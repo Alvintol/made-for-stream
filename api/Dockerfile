@@ -15,7 +15,9 @@ ENV NODE_ENV=production
 # instead of adding a new one.
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package.json ./
-COPY --chown=node:node server.js policyVersions.js policyAcceptanceGuard.js ./
+# Every top-level module server.js imports. A glob, not a list: the list
+# went stale when Sprint 4-9 added modules, and the image crashed on start.
+COPY --chown=node:node *.js ./
 
 USER node
 
