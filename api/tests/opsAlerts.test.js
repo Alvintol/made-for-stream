@@ -258,38 +258,93 @@ describe("planOpsAlertDigest", () => {
 });
 
 describe("renderOpsAlertDigest", () => {
-  it("heads every group with its playbook issue and link", () => {
-    const { subject, text, html } = renderOpsAlertDigest({
-      rows: [
-        {
-          alert_id: "stuck_payment",
-          playbook_issue: "PAY-005",
-          subject_id: "pay-1",
-          observed_at: "2026-09-23T00:00:00.000Z",
-          detail: { status: "checkout_opened" },
-          isNew: true,
-        },
-        {
-          alert_id: "payment_account_lost_readiness",
-          playbook_issue: "CON-003",
-          subject_id: "user-<1>",
-          observed_at: null,
-          detail: null,
-          isNew: false,
-        },
-      ],
+  const now = Date.parse("2026-09-26T22:10:00.000Z");
+  const render = (rows) =>
+    renderOpsAlertDigest({
+      rows,
       repoUrl: "https://github.com/Alvintol/creator-hub/blob/main",
+      siteUrl: "https://madeforstream.com",
+      now,
     });
 
-    expect(subject).toBe("[Made for Stream ops] 2 open alerts (1 new): CON-003, PAY-005");
-    expect(text).toContain("PAY-005 -- Payment stuck in checkout_opened or processing (1)");
+  it("explains a stale request in plain language, with a readable date and an admin link", () => {
+    const { subject, text, html } = render([
+      {
+        alert_id: "stale_request",
+        playbook_issue: "REQ-003",
+        subject_id: "e1ee74b1-a947-45a4-bbb6-b77cde0b5c05",
+        observed_at: "2026-06-20T22:59:20.301036+00:00",
+        detail: { has_open_notice: false, days_since_activity: 98 },
+        isNew: true,
+      },
+    ]);
+
+    expect(subject).toBe("[Made for Stream ops] Project gone quiet (1 new)");
+    expect(text).toContain("What happened: An active project has had no messages");
+    expect(text).toContain("- NEW: No activity for 98 days; no notice has been sent, since Jun 20, 2026 (98 days ago)");
+    expect(text).toContain("Open: https://madeforstream.com/admin/requests/e1ee74b1-a947-45a4-bbb6-b77cde0b5c05");
     expect(text).toContain(
-      "Playbook: https://github.com/Alvintol/creator-hub/blob/main/docs/support/payments/checkout.md",
+      "Full steps: REQ-003 in https://github.com/Alvintol/creator-hub/blob/main/docs/support/requests/request-lifecycle.md",
     );
-    expect(text).toContain("[new] pay-1 since 2026-09-23T00:00:00.000Z -- status=checkout_opened");
-    expect(text).toContain("CON-003 -- ");
-    expect(html).toContain("user-&lt;1&gt;");
-    expect(html).not.toContain("user-<1>");
+    expect(html).toContain('href="https://madeforstream.com/admin/requests/e1ee74b1-a947-45a4-bbb6-b77cde0b5c05"');
+    expect(html).not.toContain("has_open_notice");
+  });
+
+  it("describes every registered alert without leaking raw keys", () => {
+    const detailFor = {
+      stuck_payment: { status: "checkout_opened", currency: "cad", total_checkout_cents: 5250, listing_request_id: "req-1" },
+      change_order_payment_missing: { listing_request_id: "req-2", price_delta: 25, revised_total_amount: 125, has_schedule_item: true },
+      stale_request: { days_since_activity: 20, has_open_notice: true },
+      tax_evidence_insufficient: { evidence_status: "contradictory", tax_jurisdiction_country: "GB", conflicting_country: "IE" },
+      tax_transaction_missing: { stripe_tax_calculation_id: "taxcalc_1" },
+      tax_reversal_missing: { payment_id: "pay-1", stripe_refund_id: "re_1", tax_refund_cents: 150 },
+      paid_wave2_currency: { currency: "eur", status: "paid" },
+      payment_account_lost_readiness: { stripe_account_id: "acct_1", active_listing_count: 1, requirements_past_due_count: 2 },
+      payment_account_mirror_stale: { stripe_account_id: "acct_2" },
+    };
+
+    const rows = Object.entries(OPS_ALERTS).map(([alertId, alert]) => ({
+      alert_id: alertId,
+      playbook_issue: alert.playbookIssue,
+      subject_id: `subject-${alertId}`,
+      observed_at: "2026-09-26T20:00:00.000Z",
+      detail: detailFor[alertId],
+      isNew: false,
+    }));
+
+    const { subject, text, html } = render(rows);
+
+    expect(subject).toBe("[Made for Stream ops] 9 open alerts");
+    expect(text).toContain("52.50 CAD payment, still \"checkout opened\"");
+    expect(text).toContain("Price raised by 25.00; the payment row is missing");
+    expect(text).toContain("Taxed as GB; evidence is contradictory (points to IE)");
+    expect(text).toContain("Refund re_1 returned 1.50 of tax");
+    expect(text).toContain("Paid in EUR");
+    expect(text).toContain("1 live listing; 2 past-due Stripe requirements");
+    expect(text).toContain("(2 hours ago)");
+    for (const alert of Object.values(OPS_ALERTS)) {
+      expect(text).toContain(alert.title.toUpperCase());
+    }
+    expect(html).not.toMatch(/undefined|NaN|\[object Object\]/);
+    expect(text).not.toMatch(/undefined|NaN|\[object Object\]/);
+  });
+
+  it("still renders an unregistered alert, and escapes HTML", () => {
+    const { text, html } = render([
+      {
+        alert_id: "mystery",
+        playbook_issue: "OPS-003",
+        subject_id: "x<1>",
+        observed_at: null,
+        detail: { a: "<b>" },
+        isNew: true,
+      },
+    ]);
+
+    expect(text).toContain("UNREGISTERED ALERT MYSTERY");
+    expect(text).toContain("a=<b>");
+    expect(html).toContain("x&lt;1&gt;");
+    expect(html).not.toContain("<b>");
   });
 });
 
