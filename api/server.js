@@ -4039,6 +4039,7 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       const { subject, text, html } = renderOpsAlertDigest({
         rows: plan.rows,
         repoUrl: OPS_PLAYBOOK_BASE_URL,
+        siteUrl: process.env.EMAIL_SITE_URL || "https://madeforstream.com",
       });
 
       const result = await sendTransactionalEmail(supabaseAdmin, {
