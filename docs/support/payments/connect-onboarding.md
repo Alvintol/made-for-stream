@@ -384,7 +384,9 @@ escalate_with:
 (`has_ready_creator_payment_account`) now also gates the moments new paid work
 starts: submitting a request, sending or accepting an agreement with a total
 above zero, and sending or accepting a change order that raises the price.
-Drafts, cancellations, price-neutral or price-lowering change orders, and
+Requests for a **free listing** (`listings.is_free`, exempt since
+`20260926_140`, matching the publish check), drafts, cancellations,
+price-neutral or price-lowering change orders, and
 payments already owed on accepted work are not affected.
 
 **What the user sees.** A buyer or creator gets one of the two messages above

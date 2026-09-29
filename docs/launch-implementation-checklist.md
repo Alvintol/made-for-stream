@@ -8,8 +8,8 @@ Every item follows `AGENTS.md`: enforcement at the database and API rather than 
 UI alone, the next free migration number taken from `supabase/migrations/`, and a
 support playbook written or updated before the branch is ready.
 
-**Baselines to hold** (measured 2026-09-24, end of Sprint 9): **1039 tests
-passing, eslint clean, tsc clean, `npx vite build` clean** (the >500 kB
+**Baselines to hold** (measured 2026-09-26, after the Sprint 9 follow-ups):
+**1041 tests passing, eslint clean, tsc clean, `npx vite build` clean** (the >500 kB
 chunk-size warning predates Sprint 7). `AGENTS.md` still
 records the older 740 / 21 errors / 19 lines — those were cleaned up since and
 it is gitignored, so this file is the current reference.
@@ -69,56 +69,67 @@ Global availability rests entirely on this. Three places in the product assume a
 currency has exactly 100 minor units, and until that assumption is gone, enabling a
 new currency ships wrong money rather than a new market.
 
-- [ ] Migration: `supported_currencies` table per `launch-scope.md` §1.1 — code,
-      `minor_unit_exponent`, `amount_multiple`, `minimum_instalment`,
-      `stripe_minimum_charge`, `enabled`. No fee-minimum columns (§3.1). Seeded
-      with CAD and USD enabled, wave 2 rows present and disabled.
+- [x] Migration: `supported_currencies` — **first cut in `20260923_138`**
+      (code, `minor_unit_exponent` fixed at 2 by a check constraint,
+      `minimum_instalment_minor_units`, `enabled`). Live 2026-09-26: 15
+      two-decimal currencies, all enabled (CAD, USD and wave 2, decided
+      2026-09-23). `amount_multiple` and `stripe_minimum_charge` are not in it:
+      they only matter for zero- and three-decimal currencies (see the deferred
+      box below).
 - [ ] Migration: `supported_countries`, seeded from Stripe's Connect availability
       list, recording which capabilities each supports.
-- [ ] Rewrite `ensure_listing_request_payment_for_schedule_item` to take the
-      exponent from the registry instead of `* 100`, and the rates from the
-      resolver instead of `500`. In CAD and USD the result must be
+- [x] ~~Rates from the resolver instead of `500`~~ — done in `20260921_117`
+      (live, verified 2026-09-26). **The exponent half is deferred** with the
+      zero-/three-decimal work below: the registry's check constraint pins every
+      enabled currency to exponent 2, so `* 100` is correct for all of them.
+- [ ] *(Deferred, see above.)* Rewrite `ensure_listing_request_payment_for_schedule_item` to take the
+      exponent from the registry instead of `* 100`. In CAD and USD the result must be
       **byte-identical** to today for any base at or above 30.00 — below that the
       dropped minimums legitimately change it, and those cases get their own
       expectations.
-- [ ] **Remove both fee minimums.** 5% flat on each side, no `max(...)` (§3.1).
+- [x] **Remove both fee minimums.** *Done in `20260921_117`; the live bridge
+      has no `max(...)`/`greatest(...)` (verified 2026-09-26).* 5% flat on each side, no `max(...)` (§3.1).
       Model A removed the cost they offset. No `creator_fee_minimum_consumption`
       table, no monthly period, no first-of-month branch — this subsystem is gone
       before it is built.
-- [ ] **Resolve both rates per user rather than as literals** (§3.5, §3.6). One
+- [x] **Resolve both rates per user rather than as literals** *(`resolve_listing_request_fee_rates`, `20260921_117`, live)* (§3.5, §3.6). One
       shared resolver, returning 500 bps for everyone today, so a future buyer or
       creator subscription is a data change rather than a trigger rewrite.
-- [ ] Record the **reason** each rate applied — standard, subscription,
+- [x] Record the **reason** each rate applied *(`*_fee_reason` columns on agreements and payments, `20260921_117`, live)* — standard, subscription,
       promotional, goodwill — on the payment alongside the rate. A `0` with no
       explanation is indistinguishable from a bug.
-- [ ] **Lock the resolved rate at agreement acceptance as a ceiling**: a later
+- [x] **Lock the resolved rate at agreement acceptance as a ceiling** *(`lock_listing_request_agreement_fee_rates`, `20260921_117`, live)*: a later
       waiver may lower it, nothing may raise it (§3.5). This is what stops a lapsed
       subscription silently repricing an accepted schedule, which Fee Schedule §8
       forbids.
-- [ ] Tests: a waived buyer rate produces a zero fee and a recorded reason; a lapsed
+- [x] *(Covered by `listingRequestAgreements.test.ts`, `listingRequestPaymentDisplay.test.ts` and `ListingRequestPaymentCheckoutFees.test.tsx`.)* Tests: a waived buyer rate produces a zero fee and a recorded reason; a lapsed
       waiver does not raise an accepted schedule's rate; a mid-project waiver lowers
       later instalments only; refunds of a zero-fee payment return zero fee.
-- [ ] Apply `amount_multiple` rounding for three-decimal currencies.
-- [ ] Enforce the registry's `minimum_instalment` (5.00 in CAD/USD) before a
+- [ ] *(Deferred until a zero- or three-decimal currency is wanted, e.g. JPY, KWD.)* Apply `amount_multiple` rounding for three-decimal currencies.
+- [x] *Done in `20260923_138` as a **10.00 floor in every currency** (Sprint 8 decision), enforced at the database with a plain-language message.* Enforce the registry's `minimum_instalment` (5.00 in CAD/USD) before a
       payment row is created. Under Model A this protects the **creator** from
       Stripe's flat 0.30 rather than the platform from a loss (§3.1). Give it a
       clear message rather than `PAY-004`'s generic failure.
-- [ ] Fix `formatPaymentCents` (`src/domain/payments/listingRequestPaymentDisplay.ts`)
+- [ ] *(Deferred with the zero-/three-decimal work.)* Fix `formatPaymentCents` (`src/domain/payments/listingRequestPaymentDisplay.ts`)
       to divide by the registry exponent, not by 100. Extend
       `src/lib/formatMoney.ts` the same way.
-- [ ] Tests: JPY (exponent 0), KWD (exponent 3, multiple of 10), and a CAD/USD
+- [ ] *(Deferred.)* Tests: JPY (exponent 0), KWD (exponent 3, multiple of 10), and a CAD/USD
       regression set proving nothing moved.
-- [ ] `POST /api/stripe/connect/start` validates country and currency against the
-      registries before calling Stripe.
-- [ ] Replace the free-text country and currency inputs in
-      `CreatorPayoutSettings.tsx` with pickers driven by the registries.
+- [x] ~~`POST /api/stripe/connect/start` validates country and currency~~ —
+      the route was removed (2026-09-22). Its replacement,
+      `POST /api/stripe/connect/account-session`, refuses unsupported currencies
+      (`20260923_138`). Country is still format-checked only, until
+      `supported_countries` exists.
+- [x] Currency: a picker driven by `SUPPORTED_CURRENCY_CODES` (Sprint 8).
+- [ ] Country: still a free-text input in `CreatorPayoutSettings.tsx`. Needs
+      `supported_countries` first.
 - [ ] Migration: foreign keys from `creator_payment_accounts.country` /
       `.default_currency` and from the agreement, schedule item and payment currency
       columns to the registry.
 - [ ] Audit existing rows for values outside the registry before the keys land.
-- [ ] Playbook: update `payments/connect-onboarding.md` and `payments/checkout.md`.
+- [x] *(Done in Sprint 8: `PAY-004`, `CON-005`, `AGR-005`/`AGR-006`.)* Playbook: update `payments/connect-onboarding.md` and `payments/checkout.md`.
       `PAY-004`'s "Note for non-USD work" becomes a description of the registry.
-- [ ] First server-side tests for `api/server.js` start here — registry validation is
+- [x] *(Started: `api/tests/` covers `tax.js`, `refundArithmetic.js`, `policyAcceptanceGuard.js`, `connectAccountState.js` and `opsAlerts.js`. The route handlers themselves are still untested; that stays in the carried list.)* First server-side tests for `api/server.js` start here — registry validation is
       a pure function and a good place to begin closing that gap.
 
 **Done:**
@@ -126,22 +137,28 @@ new currency ships wrong money rather than a new market.
 - [x] Migration: exempt `is_free` listings from
       `enforce_listing_payment_account_readiness`, and make the trigger watch
       `is_free` so a free listing flipped to paid is still checked. Playbook and UI
-      guard updated with it. *(#104)*
+      guard updated with it. *(#104)* **Correction 2026-09-26:** the migration
+      (`116`) was never applied live; `20260926_140` applies it. See Sprint 9
+      follow-ups.
 
 ---
 
 ## Sprint 2 — Currency wave 2 and global onboarding
 
 - [ ] Open creator onboarding to every country in the registry.
-- [ ] Enable the wave 2 currencies (§1.3) one at a time, each with a real end-to-end
-      run in test mode: agreement → payment → webhook → workflow advance.
-- [ ] Per-currency fee minimums and instalment minimums reviewed for purchasing
-      power, not set by spot conversion.
-- [ ] Publish the enabled currency list and its minimums in the fee schedule — §1 of
+- [x] ~~One at a time~~ — **all wave 2 two-decimal currencies were enabled
+      together** (decision 2026-09-23). The end-to-end check is the rehearsal's
+      EUR run (Sprint 8), which is still to do.
+- [ ] Record which currencies have actually been run end to end (starts with the
+      rehearsal's CAD, USD and EUR).
+- [x] ~~Per-currency minimums reviewed for purchasing power~~ — superseded:
+      fee minimums were removed (`117`) and the instalment floor is a flat 10.00
+      in every currency (Sprint 8 decision).
+- [x] *(Fee Schedule §1 lists the enabled currencies, Sprint 8.)* Publish the enabled currency list and its minimums in the fee schedule — §1 of
       that schedule already requires this before a currency may be enabled.
 - [ ] Creator-facing currency picker limited to what their account country can
       settle.
-- [ ] Playbook: record the per-currency validation status somewhere durable, so
+- [ ] *(Merged into the "record which currencies have been run" box above.)* Playbook: record the per-currency validation status somewhere durable, so
       "has this currency actually been run end to end" has an answer.
 
 ---
@@ -358,7 +375,7 @@ never need platform funding; the charge handle is what a refund is issued agains
       default may differ from the 7-day test-mode figure observed), and decide
       whether it's acceptable to publish in the fee schedule as-is or whether
       it needs monitoring per country as currency waves expand (§1.3).
-- [ ] **Follow-up, still open:** one existing connected account
+- [x] *(Resolved: `creator_payment_accounts` has no rows as of 2026-09-26, so the old v1 account is gone.)* **Follow-up:** one existing connected account
       (`creator_payment_accounts`, `charges_enabled = false`) predates this
       session's fixes entirely (created under the old v1 path with no
       schedule at all) and was not migrated to a v2 account or re-synced. It
@@ -375,7 +392,7 @@ never need platform funding; the charge handle is what a refund is issued agains
       itself. Self-heals via `backfillChargeDetailsForPayment` when a `paid`
       payment missing its charge id is retried through the "downstream workflow
       failed" branch.
-- [ ] **Bulk-backfill both columns for existing `paid` rows from Stripe.** Not run
+- [x] *(Not needed: zero `paid` rows, and the fixed code has been live since the 2026-09-26 deploy, so no payment can land under the pre-fix code.)* **Bulk-backfill both columns for existing `paid` rows from Stripe.** Not run
       in this session — there are zero `paid` rows as of 2026-09-22 (no live
       traffic), so there is nothing to backfill yet. Write and run this before the
       first real payment lands under the pre-fix code, not after
@@ -1056,11 +1073,11 @@ deploy** (see the runbook's step 0).
 - [ ] **Business number** (registration pending). Replace `[BUSINESS_NUMBER]` in
       `termsOfService.ts` and `privacyPolicy.ts`, bump both versions, record the
       fingerprints, and drop the allowance in `legalPublication.test.ts`.
-- [ ] **Cloudflare Email Routing rules** for `support@`, `legal@`, `privacy@`,
+- [x] *(Done by the user, 2026-09-26.)* **Cloudflare Email Routing rules** for `support@`, `legal@`, `privacy@`,
       `copyright@`, `disputes@`, `safety@` and `appeals@` madeforstream.com, all
       forwarding to the existing destination. **Before the web deploy**, because
       the published policies name them. Keep the existing `inbox@` rule.
-- [ ] **Cloud Run env:** set `EMAIL_SUPPORT_EMAIL=support@madeforstream.com` (the
+- [x] *(Done 2026-09-26: both are Secret Manager secrets attached to the service, with all SMTP settings, in revision `00007`.)* **Cloud Run env:** set `EMAIL_SUPPORT_EMAIL=support@madeforstream.com` (the
       code default changed, but a set env var wins) and `EMAIL_COMPANY_ADDRESS` to
       the P.O. Box line in `api/.env.example`, so receipt footers carry it.
 - [ ] **Run the rehearsal** in [`launch-rehearsal-runbook.md`](launch-rehearsal-runbook.md)
@@ -1211,10 +1228,10 @@ so no rehearsal defects came first.
 
 **User actions (not code, not done)**
 
-- [ ] **Apply `20260924_139`** with the API deploy that contains this sprint
+- [x] *(Applied, confirmed 2026-09-26.)* **Apply `20260924_139`** with the API deploy that contains this sprint
       (the API selects the new columns, so deploy after applying). Until then
       `list_ops_alerts` does not exist and the alerts job answers 500 (`OPS-001`).
-- [ ] **Stripe event destination for account events**, once per mode (test
+- [x] *(Test mode done 2026-09-26: destination "Accounts", `ed_test_61VTRW…`; signing secret rolled after it was shared and stored as secret version 3; a ping arrived `200` and was recorded `ignored`. **Live mode is still to do** at the switch to live.)* **Stripe event destination for account events**, once per mode (test
       first). Workbench → Webhooks → **Create an event destination**. **Events
       from: Your account.** Payload style **Thin**. Events:
       `v2.core.account[requirements].updated`,
@@ -1232,19 +1249,68 @@ so no rehearsal defects came first.
       `include: ["webhook_endpoint.signing_secret"]`). Classic
       `webhook_endpoints` cannot carry thin events. Then check that a
       `v2.core.account%` row appears in `stripe_webhook_events` as `processed`.
-- [ ] **Cloud Scheduler jobs** `mfs-connect-resync` (`15 * * * *`) and
+- [x] *(Created 2026-09-26, both enabled.)* **Cloud Scheduler jobs** `mfs-connect-resync` (`15 * * * *`) and
       `mfs-ops-alerts` (`45 * * * *`), both `POST` with
       `Authorization: Bearer $OPS_CRON_SECRET`. The exact `gcloud` commands are
       in `support/operations/alerting.md` → Setup. Two jobs fit in the free
       three per billing account, then $0.10/job/month.
-- [ ] **Env and secrets on Cloud Run:** `OPS_CRON_SECRET` (new Secret Manager
+- [x] *(Done 2026-09-26, except `_PROD`, which waits for live mode.)* **Env and secrets on Cloud Run:** `OPS_CRON_SECRET` (new Secret Manager
       secret, 32+ random characters), `OPS_ALERT_EMAIL=ops@madeforstream.com`,
       `STRIPE_ACCOUNT_EVENTS_WEBHOOK_SECRET_DEV` (and `_PROD` later). Optional:
       `OPS_RESYNC_BATCH_SIZE`, `OPS_PLAYBOOK_BASE_URL`.
-- [ ] **Cloudflare Email Routing rule for `ops@madeforstream.com`**, forwarding
+- [x] *(Done 2026-09-26.)* **Cloudflare Email Routing rule for `ops@madeforstream.com`**, forwarding
       to the shared inbox like Sprint 8's purpose addresses.
-- [ ] **Force-run both jobs once** and check for `200`. The alerts job should
+- [x] *(2026-09-26 22:10 UTC: both `200`; the REQ-003 digest was delivered to ops@. The first force-runs after enabling the API were queued for a few minutes, not lost.)* **Force-run both jobs once** and check for `200`. The alerts job should
       email the current `REQ-003` hit, which confirms delivery end to end.
+
+
+### Sprint 9 follow-ups (2026-09-26)
+
+Found while doing the Sprint 9 setup.
+
+- [x] **Production was stuck on the pre-Sprint-4 build.** Merging doesn't deploy,
+      and the last deploy was 2026-09-22. A new deploy would also have failed:
+      `api/Dockerfile` copied only three modules, while `server.js` imports seven
+      more (`ERR_MODULE_NOT_FOUND`). Fixed to copy `*.js` (#121). **Sprints 4–9
+      went live for the first time in revision `00007` (2026-09-26)**, so the
+      rehearsal is their first real run.
+- [x] **Cloud Run had no email configuration at all.** SMTP host, user and
+      password, from address, support address and company address were added
+      (`EMAIL_SMTP_PASS`, `EMAIL_SUPPORT_EMAIL`, `EMAIL_COMPANY_ADDRESS` as
+      secrets). Transactional email from Cloud Run is verified by the delivered
+      ops digest.
+- [x] **The alert email reads plainly** (#122): what happened, what to do,
+      readable dates and an "Open in admin" button per item.
+- [x] **Migration drift audit.** Every function body in `supabase/migrations`
+      (newest definition) was compared with the live database by hash, and every
+      table, column and trigger with the catalog. Four migrations were never
+      applied:
+      - `056` and `058`: moderation resolution rules. They could never apply,
+        because they change the function's return type.
+      - `068`: the request status-change logger.
+      - `116`: free listings exempt from payout readiness. The Sprint 1 box
+        marked "Done (#104)" was **not true in production**: a creator could
+        not publish a free listing without Stripe.
+      - The `003` updated-at trigger on `profile_platform_accounts` was also
+        missing.
+      Everything else matches.
+- [x] **Sprint 9 gate fixed for free listings.** `139` refused requests for a
+      free listing when the creator had no Stripe account. `20260926_140` exempts
+      them, matching `116`.
+- [ ] **Apply `20260926_140`** (user action). It re-applies `003`'s trigger,
+      `058` (dropping the old function first; the admin UI passes named
+      arguments and ignores the return value), `068`'s logger only (not its
+      archive-metadata function, which `074` supersedes) and `116`, then fixes
+      the gate. **Dry-run on the live database inside a rolled-back
+      transaction, 2026-09-26:** every function then matched its repo version,
+      `074`'s archive function was untouched, the publish trigger watches
+      `is_free`, the trigger functions stayed closed to client roles, and the
+      rollback left production unchanged. The dry run found one gap, now fixed:
+      recreating the moderation function gave `anon` execute, so `140` revokes it.
+- [ ] **Merging doesn't deploy.** Until a Cloud Build trigger on `main` exists
+      (a paid resource; your decision), deploy by hand after each API merge
+      (`gcloud run deploy made-for-stream-api --source api --region us-central1`)
+      and check that the serving revision is newer than the merge.
 
 ---
 
