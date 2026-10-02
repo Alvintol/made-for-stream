@@ -1,0 +1,14 @@
+// Cloudflare Worker that serves the built web app (dist/) for the dev site,
+// dev.madeforstream.com. Static assets only: there is no Worker code.
+// Unknown paths fall back to index.html so React Router handles them.
+// The name must match the Worker's name in the Cloudflare dashboard.
+// See docs/environments.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "made-for-stream-dev",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
