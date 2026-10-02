@@ -778,7 +778,7 @@ item is a live production gap and can be pulled forward on its own at any point.
       this requires the webhook endpoint to be receiving Connect events, which
       needs confirming in the Stripe Dashboard (flagged in the playbook, not
       confirmed here).
-- [ ] Point **Supabase custom SMTP** at the same provider and sending domain. Auth
+- [x] *(Done 2026-10-01: custom SMTP saved in Supabase Auth, same Cloudflare credentials. A delivered sign-in email is confirmed in the rehearsal's account setup.)* Point **Supabase custom SMTP** at the same provider and sending domain. Auth
       mail currently goes through Supabase's built-in service, which is rate-limited
       to a handful per hour and is not for production — this is a live gap
       independent of the rest of this sprint.
@@ -1092,7 +1092,7 @@ deploy** (see the runbook's step 0).
       UK GDPR). Buyers are unrestricted by country from launch, whatever currency
       the creator sells in. Privacy §11 still says the representative's details
       must be added before offering on that basis.
-- [ ] Confirm whether the site itself is served through Cloudflare (Pages or
+- [ ] *(Answered 2026-10-02: the site was not hosted at all. The dev site now runs on a Cloudflare Worker behind Cloudflare Access; see `environments.md`. **Still to do before prod:** add Cloudflare hosting to the Service Provider Register and Privacy Policy §4, which bumps both versions.)* Confirm whether the site itself is served through Cloudflare (Pages or
       proxy). The register lists Cloudflare for DNS and email only.
 
 **Waiting on the Sprint 7 tax advice**
@@ -1297,7 +1297,7 @@ Found while doing the Sprint 9 setup.
 - [x] **Sprint 9 gate fixed for free listings.** `139` refused requests for a
       free listing when the creator had no Stripe account. `20260926_140` exempts
       them, matching `116`.
-- [ ] **Apply `20260926_140`** (user action). It re-applies `003`'s trigger,
+- [x] *(Applied 2026-09-29 and verified against the live database: all four functions match, the anon revoke held.)* **Apply `20260926_140`** (user action). It re-applies `003`'s trigger,
       `058` (dropping the old function first; the admin UI passes named
       arguments and ignores the return value), `068`'s logger only (not its
       archive-metadata function, which `074` supersedes) and `116`, then fixes
@@ -1307,10 +1307,39 @@ Found while doing the Sprint 9 setup.
       `is_free`, the trigger functions stayed closed to client roles, and the
       rollback left production unchanged. The dry run found one gap, now fixed:
       recreating the moderation function gave `anon` execute, so `140` revokes it.
-- [ ] **Merging doesn't deploy.** Until a Cloud Build trigger on `main` exists
+- [ ] **Merging doesn't deploy the API.** (The dev **web** site does deploy on merge, since 2026-10-02.) Until a Cloud Build trigger on `main` exists
       (a paid resource; your decision), deploy by hand after each API merge
       (`gcloud run deploy made-for-stream-api --source api --region us-central1`)
       and check that the serving revision is newer than the merge.
+
+
+### Environments and the private dev site (2026-10-01 to 2026-10-02)
+
+Decision: nothing is publicly usable until the legal items clear. Full layout
+in [`environments.md`](environments.md).
+
+- [x] **The website had never been hosted.** `madeforstream.com` had only email
+      records. It stays dark on purpose until launch.
+- [x] **Dev site:** `dev.madeforstream.com`, a Cloudflare Worker serving the
+      Vite build (`wrangler.jsonc`), built from `main` on every merge. The
+      `workers.dev` address and preview URLs are disabled.
+- [x] **Two locks, both verified from outside (2026-10-02):** Cloudflare Access
+      redirects every path (including assets) to its sign-in page for anyone not
+      on the allow list, with one-time email codes enabled; and Supabase Auth
+      reports `disable_signup: true`, so no account can be created whatever is
+      reached.
+- [x] **API pointed at dev:** `APP_ORIGIN`, `APP_ORIGINS` and `EMAIL_SITE_URL`
+      are `https://dev.madeforstream.com`. The API accepts the dev site and
+      localhost and refuses other origins. Supabase Auth's Site URL and redirect
+      list include the dev site.
+- [x] **SMTP token rolled (2026-10-01)** after the old one was pasted into a
+      chat. The new one is in Secret Manager (`EMAIL_SMTP_PASS` version 3) and
+      Supabase Auth; a delivered ops alert confirmed the API side.
+- [ ] **The dev database holds real people's details** (seeded creator profiles
+      from friends). Replace them with made-up data before more testers are
+      added.
+- [ ] **Prod environment:** not built. `environments.md` lists what it needs,
+      including a clean replay of every migration on an empty database first.
 
 ---
 

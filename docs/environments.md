@@ -16,12 +16,19 @@ records exist on the domain.
 
 ## What keeps dev private
 
-1. **Cloudflare Access** on `dev.madeforstream.com`: only listed email
-   addresses can load the site. The Worker's `workers.dev` address and preview
-   URLs are disabled, so the custom domain is the only way in.
+1. **Cloudflare Access** on `dev.madeforstream.com` (Zero Trust → Access →
+   Applications → `dev`): only email addresses in the policy's **Include →
+   Emails** list can load the site. Login method: **One-time PIN** (a code
+   emailed to the address). Without that method enabled, only members of the
+   Cloudflare account can sign in. The Worker's `workers.dev` address and
+   preview URLs are disabled, so the custom domain is the only way in.
+   Check from outside: `curl -s -o /dev/null -w "%{http_code}" https://dev.madeforstream.com/`
+   must print `302`, not `200`.
 2. **Supabase Auth → "Allow new users to sign up" is off.** This is the real
    boundary: nobody can create an account, whatever they reach. Test accounts
-   are added by hand in the Supabase dashboard.
+   are added by hand in the Supabase dashboard (Authentication → Users → Add
+   user, auto-confirm on). Check from outside: `GET /auth/v1/settings` with
+   the publishable key must report `"disable_signup": true`.
 
 The API itself is public on Cloud Run. Every route needs a Supabase session, a
 Stripe signature, or the ops cron secret.
