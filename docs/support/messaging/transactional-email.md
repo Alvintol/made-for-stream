@@ -47,6 +47,24 @@ on delivery being trackable — a disputed administrative closure needs to show 
 final notice was actually sent, not just written to the database. That dependency
 is why email had to ship in the same sprint as closure.
 
+
+**Supabase Auth mail (sign-in and sign-up) goes through the same Cloudflare SMTP**
+since 2026-10-01 (Supabase → Authentication → Emails → SMTP Settings), verified
+delivered to an outside Gmail address 2026-10-02. Its templates are kept in
+`supabase/templates/` and pasted into Supabase → Authentication → Emails →
+Templates by hand; Supabase does not read the repo. Only three are used:
+
+| Supabase template | File | Subject |
+| --- | --- | --- |
+| Confirm signup | `confirmation.html` | Confirm your email for Made for Stream |
+| Magic link | `magic_link.html` | Your Made for Stream sign-in link |
+| Invite user | `invite.html` | You're invited to Made for Stream |
+
+The app signs in by link only (`signInWithOtp` in `src/pages/SignIn.tsx`; no
+code box, no passwords), so the templates carry no `{{ .Token }}`, and the
+password-reset, email-change and reauthentication templates are unused. If the
+dashboard copy and the file disagree, the file is the intended version.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |
