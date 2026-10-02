@@ -51,19 +51,40 @@ is why email had to ship in the same sprint as closure.
 **Supabase Auth mail (sign-in and sign-up) goes through the same Cloudflare SMTP**
 since 2026-10-01 (Supabase → Authentication → Emails → SMTP Settings), verified
 delivered to an outside Gmail address 2026-10-02. Its templates are kept in
-`supabase/templates/` and pasted into Supabase → Authentication → Emails →
-Templates by hand; Supabase does not read the repo. Only three are used:
+`supabase/templates/` and pasted into Supabase → Authentication → Emails by
+hand; Supabase does not read the repo. **Edit `supabase/templates/build.mjs`,
+not the `.html` files**, then run `node supabase/templates/build.mjs`. It
+refuses to build if a template uses a variable Supabase doesn't fill in for
+that template, which would otherwise show up blank in a real email.
 
-| Supabase template | File | Subject |
+| Supabase template | File | Used by the app today |
 | --- | --- | --- |
-| Confirm signup | `confirmation.html` | Confirm your email for Made for Stream |
-| Magic link | `magic_link.html` | Your Made for Stream sign-in link |
-| Invite user | `invite.html` | You're invited to Made for Stream |
+| Confirm signup | `confirmation.html` | yes: first email sign-in |
+| Magic link | `magic_link.html` | yes: every email sign-in |
+| Invite user | `invite.html` | when an admin invites someone |
+| Change email address | `email_change.html` | no (no email-change screen) |
+| Reset password | `recovery.html` | no (no passwords) |
+| Reauthentication | `reauthentication.html` | no |
+| Password changed (security) | `password_changed_notification.html` | no |
+| Email address changed (security) | `email_changed_notification.html` | no |
+| Phone number changed (security) | `phone_changed_notification.html` | no |
+| Sign-in method linked (security) | `identity_linked_notification.html` | if switched on: e.g. first Google sign-in on an account made by email |
+| Sign-in method removed (security) | `identity_unlinked_notification.html` | if switched on |
+| MFA method added (security) | `mfa_factor_enrolled_notification.html` | no (no MFA) |
+| MFA method removed (security) | `mfa_factor_unenrolled_notification.html` | no (no MFA) |
 
-The app signs in by link only (`signInWithOtp` in `src/pages/SignIn.tsx`; no
-code box, no passwords), so the templates carry no `{{ .Token }}`, and the
-password-reset, email-change and reauthentication templates are unused. If the
-dashboard copy and the file disagree, the file is the intended version.
+Subjects are in `build.mjs` (printed when it runs). The "security" ones are
+only sent if each is switched on in Supabase. The app signs in by link only
+(`signInWithOtp` in `src/pages/SignIn.tsx`), so the sign-in templates carry no
+code; only Reauthentication shows one. If the dashboard copy and the file
+disagree, the file is the intended version.
+
+Look: the site's colours from `src/styles/theme.css` (purple-to-orange header
+band, indigo button gradient), each gradient with a solid fallback for Outlook.
+A dark version follows the reader's system setting through
+`prefers-color-scheme`, which Apple Mail, iOS Mail and Outlook for Mac honour.
+Gmail ignores it and darkens the light version itself, so a report of "the
+email looks different in Gmail's dark mode" is expected, not a bug.
 
 ## Quick triage
 

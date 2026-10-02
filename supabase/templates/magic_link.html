@@ -3,25 +3,46 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light only" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <title>Sign in to Made for Stream</title>
+    <style>
+      /* Dark mode, from src/styles/theme.css's dark tokens. Honoured by Apple
+         Mail, iOS Mail and Outlook for Mac; Gmail ignores it and applies its
+         own darkening to the light version. */
+      @media (prefers-color-scheme: dark) {
+        .mfs-bg { background:#111018 !important; }
+        .mfs-card { background:#1a1922 !important; border-color:#2b2a36 !important; }
+        .mfs-ink { color:#ededf5 !important; }
+        .mfs-text { color:#c9c5ea !important; }
+        .mfs-muted, .mfs-muted a { color:#a8a6b6 !important; }
+        .mfs-faint { color:#7d7b8c !important; }
+        .mfs-rule { border-top-color:#2b2a36 !important; }
+        .mfs-btn { background-color:#ededf5 !important; background-image:linear-gradient(180deg,#ffffff,#e8e8f4) !important; }
+        .mfs-btn a { color:#111018 !important; }
+        .mfs-code { background:#20202c !important; border-color:#2b2a36 !important; color:#ededf5 !important; }
+        .mfs-warn { background:#2a1d18 !important; border-color:#5a3324 !important; color:#f3c9b8 !important; }
+      }
+    </style>
   </head>
-  <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
+  <body class="mfs-bg" style="margin:0;padding:0;background:#f7f7ff;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Use this link to sign in to Made for Stream.</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mfs-bg" style="background:#f7f7ff;padding:32px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:8px;padding:32px;">
-            <tr><td>
-              <p style="margin:0 0 24px;font-size:13px;font-weight:bold;letter-spacing:0.02em;color:#52525b;">Made for Stream</p>
-              <h1 style="font-size:20px;line-height:1.3;margin:0 0 12px;color:#18181b;">Sign in to Made for Stream</h1>
-              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3f46;">Use the button below to sign in. No password needed.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:6px;background:#18181b;">
-                <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;border-radius:6px;">Sign in</a>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mfs-card" style="max-width:480px;background:#ffffff;border-radius:10px;border:1px solid #e6e4f5;">
+            <tr><td bgcolor="#6b34e0" style="background-color:#6b34e0;background-image:linear-gradient(120deg,#6b34e0 0%,#a0459c 55%,#f05828 100%);border-radius:10px 10px 0 0;padding:22px 32px;">
+              <p style="margin:0;font-size:17px;font-weight:bold;letter-spacing:0.01em;color:#ffffff;">Made for Stream</p>
+            </td></tr>
+            <tr><td style="padding:32px;">
+              <h1 class="mfs-ink" style="font-size:20px;line-height:1.3;margin:0 0 12px;color:#18181b;">Sign in to Made for Stream</h1>
+              <p class="mfs-text" style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3f46;">Use the button below to sign in. No password needed.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#33209a" class="mfs-btn" style="border-radius:8px;background-color:#33209a;background-image:linear-gradient(180deg,#33209a,#271870);">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;border-radius:8px;">Sign in</a>
               </td></tr></table>
-              <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#71717a;">The link works once and expires soon. If you didn't try to sign in, you can ignore this email: your account stays as it is.</p>
-              <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#a1a1aa;word-break:break-all;">If the button doesn't work, copy this link into your browser:<br />{{ .ConfirmationURL }}</p>
-              <p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px;line-height:1.6;">
+              <p class="mfs-muted" style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#71717a;">The link works once and expires soon. If you didn't try to sign in, you can ignore this email: your account stays as it is.</p>
+              <p class="mfs-faint" style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#a1a1aa;word-break:break-all;">If the button doesn't work, copy this link into your browser:<br />{{ .ConfirmationURL }}</p>
+              <p class="mfs-muted mfs-rule" style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px;line-height:1.6;">
                 Made for Stream &middot; P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2<br />
                 Questions? <a href="mailto:support@madeforstream.com" style="color:#71717a;">support@madeforstream.com</a>
                 &middot; <a href="{{ .SiteURL }}" style="color:#71717a;">Made for Stream</a>
