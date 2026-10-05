@@ -9,6 +9,10 @@ import type { SellerApplicationRow } from "../../hooks/creatorApplication/useMyS
 import { useCreatorApplicationQueueState } from "../../hooks/creatorApplication/useCreatorApplicationQueueState";
 import { useAdminApplicantProfile } from "../../hooks/admin/useAdminApplicantProfile";
 import { useAdminApplicantPlatformAccounts } from "../../hooks/admin/useAdminApplicantAccounts";
+import {
+  assessExternalLink,
+  getExternalLinkConfirmMessage,
+} from "../../domain/links/externalLinks";
 
 const classes = {
   page: "space-y-6",
@@ -58,6 +62,9 @@ const classes = {
   sampleUrlBlock: "mt-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3",
   sampleUrlLabel: "text-[11px] font-bold uppercase tracking-wide text-zinc-500",
   sampleUrlValue: "mt-1 break-all text-xs text-zinc-700",
+  sampleKnown: "ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800",
+  sampleCaution: "ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900",
+  sampleWarnings: "mt-2 list-disc space-y-1 pl-4 text-xs text-amber-900",
 
   bannerOk: "card border border-emerald-200 bg-emerald-50 p-4 text-emerald-900",
   bannerErr: "card border border-rose-200 bg-rose-50 p-4 text-rose-900",
@@ -96,18 +103,61 @@ const getSampleTypeLabel = (sample: SellerApplicationSampleRow): string =>
       ? "Image"
       : "Video";
 
-const getUrlHost = (value: string | null): string | null => {
-  if (!value) return null;
+// A sample link is whatever the applicant typed. It is only made clickable
+// when it is an ordinary web link, and an unfamiliar one asks first, showing
+// where it really goes (src/domain/links/externalLinks.ts).
+const SampleLink = ({ url }: { url: string }) => {
+  const link = assessExternalLink(url);
 
-  try {
-    return new URL(value).host;
-  } catch {
-    return null;
-  }
+  return (
+    <>
+      <div className={classes.sampleUrlBlock}>
+        <div className={classes.sampleUrlLabel}>Goes to</div>
+        <div className={classes.sampleUrlValue}>
+          <strong>{link.host ?? "Not a web link"}</strong>{" "}
+          <span className={link.level === "known" ? classes.sampleKnown : classes.sampleCaution}>
+            {link.level === "known"
+              ? "Known site"
+              : link.level === "blocked"
+                ? "Blocked"
+                : "Check before opening"}
+          </span>
+        </div>
+
+        <div className={classes.sampleUrlLabel}>Full URL</div>
+        <div className={classes.sampleUrlValue}>{url.trim()}</div>
+
+        {link.warnings.length > 0 && (
+          <ul className={classes.sampleWarnings}>
+            {link.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {link.href && (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          referrerPolicy="no-referrer"
+          className={classes.sampleLink}
+          onClick={(event) => {
+            if (
+              link.level !== "known" &&
+              !window.confirm(getExternalLinkConfirmMessage(link))
+            ) {
+              event.preventDefault();
+            }
+          }}
+        >
+          Open sample in a new tab
+        </a>
+      )}
+    </>
+  );
 };
-
-const getSafeUrlDisplay = (value: string | null): string =>
-  value?.trim() || "No URL";
 
 const AdminCreatorApplications = () => {
   const {
@@ -441,30 +491,7 @@ const AdminCreatorApplications = () => {
                     </div>
                   )}
 
-                  {sample.url && (
-                    <div className={classes.sampleUrlBlock}>
-                      <div className={classes.sampleUrlLabel}>Domain</div>
-                      <div className={classes.sampleUrlValue}>
-                        {getUrlHost(sample.url) ?? "Invalid URL"}
-                      </div>
-
-                      <div className={classes.sampleUrlLabel}>Full URL</div>
-                      <div className={classes.sampleUrlValue}>
-                        {getSafeUrlDisplay(sample.url)}
-                      </div>
-                    </div>
-                  )}
-
-                  {sample.url && (
-                    <a
-                      href={sample.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={classes.sampleLink}
-                    >
-                      Open sample
-                    </a>
-                  )}
+                  {sample.url && <SampleLink url={sample.url} />}
                 </div>
               ))}
 
