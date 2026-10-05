@@ -34,6 +34,10 @@ import {
   selectAccountsForResync,
 } from "./connectAccountState.js";
 import {
+  getApplicantVisibleNote,
+  shouldSendApplicationDecisionEmail,
+} from "./creatorApplicationEmail.js";
+import {
   isAuthorizedOpsRequest,
   planOpsAlertDigest,
   renderOpsAlertDigest,
@@ -42,6 +46,7 @@ import {
   renderFinalNoticeEmail,
   renderFirstNoticeEmail,
   renderPaymentReceiptEmail,
+  renderCreatorApplicationDecisionEmail,
   renderPayoutReleasedEmail,
 } from "./emailTemplates.js";
 
@@ -3529,6 +3534,116 @@ app.post("/api/notices/:noticeId/send-email", async (req, res) => {
   } catch (err) {
     const message = String(err?.message || err);
     const status = /session|authorization/i.test(message) ? 401 : 400;
+
+    return res.status(status).json({ error: message });
+  }
+});
+
+// Creator application decisions. The admin page writes the decision to
+// seller_applications (RLS: admins only), then calls this so the applicant
+// hears about it. The decision and the recipient are read from the database,
+// never from the request, and only an administrator may trigger it. One
+// email per decision (api/creatorApplicationEmail.js); every attempt is
+// recorded in seller_application_decision_emails. Best-effort: a failed
+// email never undoes the decision. Playbook: creators/applications.md APP-006.
+app.post("/api/creator-applications/:applicationId/send-decision-email", async (req, res) => {
+  try {
+    const adminUserId = await requireAdminUserId(req);
+    const applicationId = String(req.params.applicationId || "").trim();
+
+    if (!/^[0-9a-f-]{36}$/i.test(applicationId)) {
+      return res.status(400).json({ error: "applicationId is required." });
+    }
+
+    const { data: application, error: applicationError } = await supabaseAdmin
+      .from("seller_applications")
+      .select("id, profile_user_id, status, submitted_at, reviewer_notes, rejection_reason")
+      .eq("id", applicationId)
+      .maybeSingle();
+
+    if (applicationError) {
+      throw new Error(applicationError.message);
+    }
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found." });
+    }
+
+    const { data: lastSent, error: lastSentError } = await supabaseAdmin
+      .from("seller_application_decision_emails")
+      .select("status, attempted_at")
+      .eq("application_id", applicationId)
+      .eq("email_status", "sent")
+      .order("attempted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastSentError) {
+      throw new Error(lastSentError.message);
+    }
+
+    const decision = shouldSendApplicationDecisionEmail({ application, lastSent });
+
+    if (!decision.send) {
+      return res.json({ status: "skipped", reason: decision.reason });
+    }
+
+    let result;
+
+    try {
+      const email = await getSupabaseUserEmail(application.profile_user_id);
+      const { subject, html, text } = renderCreatorApplicationDecisionEmail({
+        status: application.status,
+        note: getApplicantVisibleNote(application),
+      });
+
+      result = await sendTransactionalEmail(supabaseAdmin, {
+        to: email,
+        subject,
+        html,
+        text,
+      });
+    } catch (err) {
+      result = {
+        status: "failed",
+        providerMessageId: null,
+        failedReason: String(err?.message || err),
+      };
+    }
+
+    if (result.status !== "sent") {
+      console.error(
+        `APP-006: decision email (${application.status}) for creator application ${applicationId} failed: ${result.failedReason}`,
+      );
+    }
+
+    const { error: recordError } = await supabaseAdmin
+      .from("seller_application_decision_emails")
+      .insert({
+        application_id: applicationId,
+        status: application.status,
+        email_status: result.status === "sent" ? "sent" : "failed",
+        provider_message_id: result.providerMessageId,
+        failed_reason: result.failedReason,
+        sent_by_admin_user_id: adminUserId,
+      });
+
+    if (recordError) {
+      // The email may have gone; without the record a retry could send it
+      // twice, so say so loudly rather than silently.
+      console.error(
+        `APP-006: decision email for creator application ${applicationId} was ${result.status} but could not be recorded: ${recordError.message}`,
+      );
+    }
+
+    return res.json({ status: result.status, decision: application.status });
+  } catch (err) {
+    const message = String(err?.message || err);
+    const status = /session|authorization/i.test(message)
+      ? 401
+      : /Administrator access/.test(message)
+        ? 403
+        : 400;
 
     return res.status(status).json({ error: message });
   }

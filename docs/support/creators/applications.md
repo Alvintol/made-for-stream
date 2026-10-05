@@ -6,6 +6,11 @@ surfaces:
   - public.seller_application_samples
   - src/hooks/creatorApplication/
   - src/domain/creatorApplication/
+  - api/creatorApplicationEmail.js                 # when a decision email is sent
+  - api/emailTemplates.js                          # renderCreatorApplicationDecisionEmail
+  - api/server.js                                  # POST /api/creator-applications/:id/send-decision-email
+  - public.seller_application_decision_emails
+  - supabase/migrations/20261005_142_add_seller_application_decision_emails.sql
   - src/domain/links/externalLinks.ts              # how sample links are shown to admins
   - src/pages/admin/AdminCreatorApplications.tsx   # SampleLink
   - supabase/migrations/20261005_141_require_web_links_for_application_samples.sql
@@ -174,6 +179,67 @@ For a database signal: treat it as a deliberate attempt and review the
 account before approving anything.
 
 **Money impact.** None.
+
+---
+
+## `APP-006` — Applicant was not emailed about a decision
+
+```yaml
+id: APP-006
+tier: 2
+signals:
+  - source: api
+    match: "/APP-006: decision email \\((approved|needs_changes|rejected)\\) for creator application [0-9a-f-]+ failed: /"
+    where: "POST /api/creator-applications/:id/send-decision-email (api/server.js), server logs"
+  - source: api
+    match: "/APP-006: decision email for creator application [0-9a-f-]+ was (sent|failed) but could not be recorded: /"
+    where: "same route"
+  - source: db
+    where: public.seller_application_decision_emails
+    match: "email_status = 'failed' with no later 'sent' row for the same application and status"
+  - source: user_report
+    match: "I was approved / rejected but never got an email"
+auto_fix: none
+reason_not_automatable: "the cause is email configuration or the applicant's address; resending is a one-click admin action"
+escalate_with:
+  - "the application id, its status, and its rows in seller_application_decision_emails"
+  - "whether the applicant's address is in email_suppressions"
+```
+
+**How it works.** When an administrator sets an application to **approved**,
+**needs changes** or **rejected**, the admin page saves the decision and then
+asks the API to email the applicant. The API reads the decision and the
+applicant's address itself, sends one email per decision, and records every
+attempt. Saving the same decision again does not send a second email. A second
+"needs changes" after the applicant resubmits does. **Under review** and
+**suspended** send nothing: the first is not a decision, and a suspension is a
+sanction with its own appeal route.
+
+**Cause of a miss.** The email is a best-effort follow-up, so the decision
+stands even when it fails. Usual reasons: SMTP not configured or refused
+(`failed_reason` says which; see
+[`transactional-email.md`](../messaging/transactional-email.md) `EMAIL-001`),
+the address is on `email_suppressions` after a bounce, the API was down when
+the admin clicked, or migration `20261005_142` is not applied (the log then
+says the table does not exist).
+
+```sql
+select application_id, status, email_status, failed_reason, attempted_at
+from public.seller_application_decision_emails
+where application_id = '<application>'
+order by attempted_at desc;
+```
+
+**What the user sees.** Nothing arrives. The decision and the reviewer's note
+are still on their application page (`/apply/creator`).
+
+**Fix.** Fix the cause, then have an administrator open the application and
+save the same decision again: with no successful row recorded, it sends. If a
+row says `sent` and the applicant still has nothing, it is a delivery problem
+(spam folder, wrong address), not this.
+
+**Money impact.** None directly. An approved creator who never hears about it
+does not set up payouts or list anything.
 
 ---
 
