@@ -57,7 +57,11 @@ vi.mock("@stripe/connect-js", () => ({
 
 vi.mock("@stripe/react-connect-js", () => ({
   ConnectComponentsProvider: ({ children }: { children: unknown }) => <div>{children as never}</div>,
-  ConnectAccountOnboarding: () => <div>Stripe onboarding</div>,
+  ConnectAccountOnboarding: ({ onLoadError }: { onLoadError: () => void }) => (
+    <button type="button" onClick={onLoadError}>
+      Stripe onboarding
+    </button>
+  ),
 }));
 
 vi.mock("../../hooks/legal/usePolicyAcceptances", () => ({
@@ -180,6 +184,20 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
 
     await waitFor(() => expect(mocks.createSession).toHaveBeenCalledTimes(1));
     expect(mocks.record).not.toHaveBeenCalled();
+  });
+
+  it("tells the creator when Stripe's form fails to load", async () => {
+    mocks.acceptances = [
+      { policy_type: "creator_terms", policy_version: creatorTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },
+    ];
+
+    renderSettings();
+
+    fireEvent.click(getStartButton());
+    fireEvent.click(await screen.findByText("Stripe onboarding"));
+
+    expect(await screen.findByText(/Stripe's setup form couldn't load/i)).toBeInTheDocument();
+    expect(screen.queryByText("Stripe onboarding")).not.toBeInTheDocument();
   });
 });
 

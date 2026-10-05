@@ -1,7 +1,7 @@
 # Launch Rehearsal Runbook (test mode)
 
 Sprint 8's last gate (`launch-implementation-checklist.md`). **Written 2026-09-23,
-updated 2026-10-02 for the dev site, not yet run.** Nothing in this file has been executed; tick the boxes as you go and record
+updated 2026-10-05, section 0 partly done, sections 1 to 7 not yet run.** Nothing past section 0 has been executed; tick the boxes as you go and record
 the ids you used, so "has this been rehearsed" has an answer.
 
 A passing run clears **CAD and USD** for launch. The EUR run proves the money path works
@@ -18,6 +18,10 @@ The rehearsal runs on the private dev site, `https://dev.madeforstream.com`
 
 Already confirmed (2026-10-02), no action needed:
 
+- [x] *(2026-10-05)* The API's health probe is correct and `/api/health` is
+      `200`. It was malformed until today (`environments.md`), so the API
+      had been restarting constantly. If a step fails with a `500`, check
+      this first (`OPS-004`).
 - [x] Migrations `137`, `138`, `139` and `140` are applied, and every function,
       table, column and trigger matches the repo (drift audit, 2026-09-26).
 - [x] The API (Cloud Run) is on **test** Stripe keys, includes Sprints 4–9, and
@@ -30,7 +34,7 @@ Already confirmed (2026-10-02), no action needed:
 
 To do:
 
-- [ ] **Accounts.** Sign-ups are off, so accounts are created by hand. Use
+- [x] *(Done; confirmed in the database 2026-10-05, except the buyer's profile, below.)* **Accounts.** Sign-ups are off, so accounts are created by hand. Use
       separate browser profiles (or private windows), one per account; each
       passes the Cloudflare login with your own email first.
 
@@ -39,15 +43,17 @@ To do:
       | Admin | `imallbeans+twitch@gmail.com` | exists; sign in with Twitch |
       | Buyer | `imallbeans@gmail.com` | exists; sign in with Google |
       | Creator, CA / CAD | `meowington88@gmail.com` | exists and approved; sign in with Google |
-      | Creator, US / USD | `imallbeans+rehearsal-us@gmail.com` | create (below) |
-      | Creator, IE / EUR | `imallbeans+rehearsal-eu@gmail.com` | create (below) |
+      | Creator, US / USD | `trashmailtrash8888@gmail.com` (handle `TrashMailman`) | exists and approved |
+      | Creator, IE / EUR | `alvin.tolentino@hotmail.com` (handle `PizzaButt`) | exists and approved |
 
       To create one: Supabase → Authentication → Users → **Add user → Create
       new user**, the email above, any password, **Auto Confirm User** on. Then
       on the dev site choose the email sign-in and enter that address; the link
       arrives in the `imallbeans@gmail.com` inbox. **That email arriving is the
       proof that Supabase Auth mail works through Cloudflare** (Sprint 6).
-- [ ] **Make the two new accounts creators.** Each completes its profile and
+- [ ] **Buyer profile.** `imallbeans@gmail.com` signs in with Google and
+      completes profile setup (no row in `profiles` as of 2026-10-05).
+- [x] *(Done; both applications `approved`, 2026-10-05.)* **Make the two new accounts creators.** Each completes its profile and
       submits a creator application; the admin approves both at
       `/admin/creator-applications`.
 - [ ] **Stripe payout setup, all three creators** (Settings → Payouts, Stripe

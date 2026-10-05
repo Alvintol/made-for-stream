@@ -84,6 +84,7 @@ Most of this playbook is about that drift.
 | "Stripe is asking for more documents" | [`CON-004`](#con-004--stripe-requires-additional-verification) |
 | "I can't start Stripe onboarding at all" | [`CON-002`](#con-002--creator-is-not-approved-yet) |
 | "It says the creator can't take new paid work" / "It says my payout account needs attention" | [`CON-007`](#con-007--new-paid-work-refused-because-the-account-is-not-ready) |
+| "I pressed start and the Stripe form never appears" | [`CON-008`](#con-008--stripe-onboarding-form-does-not-load-key-mismatch) |
 | (internal) Mirror rows not refreshed in 48 hours | [`CON-006`](#con-006--payment-account-mirror-is-not-being-refreshed) |
 
 ---
@@ -419,6 +420,52 @@ buyer the creator is sorting out their payout account.
 
 **Money impact.** None. This refusal is what keeps money out of an account
 that can't take it.
+
+---
+
+## `CON-008` — Stripe onboarding form does not load (key mismatch)
+
+```yaml
+id: CON-008
+tier: 2
+signals:
+  - source: browser_console
+    match: "No account session with that client secret was found. Was the account session created using a secret key for a different account?"
+    where: "connect.js loadError, and POST https://api.stripe.com/v1/account_sessions/claim answering 400"
+  - source: ui
+    match: "Stripe's setup form couldn't load. Please try again. If it keeps happening, contact support."
+    where: "CreatorPayoutSettings.tsx, ConnectAccountOnboarding onLoadError (any load failure, not only this cause)"
+  - source: api
+    match: "POST /api/stripe/connect/account-session answers 200 while the form still fails"
+auto_fix: none
+reason_not_automatable: "build configuration; keys are set by a person in Cloudflare and Secret Manager"
+escalate_with:
+  - "which site (dev or prod) and the build it is serving"
+  - "the first 16 characters after pk_test_ / pk_live_ of the site's publishable key (public, not a secret)"
+  - "whether creator_payment_accounts has a new row for the creator"
+```
+
+**Cause.** The website's publishable key (`VITE_STRIPE_PUBLISHABLE_KEY_DEV` or
+`_PROD`, a **build** variable) belongs to a different Stripe account or
+sandbox than the API's secret key. The API creates the connected account and
+an account session with its key, the browser tries to claim the session with
+the other account's key, and Stripe says it does not exist. First seen
+2026-10-05 on the dev site: the key was from the main account's test mode,
+while the API uses a sandbox.
+
+The API side succeeds, so a `creator_payment_accounts` row is created with all
+three flags false, and `v2.core.account…` events are processed normally. Only
+the form is broken.
+
+**Fix.** In the Stripe Dashboard, open the account or sandbox the API's secret
+key belongs to (the one that lists the creator's `acct_…` under Connected
+accounts), copy its publishable key, set it as the build variable (Cloudflare
+→ the Worker → Settings → Build), and rebuild. Update the local `.env` too.
+The creator then presses the start button again; the existing account is
+reused.
+
+**Money impact.** None. No creator can finish payout setup until it is fixed,
+so no paid listing can be published.
 
 ---
 

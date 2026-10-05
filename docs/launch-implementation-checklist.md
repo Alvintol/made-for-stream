@@ -1339,6 +1339,33 @@ in [`environments.md`](environments.md).
 - [x] **SMTP token rolled (2026-10-01)** after the old one was pasted into a
       chat. The new one is in Secret Manager (`EMAIL_SMTP_PASS` version 3) and
       Supabase Auth; a delivered ops alert confirmed the API side.
+- [x] **API outage, 2026-10-05: a malformed health probe.** Cloud Run's
+      liveness probe path was the whole option string instead of
+      `/api/health` (the shell had turned the command's commas into spaces),
+      so every instance was shut down about 30 seconds after starting. The
+      logs show this from 2026-09-22 (revision `00004`): the API answered
+      only between restarts, and on 2026-10-05 every route returned `500`. A
+      first fix attempt (revision `00016`) repeated the mistake. Fixed in
+      revision `00017`, run from Git Bash with the value quoted. **Verified
+      from outside, 2026-10-05:** the probe path reads exactly `/api/health`,
+      `/api/health` returns `200`, the dev site still returns `302` and
+      sign-ups are still off. Recorded in `environments.md` and as
+      `OPS-004` in `support/operations/alerting.md`. **Consequence for
+      earlier checks:** anything "verified" on the API between those dates
+      was verified on an API that was restarting constantly.
+- [ ] **Rehearsal finding, 2026-10-05: payout setup could not load on the dev
+      site** (`CON-008`). The site's `VITE_STRIPE_PUBLISHABLE_KEY_DEV` is from
+      a different Stripe account than the API's secret key, so Stripe refused
+      the onboarding form ("No account session with that client secret was
+      found"). **User action:** set the build variable to the publishable key
+      of the sandbox the API uses, and rebuild. Code: the page now shows an
+      error when the form fails to load instead of staying blank (unit test
+      only; not yet seen in a browser). Working as designed in the same run:
+      the first real `v2.core.account…` events arrived and were `processed`,
+      and an "approved" decision email was recorded as `sent`.
+- [ ] **Nothing alerts when the API is down** (`OPS-004`). A Cloud Monitoring
+      uptime check on `/api/health` would; it is a cloud resource, so it is
+      your decision.
 - [ ] **The dev database holds real people's details** (seeded creator profiles
       from friends). Replace them with made-up data before more testers are
       added.
