@@ -63,6 +63,7 @@ or to force-run by hand from the Cloud Scheduler console.
 | No alert email for a day, and something should have fired | [`OPS-001`](#ops-001--alert-digest-not-delivered), [`OPS-002`](#ops-002--scheduled-job-not-authorized) |
 | A Cloud Scheduler job shows `401` | [`OPS-002`](#ops-002--scheduled-job-not-authorized) |
 | A Cloud Scheduler job shows `502` | [`OPS-001`](#ops-001--alert-digest-not-delivered) (alerts) or [`CON-006`](../payments/connect-onboarding.md#con-006--payment-account-mirror-is-not-being-refreshed) (resync) |
+| Every API route returns `500`, or a Cloud Scheduler job shows `500` / code `13` | [`OPS-004`](#ops-004--cloud-run-keeps-restarting-the-api-liveness-probe) |
 | An alert email heading says "Unregistered alert" | [`OPS-003`](#ops-003--list_ops_alerts-returned-an-unregistered-alert) |
 
 ---
@@ -167,6 +168,53 @@ step, so this shouldn't survive a deploy of the same commit.
 
 ---
 
+## `OPS-004` — Cloud Run keeps restarting the API (liveness probe)
+
+```yaml
+id: OPS-004
+tier: 2
+signals:
+  - source: cloud_run
+    match: "/LIVENESS HTTP probe failed \\d+ times consecutively for container .+ on port 8787 path /"
+    where: "Cloud Run system log (run.googleapis.com/varlog/system), severity ERROR"
+  - source: cloud_run
+    match: "The request failed because the instance could not start successfully."
+    where: "Cloud Run request log, on requests answered 500"
+  - source: scheduler
+    match: "job last attempt returned 500 (status code 13)"
+auto_fix: none
+reason_not_automatable: "service configuration; the agent may not change Cloud Run settings"
+escalate_with:
+  - "the path quoted in the LIVENESS log line"
+  - "the serving revision and when it was created"
+  - "whether the API's own log shows '[api] listening' shortly before each shutdown"
+```
+
+**Cause.** Cloud Run's liveness probe is failing, so it shuts each instance
+down ("The instance has been shut down."). Read the path in the log line. If
+it is anything but `/api/health`, the probe is misconfigured: on 2026-10-05
+it was `/api/health httpGet.port=8787 periodSeconds=30 ...`, because the
+shell had turned the option list's commas into spaces, and the API answered
+that path with `404`. If the path is right, the API itself is failing or
+hanging on `/api/health`; read its own log lines before the shutdown.
+
+In the misconfigured case the API starts normally (`[api] listening on ...`)
+and is killed about 30 seconds later. Requests that land in the gap succeed,
+so this can look like an API that is merely flaky. It ran that way from
+2026-09-22 to 2026-10-05 before failing outright.
+
+**Fix.** Set the probe and check the result, as in
+[`environments.md`](../../environments.md#the-apis-health-probe). Then
+confirm `GET /api/health` is `200` and force-run both scheduler jobs.
+
+**Money impact.** No money moves wrongly, but Stripe webhooks that arrive
+while the API is down are refused. Stripe retries them for a limited time.
+After an outage, check for payments stuck in `checkout_opened`
+([`PAY-005`](../payments/checkout.md#pay-005--payment-stuck-in-checkout_opened-or-processing))
+and force-run `mfs-connect-resync`.
+
+---
+
 ## Setup (user actions, once per environment)
 
 These create paid or external resources and are **not** done by any agent.
@@ -199,10 +247,17 @@ These create paid or external resources and are **not** done by any agent.
    The header value is stored in the job's configuration, so anyone who can view
    Cloud Scheduler jobs in the project can read it. That's acceptable for a
    secret that only triggers idempotent jobs. Rotate it if project access changes.
-4. **Verify:** force-run both jobs and check for `200`. With nothing open,
+4. **Health probe:** set and check it as in
+   [`environments.md`](../../environments.md#the-apis-health-probe) (`OPS-004`).
+5. **Verify:** force-run both jobs and check for `200`. With nothing open,
    `mfs-ops-alerts` answers `"emailStatus":"not_needed"` and sends nothing.
 
 ## Known gaps
+
+- **Nothing alerts when the API itself is down.** The alert job runs on the
+  API, so `OPS-004` is silent. The scheduler jobs' failed status is the only
+  sign. A Cloud Monitoring uptime check on `/api/health` would close this
+  (a cloud resource; not set up).
 
 - **No "alive" email.** A quiet inbox looks the same as a broken job. Cloud
   Scheduler's job status is the check. A Cloud Monitoring alert on job failure

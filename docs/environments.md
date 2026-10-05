@@ -47,6 +47,34 @@ Stripe signature, or the ops cron secret.
 - **Database:** migrations are applied by hand. `list_migrations` is unreliable
   on this project; compare objects directly.
 
+## The API's health probe
+
+Cloud Run calls `GET /api/health` every 30 seconds and restarts the API if it
+fails three times in a row. The probe's path must be exactly `/api/health`.
+Check it:
+
+```bash
+gcloud run services describe made-for-stream-api --region us-central1 --format="value(spec.template.spec.containers[0].livenessProbe.httpGet.path)"
+```
+
+**What went wrong (found 2026-10-05).** From 2026-09-22 to 2026-10-05 the
+path was the whole option string, `/api/health httpGet.port=8787
+periodSeconds=30 ...`, because the shell turned the commas in the command
+into spaces. That path returns 404, so Cloud Run shut down every instance
+about 30 seconds after it started. The API answered only in the gaps, and on
+2026-10-05 it stopped answering at all (every route `500`). Fixed in revision
+`00017`. Playbook: `support/operations/alerting.md` `OPS-004`.
+
+**Setting it.** Run this in **Git Bash**, with the quotes, so the commas
+survive. Then run the check above; do not trust the command's own output.
+
+```bash
+gcloud run services update made-for-stream-api --region us-central1 "--liveness-probe=httpGet.path=/api/health,httpGet.port=8787,periodSeconds=30,failureThreshold=3,timeoutSeconds=5"
+```
+
+A probe setting is part of the service, so later `gcloud run deploy` runs keep
+it. The same goes for a wrong one: it carried through twelve revisions unnoticed.
+
 ## Before prod is built
 
 - Replay every migration on an empty database first. `056` and `058` could not
@@ -54,5 +82,5 @@ Stripe signature, or the ops cron secret.
   replay cleanly.
 - Prod needs its own: Supabase project and keys, Cloud Run service and secrets,
   Stripe live webhook endpoint and account-events destination, Cloud Scheduler
-  jobs, Supabase Auth SMTP and URL settings, and `APP_ORIGIN` /
+  jobs, the health probe above (checked after it is set), Supabase Auth SMTP and URL settings, and `APP_ORIGIN` /
   `EMAIL_SITE_URL` pointing at `madeforstream.com`.
