@@ -11,15 +11,17 @@ const mocks = vi.hoisted(() => ({
   record: vi.fn(),
   createSession: vi.fn(),
   order: [] as string[],
+  account: null as Record<string, unknown> | null,
+  sync: vi.fn(),
 }));
 
 vi.mock("../../providers/AuthProvider", () => ({
   useAuth: () => ({ user: { id: "creator-1" }, session: { access_token: "token" }, loading: false }),
 }));
 
-vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({
-  useCreatorPaymentAccount: () => ({ data: null, refetch: vi.fn() }),
-  getCreatorPaymentAccountIsReady: () => false,
+vi.mock("../../hooks/payments/useCreatorPaymentAccount", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../hooks/payments/useCreatorPaymentAccount")>()),
+  useCreatorPaymentAccount: () => ({ data: mocks.account, refetch: vi.fn() }),
 }));
 
 // Sprint 5: the recovery balance section renders nothing when there is no
@@ -37,7 +39,7 @@ vi.mock("../../hooks/payments/useCreateCreatorRecoverySettlementCheckout", () =>
 }));
 
 vi.mock("../../hooks/payments/useStripeConnectOnboarding", () => ({
-  useSyncStripeConnectAccount: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSyncStripeConnectAccount: () => ({ mutateAsync: mocks.sync, isPending: false }),
 }));
 
 vi.mock("../../hooks/payments/useStripeConnectAccountSession", () => ({
@@ -57,10 +59,15 @@ vi.mock("@stripe/connect-js", () => ({
 
 vi.mock("@stripe/react-connect-js", () => ({
   ConnectComponentsProvider: ({ children }: { children: unknown }) => <div>{children as never}</div>,
-  ConnectAccountOnboarding: ({ onLoadError }: { onLoadError: () => void }) => (
-    <button type="button" onClick={onLoadError}>
-      Stripe onboarding
-    </button>
+  ConnectAccountOnboarding: ({ onLoadError, onExit }: { onLoadError: () => void; onExit: () => void }) => (
+    <>
+      <button type="button" onClick={onLoadError}>
+        Stripe onboarding
+      </button>
+      <button type="button" onClick={onExit}>
+        Finish Stripe form
+      </button>
+    </>
   ),
 }));
 
@@ -98,6 +105,8 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
       accountSession: { clientSecret: "secret" },
     });
     mocks.order = [];
+    mocks.account = null;
+    mocks.sync.mockReset().mockResolvedValue(undefined);
   });
 
   it("does not ask for acceptance before the creator is approved", () => {
@@ -201,7 +210,72 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
   });
 });
 
+describe("CreatorPayoutSettings setup status", () => {
+  const accepted = [
+    { policy_type: "creator_terms", policy_version: creatorTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },
+  ];
+  const account = {
+    country: "IE",
+    default_currency: "eur",
+    charges_enabled: false,
+    payouts_enabled: false,
+    details_submitted: false,
+    requirements_due_count: 0,
+  };
+
+  beforeEach(() => {
+    mocks.acceptances = accepted;
+    mocks.account = null;
+    mocks.sync.mockReset().mockResolvedValue(undefined);
+    mocks.createSession.mockReset().mockResolvedValue({ accountSession: { clientSecret: "secret" } });
+  });
+
+  it("says Stripe is checking the details when nothing is due from the creator", () => {
+    mocks.account = account;
+
+    renderSettings();
+
+    expect(screen.getByRole("status")).toHaveTextContent(/Stripe is checking your details/i);
+    expect(screen.getByRole("button", { name: "Continue Stripe setup" })).toBeInTheDocument();
+  });
+
+  it("asks the creator to continue when Stripe needs more from them", () => {
+    mocks.account = { ...account, requirements_due_count: 3 };
+
+    renderSettings();
+
+    expect(screen.getByText(/Stripe needs more information from you/i)).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("says the account is ready once Stripe has enabled it", () => {
+    mocks.account = { ...account, charges_enabled: true, payouts_enabled: true, details_submitted: true };
+
+    renderSettings();
+
+    expect(screen.getByText(/Your payout account is ready/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review Stripe details" })).toBeInTheDocument();
+  });
+
+  it("closes the finished form and refreshes the status", async () => {
+    mocks.account = account;
+
+    renderSettings();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue Stripe setup" }));
+    fireEvent.click(await screen.findByText("Finish Stripe form"));
+
+    await waitFor(() => expect(mocks.sync).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("Finish Stripe form")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/Stripe is checking your details/i);
+  });
+});
+
 describe("CreatorPayoutSettings country", () => {
+  beforeEach(() => {
+    mocks.account = null;
+  });
+
   it("offers a dropdown of supported countries, not a free-text box", () => {
     renderSettings();
 

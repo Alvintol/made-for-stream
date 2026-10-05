@@ -10,6 +10,7 @@ export type CreatorPaymentAccountRow = {
   charges_enabled: boolean;
   payouts_enabled: boolean;
   details_submitted: boolean;
+  requirements_due_count: number;
   country: string;
   default_currency: string;
   onboarding_started_at: string | null;
@@ -56,6 +57,35 @@ export const getCreatorPaymentAccountIsReady = (
       account.payouts_enabled,
   );
 
+export type CreatorPayoutSetupState =
+  | "not_started"
+  | "needs_information"
+  | "verifying"
+  | "ready";
+
+// What the creator should be told. requirements_due_count counts only what
+// the creator must supply (api/connectAccountState.js), so an account that
+// is not ready with nothing due is waiting on Stripe's own checks.
+export const getCreatorPayoutSetupState = (
+  account?: Pick<
+    CreatorPaymentAccountRow,
+    | "charges_enabled"
+    | "payouts_enabled"
+    | "details_submitted"
+    | "requirements_due_count"
+  > | null,
+): CreatorPayoutSetupState => {
+  if (!account) {
+    return "not_started";
+  }
+
+  if (getCreatorPaymentAccountIsReady(account)) {
+    return "ready";
+  }
+
+  return account.requirements_due_count > 0 ? "needs_information" : "verifying";
+};
+
 const fetchCreatorPaymentAccount = async (
   userId: string,
 ): Promise<CreatorPaymentAccountRow | null> => {
@@ -70,6 +100,7 @@ const fetchCreatorPaymentAccount = async (
       charges_enabled,
       payouts_enabled,
       details_submitted,
+      requirements_due_count,
       country,
       default_currency,
       onboarding_started_at,

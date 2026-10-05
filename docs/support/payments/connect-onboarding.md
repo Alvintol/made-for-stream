@@ -81,6 +81,7 @@ Most of this playbook is about that drift.
 | "I finished Stripe but can't publish" | [`CON-001`](#con-001--creator-finished-onboarding-but-is-still-blocked) |
 | "It says I need to connect payouts, I already did" | [`CON-001`](#con-001--creator-finished-onboarding-but-is-still-blocked) |
 | "Buyers say I can't accept payments" | [`CON-001`](#con-001--creator-finished-onboarding-but-is-still-blocked), [`CON-003`](#con-003--stripe-restricted-an-account-and-we-did-not-notice) |
+| "It says Stripe is checking my details" and it has for over a day | [`CON-004`](#con-004--stripe-requires-additional-verification) |
 | "Stripe is asking for more documents" | [`CON-004`](#con-004--stripe-requires-additional-verification) |
 | "I can't start Stripe onboarding at all" | [`CON-002`](#con-002--creator-is-not-approved-yet) |
 | "It says the creator can't take new paid work" / "It says my payout account needs attention" | [`CON-007`](#con-007--new-paid-work-refused-because-the-account-is-not-ready) |
