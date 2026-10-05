@@ -38,6 +38,9 @@ Stripe signature, or the ops cron secret.
 - **Web (dev):** automatic. Cloudflare builds and deploys on every push to
   `main` (`npm run build`, then `npx wrangler deploy`). The `VITE_*` values are
   **build** variables in the Worker's Settings → Build, not runtime variables.
+  `VITE_STRIPE_PUBLISHABLE_KEY_DEV` must come from the **same Stripe sandbox**
+  as the API's `STRIPE_SECRET_KEY_DEV`, or payout setup fails
+  (`support/payments/connect-onboarding.md` `CON-008`).
 - **API:** by hand after each API merge. Merging does not deploy.
 
   ```bash

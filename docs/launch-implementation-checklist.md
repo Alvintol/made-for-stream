@@ -1353,6 +1353,16 @@ in [`environments.md`](environments.md).
       `OPS-004` in `support/operations/alerting.md`. **Consequence for
       earlier checks:** anything "verified" on the API between those dates
       was verified on an API that was restarting constantly.
+- [ ] **Rehearsal finding, 2026-10-05: payout setup could not load on the dev
+      site** (`CON-008`). The site's `VITE_STRIPE_PUBLISHABLE_KEY_DEV` is from
+      a different Stripe account than the API's secret key, so Stripe refused
+      the onboarding form ("No account session with that client secret was
+      found"). **User action:** set the build variable to the publishable key
+      of the sandbox the API uses, and rebuild. Code: the page now shows an
+      error when the form fails to load instead of staying blank (unit test
+      only; not yet seen in a browser). Working as designed in the same run:
+      the first real `v2.core.account…` events arrived and were `processed`,
+      and an "approved" decision email was recorded as `sent`.
 - [ ] **Nothing alerts when the API is down** (`OPS-004`). A Cloud Monitoring
       uptime check on `/api/health` would; it is a cloud resource, so it is
       your decision.

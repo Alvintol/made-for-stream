@@ -346,7 +346,15 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
       {connectInstance && (
         <div className={classes.embeddedShell}>
           <ConnectComponentsProvider connectInstance={connectInstance}>
-            <ConnectAccountOnboarding onExit={() => void handleOnboardingExit()} />
+            <ConnectAccountOnboarding
+              onExit={() => void handleOnboardingExit()}
+              onLoadError={() => {
+                setConnectInstance(null);
+                setErrMsg(
+                  "Stripe's setup form couldn't load. Please try again. If it keeps happening, contact support.",
+                );
+              }}
+            />
           </ConnectComponentsProvider>
         </div>
       )}
