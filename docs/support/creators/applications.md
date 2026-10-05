@@ -6,6 +6,9 @@ surfaces:
   - public.seller_application_samples
   - src/hooks/creatorApplication/
   - src/domain/creatorApplication/
+  - src/domain/links/externalLinks.ts              # how sample links are shown to admins
+  - src/pages/admin/AdminCreatorApplications.tsx   # SampleLink
+  - supabase/migrations/20261005_141_require_web_links_for_application_samples.sql
 unmatched_tier: 2
 ---
 
@@ -118,6 +121,59 @@ client-side validation is missing or inconsistent.** The server check is the
 backstop, not the intended user experience.
 
 **Money impact.** None. Costs goodwill at a first impression.
+
+---
+
+## `APP-005` — Sample link refused, or flagged to the reviewer
+
+```yaml
+id: APP-005
+tier: 2
+signals:
+  - source: db
+    match: "/violates check constraint \"seller_application_samples_url_is_web_link\"/"
+    where: "public.seller_application_samples (20261005_141)"
+  - source: client
+    match: "Enter a valid public link, e.g. youtube.com/watch?v=…"
+    where: "getUrlValidationError (src/domain/creatorApplication/creatorApplication.ts)"
+auto_fix: none
+reason_not_automatable: "the applicant has to supply a different link; a constraint hit that got past the form is someone bypassing it"
+escalate_if:
+  - "the database signal fires at all"   # the form refuses these first, so this is a direct API write
+escalate_with:
+  - "the applicant's user id and the value they tried to store"
+```
+
+**Cause.** Sample links are whatever the applicant typed, and an administrator
+is the one who clicks them. A link is stored only if it is an ordinary
+`http`/`https` address with no spaces and no `user@` part in front of the site
+name (`https://youtube.com@evil.example` goes to `evil.example`). The form
+checks this, and since `20261005_141` the database does too, because an
+applicant can write their own sample rows directly.
+
+**What the reviewer sees** (`/admin/creator-applications`). Each sample shows
+where the link really goes and one of three labels:
+
+- **Known site**: a site creators commonly use (YouTube, Twitch and so on),
+  with nothing odd about the address. Opens directly.
+- **Check before opening**: anything else, with the reasons listed: an
+  unfamiliar domain, a link shortener or tracker, a raw network address, a
+  lookalike domain using special characters, a direct file download, an unusual
+  port, or no encryption. Opening it asks for confirmation first.
+- **Blocked**: not a web link at all. It is shown as text and cannot be clicked.
+
+**What this does not do.** It cannot tell whether a page is harmful. A link to
+a known site can still lead to bad content, and an unfamiliar site can be
+perfectly fine. Reviewers should not sign in to anything or download anything
+from a sample link, and should use a separate browser profile for reviewing.
+If an applicant's samples can only be seen by downloading a file or logging
+in somewhere, ask them for a different link (`needs_changes`).
+
+**Fix.** For the applicant: use a direct link to the work on a public page.
+For a database signal: treat it as a deliberate attempt and review the
+account before approving anything.
+
+**Money impact.** None.
 
 ---
 

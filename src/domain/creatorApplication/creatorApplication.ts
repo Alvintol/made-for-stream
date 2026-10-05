@@ -79,7 +79,15 @@ export const normaliseUrlInput = (value: string): string => {
 export const isValidPublicUrl = (value: string): boolean => {
   try {
     const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+
+    // Same rule the database enforces (20261005_141): an ordinary web
+    // address, no spaces, and no "user@" part that disguises the real site.
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      !url.username &&
+      !url.password &&
+      !/\s/.test(value.trim())
+    );
   } catch {
     return false;
   }

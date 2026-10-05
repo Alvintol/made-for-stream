@@ -57,6 +57,13 @@ describe("work sample links", () => {
     expect(getUrlValidationError("ftp://example.com")).not.toBeNull();
   });
 
+  it("refuses links the database would refuse", () => {
+    expect(getUrlValidationError("https://youtube.com@evil.example/watch")).not.toBeNull();
+    expect(getUrlValidationError("https://example.com/my work")).not.toBeNull();
+    expect(getUrlValidationError("javascript:alert(1)")).not.toBeNull();
+    expect(getUrlValidationError("youtube.com/watch?v=1")).toBeNull();
+  });
+
   it("recognises the required recent-upload sample by title, ignoring case", () => {
     expect(isRequiredRecentUploadSample(link("most recent upload/vod"))).toBe(true);
     expect(isRequiredRecentUploadSample({ ...recent, sample_type: "video" })).toBe(false);
