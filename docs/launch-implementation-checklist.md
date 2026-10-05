@@ -121,8 +121,12 @@ new currency ships wrong money rather than a new market.
       (`20260923_138`). Country is still format-checked only, until
       `supported_countries` exists.
 - [x] Currency: a picker driven by `SUPPORTED_CURRENCY_CODES` (Sprint 8).
-- [ ] Country: still a free-text input in `CreatorPayoutSettings.tsx`. Needs
-      `supported_countries` first.
+- [x] Country: a dropdown since 2026-10-05, from a 35-country list in code
+      (`api/supportedCountries.js`, mirrored in the web app, kept in step by a
+      test) and refused by the API otherwise. Choosing a country sets its
+      currency. No `supported_countries` table: a code list covers it until the
+      list needs editing without a deploy. **Confirm the list against Stripe's
+      Dashboard before launch.**
 - [ ] Migration: foreign keys from `creator_payment_accounts.country` /
       `.default_currency` and from the agreement, schedule item and payment currency
       columns to the registry.

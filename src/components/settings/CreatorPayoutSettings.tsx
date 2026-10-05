@@ -6,7 +6,7 @@ import {
   loadConnectAndInitialize,
   type StripeConnectInstance,
 } from "@stripe/connect-js";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   creatorActivationPolicyTypes,
@@ -27,6 +27,11 @@ import {
   isSupportedCurrency,
   SUPPORTED_CURRENCY_CODES,
 } from "../../domain/payments/supportedCurrencies";
+import {
+  getPayoutCountryCurrency,
+  getPayoutCountryOptions,
+  isSupportedPayoutCountry,
+} from "../../domain/payments/supportedCountries";
 import {
   createStripeConnectAccountSession,
 } from "../../hooks/payments/useStripeConnectAccountSession";
@@ -87,6 +92,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   const isReady = getCreatorPaymentAccountIsReady(paymentAccount);
 
   const [country, setCountry] = useState(() => paymentAccount?.country || "CA");
+  const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(), []);
   const [defaultCurrency, setDefaultCurrency] = useState(
     () => paymentAccount?.default_currency || "cad",
   );
@@ -254,13 +260,32 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
       <div className={classes.form}>
         <label className={classes.field}>
           <span className={classes.label}>Country</span>
-          <input
+          <select
             className={classes.input}
-            maxLength={2}
             value={country}
-            onChange={(event) => setCountry(event.target.value.toUpperCase())}
-            placeholder="CA"
-          />
+            onChange={(event) => {
+              const nextCountry = event.target.value;
+
+              setCountry(nextCountry);
+
+              // A creator is paid in their country's own currency unless
+              // they choose otherwise, so follow the country.
+              const localCurrency = getPayoutCountryCurrency(nextCountry);
+
+              if (localCurrency) {
+                setDefaultCurrency(localCurrency);
+              }
+            }}
+          >
+            {!isSupportedPayoutCountry(country) && (
+              <option value={country}>{country} (not supported)</option>
+            )}
+            {payoutCountryOptions.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className={classes.field}>

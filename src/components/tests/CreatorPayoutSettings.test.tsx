@@ -182,3 +182,28 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
     expect(mocks.record).not.toHaveBeenCalled();
   });
 });
+
+describe("CreatorPayoutSettings country", () => {
+  it("offers a dropdown of supported countries, not a free-text box", () => {
+    renderSettings();
+
+    const country = screen.getByLabelText("Country") as HTMLSelectElement;
+
+    expect(country.tagName).toBe("SELECT");
+    expect(country.value).toBe("CA");
+    expect(screen.getByRole("option", { name: "Ireland" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Japan" })).not.toBeInTheDocument();
+  });
+
+  it("switches the currency to the chosen country's own", () => {
+    renderSettings();
+
+    fireEvent.change(screen.getByLabelText("Country"), { target: { value: "IE" } });
+
+    expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("eur");
+
+    fireEvent.change(screen.getByLabelText("Country"), { target: { value: "US" } });
+
+    expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("usd");
+  });
+});

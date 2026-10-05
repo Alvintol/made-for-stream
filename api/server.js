@@ -11,6 +11,10 @@ import { createClient } from "@supabase/supabase-js";
 import { CHECKOUT_POLICY_VERSIONS } from "./policyVersions.js";
 import { getMissingCheckoutPolicyTypes } from "./policyAcceptanceGuard.js";
 import {
+  getUnsupportedPayoutCountryMessage,
+  isSupportedPayoutCountry,
+} from "./supportedCountries.js";
+import {
   getUnsupportedCurrencyMessage,
   isSupportedCurrency,
 } from "./supportedCurrencies.js";
@@ -4235,6 +4239,16 @@ app.post("/api/stripe/connect/account-session", async (req, res) => {
     const defaultCurrency = normalizeCurrencyCode(
       req.body?.defaultCurrency || "cad",
     );
+
+    // Payout accounts can only be opened where Stripe lets this platform
+    // onboard creators and pay them in a currency we support
+    // (api/supportedCountries.js). No account existed outside this list when
+    // the check was added (2026-10-05).
+    if (!isSupportedPayoutCountry(country)) {
+      return res.status(400).json({
+        error: getUnsupportedPayoutCountryMessage(country),
+      });
+    }
 
     // Projects can only be priced in a supported currency (20260923_138), so
     // onboarding a creator whose default is anything else would set up

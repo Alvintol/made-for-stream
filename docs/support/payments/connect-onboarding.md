@@ -3,6 +3,7 @@ feature: payments/connect-onboarding
 status: active
 surfaces:
   - api/server.js                                    # POST /api/stripe/connect/sync, POST /api/stripe/connect/account-session, POST /api/stripe/account-events, POST /api/internal/ops/connect-resync, getOrCreateStripeAccountForEmbeddedConnect, setStripeConnectDailyPayoutSchedule, upsertCreatorPaymentAccount, resyncCreatorPaymentAccountFromStripe
+  - api/supportedCountries.js                        # payout countries and their currencies; mirrored in src/domain/payments/supportedCountries.ts
   - api/connectAccountState.js                       # the one v2 Account -> mirror mapping, event classification, resync selection
   - src/hooks/payments/useStripeConnectAccountSession.ts
   - public.creator_payment_accounts                  # stripe_state_observed_at, readiness_lost_at, requirements_due_count, requirements_past_due_count (20260924_139)
@@ -281,6 +282,9 @@ signals:
     match: "A valid two-letter country code is required."
   - source: api
     match: "A valid three-letter currency code is required."
+  - source: api
+    match: "/Payouts are not available in [A-Z]{2} yet\\. Choose a country from the list in payout settings\\./"
+    where: "POST /api/stripe/connect/account-session (api/supportedCountries.js)"
 auto_fix: none
 reason_not_automatable: "indicates a data problem in the account record"
 escalate_with:
@@ -296,6 +300,18 @@ a user error.
 **Fix.** Manual investigation.
 
 **Money impact.** None yet.
+
+**Unsupported country.** Since 2026-10-05 the payout-settings form offers a
+dropdown of the countries in `api/supportedCountries.js`, and the
+account-session route refuses any other with the message above. A country is
+listed when Stripe supports connected accounts there, a Canadian platform may
+onboard them (Brazil, Malaysia and Thailand are domestic-only), and its local
+currency is one projects can be priced in (which leaves out Japan, Czechia,
+Hungary, Romania, the UAE and Gibraltar for now). Choosing a country sets the
+currency to its own. The list follows Stripe's published availability and has
+**not been confirmed against this platform's Dashboard**; Stripe still refuses
+anything it will not onboard. A creator asking for an unlisted country is a
+product request, not a fault.
 
 **Unsupported but valid currency.** Since `20260923_138` the account-session
 route also refuses a well-formed currency that is not enabled, with HTTP 400 and
