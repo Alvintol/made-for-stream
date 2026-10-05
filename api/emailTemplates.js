@@ -19,29 +19,75 @@ const LOGO_URL = process.env.EMAIL_LOGO_URL || "";
 const SUPPORT_EMAIL = process.env.EMAIL_SUPPORT_EMAIL || "support@madeforstream.com";
 const SITE_URL = process.env.EMAIL_SITE_URL || "https://madeforstream.com";
 const COMPANY_ADDRESS = process.env.EMAIL_COMPANY_ADDRESS || "";
+// The published address already starts with the brand name ("Made for
+// Stream, P.O. Box ..."), so don't print the name twice.
+const FOOTER_ADDRESS = !COMPANY_ADDRESS
+  ? BRAND_NAME
+  : COMPANY_ADDRESS.startsWith(BRAND_NAME)
+    ? COMPANY_ADDRESS
+    : `${BRAND_NAME} &middot; ${COMPANY_ADDRESS}`;
 
+// Text that came from a person (a title, a reviewer's note) is escaped
+// before it goes into HTML.
+export const escapeHtml = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+// The shared look, matching the Supabase Auth templates
+// (supabase/templates/build.mjs): colours from src/styles/theme.css, a
+// purple-to-orange header band, the site's indigo button gradient, each
+// gradient with a solid fallback for clients that drop gradients (Outlook).
+// The dark version follows the reader's system setting in Apple Mail, iOS
+// Mail and Outlook for Mac; Gmail ignores it and darkens the light version.
 const wrap = (title, bodyHtml, ctaUrl, ctaLabel) => `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 0;">
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>${title}</title>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .mfs-bg { background:#111018 !important; }
+        .mfs-card { background:#1a1922 !important; border-color:#2b2a36 !important; }
+        .mfs-content p, .mfs-content td, .mfs-content li { color:#c9c5ea !important; }
+        .mfs-content h1, .mfs-content strong { color:#ededf5 !important; }
+        .mfs-content a { color:#b9b4e0 !important; }
+        .mfs-note { background:#20202c !important; border-color:#2b2a36 !important; }
+        .mfs-footer, .mfs-footer a { color:#a8a6b6 !important; border-top-color:#2b2a36 !important; }
+        .mfs-btn { background-color:#ededf5 !important; background-image:linear-gradient(180deg,#ffffff,#e8e8f4) !important; }
+        .mfs-content .mfs-btn a { color:#111018 !important; }
+      }
+    </style>
+  </head>
+  <body class="mfs-bg" style="margin:0;padding:0;background:#f7f7ff;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mfs-bg" style="background:#f7f7ff;padding:32px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;padding:32px;">
-            <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mfs-card" style="max-width:480px;background:#ffffff;border-radius:10px;border:1px solid #e6e4f5;">
+            <tr><td bgcolor="#6b34e0" style="background-color:#6b34e0;background-image:linear-gradient(120deg,#6b34e0 0%,#a0459c 55%,#f05828 100%);border-radius:10px 10px 0 0;padding:22px 32px;">
               ${
                 LOGO_URL
-                  ? `<img src="${LOGO_URL}" alt="${BRAND_NAME}" height="28" style="display:block;margin:0 0 20px;border:0;" />`
-                  : `<p style="margin:0 0 20px;font-size:13px;font-weight:bold;letter-spacing:0.02em;color:#52525b;">${BRAND_NAME}</p>`
+                  ? `<img src="${LOGO_URL}" alt="${BRAND_NAME}" height="28" style="display:block;border:0;" />`
+                  : `<p style="margin:0;font-size:17px;font-weight:bold;letter-spacing:0.01em;color:#ffffff;">${BRAND_NAME}</p>`
               }
-              <h1 style="font-size:18px;margin:0 0 16px;">${title}</h1>
+            </td></tr>
+            <tr><td class="mfs-content" style="padding:32px;">
+              <h1 style="font-size:20px;line-height:1.3;margin:0 0 16px;color:#18181b;">${title}</h1>
               ${bodyHtml}
               ${
                 ctaUrl
-                  ? `<p style="margin:24px 0 0;"><a href="${ctaUrl}" style="background:#18181b;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:14px;">${ctaLabel}</a></p>`
+                  ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 0;"><tr><td bgcolor="#33209a" class="mfs-btn" style="border-radius:8px;background-color:#33209a;background-image:linear-gradient(180deg,#33209a,#271870);">
+                <a href="${ctaUrl}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;border-radius:8px;">${ctaLabel}</a>
+              </td></tr></table>`
                   : ""
               }
-              <p style="margin:32px 0 0;color:#71717a;font-size:12px;line-height:1.6;">
-                ${BRAND_NAME}${COMPANY_ADDRESS ? ` &middot; ${COMPANY_ADDRESS}` : ""}<br />
+              <p class="mfs-footer" style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px;line-height:1.6;">
+                ${FOOTER_ADDRESS}<br />
                 Questions? <a href="mailto:${SUPPORT_EMAIL}" style="color:#71717a;">${SUPPORT_EMAIL}</a>
                 &middot; <a href="${SITE_URL}" style="color:#71717a;">${SITE_URL.replace(/^https?:\/\//, "")}</a>
               </p>
@@ -73,7 +119,7 @@ export const renderPaymentReceiptEmail = ({
     text: `We received your payment of ${amount} for "${requestTitle}". View the request: ${requestUrl}`,
     html: wrap(
       "Payment received",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">We received your payment of <strong>${amount}</strong> for "${requestTitle}".</p>`,
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">We received your payment of <strong>${amount}</strong> for "${escapeHtml(requestTitle)}".</p>`,
       requestUrl,
       "View request",
     ),
@@ -94,7 +140,7 @@ export const renderFirstNoticeEmail = ({
     text: `A notice was sent on "${requestTitle}": ${requestedAction}. Please reply by ${expiresLabel}. ${requestUrl}`,
     html: wrap(
       "A reply is needed",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">On <strong>${requestTitle}</strong>, the other party needs: ${requestedAction}</p>
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">On <strong>${escapeHtml(requestTitle)}</strong>, the other party needs: ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">Please reply by <strong>${expiresLabel}</strong>. A final notice may follow if there is no reply.</p>`,
       requestUrl,
       "Open request",
@@ -116,7 +162,7 @@ export const renderFinalNoticeEmail = ({
     text: `Final notice on "${requestTitle}": ${requestedAction}. This grants a further 7 days, until ${expiresLabel}. Administrative closure may follow. ${requestUrl}`,
     html: wrap(
       "Final notice",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">This is a <strong>final notice</strong> on "${requestTitle}": ${requestedAction}</p>
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">This is a <strong>final notice</strong> on "${escapeHtml(requestTitle)}": ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">You have until <strong>${expiresLabel}</strong> to reply. After that, the other party may request that Made for Stream administratively close this project.</p>`,
       requestUrl,
       "Open request",
@@ -147,4 +193,87 @@ export const renderPayoutReleasedEmail = ({
       "View payouts",
     ),
   };
+};
+
+// Creator application decisions (api/creatorApplicationEmail.js). `note` is
+// what the reviewer wrote for the applicant; it is escaped, and shown in a
+// quoted box so it reads as the reviewer's words, not ours.
+const applicationNote = (label, note) =>
+  note
+    ? `<p style="margin:16px 0 6px;font-size:13px;font-weight:bold;color:#52525b;">${label}</p>
+       <p class="mfs-note" style="margin:0;padding:12px 14px;font-size:14px;line-height:1.6;color:#3f3f46;background:#f4f3fc;border:1px solid #e6e4f5;border-radius:8px;white-space:pre-wrap;">${escapeHtml(note)}</p>`
+    : "";
+
+const paragraph = (html) =>
+  `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3f3f46;">${html}</p>`;
+
+export const renderCreatorApplicationDecisionEmail = ({ status, note = "" }) => {
+  const applicationUrl = `${SITE_URL}/apply/creator`;
+  const cleanNote = String(note || "").trim();
+  const textNote = (label) => (cleanNote ? `\n\n${label}\n${cleanNote}` : "");
+
+  if (status === "approved") {
+    const settingsUrl = `${SITE_URL}/settings`;
+
+    return {
+      subject: `You're approved as a creator on ${BRAND_NAME}`,
+      text:
+        `Good news: your creator application was approved.\n\n` +
+        `Two steps before you can take paid work:\n` +
+        `1. Set up payouts in Settings, so you can be paid. This is done through Stripe and takes a few minutes.\n` +
+        `2. Publish your first listing.\n\n` +
+        `Free listings don't need payouts set up.${textNote("A note from the reviewer:")}\n\n${settingsUrl}`,
+      html: wrap(
+        "You're approved",
+        paragraph(`Good news: your creator application was approved. Welcome to ${BRAND_NAME}.`) +
+          paragraph("Two steps before you can take paid work:") +
+          `<ol style="margin:0 0 12px;padding-left:20px;font-size:15px;line-height:1.6;color:#3f3f46;">
+             <li style="margin:0 0 6px;"><strong>Set up payouts</strong> in Settings, so you can be paid. This is done through Stripe and takes a few minutes.</li>
+             <li><strong>Publish your first listing.</strong></li>
+           </ol>` +
+          paragraph("Free listings don't need payouts set up.") +
+          applicationNote("A note from the reviewer", cleanNote),
+        settingsUrl,
+        "Set up payouts",
+      ),
+    };
+  }
+
+  if (status === "needs_changes") {
+    return {
+      subject: `Your ${BRAND_NAME} creator application needs changes`,
+      text:
+        `We've reviewed your creator application and it needs a few changes before we can approve it.` +
+        `${textNote("What to change:")}\n\n` +
+        `Update your application and submit it again. You don't need to start over.\n\n${applicationUrl}`,
+      html: wrap(
+        "Your application needs changes",
+        paragraph("We've reviewed your creator application and it needs a few changes before we can approve it.") +
+          applicationNote("What to change", cleanNote) +
+          `<p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#3f3f46;">Update your application and submit it again. You don't need to start over.</p>`,
+        applicationUrl,
+        "Update application",
+      ),
+    };
+  }
+
+  if (status === "rejected") {
+    return {
+      subject: `An update on your ${BRAND_NAME} creator application`,
+      text:
+        `Thank you for applying to be a creator on ${BRAND_NAME}. After reviewing your application, we aren't able to approve it at this time.` +
+        `${textNote("Reason:")}\n\n` +
+        `You can still use ${BRAND_NAME} as a buyer. If you think this decision was a mistake, reply to ${SUPPORT_EMAIL}.\n\n${applicationUrl}`,
+      html: wrap(
+        "An update on your application",
+        paragraph(`Thank you for applying to be a creator on ${BRAND_NAME}. After reviewing your application, we aren't able to approve it at this time.`) +
+          applicationNote("Reason", cleanNote) +
+          `<p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#3f3f46;">You can still use ${BRAND_NAME} as a buyer. If you think this decision was a mistake, contact <a href="mailto:${SUPPORT_EMAIL}" style="color:#33209a;">${SUPPORT_EMAIL}</a>.</p>`,
+        applicationUrl,
+        "View application",
+      ),
+    };
+  }
+
+  throw new Error(`No creator application email for status "${status}".`);
 };

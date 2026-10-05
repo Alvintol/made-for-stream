@@ -51,14 +51,47 @@ const reviewSellerApplication = async (
   return data;
 };
 
+const getApiBase = (): string =>
+  (import.meta.env.VITE_API_BASE as string | undefined)?.trim() || "";
+
+// The decision above is a database fact. Telling the applicant is a
+// best-effort follow-up, the same pattern as listingRequestNoticeEmail.ts:
+// the API reads the decision itself, sends one email per decision, and a
+// failure here never undoes the review (playbook APP-006).
+const sendDecisionEmail = async (applicationId: string): Promise<void> => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) return;
+
+    await fetch(
+      `${getApiBase()}/api/creator-applications/${applicationId}/send-decision-email`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  } catch {
+    // Best-effort -- see the comment above.
+  }
+};
+
 export const useReviewSellerApplication = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: ReviewSellerApplicationInput) => {
+    mutationFn: async (input: ReviewSellerApplicationInput) => {
       if (!user?.id) throw new Error("You must be signed in.");
-      return reviewSellerApplication(user.id, input);
+
+      const application = await reviewSellerApplication(user.id, input);
+      await sendDecisionEmail(input.applicationId);
+
+      return application;
     },
     onSuccess: async (_, variables) => {
       await Promise.all([

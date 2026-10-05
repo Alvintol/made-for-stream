@@ -15,7 +15,8 @@ unmatched_tier: 2
 
 Launch-scope.md section 7.1: the first outbound email the product sends beyond
 Supabase's own auth mail. Four templates ship at launch — payment receipt, first
-notice, final notice, payout released — all sent over authenticated SMTP against
+notice, final notice, payout released — plus the creator-application decision
+emails (approved, needs changes, rejected; `creators/applications.md` `APP-006`), all sent over authenticated SMTP against
 Cloudflare Email Service from `api/email.js`. No Workers code is involved; the
 Express API sends directly.
 
