@@ -6,7 +6,7 @@ import {
   loadConnectAndInitialize,
   type StripeConnectInstance,
 } from "@stripe/connect-js";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   creatorActivationPolicyTypes,
@@ -37,6 +37,7 @@ import {
 } from "../../hooks/payments/useStripeConnectAccountSession";
 import {
   getCreatorPaymentAccountIsReady,
+  getCreatorPayoutSetupState,
   useCreatorPaymentAccount,
 } from "../../hooks/payments/useCreatorPaymentAccount";
 import { useSyncStripeConnectAccount } from "../../hooks/payments/useStripeConnectOnboarding";
@@ -90,6 +91,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
   const paymentAccount = paymentAccountQuery.data ?? null;
   const isReady = getCreatorPaymentAccountIsReady(paymentAccount);
+  const setupState = getCreatorPayoutSetupState(paymentAccount);
 
   const [country, setCountry] = useState(() => paymentAccount?.country || "CA");
   const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(), []);
@@ -196,9 +198,29 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   }, [paymentAccountQuery, syncAccount]);
 
   const handleOnboardingExit = useCallback(async () => {
+    // Stripe's form is finished and renders nothing more, so take it away
+    // and let the status notice say what happens next.
+    setConnectInstance(null);
     setSuccessMsg("Stripe setup was saved. Refreshing payout status…");
     await refreshStatus();
   }, [refreshStatus]);
+
+  // While Stripe is checking the details, its account events update the row
+  // in the background, so re-read it until the state moves on.
+  // ponytail: fixed 10 s poll while this page is open; use a realtime
+  // subscription if that ever matters.
+  const refetchPaymentAccount = paymentAccountQuery.refetch;
+  const isVerifying = setupState === "verifying" && !connectInstance;
+
+  useEffect(() => {
+    if (!isVerifying) {
+      return;
+    }
+
+    const timer = window.setInterval(() => void refetchPaymentAccount(), 10_000);
+
+    return () => window.clearInterval(timer);
+  }, [isVerifying, refetchPaymentAccount]);
 
   if (!isCreatorApproved) {
     return (
@@ -210,9 +232,30 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
   return (
     <>
-      {!isReady && (
+      {setupState === "not_started" && (
         <div className={classes.warning}>
           Finish Stripe setup before publishing active listings or receiving buyer payments.
+        </div>
+      )}
+
+      {setupState === "needs_information" && !connectInstance && (
+        <div className={classes.warning}>
+          Stripe needs more information from you before you can publish active listings or
+          receive buyer payments. Choose Continue Stripe setup to pick up where you left off.
+        </div>
+      )}
+
+      {setupState === "verifying" && !connectInstance && (
+        <div className={classes.warning} role="status">
+          Stripe is checking your details. There is nothing more for you to do right now. This
+          usually takes a few minutes, and this page updates by itself. If Stripe needs anything
+          else, it will ask for it here.
+        </div>
+      )}
+
+      {setupState === "ready" && (
+        <div className={classes.success}>
+          Your payout account is ready. You can publish listings and receive buyer payments.
         </div>
       )}
 
@@ -328,7 +371,9 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
                 ? "Restart Stripe setup"
                 : isReady
                   ? "Review Stripe details"
-                  : "Start Stripe setup"}
+                  : paymentAccount
+                    ? "Continue Stripe setup"
+                    : "Start Stripe setup"}
           </button>
         </div>
       </div>
@@ -348,6 +393,12 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           <ConnectComponentsProvider connectInstance={connectInstance}>
             <ConnectAccountOnboarding
               onExit={() => void handleOnboardingExit()}
+              // Ask for everything in one pass, so the creator is not sent
+              // back in for each later requirement.
+              collectionOptions={{
+                fields: "eventually_due",
+                futureRequirements: "include",
+              }}
               onLoadError={() => {
                 setConnectInstance(null);
                 setErrMsg(

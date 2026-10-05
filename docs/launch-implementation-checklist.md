@@ -1353,7 +1353,22 @@ in [`environments.md`](environments.md).
       `OPS-004` in `support/operations/alerting.md`. **Consequence for
       earlier checks:** anything "verified" on the API between those dates
       was verified on an API that was restarting constantly.
-- [ ] **Rehearsal finding, 2026-10-05: payout setup could not load on the dev
+- [x] **Rehearsal, 2026-10-05: first creator through Stripe payout setup.**
+      TrashMailman (Ireland / EUR, `acct_1UNLCC2LYyYcqv6i`): `charges_enabled`,
+      `payouts_enabled` and `details_submitted` all true in
+      `creator_payment_accounts`, and 15 `v2.core.account…` events stored as
+      `processed`, none failed. This is the Sprint 9 handler's first real run.
+- [ ] **Rehearsal finding, 2026-10-05: the payout page did not say what was
+      happening.** After Stripe's form closed the page went blank with a
+      "Restart Stripe setup" button, gave no sign that Stripe was checking the
+      details, and did not say when the account became ready. Code: the page
+      now shows one of three notices (Stripe needs more from you / Stripe is
+      checking your details / your payout account is ready), closes the
+      finished form, re-reads the status every 10 seconds while Stripe is
+      checking, and asks Stripe for all requirements in one pass. **Unit
+      tests only; tick this when the next creator's setup shows it working
+      in a browser.**
+- [x] *(Fixed 2026-10-05: build variable corrected by the user; the form loaded and TrashMailman completed setup.)* **Rehearsal finding, 2026-10-05: payout setup could not load on the dev
       site** (`CON-008`). The site's `VITE_STRIPE_PUBLISHABLE_KEY_DEV` is from
       a different Stripe account than the API's secret key, so Stripe refused
       the onboarding form ("No account session with that client secret was
