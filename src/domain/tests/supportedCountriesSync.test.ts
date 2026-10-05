@@ -21,7 +21,7 @@ describe("supported payout countries", () => {
     }
   });
 
-  it("leaves out countries a Canadian platform cannot onboard or pay locally", () => {
+  it("leaves out countries where the platform cannot take its fee or pay locally", () => {
     for (const country of ["BR", "MY", "TH", "JP", "CZ", "HU", "RO", "AE", "GI", "IN"]) {
       expect(isSupportedPayoutCountry(country), country).toBe(false);
       expect(api.isSupportedPayoutCountry(country), country).toBe(false);

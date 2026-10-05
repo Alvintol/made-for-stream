@@ -5,16 +5,22 @@
 //
 // A country is listed when all three hold:
 //   1. Stripe supports connected accounts there.
-//   2. A platform outside that country may onboard them. Brazil, Malaysia
-//      and Thailand are domestic-only, so a Canadian platform cannot.
+//   2. This platform can earn its fees there. Brazil fails this one: Stripe
+//      does not let a platform outside Brazil collect application fees from
+//      Brazilian connected accounts, and every fee here (buyer fee, creator
+//      fee, recovery instalments, tax) travels inside the application fee.
 //   3. Its local currency is one projects can be priced in
 //      (supportedCurrencies.js), so the creator is paid without conversion.
 //      That rules out Japan (JPY is zero-decimal), Czechia, Hungary, Romania,
-//      the UAE and Gibraltar until their currencies are added.
+//      Malaysia, Thailand, the UAE and Gibraltar until their currencies are
+//      added. Thailand and the UAE also need Stripe's sales team before any
+//      Connect onboarding.
 //
-// From Stripe's published availability as understood on 2026-10-05; not
-// confirmed against this platform's own Dashboard. Stripe is still the final
-// word: it refuses a country it will not onboard, whatever is listed here.
+// Sources, read 2026-10-05: docs.stripe.com/connect/express-accounts (which
+// platform countries can onboard where; Thailand and UAE) and Stripe's
+// direct-charges guide (the Brazil application-fee rule). Not confirmed
+// against this platform's own Dashboard. Stripe is still the final word: it
+// refuses a country it will not onboard, whatever is listed here.
 // See docs/support/payments/connect-onboarding.md (CON-005).
 
 export const SUPPORTED_PAYOUT_COUNTRIES = {
