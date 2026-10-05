@@ -304,10 +304,14 @@ a user error.
 **Unsupported country.** Since 2026-10-05 the payout-settings form offers a
 dropdown of the countries in `api/supportedCountries.js`, and the
 account-session route refuses any other with the message above. A country is
-listed when Stripe supports connected accounts there, a Canadian platform may
-onboard them (Brazil, Malaysia and Thailand are domestic-only), and its local
-currency is one projects can be priced in (which leaves out Japan, Czechia,
-Hungary, Romania, the UAE and Gibraltar for now). Choosing a country sets the
+listed when Stripe supports connected accounts there, the platform can earn
+its fees there, and its local currency is one projects can be priced in (which
+leaves out Japan, Czechia, Hungary, Romania, Malaysia, Thailand, the UAE and
+Gibraltar for now). **Brazil is left out for the fee reason:** Stripe does not
+let a platform outside Brazil collect application fees from Brazilian connected
+accounts, and all of Made for Stream's fees travel inside the application fee.
+A Brazilian creator can still onboard under another country only if they
+genuinely have a legal entity and bank account there. Choosing a country sets the
 currency to its own. The list follows Stripe's published availability and has
 **not been confirmed against this platform's Dashboard**; Stripe still refuses
 anything it will not onboard. A creator asking for an unlisted country is a
