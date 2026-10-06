@@ -1,6 +1,6 @@
 # Made for Stream branding
 
-Public name: **Made for Stream**. Tagline: **By creators, for creators.**
+Public name: **Made for Stream**. Tagline: **For creators, by creators.**
 
 The application, payment descriptions, policy text, metadata, install manifest,
 icons and support documentation use this name. The SVG mark is a simple M/play

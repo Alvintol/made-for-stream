@@ -1428,6 +1428,21 @@ in [`environments.md`](environments.md).
 - [x] *(2026-10-06)* **Revision history shows each change as a title with
       From and To on their own lines**, on the listing page and both revision
       pages.
+- [ ] **Video previews (MP4 / WebM), 2026-10-06.** The animated preview
+      accepts a short video as well as a GIF: same 8 MB cap, same masking, no
+      watermark, played once and muted. The file's kind is decided from its
+      first bytes, not its name. Migration `20261006_145` widens the bucket's
+      accepted types (dry-run in a rolled-back transaction: one row changed).
+      **User action: apply `145`**; until then video uploads are refused,
+      GIFs and everything else keep working. **Not tested:** a real video or
+      GIF in a real browser.
+- [x] *(2026-10-06)* **Landing page hero uses fixed placeholder art again.**
+      It took its three pictures from the newest published listings, so the
+      rehearsal's new listings replaced the placeholders. No code had
+      changed; publishing listings changed it. The hero now always shows the
+      three placeholder pictures. The "featured" cards below it still show
+      the six newest listings, by design, until listings have a featured
+      flag.
 - [ ] **Existing listings still show pasted links** (11 on dev: 6 placeholder
       photos, 5 taken from other websites). They are left as they are and can
       still be published and edited. Not copied into our storage: five are

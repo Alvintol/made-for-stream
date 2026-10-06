@@ -350,6 +350,7 @@ const EditListing = () => {
               animated_preview_url: await uploadListingAnimation({
                 userId: user.id,
                 file: animationChoice.file,
+                kind: animationChoice.kind,
               }),
             }
           : animationChoice.action === "remove"

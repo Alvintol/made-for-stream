@@ -30,7 +30,9 @@ describe("<ListingAnimatedPreviewField />", () => {
     render(<ListingAnimatedPreviewField hasExisting={false} onChange={onChange} />);
     choose(file);
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith({ action: "upload", file }));
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({ action: "upload", file, kind: "gif" }),
+    );
     expect(screen.getByRole("status")).toHaveTextContent("Ready to upload when you save: loop.gif");
   });
 
@@ -40,8 +42,28 @@ describe("<ListingAnimatedPreviewField />", () => {
     render(<ListingAnimatedPreviewField hasExisting={false} onChange={onChange} />);
     choose(gifFile([10]));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Choose an animated GIF");
+    expect(await screen.findByRole("alert")).toHaveTextContent("That GIF does not move");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("accepts an MP4 video and says what kind it is", async () => {
+    const onChange = vi.fn();
+    const file = new File(
+      [new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d])],
+      "clip.mp4",
+      { type: "video/mp4" },
+    );
+
+    render(<ListingAnimatedPreviewField hasExisting={false} onChange={onChange} />);
+    choose(file);
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({ action: "upload", file, kind: "mp4" }),
+    );
+    expect(screen.getByLabelText("Animated preview (optional)")).toHaveAttribute(
+      "accept",
+      "image/gif,video/mp4,video/webm",
+    );
   });
 
   it("lets the creator remove an existing animated preview, and change their mind", () => {

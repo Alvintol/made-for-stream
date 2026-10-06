@@ -38,7 +38,7 @@ about Stripe being stale.
 | "I can't publish my listing" | [`LST-001`](#lst-001--publish-blocked-by-payout-readiness) |
 | "I saved my listing but buyers can't see it" | The listing's page has a status banner. "Draft: only you can see this" means it was never published; "Deactivated" means it was switched off. Neither is a fault. |
 | "I can't add a picture to my listing" / "my listing won't save since I added an image" | [`LST-004`](#lst-004--preview-image-cannot-be-added) |
-| "My GIF won't upload" / "my animation doesn't play" / "someone copied my GIF" | [`LST-005`](#lst-005--animated-preview-gif-problems) |
+| "My GIF won't upload" / "my animation doesn't play" / "someone copied my GIF" | [`LST-005`](#lst-005--animated-preview-gif-or-video-problems) |
 | "My listing disappeared" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
 | "Buyers say the listing is unavailable" | [`LST-003`](#lst-003--listing-not-found-or-unavailable) |
 | "I can't restore my listing" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
@@ -232,18 +232,21 @@ creator who cannot upload cannot sell.
 
 ---
 
-## `LST-005` — Animated preview (GIF) problems
+## `LST-005` — Animated preview (GIF or video) problems
 
 ```yaml
 id: LST-005
 tier: 2
 signals:
   - source: ui
-    match: "That GIF is over 8 MB. Use a shorter or smaller loop."
-    where: "validateListingAnimationFile (src/lib/listings/listingAnimatedPreview.ts)"
+    match: "That file is over 8 MB. Use a shorter or smaller clip."
+    where: "checkListingAnimationFile (src/lib/listings/listingAnimatedPreview.ts)"
   - source: ui
-    match: "Choose an animated GIF. That file is not one."
-    where: "validateListingAnimationFile: not a GIF, or a GIF with one frame"
+    match: "Choose an animated GIF, or an MP4 or WebM video."
+    where: "checkListingAnimationFile: the file's first bytes are not GIF, MP4 or WebM, whatever it is named"
+  - source: ui
+    match: "That GIF does not move. Choose an animated one."
+    where: "checkListingAnimationFile: a GIF with a single frame"
   - source: db
     match: "Listing animated preview must be a GIF uploaded to Made for Stream."
     where: "public.enforce_listing_preview_is_uploaded() (20261006_144), errcode check_violation"
@@ -257,6 +260,16 @@ escalate_with:
   - "whether the listing-animations bucket exists (storage.buckets)"
   - "listings.animated_preview_url for the listing"
 ```
+
+**Videos (since `20261006_145`).** The preview may be an MP4 or WebM video
+instead of a GIF, under the same 8 MB cap and the same rules. A video plays
+muted (browsers only autoplay without sound), with no controls, and returns
+to the still image when it ends. If the visitor's browser cannot play the
+format, the page keeps the still image and offers no button: WebM does not
+play on older iPhones, so "it works for me but not on my phone" usually means
+a WebM, and the fix is to upload an MP4. Until `145` is applied, video
+uploads are refused by Storage with a "mime type ... is not supported"
+message. The database's own message still says "must be a GIF" for a video.
 
 **How it works.** A listing may carry one optional GIF. Cards, search and the
 market only ever show the still preview image. On the listing's own page the
@@ -293,6 +306,8 @@ not offered.
 
 ## Known gaps
 
+- **Video previews have no length limit**, only the 8 MB size cap, and video
+  playback was tested with a stand-in, not a real file in a real browser.
 - **The GIF timing reader was tested on hand-built GIF data only**, not on
   files exported from real tools. If a real GIF stops early or late, this is
   where to look (`getGifPlayOnceMs`).

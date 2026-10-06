@@ -430,7 +430,7 @@ const CreateListing = () => {
 
       const animatedPreviewUrl =
         animationChoice.action === "upload"
-          ? await uploadListingAnimation({ userId: user.id, file: animationChoice.file })
+          ? await uploadListingAnimation({ userId: user.id, file: animationChoice.file, kind: animationChoice.kind })
           : null;
 
       const { data: created, error } = await supabase.from("listings").insert({
