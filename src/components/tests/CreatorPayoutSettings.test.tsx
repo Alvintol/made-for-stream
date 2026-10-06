@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import CreatorPayoutSettings from "../settings/CreatorPayoutSettings";
 import { creatorTermsVersion } from "../../domain/legal/creatorTerms";
@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   order: [] as string[],
   account: null as Record<string, unknown> | null,
   sync: vi.fn(),
+  refetch: vi.fn(),
 }));
 
 vi.mock("../../providers/AuthProvider", () => ({
@@ -21,7 +22,7 @@ vi.mock("../../providers/AuthProvider", () => ({
 
 vi.mock("../../hooks/payments/useCreatorPaymentAccount", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../hooks/payments/useCreatorPaymentAccount")>()),
-  useCreatorPaymentAccount: () => ({ data: mocks.account, refetch: vi.fn() }),
+  useCreatorPaymentAccount: () => ({ data: mocks.account, refetch: mocks.refetch }),
 }));
 
 // Sprint 5: the recovery balance section renders nothing when there is no
@@ -283,6 +284,48 @@ describe("CreatorPayoutSettings setup status", () => {
 
     expect(screen.getByText(/Your payout account is ready/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Review Stripe details" })).toBeInTheDocument();
+  });
+
+  describe("polling while Stripe is checking", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      mocks.refetch.mockReset();
+      mocks.account = account;
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("stops by itself after 30 tries", () => {
+      renderSettings();
+
+      vi.advanceTimersByTime(60 * 60 * 1000);
+
+      expect(mocks.refetch).toHaveBeenCalledTimes(30);
+    });
+
+    it("does not poll while the tab is hidden", () => {
+      const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+      renderSettings();
+
+      vi.advanceTimersByTime(60 * 60 * 1000);
+
+      expect(mocks.refetch).not.toHaveBeenCalled();
+
+      visibility.mockRestore();
+    });
+
+    it("does not poll at all once the account is ready", () => {
+      mocks.account = { ...account, charges_enabled: true, payouts_enabled: true, details_submitted: true };
+
+      renderSettings();
+
+      vi.advanceTimersByTime(60 * 60 * 1000);
+
+      expect(mocks.refetch).not.toHaveBeenCalled();
+    });
   });
 
   it("closes the finished form and refreshes the status", async () => {

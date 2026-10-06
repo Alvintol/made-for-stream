@@ -1402,6 +1402,18 @@ in [`environments.md`](environments.md).
       only; not yet seen in a browser). Working as designed in the same run:
       the first real `v2.core.account…` events arrived and were `processed`,
       and an "approved" decision email was recorded as `sent`.
+- [ ] **Outage, 2026-10-06: the dev database stopped answering** (`OPS-005`).
+      Supabase reported the Disk IO budget running out; from about 14:45 UTC
+      queries timed out, and sign-in failed with `504`. The website and the
+      API stayed up. Likely trigger: the payout page's new status check (added
+      2026-10-05) re-read the database every 10 seconds with no end, from a
+      tab left open overnight on an account that could never leave
+      "checking" (about 4,800 requests in 23 hours). Not proved: the database
+      could not be queried while down. Code: the check now stops after 30
+      tries (5 minutes) and pauses in hidden tabs; tests cover both. **User
+      actions:** restart the project; for prod, use the paid plan with a
+      chosen compute size. Tick when the database answers again and the
+      Disk IO chart is flat with the site open.
 - [ ] **Nothing alerts when the API is down** (`OPS-004`). A Cloud Monitoring
       uptime check on `/api/health` would; it is a cloud resource, so it is
       your decision.

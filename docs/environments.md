@@ -78,11 +78,21 @@ gcloud run services update made-for-stream-api --region us-central1 "--liveness-
 A probe setting is part of the service, so later `gcloud run deploy` runs keep
 it. The same goes for a wrong one: it carried through twelve revisions unnoticed.
 
+## The database is the smallest instance (OPS-005)
+
+Dev runs on Supabase's free plan, on its smallest instance. On 2026-10-06 it
+used up its daily disk allowance and stopped answering: nobody could sign in.
+Playbook: `support/operations/alerting.md` `OPS-005`. Dev can live with this;
+prod cannot.
+
 ## Before prod is built
 
 - Replay every migration on an empty database first. `056` and `058` could not
   apply on the live one (`20260926_140` explains why), so the chain may not
   replay cleanly.
+- Prod's database must be on the paid plan with a compute size chosen on
+  purpose, not the default smallest one, and with Supabase's usage emails
+  going to an inbox that is read (`OPS-005`).
 - Prod needs its own: Supabase project and keys, Cloud Run service and secrets,
   Stripe live webhook endpoint and account-events destination, Cloud Scheduler
   jobs, the health probe above (checked after it is set), Supabase Auth SMTP and URL settings, and `APP_ORIGIN` /

@@ -71,6 +71,9 @@ const classes = {
   policyLink: "font-semibold underline underline-offset-2",
 } as const;
 
+const VERIFYING_POLL_MS = 10_000;
+const VERIFYING_POLL_TRIES = 30;
+
 const getErrorMessage = (error: unknown): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
@@ -224,9 +227,12 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   }, [refreshStatus]);
 
   // While Stripe is checking the details, its account events update the row
-  // in the background, so re-read it until the state moves on.
-  // ponytail: fixed 10 s poll while this page is open; use a realtime
-  // subscription if that ever matters.
+  // in the background, so re-read it for a few minutes. It must stop by
+  // itself: an unbounded version of this ran all night in a forgotten tab
+  // and was the only steady load on the database when it went down
+  // (2026-10-06, OPS-005). Hidden tabs do not poll at all.
+  // ponytail: 10 s poll, 30 tries; use a realtime subscription if a creator
+  // ever needs the page to stay live for longer.
   const refetchPaymentAccount = paymentAccountQuery.refetch;
   const isVerifying = setupState === "verifying" && !connectInstance;
 
@@ -235,7 +241,22 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
       return;
     }
 
-    const timer = window.setInterval(() => void refetchPaymentAccount(), 10_000);
+    let triesLeft = VERIFYING_POLL_TRIES;
+
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      triesLeft -= 1;
+
+      if (triesLeft < 0) {
+        window.clearInterval(timer);
+        return;
+      }
+
+      void refetchPaymentAccount();
+    }, VERIFYING_POLL_MS);
 
     return () => window.clearInterval(timer);
   }, [isVerifying, refetchPaymentAccount]);
@@ -266,8 +287,8 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
       {setupState === "verifying" && !connectInstance && (
         <div className={classes.warning} role="status">
           Stripe is checking your details. There is nothing more for you to do right now. This
-          usually takes a few minutes, and this page updates by itself. If Stripe needs anything
-          else, it will ask for it here.
+          usually takes a few minutes. This page checks for the next five minutes; after that,
+          press Refresh status. If Stripe needs anything else, it will ask for it here.
         </div>
       )}
 
