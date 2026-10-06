@@ -57,9 +57,11 @@ To do:
       submits a creator application; the admin approves both at
       `/admin/creator-applications`.
 - [ ] **Stripe payout setup, all three creators** (Settings → Payouts, Stripe
-      test data): CA with CAD, US with USD, IE with EUR. *(2026-10-05: IE
-      done and verified, on `TrashMailman`; `PizzaButt` takes US / USD. CA and
-      US still to do.)* Afterwards each row in
+      test data): CA with CAD, US with USD, IE with EUR. *(2026-10-05: IE was
+      done and verified on `TrashMailman`, then that Stripe account was
+      deleted. All three are to do again: `meowington88` CA, `PizzaButt` US,
+      `TrashMailman` IE. If an account is deleted in Stripe, its row must be
+      reset too: `CON-009`.)* Afterwards each row in
       `creator_payment_accounts` shows `charges_enabled`, `payouts_enabled` and
       `details_submitted` all true, and a `v2.core.account…` row appears in
       `stripe_webhook_events` as `processed` (the first real account events).

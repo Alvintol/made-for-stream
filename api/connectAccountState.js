@@ -223,6 +223,17 @@ export const classifyConnectAccountEvent = (notification) => {
 export const didCreatorPaymentAccountLoseReadiness = (before, after) =>
   isCreatorPaymentAccountReady(before) && !isCreatorPaymentAccountReady(after);
 
+// CON-009. The mirror row points at a Stripe account that Stripe no longer
+// has (deleted in a sandbox, or removed from the platform). Nothing the
+// creator can do in the form fixes that, so the routes say so plainly
+// instead of passing on Stripe's "No such account".
+export const CONNECT_ACCOUNT_GONE_MESSAGE =
+  "Your Stripe payout account is closed, so setup can't continue here. Please contact support.";
+
+export const isStripeAccountGoneError = (err) =>
+  err?.code === "resource_missing" ||
+  /No such account/i.test(String(err?.message || ""));
+
 // Which mirror rows the scheduled resync reads this run: the stalest first,
 // never-synced before anything else, skipping rows synced within
 // `minAgeMs`, at most `limit`.

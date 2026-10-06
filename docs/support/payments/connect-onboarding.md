@@ -86,6 +86,7 @@ Most of this playbook is about that drift.
 | "I can't start Stripe onboarding at all" | [`CON-002`](#con-002--creator-is-not-approved-yet) |
 | "It says the creator can't take new paid work" / "It says my payout account needs attention" | [`CON-007`](#con-007--new-paid-work-refused-because-the-account-is-not-ready) |
 | "I pressed start and the Stripe form never appears" | [`CON-008`](#con-008--stripe-onboarding-form-does-not-load-key-mismatch) |
+| "It says my Stripe payout account is closed" | [`CON-009`](#con-009--the-creators-stripe-account-is-closed-or-gone) |
 | (internal) Mirror rows not refreshed in 48 hours | [`CON-006`](#con-006--payment-account-mirror-is-not-being-refreshed) |
 
 ---
@@ -470,8 +471,61 @@ so no paid listing can be published.
 
 ---
 
+## `CON-009` — The creator's Stripe account is closed or gone
+
+```yaml
+id: CON-009
+tier: 2
+signals:
+  - source: api
+    match: "/CON-009: Stripe account is closed or missing \\(route=.+\\): /"
+    where: "respondIfStripeAccountGone (api/server.js), on POST /api/stripe/connect/account-session and /connect/sync; the routes answer 409"
+  - source: ui
+    match: "Your Stripe payout account is closed, so setup can't continue here. Please contact support."
+    where: "payout settings, after Continue Stripe setup or Refresh status"
+  - source: db
+    match: "stripe_webhook_events has a v2.core.account.closed row for the creator's stripe_account_id"
+auto_fix: none
+reason_not_automatable: "why the account closed decides what happens next, and the reset deletes a row"
+escalate_with:
+  - "the creator_payment_accounts row"
+  - "who closed the account (Stripe, or us in the Dashboard) and why"
+  - "whether the creator has live listings, open requests or an open recovery balance"
+```
+
+**Cause.** `creator_payment_accounts` points at a Stripe account that Stripe
+has closed or no longer has. The API reuses the stored account id for every
+session (`getOrCreateStripeAccountForEmbeddedConnect`), so Stripe answers
+"No such account" and setup cannot continue. First seen 2026-10-05, when
+test accounts were deleted in the Stripe Dashboard and their rows were left
+behind. The `v2.core.account.closed` event is handled: the row's three flags
+go false, so the creator stops being ready.
+
+**Fix.** Decide first whether the creator should have a new account. If
+Stripe closed it, do not replace it without understanding why. If it should
+be replaced, and the creator has **no** payments, open requests or recovery
+balance, delete the mirror row; their next "Start Stripe setup" creates a new
+account, and they choose country and currency again:
+
+```sql
+delete from public.creator_payment_accounts
+where stripe_account_id = '<acct_...>';
+```
+
+A creator with payment history needs a person to work out what the old
+account still owes or is owed before anything is deleted.
+
+**Money impact.** None from the reset itself. The creator cannot take paid
+work until a new account is ready.
+
+---
+
 ## Known gaps
 
+- **A closed account still reads "Stripe is checking your details"**
+  (`CON-009`). The mirror has no "closed" column, so the payout page cannot
+  tell a closed account from one under review until the creator presses a
+  button and gets the closed message. A `closed_at` column would fix it.
 - **The account-events destination is a Dashboard step.** Until it exists in
   each Stripe mode (Workbench → Webhooks → Create event destination,
   **Events from: Your account**, payload style **Thin**), only the hourly resync

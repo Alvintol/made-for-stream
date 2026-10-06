@@ -1353,11 +1353,22 @@ in [`environments.md`](environments.md).
       `OPS-004` in `support/operations/alerting.md`. **Consequence for
       earlier checks:** anything "verified" on the API between those dates
       was verified on an API that was restarting constantly.
-- [x] **Rehearsal, 2026-10-05: first creator through Stripe payout setup.**
+- [x] *(That account was deleted in Stripe later the same day; the result stands, the account does not.)* **Rehearsal, 2026-10-05: first creator through Stripe payout setup.**
       TrashMailman (Ireland / EUR, `acct_1UNLCC2LYyYcqv6i`): `charges_enabled`,
       `payouts_enabled` and `details_submitted` all true in
       `creator_payment_accounts`, and 15 `v2.core.account…` events stored as
       `processed`, none failed. This is the Sprint 9 handler's first real run.
+- [ ] **Rehearsal finding, 2026-10-05: a deleted Stripe account left the
+      creator stuck** (`CON-009`). Two test accounts were deleted in the
+      Stripe Dashboard; their `creator_payment_accounts` rows stayed, so
+      "Continue Stripe setup" showed Stripe's raw "No such account". Working
+      as designed: the `v2.core.account.closed` events were `processed` and
+      the rows' flags went false. Code (API): both payout routes now answer
+      with a plain "account is closed, contact support" message and log
+      `CON-009`; the playbook has the reset. **Needs an API deploy; unit test
+      of the error check only.** Still open: the page reads "Stripe is
+      checking your details" for a closed account until a button is pressed
+      (needs a `closed_at` column; your decision).
 - [ ] **Rehearsal finding, 2026-10-05: the payout page did not say what was
       happening.** After Stripe's form closed the page went blank with a
       "Restart Stripe setup" button, gave no sign that Stripe was checking the

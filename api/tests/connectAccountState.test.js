@@ -8,6 +8,7 @@ import {
   deriveCreatorRequirementCountsFromV2Account,
   didCreatorPaymentAccountLoseReadiness,
   isCreatorPaymentAccountReady,
+  isStripeAccountGoneError,
   selectAccountsForResync,
 } from "../connectAccountState.js";
 
@@ -319,4 +320,18 @@ it("retrieves every section the mapping reads", () => {
       "identity",
     ]),
   );
+});
+
+describe("isStripeAccountGoneError (CON-009)", () => {
+  it("recognises Stripe's missing-account error, by code or by message", () => {
+    expect(isStripeAccountGoneError({ code: "resource_missing" })).toBe(true);
+    expect(
+      isStripeAccountGoneError(new Error("No such account: 'acct_123'")),
+    ).toBe(true);
+  });
+
+  it("leaves every other error alone", () => {
+    expect(isStripeAccountGoneError(new Error("Invalid session"))).toBe(false);
+    expect(isStripeAccountGoneError(null)).toBe(false);
+  });
 });
