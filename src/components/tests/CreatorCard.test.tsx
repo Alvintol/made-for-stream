@@ -7,7 +7,6 @@ import {
   HubStateContext,
 } from "../../providers/hub/HubProvider";
 import type { HubActions, HubState } from "../../providers/hub";
-import type { TwitchStream } from "../../domain/twitch";
 
 // Mock the Twitch streams hook so the test controls live status
 vi.mock("../../hooks/useTwitchStreams", () => ({
@@ -17,17 +16,6 @@ vi.mock("../../hooks/useTwitchStreams", () => ({
 import { useTwitchStreams } from "../../hooks/useTwitchStreams";
 
 const mockUseTwitchStreams = vi.mocked(useTwitchStreams);
-
-// Builds a minimal Twitch stream object for tests
-// Only includes the fields CreatorCard actually reads
-const createStream = (overrides?: Partial<TwitchStream>): TwitchStream =>
-  ({
-    title: "",
-    viewerCount: 0,
-    gameName: "",
-    thumbnailUrl: "https://example.com/{width}x{height}.jpg",
-    ...overrides,
-  }) as TwitchStream;
 
 // Builds a mocked useTwitchStreams() result
 // The real hook returns more than the component needs, so this helper
