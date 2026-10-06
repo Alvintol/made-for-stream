@@ -1358,6 +1358,15 @@ in [`environments.md`](environments.md).
       `payouts_enabled` and `details_submitted` all true in
       `creator_payment_accounts`, and 15 `v2.core.account…` events stored as
       `processed`, none failed. This is the Sprint 9 handler's first real run.
+- [ ] **Rehearsal finding, 2026-10-05: the wrong payout country was too easy
+      to pick.** Canada was preselected and one click created a permanent
+      Stripe account (it happened twice in the rehearsal). Code: no country
+      is preselected; the page shows a large warning that the country can't
+      be changed; the creator chooses, presses "Confirm <country>
+      (<currency>)", and only then is the Stripe button shown, with a
+      "Change country" button until setup starts. The API no longer falls
+      back to Canada / CAD when a request names no country. **Unit tests
+      only; needs an API deploy; tick when seen in a browser.**
 - [ ] **Rehearsal finding, 2026-10-05: a deleted Stripe account left the
       creator stuck** (`CON-009`). Two test accounts were deleted in the
       Stripe Dashboard; their `creator_payment_accounts` rows stayed, so

@@ -86,6 +86,7 @@ Most of this playbook is about that drift.
 | "I can't start Stripe onboarding at all" | [`CON-002`](#con-002--creator-is-not-approved-yet) |
 | "It says the creator can't take new paid work" / "It says my payout account needs attention" | [`CON-007`](#con-007--new-paid-work-refused-because-the-account-is-not-ready) |
 | "I pressed start and the Stripe form never appears" | [`CON-008`](#con-008--stripe-onboarding-form-does-not-load-key-mismatch) |
+| "I picked the wrong country" | Before Stripe setup starts: "Change country" on the payout page. After: [`CON-009`](#con-009--the-creators-stripe-account-is-closed-or-gone)'s reset, once the wrong account is closed in Stripe |
 | "It says my Stripe payout account is closed" | [`CON-009`](#con-009--the-creators-stripe-account-is-closed-or-gone) |
 | (internal) Mirror rows not refreshed in 48 hours | [`CON-006`](#con-006--payment-account-mirror-is-not-being-refreshed) |
 
@@ -288,6 +289,9 @@ signals:
   - source: api
     match: "/Payouts are not available in [A-Z]{2} yet\\. Choose a country from the list in payout settings\\./"
     where: "POST /api/stripe/connect/account-session (api/supportedCountries.js)"
+  - source: api
+    match: "Choose your payout country and currency before starting Stripe setup."
+    where: "POST /api/stripe/connect/account-session, when the request names no country or currency. The payout page cannot send this; it means an old cached page or a hand-made request."
 auto_fix: none
 reason_not_automatable: "indicates a data problem in the account record"
 escalate_with:

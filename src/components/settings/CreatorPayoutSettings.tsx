@@ -60,6 +60,8 @@ const classes = {
   secondaryButton: "btnOutline",
   warning: "notice noticeWarning",
   error: "notice noticeError",
+  countryWarning: "notice noticeError space-y-3 text-base",
+  countryWarningTitle: "text-lg font-bold",
   success: "notice noticeSuccess",
   embeddedShell: "overflow-hidden rounded-2xl border border-[var(--hairline)] bg-white p-3",
   loadingShell: "space-y-3 rounded-2xl border border-dashed border-zinc-300 p-4",
@@ -96,12 +98,19 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   // Once a Stripe account exists its country and currency are fixed (the API
   // ignores new values for an existing account), so show the account's own
   // and only let the creator choose before one is created.
-  const [chosenCountry, setCountry] = useState("CA");
+  // Nothing is preselected: Stripe never lets the country change, so the
+  // creator picks it, reads the warning and confirms before the Stripe
+  // button is offered at all.
+  const [chosenCountry, setCountry] = useState("");
   const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(), []);
-  const [chosenCurrency, setDefaultCurrency] = useState("cad");
+  const [chosenCurrency, setDefaultCurrency] = useState("");
+  const [isCountryConfirmed, setIsCountryConfirmed] = useState(false);
   const country = paymentAccount?.country || chosenCountry;
   const defaultCurrency = paymentAccount?.default_currency || chosenCurrency;
   const hasPaymentAccount = Boolean(paymentAccount);
+  const isCountryLocked = hasPaymentAccount || isCountryConfirmed;
+  const countryName =
+    payoutCountryOptions.find((option) => option.code === country)?.name ?? country;
   const [connectInstance, setConnectInstance] = useState<StripeConnectInstance | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -135,6 +144,11 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
     if (!hasAcceptedCreatorTerms && !creatorTermsAgreed) {
       setErrMsg("Accept the Creator Terms and Stripe agreements to start Stripe setup.");
+      return;
+    }
+
+    if (!country || !defaultCurrency) {
+      setErrMsg("Choose and confirm your country before starting Stripe setup.");
       return;
     }
 
@@ -310,7 +324,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           <select
             className={classes.input}
             value={country}
-            disabled={hasPaymentAccount}
+            disabled={isCountryLocked}
             onChange={(event) => {
               const nextCountry = event.target.value;
 
@@ -325,7 +339,12 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
               }
             }}
           >
-            {!isSupportedPayoutCountry(country) && (
+            {!country && (
+              <option value="" disabled>
+                Choose your country
+              </option>
+            )}
+            {country && !isSupportedPayoutCountry(country) && (
               <option value={country}>{country} (not supported)</option>
             )}
             {payoutCountryOptions.map((option) => (
@@ -341,10 +360,11 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           <select
             className={classes.input}
             value={defaultCurrency}
-            disabled={hasPaymentAccount}
+            disabled={isCountryLocked || !country}
             onChange={(event) => setDefaultCurrency(event.target.value)}
           >
-            {!isSupportedCurrency(defaultCurrency) && (
+            {!defaultCurrency && <option value="">-</option>}
+            {defaultCurrency && !isSupportedCurrency(defaultCurrency) && (
               <option value={defaultCurrency}>{defaultCurrency.toUpperCase()} (not supported)</option>
             )}
             {SUPPORTED_CURRENCY_CODES.map((code) => (
@@ -356,33 +376,78 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
         </label>
 
         <div className={classes.actions}>
-          <button
-            className={classes.secondaryButton}
-            type="button"
-            disabled={syncAccount.isPending}
-            onClick={() => void refreshStatus()}
-          >
-            {syncAccount.isPending ? "Refreshing…" : "Refresh status"}
-          </button>
+          {hasPaymentAccount && (
+            <button
+              className={classes.secondaryButton}
+              type="button"
+              disabled={syncAccount.isPending}
+              onClick={() => void refreshStatus()}
+            >
+              {syncAccount.isPending ? "Refreshing…" : "Refresh status"}
+            </button>
+          )}
 
-          <button
-            className={classes.button}
-            type="button"
-            disabled={isStarting || !canStartOnboarding || creatorTermsQuery.isLoading}
-            onClick={() => void startEmbeddedOnboarding()}
-          >
-            {isStarting
-              ? "Preparing…"
-              : connectInstance
-                ? "Restart Stripe setup"
-                : isReady
-                  ? "Review Stripe details"
-                  : paymentAccount
-                    ? "Continue Stripe setup"
-                    : "Start Stripe setup"}
-          </button>
+          {!hasPaymentAccount && isCountryConfirmed && !connectInstance && (
+            <button
+              className={classes.secondaryButton}
+              type="button"
+              disabled={isStarting}
+              onClick={() => setIsCountryConfirmed(false)}
+            >
+              Change country
+            </button>
+          )}
+
+          {isCountryLocked && (
+            <button
+              className={classes.button}
+              type="button"
+              disabled={isStarting || !canStartOnboarding || creatorTermsQuery.isLoading}
+              onClick={() => void startEmbeddedOnboarding()}
+            >
+              {isStarting
+                ? "Preparing…"
+                : connectInstance
+                  ? "Restart Stripe setup"
+                  : isReady
+                    ? "Review Stripe details"
+                    : paymentAccount
+                      ? "Continue Stripe setup"
+                      : "Start Stripe setup"}
+            </button>
+          )}
         </div>
       </div>
+
+      {!hasPaymentAccount && !isCountryConfirmed && (
+        <div className={classes.countryWarning} role="alert">
+          <p className={classes.countryWarningTitle}>
+            You can't change your country after Stripe setup starts.
+          </p>
+          <p>
+            Stripe ties your payout account to this country permanently. Choose the country where
+            you live and where your bank account is. If it is wrong, you will not be able to get
+            paid and support will have to close the account and start again.
+          </p>
+          {country && defaultCurrency && (
+            <button
+              className={classes.button}
+              type="button"
+              onClick={() => setIsCountryConfirmed(true)}
+            >
+              Confirm {countryName} ({defaultCurrency.toUpperCase()})
+            </button>
+          )}
+        </div>
+      )}
+
+      {!hasPaymentAccount && isCountryConfirmed && (
+        <p className={classes.text}>
+          Locked in: <strong>{countryName}</strong>, paid in{" "}
+          <strong>{defaultCurrency.toUpperCase()}</strong>. This becomes permanent when you start
+          Stripe setup.
+        </p>
+      )}
 
       {hasPaymentAccount && (
         <p className={classes.text}>

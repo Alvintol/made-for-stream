@@ -4259,10 +4259,16 @@ app.post("/api/stripe/connect/account-session", async (req, res) => {
 
     await requireApprovedCreator(userId);
 
-    const country = normalizeCountryCode(req.body?.country || "CA");
-    const defaultCurrency = normalizeCurrencyCode(
-      req.body?.defaultCurrency || "cad",
-    );
+    // No default: a Stripe account's country is permanent, so a request
+    // that does not name one must not quietly open a Canadian account.
+    if (!req.body?.country || !req.body?.defaultCurrency) {
+      return res.status(400).json({
+        error: "Choose your payout country and currency before starting Stripe setup.",
+      });
+    }
+
+    const country = normalizeCountryCode(req.body.country);
+    const defaultCurrency = normalizeCurrencyCode(req.body.defaultCurrency);
 
     // Payout accounts can only be opened where Stripe lets this platform
     // onboard creators and pay them in a currency we support
