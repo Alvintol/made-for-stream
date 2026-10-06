@@ -51,7 +51,7 @@ type CreatorPayoutSettingsProps = {
 
 const classes = {
   text: "text-sm text-zinc-600",
-  form: "grid gap-3 sm:grid-cols-[8rem_8rem_1fr] sm:items-end",
+  form: "grid gap-3 sm:grid-cols-[minmax(12rem,1fr)_8rem_auto] sm:items-end",
   field: "flex flex-col gap-1.5",
   label: "formLabel",
   input: "formControl uppercase",
