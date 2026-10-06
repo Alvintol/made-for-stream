@@ -6,6 +6,7 @@ import {
   type ListingRevisionRow,
 } from "../../hooks/listings/useListingRevisions";
 import { getListingRevisionChanges } from "../../lib/listings/listingRevisionDiff";
+import ListingRevisionChangeText from "../../components/listings/ListingRevisionChangeText";
 
 const classes = {
   page: "space-y-6",
@@ -278,7 +279,7 @@ const AdminListingRevisions = () => {
                               key={`${revision.id}-${change.key}-${change.label}`}
                               className={classes.changeItem}
                             >
-                              {change.label}
+                              <ListingRevisionChangeText change={change} />
                             </div>
                           ))}
                         </div>

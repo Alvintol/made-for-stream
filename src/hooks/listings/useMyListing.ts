@@ -24,6 +24,7 @@ const fetchMyListing = async (
       deliverables,
       tags,
       preview_url,
+      animated_preview_url,
       status,
       is_active,
       created_at,

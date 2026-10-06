@@ -12,6 +12,11 @@ surfaces:
   - storage bucket listing-previews
   - public.enforce_listing_preview_is_uploaded()
   - supabase/migrations/20261006_143_add_listing_preview_uploads.sql
+  - src/lib/listings/listingAnimatedPreview.ts
+  - src/components/listings/ListingAnimatedPreviewField.tsx
+  - src/components/listings/ListingAnimatedPreview.tsx
+  - storage bucket listing-animations
+  - supabase/migrations/20261006_144_add_listing_animated_previews.sql
 unmatched_tier: 2
 ---
 
@@ -33,6 +38,7 @@ about Stripe being stale.
 | "I can't publish my listing" | [`LST-001`](#lst-001--publish-blocked-by-payout-readiness) |
 | "I saved my listing but buyers can't see it" | The listing's page has a status banner. "Draft: only you can see this" means it was never published; "Deactivated" means it was switched off. Neither is a fault. |
 | "I can't add a picture to my listing" / "my listing won't save since I added an image" | [`LST-004`](#lst-004--preview-image-cannot-be-added) |
+| "My GIF won't upload" / "my animation doesn't play" / "someone copied my GIF" | [`LST-005`](#lst-005--animated-preview-gif-problems) |
 | "My listing disappeared" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
 | "Buyers say the listing is unavailable" | [`LST-003`](#lst-003--listing-not-found-or-unavailable) |
 | "I can't restore my listing" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
@@ -226,7 +232,72 @@ creator who cannot upload cannot sell.
 
 ---
 
+## `LST-005` — Animated preview (GIF) problems
+
+```yaml
+id: LST-005
+tier: 2
+signals:
+  - source: ui
+    match: "That GIF is over 8 MB. Use a shorter or smaller loop."
+    where: "validateListingAnimationFile (src/lib/listings/listingAnimatedPreview.ts)"
+  - source: ui
+    match: "Choose an animated GIF. That file is not one."
+    where: "validateListingAnimationFile: not a GIF, or a GIF with one frame"
+  - source: db
+    match: "Listing animated preview must be a GIF uploaded to Made for Stream."
+    where: "public.enforce_listing_preview_is_uploaded() (20261006_144), errcode check_violation"
+  - source: storage
+    match: "/Bucket not found|mime type .* is not supported|exceeded the maximum allowed size|row-level security/"
+    where: "Supabase Storage's answer to the upload, shown in the form's error box"
+auto_fix: none
+reason_not_automatable: "either the creator's file, or a missing migration"
+escalate_with:
+  - "the exact message shown, the file's size, and the browser"
+  - "whether the listing-animations bucket exists (storage.buckets)"
+  - "listings.animated_preview_url for the listing"
+```
+
+**How it works.** A listing may carry one optional GIF. Cards, search and the
+market only ever show the still preview image. On the listing's own page the
+GIF is downloaded in the background, shown from a temporary in-page address,
+played through once, and then replaced by the still image with a **Play
+again** button. Visitors whose device asks for reduced motion get a **Play
+preview** button and no autoplay. The page works out when one pass ends from
+the GIF's own frame timings.
+
+**It is not copy-protected, by design.** The GIF is stored exactly as
+uploaded: not shrunk, not watermarked. The page hides the file's address and
+blocks right-click and drag, which stops casual saving only. Anyone who opens
+the browser's network tools can save the file. The upload form says this in a
+warning box, and tells creators to upload a short, low-resolution loop. A
+complaint that a GIF was copied is therefore not a fault; point to that
+warning. Watermarked animations would need server-side processing and are
+not offered.
+
+**Cause, by signal.**
+- The two UI messages are about the file: too large, or not an animated GIF
+  (a still GIF, or another format renamed to `.gif`).
+- "Bucket not found" means `20261006_144` has not been applied here. **While
+  that is so, no listing can be saved at all**: the save names a column the
+  migration adds. Apply the migration.
+- The database message means something tried to point the listing at a file
+  outside the creator's own folder in the bucket; the page cannot do this.
+- "It doesn't play": if the download fails or the file is not a readable
+  animated GIF, the page quietly keeps the still image and shows no button.
+  Check that `animated_preview_url` opens in a browser.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
+
+- **The GIF timing reader was tested on hand-built GIF data only**, not on
+  files exported from real tools. If a real GIF stops early or late, this is
+  where to look (`getGifPlayOnceMs`).
+- **The animated preview is not part of a listing's revision history.**
+  Adding, replacing or removing it leaves no entry.
 
 - **The watermark and resize happen in the creator's browser.** They protect
   the creator's original from buyers. They do not stop a creator who

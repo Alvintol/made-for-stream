@@ -17,6 +17,7 @@ const listing: PublicListingRow = {
   deliverables: ["png", "licence notes"],
   tags: ["emotes", "png", "cozy"],
   preview_url: "https://example.com/preview.png",
+  animated_preview_url: null,
   status: "published",
   is_active: true,
   is_free: false,

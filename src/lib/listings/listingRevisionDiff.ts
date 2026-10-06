@@ -14,6 +14,10 @@ export type ListingRevisionChange = {
   | "preview_url"
   | "status";
   label: string;
+  // Set together when the field went from one value to another; shown on
+  // their own lines.
+  from?: string;
+  to?: string;
 };
 
 const priceText = (
@@ -54,14 +58,18 @@ export const getListingRevisionChanges = (
   if (currentSnapshot.title !== previousSnapshot.title) {
     changes.push({
       key: "title",
-      label: `Title changed from "${previousSnapshot.title}" to "${currentSnapshot.title}"`,
+      label: "Title changed",
+      from: `"${previousSnapshot.title}"`,
+      to: `"${currentSnapshot.title}"`,
     });
   }
 
   if (currentSnapshot.fulfilment_mode !== previousSnapshot.fulfilment_mode) {
     changes.push({
       key: "fulfilment_mode",
-      label: `Fulfilment mode changed from ${previousSnapshot.fulfilment_mode} to ${currentSnapshot.fulfilment_mode}`,
+      label: "Fulfilment mode changed",
+      from: previousSnapshot.fulfilment_mode,
+      to: currentSnapshot.fulfilment_mode,
     });
   }
 
@@ -75,21 +83,27 @@ export const getListingRevisionChanges = (
   if (currentSnapshot.offering_type !== previousSnapshot.offering_type) {
     changes.push({
       key: "offering_type",
-      label: `Offering type changed from ${previousSnapshot.offering_type} to ${currentSnapshot.offering_type}`,
+      label: "Offering type changed",
+      from: previousSnapshot.offering_type,
+      to: currentSnapshot.offering_type,
     });
   }
 
   if (currentSnapshot.category !== previousSnapshot.category) {
     changes.push({
       key: "category",
-      label: `Category changed from ${previousSnapshot.category} to ${currentSnapshot.category}`,
+      label: "Category changed",
+      from: previousSnapshot.category,
+      to: currentSnapshot.category,
     });
   }
 
   if (currentSnapshot.video_subtype !== previousSnapshot.video_subtype) {
     changes.push({
       key: "video_subtype",
-      label: `Video subtype changed from ${previousSnapshot.video_subtype ?? "None"} to ${currentSnapshot.video_subtype ?? "None"}`,
+      label: "Video subtype changed",
+      from: previousSnapshot.video_subtype ?? "None",
+      to: currentSnapshot.video_subtype ?? "None",
     });
   }
 
@@ -112,7 +126,9 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "price",
-      label: `Price changed from ${previousPrice} to ${currentPrice}`,
+      label: "Price changed",
+      from: previousPrice,
+      to: currentPrice,
     });
   }
 
@@ -122,21 +138,27 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "deliverables",
-      label: `Deliverables changed from ${listText(previousSnapshot.deliverables)} to ${listText(currentSnapshot.deliverables)}`,
+      label: "Deliverables changed",
+      from: listText(previousSnapshot.deliverables),
+      to: listText(currentSnapshot.deliverables),
     });
   }
 
   if (JSON.stringify(currentSnapshot.tags) !== JSON.stringify(previousSnapshot.tags)) {
     changes.push({
       key: "tags",
-      label: `Tags changed from ${listText(previousSnapshot.tags)} to ${listText(currentSnapshot.tags)}`,
+      label: "Tags changed",
+      from: listText(previousSnapshot.tags),
+      to: listText(currentSnapshot.tags),
     });
   }
 
   if (currentSnapshot.preview_url !== previousSnapshot.preview_url) {
     changes.push({
       key: "preview_url",
-      label: `Preview URL changed from ${previousSnapshot.preview_url ?? "None"} to ${currentSnapshot.preview_url ?? "None"}`,
+      label: "Preview image changed",
+      from: previousSnapshot.preview_url ?? "None",
+      to: currentSnapshot.preview_url ?? "None",
     });
   }
 
@@ -146,7 +168,9 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "status",
-      label: `Status changed from ${statusText(previousSnapshot.status, previousSnapshot.is_active)} to ${statusText(currentSnapshot.status, currentSnapshot.is_active)}`,
+      label: "Status changed",
+      from: statusText(previousSnapshot.status, previousSnapshot.is_active),
+      to: statusText(currentSnapshot.status, currentSnapshot.is_active),
     });
   }
 

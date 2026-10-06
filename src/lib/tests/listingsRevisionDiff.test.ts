@@ -73,7 +73,9 @@ describe("getListingRevisionChanges", () => {
 
     expect(getListingRevisionChanges(current, previous)).toContainEqual({
       key: "price",
-      label: "Price changed from $18 to From $25",
+      label: "Price changed",
+      from: "$18",
+      to: "From $25",
     });
   });
 
@@ -94,7 +96,9 @@ describe("getListingRevisionChanges", () => {
 
     expect(getListingRevisionChanges(current, previous)).toContainEqual({
       key: "fulfilment_mode",
-      label: "Fulfilment mode changed from request to instant",
+      label: "Fulfilment mode changed",
+      from: "request",
+      to: "instant",
     });
   });
 
@@ -117,7 +121,9 @@ describe("getListingRevisionChanges", () => {
 
     expect(getListingRevisionChanges(current, previous)).toContainEqual({
       key: "status",
-      label: "Status changed from draft • Inactive to published • Active",
+      label: "Status changed",
+      from: "draft • Inactive",
+      to: "published • Active",
     });
   });
 
@@ -142,12 +148,16 @@ describe("getListingRevisionChanges", () => {
 
     expect(changes).toContainEqual({
       key: "deliverables",
-      label: "Deliverables changed from png to png, psd",
+      label: "Deliverables changed",
+      from: "png",
+      to: "png, psd",
     });
 
     expect(changes).toContainEqual({
       key: "tags",
-      label: "Tags changed from emotes to emotes, cozy",
+      label: "Tags changed",
+      from: "emotes",
+      to: "emotes, cozy",
     });
   });
 

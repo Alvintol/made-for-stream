@@ -1,4 +1,5 @@
 import { FadeIn } from "../../lib/motion";
+import ListingAnimatedPreview from "../../components/listings/ListingAnimatedPreview";
 import { Link, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
 import { useTwitchStreams } from "../../hooks/useTwitchStreams";
@@ -233,7 +234,13 @@ const ListingPage = () => {
       </Link>
 
       <div className={classes.grid}>
-        {listing.preview_url ? (
+        {listing.animated_preview_url ? (
+          <ListingAnimatedPreview
+            coverUrl={listing.preview_url}
+            animationUrl={listing.animated_preview_url}
+            className={classes.img}
+          />
+        ) : listing.preview_url ? (
           <img
             src={listing.preview_url}
             alt=""
