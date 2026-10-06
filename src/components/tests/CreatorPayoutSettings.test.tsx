@@ -94,6 +94,20 @@ const renderSettings = (isCreatorApproved = true) =>
   );
 
 const getStartButton = () => screen.getByRole("button", { name: /Start Stripe setup/i });
+
+const chooseAndConfirmCountry = (code = "CA") => {
+  fireEvent.change(screen.getByLabelText("Country"), { target: { value: code } });
+  fireEvent.click(screen.getByRole("button", { name: /^Confirm / }));
+};
+
+// A new creator, country chosen and confirmed, so the Stripe button is on offer.
+const renderReadyToStart = () => {
+  const view = renderSettings();
+
+  chooseAndConfirmCountry();
+
+  return view;
+};
 const getTermsCheckbox = () => screen.getByRole("checkbox", { name: /I accept the Made for Stream Creator Terms/i });
 
 describe("CreatorPayoutSettings creator terms acceptance", () => {
@@ -134,7 +148,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
   });
 
   it("keeps Stripe setup disabled until the box is checked", () => {
-    renderSettings();
+    renderReadyToStart();
 
     expect(getStartButton()).toBeDisabled();
 
@@ -144,7 +158,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
   });
 
   it("records the acceptance before starting Stripe onboarding", async () => {
-    renderSettings();
+    renderReadyToStart();
 
     fireEvent.click(getTermsCheckbox());
     fireEvent.click(getStartButton());
@@ -159,7 +173,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
   it("does not start onboarding if the acceptance could not be recorded", async () => {
     mocks.record.mockRejectedValue(new Error("insert failed"));
 
-    renderSettings();
+    renderReadyToStart();
 
     fireEvent.click(getTermsCheckbox());
     fireEvent.click(getStartButton());
@@ -173,7 +187,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
       { policy_type: "creator_terms", policy_version: "2020-01-01-old", accepted_at: "2026-01-01T00:00:00Z" },
     ];
 
-    renderSettings();
+    renderReadyToStart();
 
     expect(getTermsCheckbox()).not.toBeChecked();
     expect(getStartButton()).toBeDisabled();
@@ -184,7 +198,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
       { policy_type: "creator_terms", policy_version: creatorTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },
     ];
 
-    renderSettings();
+    renderReadyToStart();
 
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.getByText(/You accepted the/i)).toBeInTheDocument();
@@ -200,7 +214,7 @@ describe("CreatorPayoutSettings creator terms acceptance", () => {
       { policy_type: "creator_terms", policy_version: creatorTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },
     ];
 
-    renderSettings();
+    renderReadyToStart();
 
     fireEvent.click(getStartButton());
     fireEvent.click(await screen.findByText("Stripe onboarding"));
@@ -290,13 +304,13 @@ describe("CreatorPayoutSettings country", () => {
     mocks.account = null;
   });
 
-  it("offers a dropdown of supported countries, not a free-text box", () => {
+  it("offers a dropdown of supported countries with nothing preselected", () => {
     renderSettings();
 
     const country = screen.getByLabelText("Country") as HTMLSelectElement;
 
     expect(country.tagName).toBe("SELECT");
-    expect(country.value).toBe("CA");
+    expect(country.value).toBe("");
     expect(screen.getByRole("option", { name: "Ireland" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Japan" })).not.toBeInTheDocument();
   });
@@ -311,5 +325,52 @@ describe("CreatorPayoutSettings country", () => {
     fireEvent.change(screen.getByLabelText("Country"), { target: { value: "US" } });
 
     expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("usd");
+  });
+
+  it("hides the Stripe button and warns until a country is confirmed", () => {
+    renderSettings();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/can't change your country/i);
+    expect(screen.queryByRole("button", { name: /Stripe setup/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Confirm / })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Country"), { target: { value: "US" } });
+
+    expect(screen.queryByRole("button", { name: /Stripe setup/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm United States (USD)" }));
+
+    expect(getStartButton()).toBeInTheDocument();
+    expect(screen.getByLabelText("Country")).toBeDisabled();
+    expect(screen.getByLabelText("Currency")).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("lets the creator change a confirmed country before Stripe setup starts", () => {
+    renderSettings();
+
+    chooseAndConfirmCountry("IE");
+    fireEvent.click(screen.getByRole("button", { name: "Change country" }));
+
+    expect(screen.getByLabelText("Country")).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /Stripe setup/i })).not.toBeInTheDocument();
+  });
+
+  it("starts Stripe with the confirmed country and currency", async () => {
+    mocks.acceptances = [
+      { policy_type: "creator_terms", policy_version: creatorTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },
+    ];
+    mocks.createSession.mockReset().mockResolvedValue({ accountSession: { clientSecret: "secret" } });
+
+    renderSettings();
+
+    chooseAndConfirmCountry("US");
+    fireEvent.click(getStartButton());
+
+    await waitFor(() =>
+      expect(mocks.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ country: "US", defaultCurrency: "usd" }),
+      ),
+    );
   });
 });
