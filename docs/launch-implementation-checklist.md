@@ -1409,6 +1409,25 @@ in [`environments.md`](environments.md).
       tested:** a real upload end to end, Safari, the form in a browser.
       **User action: apply `143` before merging**, or saving any listing
       fails (`LST-004`).
+- [ ] **Animated previews (GIF) on the listing page, 2026-10-06.** An
+      optional GIF, up to 8 MB, uploaded as-is. It shows only on the
+      listing's own page: downloaded in the background, shown from a
+      temporary in-page address with right-click and drag blocked, played
+      once, then replaced by the still image with a Play again button (a Play
+      preview button, no autoplay, for visitors who ask for reduced motion).
+      **Decision (2026-10-06): no free watermarking or protection for
+      animations; masking only.** The upload form carries a warning that
+      animated previews are not copy-protected. Migration `20261006_144`
+      adds the `listing-animations` bucket and `animated_preview_url`, and
+      puts both media columns under one rule. **Dry-run on the live database
+      in a rolled-back transaction:** outside links, another creator's folder
+      and the wrong bucket are refused; the creator's own GIF and removing it
+      are accepted; old pasted image links still work. **Not tested:** a real
+      GIF file, a real upload, the page in a browser. **User action: apply
+      `144` before merging**, or saving any listing fails (`LST-005`).
+- [x] *(2026-10-06)* **Revision history shows each change as a title with
+      From and To on their own lines**, on the listing page and both revision
+      pages.
 - [ ] **Existing listings still show pasted links** (11 on dev: 6 placeholder
       photos, 5 taken from other websites). They are left as they are and can
       still be published and edited. Not copied into our storage: five are

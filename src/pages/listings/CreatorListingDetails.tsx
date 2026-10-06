@@ -1,21 +1,23 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMyListing } from "../../hooks/listings/useMyListing";
 import { useDeleteListingDraft } from "../../hooks/listings/useDeleteListingDraft";
-import { getListingPublishReadiness } from '../../lib/listings/listingPublishReadiness';
+import {
+  getListingPublishReadiness,
+  getMissingPublishCheckCount,
+} from '../../lib/listings/listingPublishReadiness';
 import { usePublishListing } from '../../hooks/listings/usePublishListing';
 import { useSetListingActiveState } from '../../hooks/listings/useSetListingActiveState';
 import { useMoveListingToDraft } from '../../hooks/listings/useMoveListingToDraft';
 import { ListingRevisionRow, useListingRevisions } from '../../hooks/listings/useListingRevisions';
 import { getListingRevisionChanges } from '../../lib/listings/listingRevisionDiff';
+import ListingRevisionChangeText from "../../components/listings/ListingRevisionChangeText";
 import {
   getListingStatusSummary,
   getListingVisibilityLabel,
   isAdminHiddenListing,
   type ListingStatusKey,
 } from '../../domain/listings/listings';
-import ListingPublishChecklist, {
-  getMissingPublishCheckCount,
-} from '../../components/listings/ListingPublishChecklist';
+import ListingPublishChecklist from '../../components/listings/ListingPublishChecklist';
 
 // Stays under the site header on wide screens, so the answer to "is this
 // live?" and the next action are always on screen.
@@ -163,17 +165,6 @@ const revisionDateText = (value: string) => {
       minute: "2-digit",
     });
 };
-
-const revisionPriceText = (
-  priceType: "fixed" | "starting_at" | "range",
-  priceMin: number,
-  priceMax: number | null
-) =>
-  priceType === "fixed"
-    ? `$${priceMin}`
-    : priceType === "starting_at"
-      ? `From $${priceMin}`
-      : `$${priceMin}–$${priceMax ?? priceMin}`;
 
 const CreatorListingDetails = () => {
   const navigate = useNavigate();
@@ -594,7 +585,7 @@ const CreatorListingDetails = () => {
                               key={`${revision.id}-${change.key}-${change.label}`}
                               className={classes.changeItem}
                             >
-                              {change.label}
+                              <ListingRevisionChangeText change={change} />
                             </div>
                           ))}
                         </div>

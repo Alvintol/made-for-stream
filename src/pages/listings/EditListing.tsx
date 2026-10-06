@@ -9,6 +9,10 @@ import ListingPreviewImageField, {
 } from "../../components/listings/ListingPreviewImageField";
 import { uploadListingPreviewImage } from "../../lib/listings/listingPreviewImage";
 import { useMyProfile } from "../../hooks/profile/useMyProfile";
+import ListingAnimatedPreviewField, {
+  type ListingAnimationChoice,
+} from "../../components/listings/ListingAnimatedPreviewField";
+import { uploadListingAnimation } from "../../lib/listings/listingAnimatedPreview";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -196,6 +200,9 @@ const EditListing = () => {
   const [hasLoadedForm, setHasLoadedForm] = useState(false);
   // A replacement thumbnail, uploaded when the draft is saved.
   const [previewSelection, setPreviewSelection] = useState<ListingPreviewSelection | null>(null);
+  const [animationChoice, setAnimationChoice] = useState<ListingAnimationChoice>({
+    action: "keep",
+  });
   const { data: profile } = useMyProfile();
 
   useEffect(() => {
@@ -337,6 +344,18 @@ const EditListing = () => {
           }
         : {};
 
+      const animationFields =
+        animationChoice.action === "upload"
+          ? {
+              animated_preview_url: await uploadListingAnimation({
+                userId: user.id,
+                file: animationChoice.file,
+              }),
+            }
+          : animationChoice.action === "remove"
+            ? { animated_preview_url: null }
+            : {};
+
       const { data: updated, error: updateError } = await supabase
         .from("listings")
         .update({
@@ -355,6 +374,7 @@ const EditListing = () => {
           deliverables: parseDeliverables(form.deliverablesText),
           tags: parseTags(form.tagsText),
           ...previewFields,
+          ...animationFields,
           status: "draft",
           is_active: false,
         })
@@ -775,6 +795,12 @@ const EditListing = () => {
             handle={profile?.handle}
             disabled={isSaving}
             onChange={setPreviewSelection}
+          />
+
+          <ListingAnimatedPreviewField
+            hasExisting={Boolean(listing?.animated_preview_url)}
+            disabled={isSaving}
+            onChange={setAnimationChoice}
           />
         </div>
 

@@ -21,6 +21,10 @@ import ListingPreviewImageField, {
 } from "../../components/listings/ListingPreviewImageField";
 import { uploadListingPreviewImage } from "../../lib/listings/listingPreviewImage";
 import { useMyProfile } from "../../hooks/profile/useMyProfile";
+import ListingAnimatedPreviewField, {
+  type ListingAnimationChoice,
+} from "../../components/listings/ListingAnimatedPreviewField";
+import { uploadListingAnimation } from "../../lib/listings/listingAnimatedPreview";
 
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
@@ -181,6 +185,10 @@ const CreateListing = () => {
   const [freeFile, setFreeFile] = useState<File | null>(null);
   // The prepared thumbnail, uploaded when the listing is saved.
   const [previewSelection, setPreviewSelection] = useState<ListingPreviewSelection | null>(null);
+  // The optional GIF, also uploaded on save.
+  const [animationChoice, setAnimationChoice] = useState<ListingAnimationChoice>({
+    action: "keep",
+  });
   const { data: profile } = useMyProfile();
 
   // Which button submitted the form: save a draft, or save and publish.
@@ -420,6 +428,11 @@ const CreateListing = () => {
         ? await uploadListingPreviewImage({ userId: user.id, blob: previewSelection.blob })
         : null;
 
+      const animatedPreviewUrl =
+        animationChoice.action === "upload"
+          ? await uploadListingAnimation({ userId: user.id, file: animationChoice.file })
+          : null;
+
       const { data: created, error } = await supabase.from("listings").insert({
         user_id: user.id,
         title: form.title.trim(),
@@ -436,6 +449,7 @@ const CreateListing = () => {
         tags: parseTags(form.tagsText),
         preview_url: previewUrl,
         preview_watermarked: Boolean(previewSelection?.watermarked),
+        animated_preview_url: animatedPreviewUrl,
         status: "draft",
         is_active: false,
         fulfilment_mode: normaliseFulfilmentMode(
@@ -978,6 +992,12 @@ const CreateListing = () => {
             handle={profile?.handle}
             disabled={isSaving}
             onChange={setPreviewSelection}
+          />
+
+          <ListingAnimatedPreviewField
+            hasExisting={false}
+            disabled={isSaving}
+            onChange={setAnimationChoice}
           />
         </div>
 

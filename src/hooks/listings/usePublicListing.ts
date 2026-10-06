@@ -17,6 +17,7 @@ export type PublicListingRow = {
   deliverables: string[];
   tags: string[];
   preview_url: string | null;
+  animated_preview_url: string | null;
   status: string;
   is_active: boolean;
   updated_at: string;
@@ -66,6 +67,7 @@ const fetchPublicListing = async (
       deliverables,
       tags,
       preview_url,
+      animated_preview_url,
       status,
       is_active,
       updated_at,

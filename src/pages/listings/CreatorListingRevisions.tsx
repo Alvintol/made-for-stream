@@ -6,6 +6,7 @@ import {
 } from "../../hooks/listings/useListingRevisions";
 import { useMyListing } from "../../hooks/listings/useMyListing";
 import { getListingRevisionChanges } from '../../lib/listings/listingRevisionDiff';
+import ListingRevisionChangeText from "../../components/listings/ListingRevisionChangeText";
 
 const classes = {
   page: "space-y-6",
@@ -200,7 +201,7 @@ const CreatorListingRevisions = () => {
                             key={`${revision.id}-${change.key}-${change.label}`}
                             className={classes.changeItem}
                           >
-                            {change.label}
+                            <ListingRevisionChangeText change={change} />
                           </div>
                         ))}
                       </div>

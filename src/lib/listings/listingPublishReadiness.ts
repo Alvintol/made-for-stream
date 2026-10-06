@@ -83,3 +83,6 @@ export const getListingPublishReadiness = (
     isReady: checks.every((check) => check.passed),
   };
 };
+
+export const getMissingPublishCheckCount = (readiness: ListingPublishReadiness) =>
+  readiness.checks.filter((check) => !check.passed).length;

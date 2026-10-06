@@ -1,4 +1,7 @@
-import type { ListingPublishReadiness } from "../../lib/listings/listingPublishReadiness";
+import {
+  getMissingPublishCheckCount,
+  type ListingPublishReadiness,
+} from "../../lib/listings/listingPublishReadiness";
 
 const classes = {
   wrap: "space-y-3",
@@ -15,9 +18,6 @@ const classes = {
     "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-700",
   checkText: "text-sm text-zinc-700",
 } as const;
-
-export const getMissingPublishCheckCount = (readiness: ListingPublishReadiness) =>
-  readiness.checks.filter((check) => !check.passed).length;
 
 // The publish checklist, shared by the create page's side panel and the
 // listing details page so both always show the same rules.

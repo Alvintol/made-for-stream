@@ -17,6 +17,7 @@ export type MyListingRow = {
   deliverables: string[];
   tags: string[];
   preview_url: string | null;
+  animated_preview_url: string | null;
   status: "draft" | "published";
   is_active: boolean;
   created_at: string;
@@ -46,6 +47,7 @@ const fetchMyListings = async (userId: string): Promise<MyListingRow[]> => {
       deliverables,
       tags,
       preview_url,
+      animated_preview_url,
       status,
       is_active,
       created_at,
