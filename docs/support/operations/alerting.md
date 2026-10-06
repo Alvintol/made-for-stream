@@ -64,6 +64,7 @@ or to force-run by hand from the Cloud Scheduler console.
 | A Cloud Scheduler job shows `401` | [`OPS-002`](#ops-002--scheduled-job-not-authorized) |
 | A Cloud Scheduler job shows `502` | [`OPS-001`](#ops-001--alert-digest-not-delivered) (alerts) or [`CON-006`](../payments/connect-onboarding.md#con-006--payment-account-mirror-is-not-being-refreshed) (resync) |
 | Every API route returns `500`, or a Cloud Scheduler job shows `500` / code `13` | [`OPS-004`](#ops-004--cloud-run-keeps-restarting-the-api-liveness-probe) |
+| Nobody can sign in, pages load forever, or Supabase emails about "Disk IO Budget" | [`OPS-005`](#ops-005--the-database-stops-answering-disk-io-budget-used-up) |
 | An alert email heading says "Unregistered alert" | [`OPS-003`](#ops-003--list_ops_alerts-returned-an-unregistered-alert) |
 
 ---
@@ -215,6 +216,56 @@ and force-run `mfs-connect-resync`.
 
 ---
 
+## `OPS-005` — The database stops answering (Disk IO budget used up)
+
+```yaml
+id: OPS-005
+tier: 2
+signals:
+  - source: email
+    match: "Your project is depleting its Disk IO Budget"
+    where: "Supabase's email to the project owner"
+  - source: postgres
+    match: "canceling statement due to statement timeout"
+    where: "Supabase Postgres logs, many per minute; PostgREST returns code 57014"
+  - source: postgrest
+    match: "Warp server error: Thread killed by timeout manager"
+  - source: edge
+    match: "/rest/v1/* and /auth/v1/token answering 504"
+auto_fix: none
+reason_not_automatable: "needs the Supabase dashboard (restart, compute size) and a look at what is loading the database"
+escalate_with:
+  - "Supabase Reports > Database: the Disk IO and memory charts for the day"
+  - "requests per hour by path from the API gateway logs (which path is steady all day?)"
+  - "the project's plan and compute size"
+```
+
+**Cause.** A small Supabase instance may only use its disk heavily for a
+limited time each day. When that allowance is gone, every query crawls,
+sign-in (`/auth/v1/token`) times out and the site looks dead, although the
+website and the API are both up. The usual causes are a steady stream of
+requests that never stops, or the instance running short of memory and
+swapping to disk.
+
+First seen 2026-10-06 on the free plan's smallest instance. The only steady
+load that day was the payout page re-reading `creator_payment_accounts`
+every 10 seconds from a browser tab left open overnight (about 4,800
+requests in 23 hours). That poll had no end and ran in hidden tabs. It is
+the likely trigger; it could not be proved, because the database could not
+be queried while it was down. The poll now stops after 30 tries and pauses
+in hidden tabs.
+
+**Fix.** Close every open tab of the site. In Supabase: Settings → General →
+Restart project. If it does not recover within the hour, or it happens on
+prod, raise the compute size (Settings → Compute and Disk). Then find the
+steady request in the gateway logs and stop it at the source.
+
+**Money impact.** No money moves wrongly. While it lasts nobody can sign in
+or pay, and Stripe webhooks fail (Stripe retries them). Afterwards, check
+`PAY-005` and force-run both scheduler jobs.
+
+---
+
 ## Setup (user actions, once per environment)
 
 These create paid or external resources and are **not** done by any agent.
@@ -253,6 +304,11 @@ These create paid or external resources and are **not** done by any agent.
    `mfs-ops-alerts` answers `"emailStatus":"not_needed"` and sends nothing.
 
 ## Known gaps
+
+- **Timers in the website must end.** Every `refetchInterval` or
+  `setInterval` that reads the database needs a stop condition and must not
+  run in a hidden tab (TanStack Query's `refetchInterval` already pauses
+  when hidden; a raw `setInterval` does not). See `OPS-005`.
 
 - **Nothing alerts when the API itself is down.** The alert job runs on the
   API, so `OPS-004` is silent. The scheduler jobs' failed status is the only
