@@ -8,7 +8,7 @@ environment now, and **prod** is built when they clear.
 | --- | --- | --- |
 | Website | `dev.madeforstream.com`, Cloudflare Worker `made-for-stream-dev` (static assets, `wrangler.jsonc`), built from `main` | `madeforstream.com` |
 | API | Cloud Run `made-for-stream-api` (`us-central1`), `STRIPE_KEY_MODE=dev` | a second Cloud Run service with live Stripe keys |
-| Database | Supabase project `itbgxxczuazwroniiyot` | a new Supabase project (paid plan: free projects pause when idle) |
+| Database | Supabase project `itbgxxczuazwroniiyot`, Pro plan, **Small** compute (since 2026-10-06) | a new Supabase project in the same organization, Small compute or larger |
 | Stripe | test mode (sandbox) | live mode |
 
 `madeforstream.com` and `www` have no web records on purpose. Only email
@@ -80,10 +80,19 @@ it. The same goes for a wrong one: it carried through twelve revisions unnoticed
 
 ## The database is the smallest instance (OPS-005)
 
-Dev runs on Supabase's free plan, on its smallest instance. On 2026-10-06 it
-used up its daily disk allowance and stopped answering: nobody could sign in.
-Playbook: `support/operations/alerting.md` `OPS-005`. Dev can live with this;
-prod cannot.
+Until 2026-10-06 dev ran on Supabase's free plan, on its smallest instance
+(Nano, at most 0.5 GB of memory). That day it used up its daily disk
+allowance and stopped answering: nobody could sign in. Playbook:
+`support/operations/alerting.md` `OPS-005`.
+
+The organization (`ImAllBeans`) is now on the **Pro** plan and the project is
+on **Small** compute (2 GB). Two things to know:
+
+- Upgrading the plan does not change the machine. The size is set per
+  project: Project Settings → Compute and Disk. Changing it restarts the
+  database.
+- Supabase's billing and usage emails go to the organization's billing email
+  (Organization → Billing), set to `ops@madeforstream.com`.
 
 ## Before prod is built
 

@@ -1402,7 +1402,7 @@ in [`environments.md`](environments.md).
       only; not yet seen in a browser). Working as designed in the same run:
       the first real `v2.core.account…` events arrived and were `processed`,
       and an "approved" decision email was recorded as `sent`.
-- [ ] **Outage, 2026-10-06: the dev database stopped answering** (`OPS-005`).
+- [x] *(Recovered 2026-10-06 after the plan and compute upgrade: the database answers in under 0.1 s from outside, sign-ups are still off, and both scheduler jobs ran clean at 20:15 and 20:45 UTC. The Disk IO chart has not been looked at.)* **Outage, 2026-10-06: the dev database stopped answering** (`OPS-005`).
       Supabase reported the Disk IO budget running out; from about 14:45 UTC
       queries timed out, and sign-in failed with `504`. The website and the
       API stayed up. Likely trigger: the payout page's new status check (added
@@ -1414,6 +1414,11 @@ in [`environments.md`](environments.md).
       actions:** restart the project; for prod, use the paid plan with a
       chosen compute size. Tick when the database answers again and the
       Disk IO chart is flat with the site open.
+- [x] **Supabase moved to the paid plan (2026-10-06, user action).** The
+      organization is on Pro (confirmed through Supabase's API) and the dev
+      project is on Small compute. The billing email was set to
+      `ops@madeforstream.com` by the user; not verified from here. Prod will
+      be a second project in the same organization.
 - [ ] **Nothing alerts when the API is down** (`OPS-004`). A Cloud Monitoring
       uptime check on `/api/health` would; it is a cloud resource, so it is
       your decision.
