@@ -239,6 +239,20 @@ describe("CreatorPayoutSettings setup status", () => {
     expect(screen.getByRole("button", { name: "Continue Stripe setup" })).toBeInTheDocument();
   });
 
+  it("shows the account's own country and currency, locked, not the defaults", () => {
+    mocks.account = account;
+
+    renderSettings();
+
+    const country = screen.getByLabelText("Country") as HTMLSelectElement;
+    const currency = screen.getByLabelText("Currency") as HTMLSelectElement;
+
+    expect(country.value).toBe("IE");
+    expect(currency.value).toBe("eur");
+    expect(country).toBeDisabled();
+    expect(currency).toBeDisabled();
+  });
+
   it("asks the creator to continue when Stripe needs more from them", () => {
     mocks.account = { ...account, requirements_due_count: 3 };
 

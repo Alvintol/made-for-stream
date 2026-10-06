@@ -93,11 +93,15 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   const isReady = getCreatorPaymentAccountIsReady(paymentAccount);
   const setupState = getCreatorPayoutSetupState(paymentAccount);
 
-  const [country, setCountry] = useState(() => paymentAccount?.country || "CA");
+  // Once a Stripe account exists its country and currency are fixed (the API
+  // ignores new values for an existing account), so show the account's own
+  // and only let the creator choose before one is created.
+  const [chosenCountry, setCountry] = useState("CA");
   const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(), []);
-  const [defaultCurrency, setDefaultCurrency] = useState(
-    () => paymentAccount?.default_currency || "cad",
-  );
+  const [chosenCurrency, setDefaultCurrency] = useState("cad");
+  const country = paymentAccount?.country || chosenCountry;
+  const defaultCurrency = paymentAccount?.default_currency || chosenCurrency;
+  const hasPaymentAccount = Boolean(paymentAccount);
   const [connectInstance, setConnectInstance] = useState<StripeConnectInstance | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -306,6 +310,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           <select
             className={classes.input}
             value={country}
+            disabled={hasPaymentAccount}
             onChange={(event) => {
               const nextCountry = event.target.value;
 
@@ -336,6 +341,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           <select
             className={classes.input}
             value={defaultCurrency}
+            disabled={hasPaymentAccount}
             onChange={(event) => setDefaultCurrency(event.target.value)}
           >
             {!isSupportedCurrency(defaultCurrency) && (
@@ -377,6 +383,13 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           </button>
         </div>
       </div>
+
+      {hasPaymentAccount && (
+        <p className={classes.text}>
+          Country and currency were set when your Stripe account was created and can't be
+          changed here. Contact support if they are wrong.
+        </p>
+      )}
 
       {successMsg && <div className={classes.success}>{successMsg}</div>}
       {errMsg && <div className={classes.error}>{errMsg}</div>}
