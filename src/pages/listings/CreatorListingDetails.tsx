@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMyListing } from "../../hooks/listings/useMyListing";
 import { useDeleteListingDraft } from "../../hooks/listings/useDeleteListingDraft";
 import { getListingPublishReadiness } from '../../lib/listings/listingPublishReadiness';
@@ -7,10 +7,35 @@ import { useSetListingActiveState } from '../../hooks/listings/useSetListingActi
 import { useMoveListingToDraft } from '../../hooks/listings/useMoveListingToDraft';
 import { ListingRevisionRow, useListingRevisions } from '../../hooks/listings/useListingRevisions';
 import { getListingRevisionChanges } from '../../lib/listings/listingRevisionDiff';
-import { getListingVisibilityLabel, isAdminHiddenListing } from '../../domain/listings/listings';
+import {
+  getListingStatusSummary,
+  getListingVisibilityLabel,
+  isAdminHiddenListing,
+  type ListingStatusKey,
+} from '../../domain/listings/listings';
+import ListingPublishChecklist, {
+  getMissingPublishCheckCount,
+} from '../../components/listings/ListingPublishChecklist';
+
+// Stays under the site header on wide screens, so the answer to "is this
+// live?" and the next action are always on screen.
+const statusBannerBase =
+  "flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-4 lg:sticky lg:top-[84px] lg:z-20";
+
+const statusBannerTone: Record<ListingStatusKey, string> = {
+  draft: "border-amber-300 bg-amber-50 text-amber-900",
+  live: "border-emerald-300 bg-emerald-50 text-emerald-900",
+  inactive: "border-zinc-300 bg-zinc-100 text-zinc-800",
+  admin_hidden: "border-red-300 bg-red-50 text-red-900",
+};
+
+const getErrorText = (error: unknown, fallback: string): string =>
+  error instanceof Error && error.message ? error.message : fallback;
 
 const classes = {
   page: "space-y-6",
+  statusTitle: "text-lg font-bold",
+  statusText: "text-sm",
   backLink: "backLink",
 
   header: "space-y-1",
@@ -152,7 +177,13 @@ const revisionPriceText = (
 
 const CreatorListingDetails = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
+
+  // Set by the create page when "Publish now" saved the draft but the
+  // publish step was refused (for example, payouts are not set up yet).
+  const carriedPublishError =
+    (location.state as { publishError?: string } | null)?.publishError ?? null;
 
   const { data: listing, isLoading, error } = useMyListing(id ?? null);
   const deleteDraftMutation = useDeleteListingDraft();
@@ -277,6 +308,8 @@ const CreatorListingDetails = () => {
     listing.status === "draft" && !listing.is_active && !isAdminHidden;
 
   const publishReadiness = getListingPublishReadiness(listing);
+  const statusSummary = getListingStatusSummary(listing);
+  const missingChecks = getMissingPublishCheckCount(publishReadiness);
 
   return (
     <div className={classes.page}>
@@ -288,10 +321,61 @@ const CreatorListingDetails = () => {
         <h1 className={classes.h1}>{listing.title}</h1>
 
         <p className={classes.sub}>
-          Review your private listing details before broader listing management
-          and publishing are added.
+          Only you can see this page. It shows whether buyers can see the listing and what is
+          left to do.
         </p>
       </div>
+
+      <div
+        className={`${statusBannerBase} ${statusBannerTone[statusSummary.key]}`}
+        role="status"
+      >
+        <div>
+          <div className={classes.statusTitle}>{statusSummary.title}</div>
+          <div className={classes.statusText}>
+            {statusSummary.description}
+            {isDraftInactive && !publishReadiness.isReady && (
+              <>
+                {" "}
+                {missingChecks} checklist {missingChecks === 1 ? "item" : "items"} left.
+              </>
+            )}
+          </div>
+        </div>
+
+        {isDraftInactive &&
+          (publishReadiness.isReady ? (
+            <button
+              className={classes.btnPrimary}
+              type="button"
+              onClick={handlePublishListing}
+              disabled={publishListingMutation.isPending}
+            >
+              {publishListingMutation.isPending ? "Publishing…" : "Publish now"}
+            </button>
+          ) : (
+            <a className={classes.btnOutline} href="#publish-checklist">
+              See what is missing
+            </a>
+          ))}
+
+        {statusSummary.key === "inactive" && (
+          <button
+            className={classes.btnPrimary}
+            type="button"
+            onClick={handleReactivateListing}
+            disabled={setListingActiveStateMutation.isPending}
+          >
+            {setListingActiveStateMutation.isPending ? "Updating…" : "Reactivate"}
+          </button>
+        )}
+      </div>
+
+      {carriedPublishError && !publishListingMutation.error && isDraftInactive && (
+        <div className={classes.errorCard}>
+          Your listing was saved as a draft, but it could not be published: {carriedPublishError}
+        </div>
+      )}
 
       {moveListingToDraftMutation.error && (
         <div className={classes.errorCard}>
@@ -301,7 +385,8 @@ const CreatorListingDetails = () => {
 
       {publishListingMutation.error && (
         <div className={classes.errorCard}>
-          This listing could not be published right now.
+          This listing could not be published:{" "}
+          {getErrorText(publishListingMutation.error, "please try again.")}
         </div>
       )}
 
@@ -447,39 +532,17 @@ const CreatorListingDetails = () => {
             </div>
           </div>
 
-          <div className={classes.readinessCard}>
+          <div className={`${classes.readinessCard} scroll-mt-48`} id="publish-checklist">
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Publish readiness</h2>
+              <h2 className={classes.sectionTitle}>Publish checklist</h2>
 
               <p className={classes.text}>
-                This checklist helps confirm the listing is ready before publishing is
-                introduced as a separate step.
+                Every item must be done before a listing can be published. Edit the draft to
+                fill in anything that is missing.
               </p>
             </div>
 
-            <div className={classes.section}>
-              {publishReadiness.isReady ? (
-                <div className={classes.readyBox}>
-                  This listing is ready for a future publish action.
-                </div>
-              ) : (
-                <div className={classes.notReadyBox}>
-                  This listing is not ready to publish yet.
-                </div>
-              )}
-
-              <div className={classes.checkList}>
-                {publishReadiness.checks.map((check) => (
-                  <div key={check.key} className={classes.checkRow}>
-                    <span className={check.passed ? classes.checkPass : classes.checkFail}>
-                      {check.passed ? "✓" : "!"}
-                    </span>
-
-                    <div className={classes.checkText}>{check.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ListingPublishChecklist readiness={publishReadiness} />
           </div>
 
           <div className={classes.revisionCard}>

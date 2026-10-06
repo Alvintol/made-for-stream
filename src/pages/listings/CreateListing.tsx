@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -13,6 +13,14 @@ import {
   normaliseFulfilmentMode,
   validateFreeListingInput,
 } from '../../domain/listings/listings';
+import { getListingPublishReadiness } from "../../lib/listings/listingPublishReadiness";
+import { usePublishListing } from "../../hooks/listings/usePublishListing";
+import ListingPublishChecklist from "../../components/listings/ListingPublishChecklist";
+import ListingPreviewImageField, {
+  type ListingPreviewSelection,
+} from "../../components/listings/ListingPreviewImageField";
+import { uploadListingPreviewImage } from "../../lib/listings/listingPreviewImage";
+import { useMyProfile } from "../../hooks/profile/useMyProfile";
 
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
@@ -30,7 +38,6 @@ type FormState = {
   priceMax: string;
   deliverablesText: string;
   tagsText: string;
-  previewUrl: string;
   isFree: boolean;
   freeDeliveryType: FreeDeliveryType | "";
   freeExternalUrl: string;
@@ -48,6 +55,14 @@ const classes = {
   header: "space-y-1",
   h1: "pageTitle",
   sub: "pageSub",
+
+  layout: "grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start",
+  // Clears the sticky site header, like the other side panels.
+  aside: "card space-y-4 p-4 lg:order-last lg:sticky lg:top-24",
+  asideTitle: "text-base font-bold text-zinc-900",
+  asideStatus:
+    "rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900",
+  asideButtons: "flex flex-col gap-2",
 
   card: "card p-6",
   section: "space-y-4",
@@ -121,7 +136,6 @@ const initialState: FormState = {
   priceMax: "",
   deliverablesText: "",
   tagsText: "",
-  previewUrl: "",
   isFree: false,
   freeDeliveryType: "",
   freeExternalUrl: "",
@@ -165,6 +179,13 @@ const CreateListing = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [freeFile, setFreeFile] = useState<File | null>(null);
+  // The prepared thumbnail, uploaded when the listing is saved.
+  const [previewSelection, setPreviewSelection] = useState<ListingPreviewSelection | null>(null);
+  const { data: profile } = useMyProfile();
+
+  // Which button submitted the form: save a draft, or save and publish.
+  const publishAfterSaveRef = useRef(false);
+  const publishListing = usePublishListing();
 
   const isRangePrice = form.priceType === "range";
   const canOfferFree = allowsFreeListing(form.offeringType);
@@ -176,6 +197,34 @@ const CreateListing = () => {
   );
 
   const tagPreview = useMemo(() => parseTags(form.tagsText), [form.tagsText]);
+
+  // The same checklist the details page uses, fed from what is typed so far,
+  // so the creator can see what publishing needs before saving anything.
+  const publishReadiness = useMemo(() => {
+    const priceMin = isFreeListing ? 0 : parseInteger(form.priceMin);
+    const priceMax = isFreeListing
+      ? 0
+      : form.priceType === "fixed"
+        ? priceMin
+        : form.priceType === "starting_at"
+          ? null
+          : parseInteger(form.priceMax);
+
+    return getListingPublishReadiness({
+      title: form.title,
+      short: form.short,
+      category: form.category,
+      video_subtype: form.videoSubtype || null,
+      price_type: isFreeListing ? "fixed" : form.priceType,
+      // An empty price fails the check rather than counting as zero.
+      price_min: priceMin ?? -1,
+      price_max: priceMax,
+      deliverables: deliverablePreview,
+      tags: tagPreview,
+      // Not uploaded yet, but chosen: that is what the checklist asks for.
+      preview_url: previewSelection ? "chosen" : "",
+    });
+  }, [deliverablePreview, form, isFreeListing, previewSelection, tagPreview]);
 
   const setField = <Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -303,9 +352,13 @@ const CreateListing = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const publishAfterSave = publishAfterSaveRef.current;
+    publishAfterSaveRef.current = false;
+
     const { isValid, priceMin, rawPriceMax } = validate();
     if (!isValid || !user?.id) return;
     if (!isFreeListing && priceMin === null) return;
+    if (publishAfterSave && !publishReadiness.isReady) return;
 
     setIsSaving(true);
 
@@ -363,7 +416,11 @@ const CreateListing = () => {
         };
       }
 
-      const { error } = await supabase.from("listings").insert({
+      const previewUrl = previewSelection
+        ? await uploadListingPreviewImage({ userId: user.id, blob: previewSelection.blob })
+        : null;
+
+      const { data: created, error } = await supabase.from("listings").insert({
         user_id: user.id,
         title: form.title.trim(),
         short: form.short.trim(),
@@ -377,7 +434,8 @@ const CreateListing = () => {
         price_max: isFreeListing ? 0 : nextPriceMax,
         deliverables: parseDeliverables(form.deliverablesText),
         tags: parseTags(form.tagsText),
-        preview_url: form.previewUrl.trim() || null,
+        preview_url: previewUrl,
+        preview_watermarked: Boolean(previewSelection?.watermarked),
         status: "draft",
         is_active: false,
         fulfilment_mode: normaliseFulfilmentMode(
@@ -385,13 +443,34 @@ const CreateListing = () => {
           form.fulfilmentMode
         ),
         ...freeFields,
-      });
+      })
+        .select("id")
+        .single();
 
       if (error) {
         throw error;
       }
 
-      navigate("/creator/listings");
+      const detailsPath = `/creator/listings/${created.id}`;
+
+      if (!publishAfterSave) {
+        navigate(detailsPath);
+        return;
+      }
+
+      // The draft is saved either way. If publishing is refused (payouts not
+      // set up, for example), land on the details page and say why there.
+      try {
+        await publishListing.mutateAsync(created.id);
+        navigate(detailsPath);
+      } catch (publishError) {
+        navigate(detailsPath, {
+          state: {
+            publishError:
+              publishError instanceof Error ? publishError.message : "please try again.",
+          },
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -417,12 +496,57 @@ const CreateListing = () => {
         <h1 className={classes.h1}>Create listing</h1>
 
         <p className={classes.sub}>
-          Save a private draft listing. This first pass does not publish listings,
-          upload media, or handle payouts yet.
+          Fill this in, then publish it straight away or save it as a private draft to finish
+          later. Buyers only see a listing once it is published.
         </p>
       </div>
 
-      <form className={classes.card} onSubmit={handleSubmit}>
+      <div className={classes.layout}>
+      <aside className={classes.aside} aria-label="Publish checklist">
+        <h2 className={classes.asideTitle}>Publish checklist</h2>
+
+        <div className={classes.asideStatus} role="status">
+          <strong>Not saved yet.</strong> Nothing is visible to buyers until you publish.
+        </div>
+
+        <ListingPublishChecklist readiness={publishReadiness} />
+
+        <div className={classes.asideButtons}>
+          <button
+            className={classes.btnPrimary}
+            type="submit"
+            form="create-listing-form"
+            disabled={isSaving || !publishReadiness.isReady}
+            onClick={() => {
+              publishAfterSaveRef.current = true;
+            }}
+          >
+            {isSaving ? "Saving…" : "Publish now"}
+          </button>
+
+          <button
+            className={classes.btnOutline}
+            type="submit"
+            form="create-listing-form"
+            disabled={isSaving}
+            onClick={() => {
+              publishAfterSaveRef.current = false;
+            }}
+          >
+            {isSaving ? "Saving…" : "Save as draft"}
+          </button>
+        </div>
+
+        {!publishReadiness.isReady && (
+          <p className={classes.sectionText}>
+            Finish the checklist to publish now. You can save a draft at any point.
+          </p>
+        )}
+
+        {errors.submit && <div className={classes.submitError}>{errors.submit}</div>}
+      </aside>
+
+      <form id="create-listing-form" className={classes.card} onSubmit={handleSubmit}>
         <div className={classes.section}>
           <div>
             <h2 className={classes.sectionTitle}>Basics</h2>
@@ -844,35 +968,27 @@ const CreateListing = () => {
           <div>
             <h2 className={classes.sectionTitle}>Preview</h2>
             <p className={classes.sectionText}>
-              A preview image URL is optional for now. File uploads will come later.
+              An image that shows your work. A draft can be saved without one, but a listing
+              needs one before it can be published.
             </p>
           </div>
 
-          <div className={classes.grid}>
-            <div className={`${classes.field} ${classes.full}`}>
-              <label className={classes.label} htmlFor="previewUrl">
-                Preview URL
-              </label>
-
-              <input
-                id="previewUrl"
-                className={classes.input}
-                type="text"
-                value={form.previewUrl}
-                onChange={(event) => setField("previewUrl", event.target.value)}
-                placeholder="https://example.com/preview.jpg"
-              />
-            </div>
-          </div>
+          <ListingPreviewImageField
+            existingUrl={null}
+            handle={profile?.handle}
+            disabled={isSaving}
+            onChange={setPreviewSelection}
+          />
         </div>
 
         <div className={classes.section}>
           <div className={classes.infoBox}>
-            <div className={classes.infoTitle}>Save behaviour</div>
+            <div className={classes.infoTitle}>What happens next</div>
 
             <div className={classes.infoText}>
-              Saving this form creates a draft listing with unpublished defaults:
-              <strong> status = draft</strong> and <strong>is_active = false</strong>.
+              <strong>Publish now</strong> saves the listing and puts it in the market.{" "}
+              <strong>Save as draft</strong> keeps it private. Either way you land on the
+              listing's page, which shows its status.
             </div>
           </div>
 
@@ -881,8 +997,26 @@ const CreateListing = () => {
           )}
 
           <div className={classes.row}>
-            <button className={classes.btnPrimary} type="submit" disabled={isSaving}>
-              {isSaving ? "Saving draft…" : "Save draft"}
+            <button
+              className={classes.btnPrimary}
+              type="submit"
+              disabled={isSaving || !publishReadiness.isReady}
+              onClick={() => {
+                publishAfterSaveRef.current = true;
+              }}
+            >
+              {isSaving ? "Saving…" : "Publish now"}
+            </button>
+
+            <button
+              className={classes.btnOutline}
+              type="submit"
+              disabled={isSaving}
+              onClick={() => {
+                publishAfterSaveRef.current = false;
+              }}
+            >
+              {isSaving ? "Saving…" : "Save as draft"}
             </button>
 
             <Link className={classes.btnOutline} to="/creator/listings">
@@ -891,6 +1025,7 @@ const CreateListing = () => {
           </div>
         </div>
       </form>
+      </div>
     </div>
   );
 };

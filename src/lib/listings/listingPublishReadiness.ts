@@ -68,7 +68,7 @@ export const getListingPublishReadiness = (
     },
     {
       key: "preview",
-      label: "Preview image URL is added",
+      label: "Preview image is added",
       passed: hasTrimmedText(listing.preview_url ?? ""),
     },
     {

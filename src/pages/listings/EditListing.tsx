@@ -4,6 +4,11 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import ListingPreviewImageField, {
+  type ListingPreviewSelection,
+} from "../../components/listings/ListingPreviewImageField";
+import { uploadListingPreviewImage } from "../../lib/listings/listingPreviewImage";
+import { useMyProfile } from "../../hooks/profile/useMyProfile";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -189,6 +194,9 @@ const EditListing = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasLoadedForm, setHasLoadedForm] = useState(false);
+  // A replacement thumbnail, uploaded when the draft is saved.
+  const [previewSelection, setPreviewSelection] = useState<ListingPreviewSelection | null>(null);
+  const { data: profile } = useMyProfile();
 
   useEffect(() => {
     if (!listing || hasLoadedForm) return;
@@ -317,6 +325,18 @@ const EditListing = () => {
             ? null
             : rawPriceMax;
 
+      // Only touch the image when a new one was chosen. An unchanged value
+      // is left exactly as it is, including an older pasted link.
+      const previewFields = previewSelection
+        ? {
+            preview_url: await uploadListingPreviewImage({
+              userId: user.id,
+              blob: previewSelection.blob,
+            }),
+            preview_watermarked: previewSelection.watermarked,
+          }
+        : {};
+
       const { data: updated, error: updateError } = await supabase
         .from("listings")
         .update({
@@ -334,7 +354,7 @@ const EditListing = () => {
           price_max: nextPriceMax,
           deliverables: parseDeliverables(form.deliverablesText),
           tags: parseTags(form.tagsText),
-          preview_url: form.previewUrl.trim() || null,
+          ...previewFields,
           status: "draft",
           is_active: false,
         })
@@ -352,7 +372,7 @@ const EditListing = () => {
         throw new Error("Only draft listings can be edited right now.");
       }
 
-      navigate("/creator/listings");
+      navigate(`/creator/listings/${updated.id}`);
     } catch (error) {
       const message =
         error instanceof Error
@@ -746,25 +766,16 @@ const EditListing = () => {
           <div>
             <h2 className={classes.sectionTitle}>Preview</h2>
             <p className={classes.sectionText}>
-              Preview URLs remain optional until uploads are introduced.
+              An image that shows your work. A listing needs one before it can be published.
             </p>
           </div>
 
-          <div className={classes.grid}>
-            <div className={`${classes.field} ${classes.full}`}>
-              <label className={classes.label} htmlFor="previewUrl">
-                Preview URL
-              </label>
-
-              <input
-                id="previewUrl"
-                className={classes.input}
-                type="text"
-                value={form.previewUrl}
-                onChange={(event) => setField("previewUrl", event.target.value)}
-              />
-            </div>
-          </div>
+          <ListingPreviewImageField
+            existingUrl={form.previewUrl || null}
+            handle={profile?.handle}
+            disabled={isSaving}
+            onChange={setPreviewSelection}
+          />
         </div>
 
         <div className={classes.section}>
