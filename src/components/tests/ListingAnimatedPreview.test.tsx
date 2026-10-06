@@ -96,6 +96,54 @@ describe("<ListingAnimatedPreview />", () => {
     expect(picture()).toHaveAttribute("draggable", "false");
   });
 
+  describe("with a video", () => {
+    const VIDEO = ANIMATION.replace("a.gif", "a.mp4");
+
+    const renderVideo = () =>
+      render(<ListingAnimatedPreview coverUrl={COVER} animationUrl={VIDEO} className="img" />);
+
+    const video = () => document.querySelector("video") as HTMLVideoElement | null;
+
+    it("plays it muted from a temporary address, with saving controls off", async () => {
+      renderVideo();
+      await settle();
+
+      expect(video()).toHaveAttribute("src", "blob:play-1");
+      expect(video()?.muted).toBe(true);
+      expect(video()).toHaveAttribute("controlslist", "nodownload noplaybackrate");
+      expect(video()).not.toHaveAttribute("controls");
+      expect(document.body.innerHTML).not.toContain(VIDEO);
+    });
+
+    it("returns to the cover when the video ends, and offers Play again", async () => {
+      renderVideo();
+      await settle();
+
+      // No timer is involved: a long wait changes nothing.
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(video()).not.toBeNull();
+
+      fireEvent.ended(video() as HTMLVideoElement);
+
+      expect(video()).toBeNull();
+      expect(picture()).toHaveAttribute("src", COVER);
+
+      fireEvent.click(screen.getByRole("button", { name: "Play again" }));
+      expect(video()).toHaveAttribute("src", "blob:play-2");
+    });
+
+    it("keeps the cover and offers nothing when this browser cannot play the format", async () => {
+      renderVideo();
+      await settle();
+
+      fireEvent.error(video() as HTMLVideoElement);
+
+      expect(video()).toBeNull();
+      expect(picture()).toHaveAttribute("src", COVER);
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
+  });
+
   it("just keeps the cover when the GIF cannot be loaded", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false })));
 

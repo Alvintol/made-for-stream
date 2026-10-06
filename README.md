@@ -1,6 +1,6 @@
 # Made for Stream
 
-**By creators, for creators.**
+**For creators, by creators.**
 
 Production domain: [madeforstream.com](https://madeforstream.com).
 

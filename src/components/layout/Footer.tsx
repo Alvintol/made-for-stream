@@ -37,7 +37,7 @@ const Footer = () => {
           </Link>
 
           <p className={classes.tagline}>
-            By creators, for creators. A human-made marketplace for emotes, overlays, VTuber models, editing
+            For creators, by creators. A human-made marketplace for emotes, overlays, VTuber models, editing
             and audio help.
           </p>
         </div>

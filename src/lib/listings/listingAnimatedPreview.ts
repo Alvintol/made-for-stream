@@ -1,13 +1,44 @@
 import { supabase } from "../supabaseClient";
 
-// A listing's optional animated preview: a GIF shown on the listing's own
-// page, where it plays once. Unlike the static image
+// A listing's optional animated preview: a GIF or a short video shown on the
+// listing's own page, where it plays once. Unlike the static image
 // (listingPreviewImage.ts) it is uploaded exactly as the creator made it,
 // because a browser cannot re-save an animation. The bucket and database
-// rule are in supabase/migrations/20261006_144_add_listing_animated_previews.sql.
+// rule are in supabase/migrations/20261006_144_add_listing_animated_previews.sql
+// and 20261006_145_allow_video_listing_previews.sql.
 
 export const LISTING_ANIMATION_BUCKET = "listing-animations";
 export const LISTING_ANIMATION_MAX_BYTES = 8 * 1024 * 1024;
+export const LISTING_ANIMATION_ACCEPT = "image/gif,video/mp4,video/webm";
+
+export type ListingAnimationKind = "gif" | "mp4" | "webm";
+
+export const LISTING_ANIMATION_CONTENT_TYPES: Record<ListingAnimationKind, string> = {
+  gif: "image/gif",
+  mp4: "video/mp4",
+  webm: "video/webm",
+};
+
+// What a file really is, from its first bytes, whatever it is named.
+export const getListingAnimationKind = (bytes: Uint8Array): ListingAnimationKind | null => {
+  const text = (start: number, end: number) =>
+    String.fromCharCode(...bytes.subarray(start, end));
+
+  return text(0, 4) === "GIF8"
+    ? "gif"
+    : text(4, 8) === "ftyp"
+      ? "mp4"
+      : bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3
+        ? "webm"
+        : null;
+};
+
+// Which kind a stored preview is, from the address we gave it at upload.
+export const getListingAnimationKindFromUrl = (url: string): ListingAnimationKind => {
+  const path = url.split(/[?#]/)[0].toLowerCase();
+
+  return path.endsWith(".mp4") ? "mp4" : path.endsWith(".webm") ? "webm" : "gif";
+};
 
 // How long one pass through an animated GIF takes, in milliseconds, read
 // from the file's own frame delays. Null when the bytes are not a GIF or
@@ -74,31 +105,49 @@ export const getGifPlayOnceMs = (bytes: Uint8Array): number | null => {
   return frames > 1 ? totalCentiseconds * 10 : null;
 };
 
-// Null when the file can be used; otherwise what to tell the creator.
-export const validateListingAnimationFile = async (file: File): Promise<string | null> => {
+export type ListingAnimationCheck =
+  | { kind: ListingAnimationKind; error: null }
+  | { kind: null; error: string };
+
+// Says what the file is, or what to tell the creator if it cannot be used.
+export const checkListingAnimationFile = async (file: File): Promise<ListingAnimationCheck> => {
   if (file.size > LISTING_ANIMATION_MAX_BYTES) {
-    return "That GIF is over 8 MB. Use a shorter or smaller loop.";
+    return { kind: null, error: "That file is over 8 MB. Use a shorter or smaller clip." };
   }
 
-  const playOnceMs = getGifPlayOnceMs(new Uint8Array(await file.arrayBuffer()));
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kind = getListingAnimationKind(bytes);
 
-  return playOnceMs === null ? "Choose an animated GIF. That file is not one." : null;
+  if (kind === null) {
+    return { kind: null, error: "Choose an animated GIF, or an MP4 or WebM video." };
+  }
+
+  if (kind === "gif" && getGifPlayOnceMs(bytes) === null) {
+    return { kind: null, error: "That GIF does not move. Choose an animated one." };
+  }
+
+  return { kind, error: null };
 };
 
-// Uploads the GIF into the creator's own folder and returns its public
-// address, which is what listings.animated_preview_url stores.
+// Uploads the file into the creator's own folder and returns its public
+// address, which is what listings.animated_preview_url stores. The file
+// extension records the kind, which is how the listing page knows whether to
+// play it as a GIF or a video.
 export const uploadListingAnimation = async ({
   userId,
   file,
+  kind,
 }: {
   userId: string;
   file: Blob;
+  kind: ListingAnimationKind;
 }): Promise<string> => {
-  const path = `${userId}/${crypto.randomUUID()}.gif`;
+  const path = `${userId}/${crypto.randomUUID()}.${kind}`;
 
-  const { error } = await supabase.storage
-    .from(LISTING_ANIMATION_BUCKET)
-    .upload(path, file, { contentType: "image/gif", cacheControl: "31536000" });
+  const { error } = await supabase.storage.from(LISTING_ANIMATION_BUCKET).upload(path, file, {
+    contentType: LISTING_ANIMATION_CONTENT_TYPES[kind],
+    cacheControl: "31536000",
+  });
 
   if (error) {
     throw error;

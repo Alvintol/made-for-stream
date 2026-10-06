@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { validateListingAnimationFile } from "../../lib/listings/listingAnimatedPreview";
+import {
+  checkListingAnimationFile,
+  LISTING_ANIMATION_ACCEPT,
+  type ListingAnimationKind,
+} from "../../lib/listings/listingAnimatedPreview";
 
 // What the page should do with the animated preview when the listing is
-// saved: upload a new GIF, remove the current one, or leave it alone.
+// saved: upload a new file, remove the current one, or leave it alone.
 export type ListingAnimationChoice =
   | { action: "keep" }
-  | { action: "upload"; file: File }
+  | { action: "upload"; file: File; kind: ListingAnimationKind }
   | { action: "remove" };
 
 type ListingAnimatedPreviewFieldProps = {
@@ -30,7 +34,7 @@ const classes = {
 
 const formatMegabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 
-// The optional GIF shown on the listing's own page. Nothing is uploaded
+// The optional GIF or short video shown on the listing's own page. Nothing is uploaded
 // here; the page uploads it when the listing is saved.
 const ListingAnimatedPreviewField = ({
   hasExisting,
@@ -44,17 +48,17 @@ const ListingAnimatedPreviewField = ({
   const handleFile = async (file: File | null) => {
     if (!file) return;
 
-    const fileError = await validateListingAnimationFile(file);
+    const check = await checkListingAnimationFile(file);
 
-    if (fileError) {
-      setError(fileError);
+    if (check.error !== null) {
+      setError(check.error);
       return;
     }
 
     setError(null);
     setChosen(file);
     setRemove(false);
-    onChange({ action: "upload", file });
+    onChange({ action: "upload", file, kind: check.kind });
   };
 
   const handleRemove = (checked: boolean) => {
@@ -74,14 +78,16 @@ const ListingAnimatedPreviewField = ({
           id="animatedPreview"
           className={classes.input}
           type="file"
-          accept="image/gif"
+          accept={LISTING_ANIMATION_ACCEPT}
           disabled={disabled}
           onChange={(event) => void handleFile(event.target.files?.[0] ?? null)}
         />
 
         <p className={classes.hint}>
-          An animated GIF, up to 8 MB. It shows only on your listing's page, plays once, and
-          then offers a Play again button. Cards and search always show the still image above.
+          An animated GIF, or an MP4 or WebM video, up to 8 MB. It shows only on your listing's
+          page, plays once, and then offers a Play again button. Videos play without sound. MP4
+          plays on every device; WebM may not play on older iPhones. Cards and search always
+          show the still image above.
         </p>
 
         {error && (
@@ -120,7 +126,7 @@ const ListingAnimatedPreviewField = ({
         <div className={classes.warningTitle}>Animated previews are not copy-protected</div>
 
         <p className={classes.warningText}>
-          Your GIF is uploaded exactly as you made it. It is not shrunk and not watermarked.
+          Your file is uploaded exactly as you made it. It is not shrunk and not watermarked.
         </p>
 
         <p className={classes.warningText}>
@@ -129,7 +135,7 @@ const ListingAnimatedPreviewField = ({
         </p>
 
         <p className={classes.warningText}>
-          Upload a short, low-resolution loop. Never upload the finished work.
+          Upload a short, low-resolution clip. Never upload the finished work.
         </p>
       </div>
     </div>

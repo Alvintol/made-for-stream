@@ -108,6 +108,16 @@ const SectionHeader = ({ eyebrow, title, to, linkText }: SectionHeaderProps) => 
   </div>
 );
 
+// The hero's artwork is fixed placeholder art, not creators' listings. It
+// used to take the three newest listings' images, so whatever a creator
+// published last became the site's front-page art (noticed 2026-10-06).
+// Replace these with brand artwork when it exists (rebrand assets).
+const HERO_PLACEHOLDER_URLS = [
+  "https://picsum.photos/seed/emotes/960/540",
+  "https://picsum.photos/seed/overlay/960/540",
+  "https://picsum.photos/seed/pngtuber/960/540",
+];
+
 type FeaturedListingCardProps = {
   item: MarketListingItem;
 };
@@ -332,14 +342,10 @@ const Home = () => {
   // use the first public listings returned by the market query.
   const featuredListings = marketItems.slice(0, 6);
 
-  const heroPreviewUrls = featuredListings
-    .map((item) => item.listing.preview_url)
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 3);
 
   return (
     <div className={classes.page}>
-      <HeroParallax previewUrls={heroPreviewUrls} />
+      <HeroParallax previewUrls={HERO_PLACEHOLDER_URLS} />
       <FeaturedSection
         featuredListings={featuredListings}
         isLoading={isLoadingMarket}

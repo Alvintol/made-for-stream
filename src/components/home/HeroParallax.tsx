@@ -168,7 +168,7 @@ const HeroParallax = ({ previewUrls }: HeroParallaxProps) => {
         <div className={classes.copy} data-hero-copy>
           <p className={classes.tagline}>
             <span className={classes.taglineRule} aria-hidden="true" />
-            By creators, for creators
+            For Creators, By Creators
           </p>
 
           <h1 id="home-hero-title" className={classes.title}>
