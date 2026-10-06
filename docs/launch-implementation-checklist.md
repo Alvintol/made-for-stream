@@ -1365,7 +1365,11 @@ in [`environments.md`](environments.md).
       now shows one of three notices (Stripe needs more from you / Stripe is
       checking your details / your payout account is ready), closes the
       finished form, re-reads the status every 10 seconds while Stripe is
-      checking, and asks Stripe for all requirements in one pass. **Unit
+      checking, and asks Stripe for all requirements in one pass. Country
+      and currency also showed Canada / CAD after a page refresh whatever
+      the account's were (display only: the API ignores them for an existing
+      account, and the row stayed IE / EUR); they now show the account's own
+      and are locked once an account exists. **Unit
       tests only; tick this when the next creator's setup shows it working
       in a browser.**
 - [x] *(Fixed 2026-10-05: build variable corrected by the user; the form loaded and TrashMailman completed setup.)* **Rehearsal finding, 2026-10-05: payout setup could not load on the dev
