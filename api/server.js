@@ -31,10 +31,12 @@ import {
   parseTaxConfig,
 } from "./tax.js";
 import {
+  CONNECT_ACCOUNT_GONE_MESSAGE,
   CONNECT_ACCOUNT_RETRIEVE_INCLUDE,
   buildCreatorPaymentAccountPatch,
   classifyConnectAccountEvent,
   didCreatorPaymentAccountLoseReadiness,
+  isStripeAccountGoneError,
   selectAccountsForResync,
 } from "./connectAccountState.js";
 import {
@@ -1952,6 +1954,24 @@ const setStripeConnectDailyPayoutSchedule = async ({
   );
 };
 
+// CON-009: answers true (and has replied) when Stripe no longer has the
+// creator's account.
+const respondIfStripeAccountGone = (res, err, route) => {
+  if (!isStripeAccountGoneError(err)) {
+    return false;
+  }
+
+  console.warn(
+    `CON-009: Stripe account is closed or missing (route=${route}): ${String(err?.message || err)}`,
+  );
+  res.status(409).json({
+    code: "stripe_account_gone",
+    error: CONNECT_ACCOUNT_GONE_MESSAGE,
+  });
+
+  return true;
+};
+
 const getStripeConnectSetupRequiredResponse = (message) => {
   if (!/signed up for Connect|dashboard\.stripe\.com\/connect/i.test(message)) {
     return null;
@@ -2744,6 +2764,10 @@ app.post("/api/stripe/connect/sync", async (req, res) => {
       },
     });
   } catch (err) {
+    if (respondIfStripeAccountGone(res, err, "connect/sync")) {
+      return;
+    }
+
     const message = String(err?.message || err);
     const status = /session|authorization/i.test(message) ? 401 : 400;
 
@@ -4286,6 +4310,10 @@ app.post("/api/stripe/connect/account-session", async (req, res) => {
       },
     });
   } catch (err) {
+    if (respondIfStripeAccountGone(res, err, "connect/account-session")) {
+      return;
+    }
+
     const message = String(err?.message || err);
     const connectSetupResponse = getStripeConnectSetupRequiredResponse(message);
 
