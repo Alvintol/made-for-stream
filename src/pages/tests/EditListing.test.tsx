@@ -16,6 +16,10 @@ vi.mock("../../providers/AuthProvider", () => ({
   useAuth: mocks.useAuth,
 }));
 
+vi.mock("../../hooks/profile/useMyProfile", () => ({
+  useMyProfile: () => ({ data: { handle: "PizzaButt" } }),
+}));
+
 vi.mock("../../lib/supabaseClient", () => ({
   supabase: {
     from: vi.fn(),
@@ -78,6 +82,9 @@ describe("<EditListing />", () => {
 
     expect(screen.getByText("Edit draft listing")).toBeInTheDocument();
     expect(screen.getByLabelText("Title")).toBeInTheDocument();
+    // The thumbnail is an upload now, not a pasted link.
+    expect(screen.getByLabelText("Preview image")).toHaveAttribute("type", "file");
+    expect(screen.queryByLabelText("Preview URL")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Save changes" })
     ).toBeInTheDocument();

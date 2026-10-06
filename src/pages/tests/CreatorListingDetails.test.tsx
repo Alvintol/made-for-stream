@@ -150,4 +150,54 @@ describe("<CreatorListingDetails />", () => {
     expect(screen.queryByRole("button", { name: "Reactivate listing" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Deactivate listing" })).not.toBeInTheDocument();
   });
+  it("says a draft is private and points at what is missing", () => {
+    renderPage();
+
+    const banner = screen.getByRole("status");
+
+    expect(banner).toHaveTextContent("Draft: only you can see this");
+    expect(banner).toHaveTextContent("1 checklist item left.");
+    expect(screen.getByRole("link", { name: "See what is missing" })).toHaveAttribute(
+      "href",
+      "#publish-checklist",
+    );
+    expect(screen.queryByRole("button", { name: "Publish now" })).not.toBeInTheDocument();
+  });
+
+  it("offers Publish now in the banner once the checklist is done", () => {
+    mocks.useMyListing.mockReturnValue({
+      data: createListing({ preview_url: "https://example.com/preview.jpg" }),
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByRole("button", { name: "Publish now" })).toBeEnabled();
+  });
+
+  it("says a published, active listing is live", () => {
+    mocks.useMyListing.mockReturnValue({
+      data: createListing({ status: "published", is_active: true }),
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByRole("status")).toHaveTextContent("Live: buyers can see this");
+  });
+
+  it("says a deactivated listing is hidden and offers to reactivate it", () => {
+    mocks.useMyListing.mockReturnValue({
+      data: createListing({ status: "published", is_active: false }),
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByRole("status")).toHaveTextContent("Deactivated: hidden from buyers");
+    expect(screen.getByRole("button", { name: "Reactivate" })).toBeInTheDocument();
+  });
 });

@@ -134,7 +134,39 @@ export const getListingVisibilityLabel = (listing: {
       ? "Visible"
       : "Inactive";
 
-      export type ListingRequestDisplayInput = {
+export type ListingStatusKey = "draft" | "live" | "inactive" | "admin_hidden";
+
+// The one-line answer to "can buyers see this?", for the creator's own pages.
+export const getListingStatusSummary = (listing: {
+  status: string;
+  is_active: boolean;
+  admin_hidden_at?: string | null;
+}): { key: ListingStatusKey; title: string; description: string } =>
+  isAdminHiddenListing(listing)
+    ? {
+        key: "admin_hidden",
+        title: "Locked by an admin",
+        description: "Buyers cannot see this listing, and you cannot change it until an admin restores it.",
+      }
+    : listing.status === "draft"
+      ? {
+          key: "draft",
+          title: "Draft: only you can see this",
+          description: "Buyers cannot see or request this listing until you publish it.",
+        }
+      : listing.is_active
+        ? {
+            key: "live",
+            title: "Live: buyers can see this",
+            description: "This listing is published and shown in the market.",
+          }
+        : {
+            key: "inactive",
+            title: "Deactivated: hidden from buyers",
+            description: "This listing is published but switched off. Reactivate it to show it in the market again.",
+          };
+
+export type ListingRequestDisplayInput = {
   request_title?: string | null;
   request_details?: string | null;
   message?: string | null;

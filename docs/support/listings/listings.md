@@ -7,6 +7,11 @@ surfaces:
   - src/hooks/listings/listingPaymentAccountGuards.ts
   - src/hooks/listings/
   - src/pages/listings/
+  - src/lib/listings/listingPreviewImage.ts
+  - src/components/listings/ListingPreviewImageField.tsx
+  - storage bucket listing-previews
+  - public.enforce_listing_preview_is_uploaded()
+  - supabase/migrations/20261006_143_add_listing_preview_uploads.sql
 unmatched_tier: 2
 ---
 
@@ -26,6 +31,8 @@ about Stripe being stale.
 | Symptom the user reports | Likely issue |
 | --- | --- |
 | "I can't publish my listing" | [`LST-001`](#lst-001--publish-blocked-by-payout-readiness) |
+| "I saved my listing but buyers can't see it" | The listing's page has a status banner. "Draft: only you can see this" means it was never published; "Deactivated" means it was switched off. Neither is a fault. |
+| "I can't add a picture to my listing" / "my listing won't save since I added an image" | [`LST-004`](#lst-004--preview-image-cannot-be-added) |
 | "My listing disappeared" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
 | "Buyers say the listing is unavailable" | [`LST-003`](#lst-003--listing-not-found-or-unavailable) |
 | "I can't restore my listing" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
@@ -41,6 +48,9 @@ signals:
   - source: db
     match: "Creator payout account must be ready before publishing active listings."
     where: supabase/migrations/20260921_116_exempt_free_listings_from_payout_readiness.sql
+  - source: ui
+    match: "Connect and complete Stripe payout onboarding before publishing paid listings."
+    where: "src/hooks/listings/listingPaymentAccountGuards.ts, the earlier client-side check. Shown on the listing's page after 'This listing could not be published:' or, when it came from the create page's Publish now, after 'Your listing was saved as a draft, but it could not be published:'"
 auto_fix: resync_connect_account
 params:
   user_id: "$.listing.user_id"
@@ -69,6 +79,12 @@ Stripe ever.
 not ready, when as far as they are concerned it is. This is the single most
 likely stale-mirror symptom, because publishing is the first thing a newly
 onboarded creator does.
+
+**Publish now on the create page.** Since 2026-10-06 a creator can publish
+straight from the create form. The listing is always saved as a draft first,
+then published. If the publish step is refused, nothing is lost: they land on
+the listing's page, which shows the draft banner and the reason. They are not
+told to start again.
 
 **Fix.** Re-sync from Stripe, then retry the publish. See
 [`connect-onboarding.md`](../payments/connect-onboarding.md) `CON-001` for the
@@ -151,7 +167,77 @@ that nobody hears about.
 
 ---
 
+## `LST-004` — Preview image cannot be added
+
+```yaml
+id: LST-004
+tier: 2
+signals:
+  - source: ui
+    match: "Choose a JPEG, PNG or WebP image."
+    where: "validateListingPreviewSource (src/lib/listings/listingPreviewImage.ts)"
+  - source: ui
+    match: "That image is over 20 MB. Choose a smaller one."
+    where: "validateListingPreviewSource"
+  - source: ui
+    match: "That image could not be read. Try a different file."
+    where: "ListingPreviewImageField.tsx, when the browser cannot decode or re-save the file"
+  - source: db
+    match: "Listing preview must be an image uploaded to Made for Stream."
+    where: "public.enforce_listing_preview_is_uploaded() (20261006_143), errcode check_violation"
+  - source: storage
+    match: "/Bucket not found|mime type .* is not supported|exceeded the maximum allowed size|row-level security/"
+    where: "Supabase Storage's answer to the upload, shown in the form's error box"
+auto_fix: none
+reason_not_automatable: "the first three are the creator's file; the last two mean a migration or policy is wrong"
+escalate_with:
+  - "the exact message shown"
+  - "the file's type and size, and the browser"
+  - "whether the listing-previews bucket exists (storage.buckets)"
+```
+
+**How it works.** The creator picks an image. The page shrinks it to at most
+1200 pixels, draws the watermark if that option is ticked ("Made for Stream ·
+@handle", repeated diagonally), and re-saves it. Only that copy is uploaded,
+to `listing-previews/<creator id>/`, when the listing is saved. The original
+never reaches us. `listings.preview_url` holds the copy's public address and
+`preview_watermarked` records the choice.
+
+**Cause, by signal.**
+- The three UI messages are about the file: wrong type, too large, or one the
+  browser cannot open (a damaged file, or a format with a misleading name).
+  Ask for a JPEG or PNG export.
+- "Listing preview must be an image uploaded to Made for Stream." means
+  something tried to set `preview_url` to an address outside the creator's
+  own folder in the bucket. The page cannot do this; it means a hand-made
+  request or an old cached page that still pastes a link.
+- "Bucket not found" means `20261006_143` has not been applied in this
+  environment. **While that is so, a listing with an image cannot be
+  saved at all**, and neither can one without (the insert names a column the
+  migration adds). Apply the migration.
+- A type or size refusal from Storage means the bucket's limits (2 MB;
+  WebP, JPEG, PNG) and the page's output have drifted apart.
+
+**Fix.** As above. Listings created before uploads existed keep their old
+pasted link until the creator replaces the image; that is intended.
+
+**Money impact.** None. A listing cannot be published without an image, so a
+creator who cannot upload cannot sell.
+
+---
+
 ## Known gaps
+
+- **The watermark and resize happen in the creator's browser.** They protect
+  the creator's original from buyers. They do not stop a creator who
+  deliberately bypasses the page from uploading an unprocessed image to their
+  own folder; the bucket still limits type and size. If the watermark becomes
+  a paid add-on, the browser alone must not be what decides who gets it.
+- **Replaced and abandoned images stay in storage.** Choosing a new image, or
+  failing to save after the upload, leaves the old file behind. Nothing
+  cleans them up yet.
+- **Uploaded images are not scanned.** A published listing's image is public
+  at once; the admin "hide listing" action is the only control.
 
 - **Readiness is only enforced at write time.** The trigger fires on insert and
   update of `listings`. A creator who becomes unready afterwards keeps their
@@ -162,6 +248,5 @@ that nobody hears about.
   limitation above still applies afterwards.
 - **Revision-history failure modes are undocumented.** The feature exists; its
   failures fall through to unmatched Tier 2.
-- **Listing media/upload failures are undocumented.**
 - **No creator notification on moderation hide** is documented, so `LST-002`
   cases arrive as confusion rather than as questions about a known action.

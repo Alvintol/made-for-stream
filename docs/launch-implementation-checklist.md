@@ -1358,6 +1358,48 @@ in [`environments.md`](environments.md).
       `payouts_enabled` and `details_submitted` all true in
       `creator_payment_accounts`, and 15 `v2.core.account…` events stored as
       `processed`, none failed. This is the Sprint 9 handler's first real run.
+- [ ] **Rehearsal finding, 2026-10-06: creating a listing left it as a
+      hidden draft with no clear next step.** Saving went back to the list;
+      publishing meant finding the listing again, and the status was two
+      small pills. Code: the create page has a checklist side panel that
+      updates as the form is filled in and stays on screen, with **Publish
+      now** (enabled once the checklist is done) and **Save as draft**. Both
+      land on the listing's page, which now opens with a coloured status
+      banner (draft / live / deactivated / locked) carrying the next action,
+      and shows the real reason when publishing is refused. **Unit tests
+      only; tick when seen in a browser.**
+- [ ] **Found 2026-10-06: `npx eslint .` does not check the website's
+      TypeScript.** `eslint.config.js` only matches `*.js` and `*.jsx`, so
+      every `.ts` and `.tsx` file is skipped. "eslint clean" has only ever
+      meant the API and scripts. `tsc` does cover the TypeScript.
+- [ ] **Listing thumbnails are uploads, with an optional watermark
+      (2026-10-06).** The pasted link is gone. The page shrinks the image to
+      1200 px, optionally watermarks it ("Made for Stream · @handle") and
+      re-saves it in the browser; only that copy is uploaded, so the original
+      cannot be taken from the page. An info panel explains this and holds the
+      watermark option (on by default, "free during early access"). Migration
+      `20261006_143` adds the `listing-previews` bucket, a rule that a
+      listing's image can only be changed to the creator's own upload, and
+      `preview_watermarked`. **Dry-run on the live database in a rolled-back
+      transaction, 2026-10-06:** an unchanged old link is kept, an outside
+      link / another creator's folder / another bucket are refused, the
+      creator's own upload and clearing the image are accepted; the rollback
+      left nothing behind. The watermark was looked at once on a generated
+      test image in a local browser (4.7 MB in, 29 KB out, 1200 px). **Not
+      tested:** a real upload end to end, Safari, the form in a browser.
+      **User action: apply `143` before merging**, or saving any listing
+      fails (`LST-004`).
+- [ ] **Existing listings still show pasted links** (11 on dev: 6 placeholder
+      photos, 5 taken from other websites). They are left as they are and can
+      still be published and edited. Not copied into our storage: five are
+      other people's images, and stamping them "Made for Stream" would claim
+      them. Replace them when the dev data is replaced with made-up data
+      (item below).
+- [ ] **Watermark as a paid add-on, promo codes, subscription (later, not
+      built).** What exists for it: `listings.preview_watermarked`. What it
+      needs: an entitlements table (who may watermark, how many, until when),
+      promo codes that grant one, and a database check when
+      `preview_watermarked` is set, since the browser cannot be the gate.
 - [ ] **Rehearsal finding, 2026-10-05: the wrong payout country was too easy
       to pick.** Canada was preselected and one click created a permanent
       Stripe account (it happened twice in the rehearsal). Code: no country
