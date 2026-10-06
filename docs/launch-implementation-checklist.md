@@ -1369,9 +1369,29 @@ in [`environments.md`](environments.md).
       and shows the real reason when publishing is refused. **Unit tests
       only; tick when seen in a browser.**
 - [ ] **Found 2026-10-06: `npx eslint .` does not check the website's
-      TypeScript.** `eslint.config.js` only matches `*.js` and `*.jsx`, so
-      every `.ts` and `.tsx` file is skipped. "eslint clean" has only ever
-      meant the API and scripts. `tsc` does cover the TypeScript.
+      TypeScript.** `eslint.config.js` only matched `*.js` and `*.jsx`, so
+      every `.ts` and `.tsx` file was skipped. "eslint clean" had only ever
+      meant the API and scripts. `tsc` did cover the TypeScript.
+      **Fixed in config the same day:** added the `typescript-eslint`
+      package (dev-only) and a TypeScript block, with the React hooks and
+      fast-refresh rules applied to it. `npx eslint .` now reads 460 files
+      instead of 23. First run: 37 errors, 2 warnings. Ten trivial ones were
+      fixed (unused imports, unused constants, one `let` that should be
+      `const`, one empty `catch` given a comment). **Left for a decision:
+      27 errors, 2 warnings** —
+      11 `react-hooks/set-state-in-effect` (a form or selection is reset
+      from inside an effect; works, but can overwrite what someone is typing
+      when data reloads),
+      8 `react-refresh/only-export-components` (developer hot-reload only,
+      no effect on the live site),
+      8 unused variables (six are loading/error values on the admin creator
+      applications page that are fetched but never shown),
+      1 `react-hooks/exhaustive-deps` warning on the payment checkout page
+      (looks like a false alarm, not yet confirmed),
+      1 leftover `eslint-disable` comment. No `rules-of-hooks` findings.
+      Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
+      clean, `npx vite build` clean. **Tick when the 27 are fixed or the
+      rules are deliberately relaxed.**
 - [ ] **Listing thumbnails are uploads, with an optional watermark
       (2026-10-06).** The pasted link is gone. The page shrinks the image to
       1200 px, optionally watermarks it ("Made for Stream · @handle") and

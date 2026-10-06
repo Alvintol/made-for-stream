@@ -65,7 +65,7 @@ export const useSubmitModerationReport = () => {
       return data.id as string;
     },
 
-    onSuccess: async (_data, input) => {
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["moderationReports"],

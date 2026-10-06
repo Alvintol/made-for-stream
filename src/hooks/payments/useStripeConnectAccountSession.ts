@@ -1,6 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../../providers/AuthProvider";
-
 export type StripeConnectAccountSessionInput = {
   country: string;
   defaultCurrency: string;

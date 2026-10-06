@@ -41,14 +41,6 @@ type UseAdminListingsInput = {
   pageSize?: number;
 };
 
-const emptyResult: AdminListingsResult = {
-  items: [],
-  totalCount: 0,
-  page: 1,
-  pageSize: 25,
-  pageCount: 0,
-};
-
 // Normalises a handle search so admins can search with or without @
 const normaliseHandle = (value: string) => value.trim().replace(/^@+/, "");
 

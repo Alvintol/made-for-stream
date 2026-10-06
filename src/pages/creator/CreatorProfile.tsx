@@ -292,6 +292,7 @@ const CreatorProfile = () => {
 
       navigate(`/messages/${conversation.id}`);
     } catch {
+      // createInquiryMutation.error is rendered in the form below.
     }
   };
 

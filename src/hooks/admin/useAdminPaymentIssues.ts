@@ -65,14 +65,6 @@ type UseAdminPaymentIssuesInput = {
   pageSize?: number;
 };
 
-const emptyResult: AdminPaymentIssuesResult = {
-  items: [],
-  totalCount: 0,
-  page: 1,
-  pageSize: 20,
-  pageCount: 0,
-};
-
 const fetchAdminPaymentIssues = async (
   input: UseAdminPaymentIssuesInput
 ): Promise<AdminPaymentIssuesResult> => {

@@ -42,9 +42,7 @@ const createRpcSuccess = <Data,>(data: Data) => ({
 });
 
 const createSupabaseChain = (data: unknown = { id: "listing-1" }) => {
-  let chain: SupabaseChain;
-
-  chain = {
+  const chain: SupabaseChain = {
     update: vi.fn(() => chain),
     delete: vi.fn(() => chain),
     eq: vi.fn(() => chain),
