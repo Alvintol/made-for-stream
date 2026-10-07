@@ -12,7 +12,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useSellerAccess } from '../../hooks/creatorApplication/useSellerAccess';
 import { useMyAdminAccess } from '../../hooks/admin/useMyAdminAccess';
 import { useMessagesInbox } from '../../hooks/conversations/useMessagesInbox';
-import { useCollapsed } from "../../hooks/useCollapsed";
+import { useCollapsed, useFitCount } from "../../hooks/useCollapsed";
 import RegionPicker from "./RegionPicker";
 import ThemeToggle from "./ThemeToggle";
 
@@ -45,8 +45,8 @@ const classes = {
   collapsed: "invisible absolute -left-[9999px] top-0 w-max",
   menuButton: "themeToggle",
   navMenu: "navMenu right-4 top-12 sm:right-6",
-  categoryMenu: "navMenu left-4 top-full sm:left-6",
-  categoryMenuButton: "navChip navChipActive whitespace-nowrap gap-1.5",
+  categoryMoreWrap: "relative shrink-0",
+  categoryMenu: "navMenu top-full mt-1 w-max",
   navPillBase: "navPill",
   navPillActive: "navPillActive",
   navPillHot: "navPillHot",
@@ -67,7 +67,7 @@ const classes = {
 
   categoryWrap: "categoryBar",
   categoryInner: "categoryBarInner flex items-center gap-2",
-  categoryRow: "categoryRow shrink-0",
+  categoryRow: "categoryRow min-w-0",
 
   chip: "navChip whitespace-nowrap",
   chipActive: "navChip navChipActive whitespace-nowrap",
@@ -129,13 +129,13 @@ const Nav = () => {
   const topRowRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const categoryInnerRef = useRef<HTMLDivElement | null>(null);
-  const categoryRowRef = useRef<HTMLDivElement | null>(null);
+  const categoryMeasureRef = useRef<HTMLDivElement | null>(null);
   const [openMenu, setOpenMenu] = useState<"nav" | "categories" | null>(null);
 
   // Each row swaps its links for a menu button when they stop fitting,
   // whatever the screen size or the number of links.
   const navCollapsed = useCollapsed(topRowRef, navRef, MIN_SEARCH_WIDTH);
-  const categoriesCollapsed = useCollapsed(categoryInnerRef, categoryRowRef);
+  const categoryFitCount = useFitCount(categoryInnerRef, categoryMeasureRef);
 
   const { twitchByLogin, isFetching } = useTwitchStreams();
   const { user, loading } = useAuth();
@@ -179,11 +179,42 @@ const Nav = () => {
     return isActive ? classes.chipActive : classes.chip;
   };
 
-  const freeChipClass = isFreeRoute ? classes.chipActive : classes.chip;
+  // Every chip in the category rail, in order. As many as fit are shown; the
+  // rest sit behind the "Other categories" button.
+  const categoryItems = [
+    { key: "all", to: "/market", label: "All", className: chipClass(null) },
+    {
+      key: "free",
+      to: "/free",
+      label: "Free",
+      className: isFreeRoute ? classes.chipActive : classes.chip,
+    },
+    ...categoryLinks.map((category) => ({
+      key: category.key,
+      to: `/market?cat=${encodeURIComponent(category.key)}`,
+      label: category.label,
+      className: chipClass(category.key),
+    })),
+  ];
 
-  const activeCategoryLabel = isFreeRoute
-    ? "Free"
-    : (categoryLinks.find((category) => category.key === activeCat)?.label ?? "All");
+  const shownCategories = categoryItems.slice(0, categoryFitCount);
+  const otherCategories = categoryItems.slice(categoryFitCount);
+
+  // The button takes the active look when the current category is behind it.
+  const otherCategoriesClass = otherCategories.some(
+    (item) => item.className === classes.chipActive,
+  )
+    ? classes.chipActive
+    : classes.chip;
+
+  const otherCategoriesLabel =
+    shownCategories.length > 0 ? "Other categories" : "Categories";
+
+  const renderCategoryChip = (item: (typeof categoryItems)[number]) => (
+    <Link key={item.key} to={item.to} className={item.className}>
+      {item.label}
+    </Link>
+  );
 
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -295,28 +326,6 @@ const Nav = () => {
     </>
   );
 
-  const categoryChips = (
-    <>
-      <Link to="/market" className={chipClass(null)}>
-        All
-      </Link>
-
-      <Link to="/free" className={freeChipClass}>
-        Free
-      </Link>
-
-      {categoryLinks.map((category) => (
-        <Link
-          key={category.key}
-          to={`/market?cat=${encodeURIComponent(category.key)}`}
-          className={chipClass(category.key)}
-        >
-          {category.label}
-        </Link>
-      ))}
-    </>
-  );
-
   return (
     <header
       className={classes.header}
@@ -396,25 +405,48 @@ const Nav = () => {
 
       <div className={classes.categoryWrap}>
         <div className={classes.categoryInner} ref={categoryInnerRef}>
+          {/* Unseen copy of every chip and the button, for measuring only. */}
           <div
-            ref={categoryRowRef}
-            aria-hidden={categoriesCollapsed}
-            className={`${classes.categoryRow} ${categoriesCollapsed ? classes.collapsed : ""}`.trim()}
+            ref={categoryMeasureRef}
+            aria-hidden="true"
+            className={`${classes.categoryRow} ${classes.collapsed}`}
           >
-            {categoryChips}
+            {categoryItems.map((item) => (
+              <span key={item.key} className={item.className}>
+                {item.label}
+              </span>
+            ))}
+            <span className={classes.chip}>Other categories ▾</span>
           </div>
 
-          {categoriesCollapsed && (
-            <button
-              type="button"
-              className={classes.categoryMenuButton}
-              aria-expanded={openMenu === "categories"}
-              onClick={() => setOpenMenu(openMenu === "categories" ? null : "categories")}
-            >
-              <span aria-hidden="true">☰</span>
-              Categories: {activeCategoryLabel}
-            </button>
-          )}
+          <div className={classes.categoryRow} data-flexible>
+            {shownCategories.map(renderCategoryChip)}
+
+            {otherCategories.length > 0 && (
+              <div className={classes.categoryMoreWrap}>
+                <button
+                  type="button"
+                  className={otherCategoriesClass}
+                  aria-expanded={openMenu === "categories"}
+                  onClick={() => setOpenMenu(openMenu === "categories" ? null : "categories")}
+                >
+                  {otherCategoriesLabel} ▾
+                </button>
+
+                {openMenu === "categories" && (
+                  <nav
+                    aria-label="Other categories"
+                    // Opens leftwards from the button unless that would run
+                    // off the left edge of a narrow window.
+                    className={`${classes.categoryMenu} ${shownCategories.length > 1 ? "right-0" : "left-0"}`}
+                    onClick={() => setOpenMenu(null)}
+                  >
+                    {otherCategories.map(renderCategoryChip)}
+                  </nav>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className={classes.statementWrap}>
             <span className={classes.statement}>
@@ -427,16 +459,6 @@ const Nav = () => {
           </div>
         </div>
       </div>
-
-      {categoriesCollapsed && openMenu === "categories" && (
-        <nav
-          aria-label="Categories"
-          className={classes.categoryMenu}
-          onClick={() => setOpenMenu(null)}
-        >
-          {categoryChips}
-        </nav>
-      )}
     </header>
   );
 };
