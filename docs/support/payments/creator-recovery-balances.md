@@ -38,6 +38,7 @@ definition — every issue below has a real balance behind it.
 | "Why did my payment come out lower than expected?" | [`REC-002`](#rec-002--payment-diverted-toward-a-recovery-balance) |
 | "I tried to settle my balance by card and it didn't clear" | [`REC-003`](#rec-003--direct-settlement-did-not-clear-the-balance) |
 | "This creator will never pay this back" (internal) | [`REC-004`](#rec-004--admin-write-off) |
+| "Half my payment went to Made for Stream and I don't owe anything" | [`REC-005`](#rec-005--payment-diverted-with-no-balance-behind-it) |
 
 ---
 
@@ -213,6 +214,61 @@ separate status to fall out of sync).
 `creator_recovery_entries` (`entry_type = 'write_off'`, `actor_user_id` set
 to the admin). Record the business reason in the write-off's `reason` field
 itself — that is now the durable record, not a side channel.
+
+---
+
+## `REC-005` — Payment diverted with no balance behind it
+
+```yaml
+id: REC-005
+tier: 3
+signals:
+  - source: db
+    match: "listing_request_payments.recovery_instalment_cents > 0 for a creator with no creator_recovery_balances row"
+    where: "public.listing_request_payments"
+  - source: migration
+    match: "REC-005: a creator with no recovery balance must have a zero recovery instalment."
+    where: "supabase/migrations/20261007_147_fix_recovery_instalment_without_balance.sql"
+auto_fix: none
+reason_not_automatable: "money was kept from a creator who owed nothing; a person decides how it is returned"
+escalate_with:
+  - "the payment ids, their base_amount_cents and recovery_instalment_cents"
+  - "whether each payment's status is paid"
+```
+
+**Cause.** Found in the launch rehearsal on 2026-10-07, before any payment
+was taken. `resolve_listing_request_payment_recovery_instalment` used
+`least(cap, outstanding)`; Postgres's `least()` ignores a missing value, so a
+creator with **no** balance row got the 50% cap as their instalment. Half of
+every payment's base was folded into `application_fee_cents`. Fixed in
+`20261007_147`, which also carries a self-check that fails the migration if
+the function ever returns non-zero for a creator with no balance.
+
+**How to check.** This must return no rows:
+
+```sql
+select p.id, p.status, p.base_amount_cents, p.recovery_instalment_cents
+from public.listing_request_payments p
+where p.recovery_instalment_cents > 0
+  and not exists (
+    select 1 from public.creator_recovery_entries e
+    where e.related_payment_id = p.id
+  )
+  and not exists (
+    select 1 from public.creator_recovery_balances b
+    where b.creator_user_id = p.creator_user_id
+      and b.outstanding_cents > 0
+  );
+```
+
+**Fix.** Confirm `20261007_147` is applied (the function body contains
+`coalesce`). Unpaid rows correct themselves the next time checkout opens
+(`recompute_listing_request_payment_amounts`). A **paid** row means the
+creator was short-paid by `recovery_instalment_cents`: stop, treat it as an
+incident, and return the money to the creator by hand.
+
+**Money impact.** Up to 50% of the base of each affected paid payment, owed
+to the creator. None occurred: no payment was taken while the defect existed.
 
 ---
 
