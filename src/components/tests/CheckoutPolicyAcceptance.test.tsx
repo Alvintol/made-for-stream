@@ -43,7 +43,7 @@ describe("CheckoutPolicyAcceptance", () => {
     mocks.queryOptions = null;
   });
 
-  it("only counts acceptances tied to this listing request", () => {
+  it("only counts acceptances tied to this listing commission", () => {
     renderAcceptance();
 
     expect(mocks.queryOptions).toMatchObject({ relatedListingRequestId: "request-1" });
@@ -112,7 +112,7 @@ describe("CheckoutPolicyAcceptance", () => {
     );
   });
 
-  it("records each policy against the listing request, then continues", async () => {
+  it("records each policy against the listing commission, then continues", async () => {
     const onAccepted = renderAcceptance();
 
     fireEvent.click(getTermsCheckbox());
@@ -142,7 +142,7 @@ describe("CheckoutPolicyAcceptance", () => {
     expect(onAccepted).not.toHaveBeenCalled();
   });
 
-  it("goes straight through when this request already has current acceptances", async () => {
+  it("goes straight through when this commission already has current acceptances", async () => {
     mocks.acceptances = [
       { policy_type: "refund", policy_version: refundPolicyVersion, accepted_at: "2026-09-18T12:00:00Z" },
       { policy_type: "payment_terms", policy_version: paymentTermsVersion, accepted_at: "2026-09-18T12:00:00Z" },

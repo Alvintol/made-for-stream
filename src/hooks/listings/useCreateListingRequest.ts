@@ -36,7 +36,7 @@ export const useCreateListingRequest = () => {
   return useMutation({
     mutationFn: async (input: CreateListingRequestInput) => {
       if (!user?.id) {
-        throw new Error("You must be signed in to submit a request.");
+        throw new Error("You must be signed in to send a commission request.");
       }
 
       const requestTitle = input.requestTitle.trim();
@@ -71,7 +71,7 @@ export const useCreateListingRequest = () => {
       }
 
       if (!data?.id) {
-        throw new Error("The request could not be created.");
+        throw new Error("The commission request could not be sent.");
       }
 
       return data.id as string;

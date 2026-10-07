@@ -69,7 +69,7 @@ describe("ListingRequestProgressUpdateForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("does not render when the request is no longer accepted", () => {
+  it("does not render when the commission is no longer accepted", () => {
     render(
       <ListingRequestProgressUpdateForm
         requestStatus="archived"

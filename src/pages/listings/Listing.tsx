@@ -355,14 +355,14 @@ const ListingPage = () => {
 
                 {listing.fulfilment_mode === "request" ? (
                   activeRequestQuery.isLoading ? (
-                    <span className={classes.ctaLink}>Checking request…</span>
+                    <span className={classes.ctaLink}>Checking commission…</span>
                   ) : activeListingRequest ? (
                     <Link className={classes.ctaLink} to={`/requests/${activeListingRequest.id}`}>
-                      View existing request
+                      View existing commission
                     </Link>
                   ) : (
                     <Link className={classes.ctaLink} to={`/listing/${listing.id}/request`}>
-                      Submit request
+                      Send commission request
                     </Link>
                   )
                 ) : (

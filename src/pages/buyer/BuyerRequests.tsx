@@ -74,11 +74,11 @@ const viewContent: Record<
   }
 > = {
   active: {
-    title: "My requests",
+    title: "My commissions",
     description:
-      "Review active requests you have submitted to creators.",
+      "Review active commissions you have submitted to creators.",
     emptyMessage:
-      "You do not have any active requests.",
+      "You do not have any active commissions.",
   },
 
   completed: {
@@ -90,11 +90,11 @@ const viewContent: Record<
   },
 
   archived: {
-    title: "Archived requests",
+    title: "Archived commissions",
     description:
-      "Review declined, cancelled, and archived requests.",
+      "Review declined, cancelled, and archived commissions.",
     emptyMessage:
-      "You do not have any archived requests.",
+      "You do not have any archived commissions.",
   },
 };
 
@@ -190,7 +190,7 @@ const BuyerRequests = ({
           }
           to="/requests"
         >
-          Active requests
+          Active commissions
         </Link>
 
         <Link
@@ -212,13 +212,13 @@ const BuyerRequests = ({
           }
           to="/requests/archived"
         >
-          Archived requests
+          Archived commissions
         </Link>
 
         <div className={classes.pagerText}>
           {isLoading
             ? "Loading…"
-            : `${totalCount} request(s) found`}
+            : `${totalCount} commission(s) found`}
         </div>
 
         {pageCount > 0 && (
@@ -230,14 +230,14 @@ const BuyerRequests = ({
 
       {error && (
         <div className={classes.errorCard}>
-          Your requests could not be loaded
+          Your commissions could not be loaded
           right now.
         </div>
       )}
 
       {isLoading && (
         <div className={classes.loadingText}>
-          Loading requests…
+          Loading commissions…
         </div>
       )}
 
@@ -460,7 +460,7 @@ const BuyerRequests = ({
                       }
                       to={`/requests/${item.request.id}`}
                     >
-                      View request
+                      View commission
                     </Link>
                   </div>
                 </div>

@@ -95,28 +95,28 @@ export const getListingRequestStatusSummary = (
   cancellationContext?: ListingRequestCancellationContext
 ): string =>
   status === "submitted"
-    ? "This request is currently under review by the creator."
+    ? "This commission request is currently under review by the creator."
     : status === "accepted"
-      ? "The creator has accepted this request."
+      ? "The creator has accepted this commission request."
       : status === "completed"
         ? "The buyer approved the final delivery and the project is complete."
         : status === "declined"
-          ? "The creator has declined this request."
+          ? "The creator has declined this commission request."
           : status === "cancelled"
             ? cancellationContext?.cancellation_reason
-              ? `This request was cancelled: ${cancellationContext.cancellation_reason}`
-              : "This request has been cancelled."
+              ? `This commission was cancelled: ${cancellationContext.cancellation_reason}`
+              : "This commission has been cancelled."
             : archiveContext?.archived_by_user_id &&
               archiveContext.buyer_user_id &&
               archiveContext.archived_by_user_id ===
               archiveContext.buyer_user_id
-              ? "The buyer withdrew this request."
+              ? "The buyer withdrew this commission request."
               : archiveContext?.archived_by_user_id &&
                 archiveContext.creator_user_id &&
                 archiveContext.archived_by_user_id ===
                 archiveContext.creator_user_id
-                ? "The creator archived this request."
-                : "This request has been archived.";
+                ? "The creator archived this commission."
+                : "This commission has been archived.";
 
 export const canAcceptListingRequest = (
   status: ListingRequestStatus

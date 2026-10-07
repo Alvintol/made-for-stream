@@ -27,7 +27,7 @@ export const useCancelListingRequestBeforePayment = () => {
       reason,
     }: CancelListingRequestBeforePaymentInput) => {
       if (!user?.id) {
-        throw new Error("You must be signed in to cancel this request.");
+        throw new Error("You must be signed in to cancel this commission.");
       }
 
       const { data, error } = await supabase.rpc(
@@ -40,7 +40,7 @@ export const useCancelListingRequestBeforePayment = () => {
 
       if (error) {
         throw new Error(
-          error.message || "This request could not be cancelled."
+          error.message || "This commission could not be cancelled."
         );
       }
 
@@ -49,7 +49,7 @@ export const useCancelListingRequestBeforePayment = () => {
       ) as CancelListingRequestBeforePaymentResult | null;
 
       if (!result?.listing_request_id) {
-        throw new Error("This request could not be cancelled.");
+        throw new Error("This commission could not be cancelled.");
       }
 
       if (result.payments_to_expire?.length) {

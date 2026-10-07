@@ -15,8 +15,8 @@ import {
   getListingRequestDisplayTitle,
 } from "../listings/listings";
 
-describe("listing request status helpers", () => {
-  it("maps request list views to their statuses", () => {
+describe("listing commission status helpers", () => {
+  it("maps commission list views to their statuses", () => {
     expect(
       getListingRequestStatusesForView("active")
     ).toEqual(["submitted", "accepted"]);
@@ -150,13 +150,13 @@ describe("listing request status helpers", () => {
     expect(
       getListingRequestStatusSummary("submitted")
     ).toBe(
-      "This request is currently under review by the creator."
+      "This commission request is currently under review by the creator."
     );
 
     expect(
       getListingRequestStatusSummary("accepted")
     ).toBe(
-      "The creator has accepted this request."
+      "The creator has accepted this commission request."
     );
 
     expect(
@@ -168,19 +168,19 @@ describe("listing request status helpers", () => {
     expect(
       getListingRequestStatusSummary("declined")
     ).toBe(
-      "The creator has declined this request."
+      "The creator has declined this commission request."
     );
 
     expect(
       getListingRequestStatusSummary("archived")
     ).toBe(
-      "This request has been archived."
+      "This commission has been archived."
     );
 
     expect(
       getListingRequestStatusSummary("cancelled")
     ).toBe(
-      "This request has been cancelled."
+      "This commission has been cancelled."
     );
   });
 
@@ -191,7 +191,7 @@ describe("listing request status helpers", () => {
         creator_user_id: "creator-1",
         archived_by_user_id: "buyer-1",
       })
-    ).toBe("The buyer withdrew this request.");
+    ).toBe("The buyer withdrew this commission request.");
 
     expect(
       getListingRequestStatusSummary("archived", {
@@ -199,7 +199,7 @@ describe("listing request status helpers", () => {
         creator_user_id: "creator-1",
         archived_by_user_id: "creator-1",
       })
-    ).toBe("The creator archived this request.");
+    ).toBe("The creator archived this commission.");
 
     expect(
       getListingRequestStatusSummary("archived", {
@@ -207,7 +207,7 @@ describe("listing request status helpers", () => {
         creator_user_id: "creator-1",
         archived_by_user_id: null,
       })
-    ).toBe("This request has been archived.");
+    ).toBe("This commission has been archived.");
   });
 
   it("includes the cancellation reason in the cancelled summary when present", () => {
@@ -218,7 +218,7 @@ describe("listing request status helpers", () => {
         { cancellation_reason: "Schedule no longer works for either side." }
       )
     ).toBe(
-      "This request was cancelled: Schedule no longer works for either side."
+      "This commission was cancelled: Schedule no longer works for either side."
     );
   });
 
@@ -240,7 +240,7 @@ describe("listing request status helpers", () => {
     ).toBe(false);
   });
 
-  it("only allows accept and decline while the request is submitted", () => {
+  it("only allows accept and decline while the commission is submitted", () => {
     expect(
       canAcceptListingRequest("submitted")
     ).toBe(true);
@@ -282,7 +282,7 @@ describe("listing request status helpers", () => {
     ).toBe(false);
   });
 
-  it("only allows archive while the request is submitted", () => {
+  it("only allows archive while the commission is submitted", () => {
     expect(
       canArchiveListingRequest("submitted")
     ).toBe(true);
@@ -305,8 +305,8 @@ describe("listing request status helpers", () => {
   });
 });
 
-describe("listing request display helpers", () => {
-  it("uses the structured request title before the listing snapshot title", () => {
+describe("listing commission display helpers", () => {
+  it("uses the structured commission title before the listing snapshot title", () => {
     expect(
       getListingRequestDisplayTitle({
         request_title: " Custom cozy emote pack ",
@@ -317,7 +317,7 @@ describe("listing request display helpers", () => {
     ).toBe("Custom cozy emote pack");
   });
 
-  it("falls back to the listing snapshot title for legacy requests", () => {
+  it("falls back to the listing snapshot title for legacy commissions", () => {
     expect(
       getListingRequestDisplayTitle({
         request_title: null,
@@ -334,26 +334,26 @@ describe("listing request display helpers", () => {
         request_title: "   ",
         listing_snapshot: null,
       })
-    ).toBe("Untitled request");
+    ).toBe("Untitled commission");
   });
 
-  it("uses structured request details before the legacy message", () => {
+  it("uses structured commission details before the legacy message", () => {
     expect(
       getListingRequestDisplayPreview({
         request_details:
           " I need three cozy emotes. ",
-        message: "Legacy request message.",
+        message: "Legacy commission message.",
       })
     ).toBe("I need three cozy emotes.");
   });
 
-  it("falls back to the legacy message for old requests", () => {
+  it("falls back to the legacy message for old commissions", () => {
     expect(
       getListingRequestDisplayPreview({
         request_details: null,
-        message: " Legacy request message. ",
+        message: " Legacy commission message. ",
       })
-    ).toBe("Legacy request message.");
+    ).toBe("Legacy commission message.");
   });
 
   it("truncates long previews", () => {

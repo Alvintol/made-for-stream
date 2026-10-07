@@ -73,7 +73,7 @@ describe("ListingRequestChangeOrderSummary", () => {
 
     expect(
       screen.queryByText(
-        "No project change orders have been created for this request yet."
+        "No project change orders have been created for this commission yet."
       )
     ).not.toBeInTheDocument();
   });
@@ -88,7 +88,7 @@ describe("ListingRequestChangeOrderSummary", () => {
 
     expect(
       screen.getByText(
-        "No project change orders have been created for this request yet."
+        "No project change orders have been created for this commission yet."
       )
     ).toBeInTheDocument();
   });
@@ -201,7 +201,7 @@ describe("ListingRequestChangeOrderSummary", () => {
 
     expect(
       screen.getByText(
-        "No project change orders have been created for this request yet."
+        "No project change orders have been created for this commission yet."
       )
     ).toBeInTheDocument();
   });

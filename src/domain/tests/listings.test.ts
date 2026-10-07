@@ -22,19 +22,19 @@ describe("listings domain helpers", () => {
     expect(getAllowedFulfilmentModes("service")).toEqual(["request"]);
   });
 
-  it("normalises invalid instant combinations back to request", () => {
+  it("normalises invalid instant combinations back to commission", () => {
     expect(normaliseFulfilmentMode("digital", "instant")).toBe("instant");
     expect(normaliseFulfilmentMode("digital", "request")).toBe("request");
     expect(normaliseFulfilmentMode("commission", "instant")).toBe("request");
     expect(normaliseFulfilmentMode("service", "instant")).toBe("request");
   });
 
-  it("returns request CTA copy for request listings", () => {
+  it("returns commission CTA copy for commission listings", () => {
     expect(getFulfilmentModeCopy("request")).toEqual({
-      title: "Request flow coming soon",
+      title: "Commission flow coming soon",
       text:
         "This listing is intended to start with creator review or confirmation before work begins.",
-      primaryLabel: "Request this listing soon",
+      primaryLabel: "Commission commissions coming soon",
     });
   });
 

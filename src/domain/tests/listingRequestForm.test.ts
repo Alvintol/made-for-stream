@@ -5,7 +5,7 @@ import {
   validateListingRequestForm,
 } from "../listings/listingRequestForm";
 
-describe("listing request form helpers", () => {
+describe("listing commission form helpers", () => {
   it("parses reference links one per line and removes empty rows", () => {
     expect(
       parseListingRequestReferenceLinks(`
@@ -45,7 +45,7 @@ describe("listing request form helpers", () => {
 
   it("stores optional values as empty-safe values", () => {
     const result = validateListingRequestForm({
-      requestTitle: "Simple request",
+      requestTitle: "Simple commission",
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: "   ",
       budgetText: "   ",
@@ -54,7 +54,7 @@ describe("listing request form helpers", () => {
 
     expect(result.errors).toEqual({});
     expect(result.values).toEqual({
-      requestTitle: "Simple request",
+      requestTitle: "Simple commission",
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: undefined,
       budgetAmount: null,
@@ -80,7 +80,7 @@ describe("listing request form helpers", () => {
 
   it("rejects invalid budget values", () => {
     const result = validateListingRequestForm({
-      requestTitle: "Simple request",
+      requestTitle: "Simple commission",
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: "",
       budgetText: "-1",
@@ -95,7 +95,7 @@ describe("listing request form helpers", () => {
 
   it("rejects more than five reference links", () => {
     const result = validateListingRequestForm({
-      requestTitle: "Simple request",
+      requestTitle: "Simple commission",
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: "",
       budgetText: "",
@@ -115,7 +115,7 @@ describe("listing request form helpers", () => {
 
   it("rejects non-http reference links", () => {
     const result = validateListingRequestForm({
-      requestTitle: "Simple request",
+      requestTitle: "Simple commission",
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: "",
       budgetText: "",

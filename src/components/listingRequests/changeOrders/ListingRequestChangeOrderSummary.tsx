@@ -194,7 +194,7 @@ const ListingRequestChangeOrderSummary = ({
           visibleChangeOrders.length === 0 && (
             <div className={classes.empty}>
               No project change orders have been created for
-              this request yet.
+              this commission yet.
             </div>
           )}
 

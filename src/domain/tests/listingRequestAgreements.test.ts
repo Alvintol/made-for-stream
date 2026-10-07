@@ -17,7 +17,7 @@ import {
   STANDARD_FEE_BPS,
 } from "../listings/listingRequestAgreements";
 
-describe("listing request agreement helpers", () => {
+describe("listing commission agreement helpers", () => {
   it("applies the two-round fallback when included_revision_count is not stated", () => {
     expect(getListingRequestIncludedRevisionCount(null)).toBe(2);
     expect(getListingRequestIncludedRevisionCount(0)).toBe(0);
@@ -119,7 +119,7 @@ describe("listing request agreement helpers", () => {
     expect(canSendListingRequestAgreement("buyer_accepted")).toBe(false);
   });
 
-  it("allows work to start only after request acceptance, agreement acceptance, and starting payment clearance", () => {
+  it("allows work to start only after commission acceptance, agreement acceptance, and starting payment clearance", () => {
     expect(
       canStartWorkForAcceptedRequest({
         requestStatus: "accepted",
@@ -162,7 +162,7 @@ describe("listing request agreement helpers", () => {
   });
 });
 
-describe("listing request buyer timeline hold helpers", () => {
+describe("listing commission buyer timeline hold helpers", () => {
   it("maps buyer hold reasons to labels", () => {
     expect(
       getListingRequestBuyerHoldReasonLabel("agreement_acceptance_pending")
@@ -196,7 +196,7 @@ describe("listing request buyer timeline hold helpers", () => {
   });
 });
 
-describe("listing request agreement acknowledgement helpers", () => {
+describe("listing commission agreement acknowledgement helpers", () => {
   const agreement = {
     id: "agreement-1",
     scope_summary: "Create a custom overlay package.",

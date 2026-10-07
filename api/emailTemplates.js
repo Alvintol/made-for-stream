@@ -116,12 +116,12 @@ export const renderPaymentReceiptEmail = ({
 
   return {
     subject,
-    text: `We received your payment of ${amount} for "${requestTitle}". View the request: ${requestUrl}`,
+    text: `We received your payment of ${amount} for "${requestTitle}". View the commission: ${requestUrl}`,
     html: wrap(
       "Payment received",
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">We received your payment of <strong>${amount}</strong> for "${escapeHtml(requestTitle)}".</p>`,
       requestUrl,
-      "View request",
+      "View commission",
     ),
   };
 };
@@ -143,7 +143,7 @@ export const renderFirstNoticeEmail = ({
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">On <strong>${escapeHtml(requestTitle)}</strong>, the other party needs: ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">Please reply by <strong>${expiresLabel}</strong>. A final notice may follow if there is no reply.</p>`,
       requestUrl,
-      "Open request",
+      "Open commission",
     ),
   };
 };
@@ -165,7 +165,7 @@ export const renderFinalNoticeEmail = ({
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">This is a <strong>final notice</strong> on "${escapeHtml(requestTitle)}": ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">You have until <strong>${expiresLabel}</strong> to reply. After that, the other party may request that Made for Stream administratively close this project.</p>`,
       requestUrl,
-      "Open request",
+      "Open commission",
     ),
   };
 };

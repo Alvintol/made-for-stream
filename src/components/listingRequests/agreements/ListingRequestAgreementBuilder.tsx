@@ -484,7 +484,7 @@ const ListingRequestAgreementBuilder = ({
         <div className={classes.header}>
           <h2 className={classes.title}>Create project agreement</h2>
           <p className={classes.text}>
-            Turn the accepted request into a formal agreement the buyer must
+            Turn the accepted commission request into a formal agreement the buyer must
             review and accept before payment or work begins.
           </p>
         </div>

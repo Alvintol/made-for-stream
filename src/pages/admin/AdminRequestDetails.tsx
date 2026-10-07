@@ -158,13 +158,13 @@ const AdminRequestDetails = () => {
     return (
       <div className={classes.page}>
         <Link to="/admin/requests" className={classes.backLink}>
-          ← Back to admin requests
+          ← Back to admin commissions
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Request not found</h1>
+          <h1 className={classes.h1}>Commission not found</h1>
           <p className={classes.sub}>
-            This request could not be loaded for admin review.
+            This commission could not be loaded for admin review.
           </p>
         </div>
       </div>
@@ -282,7 +282,7 @@ const AdminRequestDetails = () => {
     },
     {
       id: "request",
-      title: "Buyer request",
+      title: "Commission request",
       summary: "Brief, timeline, budget and references",
       ...flags("request"),
       defaultOpen: true,
@@ -400,8 +400,8 @@ const AdminRequestDetails = () => {
       header={
         <StatusHeader
           backTo="/admin/requests"
-          backLabel="Back to admin requests"
-          eyebrow="Admin request review"
+          backLabel="Back to admin commissions"
+          eyebrow="Admin commission review"
           title={snapshot.title}
           meta={meta}
           statusLabel={getListingRequestStatusLabel(request.status, request, request)}
@@ -447,10 +447,10 @@ const AdminRequestDetails = () => {
           requestReadOnly={requestReadOnly}
           requestReadOnlyMessage={
             request.status === "archived"
-              ? "Archived requests are read-only."
+              ? "Archived commissions are read-only."
               : request.status === "cancelled"
-                ? "Cancelled requests are read-only."
-                : "Declined requests are read-only because the conversation has been ended."
+                ? "Cancelled commissions are read-only."
+                : "Declined commission requests are read-only because the conversation has been ended."
           }
         />
       }

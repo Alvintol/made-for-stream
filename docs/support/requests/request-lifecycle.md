@@ -40,6 +40,12 @@ The workspace UI computes whose turn it is from
 stuck, that "Next step" card is the fastest way to see what the system thinks is
 outstanding.
 
+**What users call it.** Since 2026-10-07 the site and its emails say
+**commission**, and **commission request** until the creator accepts. A user
+who says "my commission is stuck" means a row in `listing_requests`. The
+database, its error messages (the `match:` strings below), the web addresses
+(`/requests/...`) and the policies still say "request".
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |

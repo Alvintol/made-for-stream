@@ -121,7 +121,7 @@ describe(
       });
     });
 
-    it("requests revisions with trimmed notes", async () => {
+    it("commissions revisions with trimmed notes", async () => {
       const user = userEvent.setup();
 
       render(

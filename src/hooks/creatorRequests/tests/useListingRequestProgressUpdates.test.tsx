@@ -104,7 +104,7 @@ describe("useListingRequestProgressUpdates", () => {
     });
   });
 
-  it("loads progress updates newest first for the request", async () => {
+  it("loads progress updates newest first for the commission", async () => {
     const { result } = renderHook(
       () => useListingRequestProgressUpdates("request-1"),
       {

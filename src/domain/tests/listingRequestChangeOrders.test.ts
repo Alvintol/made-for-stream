@@ -16,7 +16,7 @@ import {
   isListingRequestChangeOrderBuyerVisible,
 } from "../listings/listingRequestChangeOrders";
 
-describe("listing request change orders", () => {
+describe("listing commission change orders", () => {
   it("maps change-order statuses to display labels", () => {
     expect(
       getListingRequestChangeOrderStatusLabel("draft")
@@ -286,7 +286,7 @@ describe("listing request change orders", () => {
     ).toBe(true);
   });
 
-  it("allows change-order creation for accepted requests with buyer-accepted agreements and no pending change order", () => {
+  it("allows change-order creation for accepted commissions with buyer-accepted agreements and no pending change order", () => {
     expect(
       canCreateListingRequestChangeOrder(
         "accepted",
@@ -303,7 +303,7 @@ describe("listing request change orders", () => {
     ).toBe(true);
   });
 
-  it("blocks change-order creation when the request or agreement is not ready", () => {
+  it("blocks change-order creation when the commission or agreement is not ready", () => {
     expect(
       canCreateListingRequestChangeOrder(
         "submitted",

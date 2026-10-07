@@ -80,7 +80,7 @@ const renderPage = () =>
     <MemoryRouter initialEntries={["/listing/listing-1/request"]}>
       <Routes>
         <Route path="/listing/:id/request" element={<RequestListing />} />
-        <Route path="/requests/:id" element={<div>Request detail loaded</div>} />
+        <Route path="/requests/:id" element={<div>Commission detail loaded</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -118,7 +118,7 @@ describe("RequestListing", () => {
     renderPage();
 
     expect(
-      screen.getByRole("heading", { name: "Sign in to submit a request" })
+      screen.getByRole("heading", { name: "Sign in to send a commission request" })
     ).toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
@@ -138,11 +138,11 @@ describe("RequestListing", () => {
 
     expect(screen.getByRole("heading", { name: "Own listing" })).toBeInTheDocument();
     expect(
-      screen.getByText("You cannot submit a buyer request for your own listing.")
+      screen.getByText("You cannot send a commission request for your own listing.")
     ).toBeInTheDocument();
   });
 
-  it("renders listing context and the structured request form", () => {
+  it("renders listing context and the structured commission form", () => {
     renderPage();
 
     expect(screen.getByText("Custom Emote Pack")).toBeInTheDocument();
@@ -150,17 +150,17 @@ describe("RequestListing", () => {
     expect(screen.getByText("$50 CAD")).toBeInTheDocument();
     expect(screen.getByText("3 emotes")).toBeInTheDocument();
 
-    expect(screen.getByLabelText("Request title / summary")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commission title / summary")).toBeInTheDocument();
     expect(screen.getByLabelText("Details")).toBeInTheDocument();
     expect(screen.getByLabelText("Deadline / timeline optional")).toBeInTheDocument();
     expect(screen.getByLabelText("Budget optional")).toBeInTheDocument();
     expect(screen.getByLabelText("References optional")).toBeInTheDocument();
   });
 
-  it("submits a normal buyer request with listing id and snapshot", async () => {
+  it("submits a normal buyer commission with listing id and snapshot", async () => {
     renderPage();
 
-    fireEvent.change(screen.getByLabelText("Request title / summary"), {
+    fireEvent.change(screen.getByLabelText("Commission title / summary"), {
       target: {
         value: "Custom cozy emote pack",
       },
@@ -190,7 +190,7 @@ describe("RequestListing", () => {
       },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Submit request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
 
     await waitFor(() => {
       expect(mocks.createRequest).toHaveBeenCalledWith(
@@ -214,10 +214,10 @@ describe("RequestListing", () => {
     });
   });
 
-  it("routes to the buyer request detail after success", async () => {
+  it("routes to the buyer commission detail after success", async () => {
     renderPage();
 
-    fireEvent.change(screen.getByLabelText("Request title / summary"), {
+    fireEvent.change(screen.getByLabelText("Commission title / summary"), {
       target: {
         value: "Custom cozy emote pack",
       },
@@ -229,12 +229,12 @@ describe("RequestListing", () => {
       },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Submit request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
 
-    expect(await screen.findByText("Request detail loaded")).toBeInTheDocument();
+    expect(await screen.findByText("Commission detail loaded")).toBeInTheDocument();
   });
 
-  it("shows a link to the existing request when the buyer already has an active request", () => {
+  it("shows a link to the existing commission when the buyer already has an active commission", () => {
     mocks.useActiveListingRequestForListing.mockReturnValue({
       data: {
         id: "request-1",
@@ -251,15 +251,15 @@ describe("RequestListing", () => {
     renderPage();
 
     expect(
-      screen.getByRole("heading", { name: "Request already submitted" })
+      screen.getByRole("heading", { name: "Commission request already sent" })
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("link", { name: "View existing request" })
+      screen.getByRole("link", { name: "View existing commission" })
     ).toHaveAttribute("href", "/requests/request-1");
 
     expect(
-      screen.queryByRole("button", { name: "Submit request" })
+      screen.queryByRole("button", { name: "Send commission request" })
     ).not.toBeInTheDocument();
   });
 
@@ -267,9 +267,9 @@ describe("RequestListing", () => {
     renderPage();
 
     fireEvent.change(screen.getByLabelText("Budget optional"), { target: { value: "-4" } });
-    fireEvent.click(screen.getByRole("button", { name: "Submit request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
 
-    const title = screen.getByLabelText("Request title / summary");
+    const title = screen.getByLabelText("Commission title / summary");
 
     expect(title).toHaveAttribute("aria-invalid", "true");
     expect(title).toHaveFocus();
@@ -293,7 +293,7 @@ describe("RequestListing", () => {
     expect(screen.getByText("2/5 links")).toBeInTheDocument();
   });
 
-  it("explains when a listing does not take requests", () => {
+  it("explains when a listing does not take commissions", () => {
     mocks.usePublicListing.mockReturnValue({
       data: createListingData({ fulfilment_mode: "instant" }),
       isLoading: false,
@@ -302,7 +302,7 @@ describe("RequestListing", () => {
 
     renderPage();
 
-    expect(screen.getByRole("heading", { name: "Request flow unavailable" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Submit request" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Commission flow unavailable" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send commission request" })).not.toBeInTheDocument();
   });
 });

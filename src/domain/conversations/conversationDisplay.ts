@@ -18,7 +18,7 @@ export const getConversationDisplayTitle = (
   const listingTitle = item.listing?.title?.trim();
 
   if (item.conversation.conversation_type === "listing_request") {
-    return subject || listingTitle || "Listing request";
+    return subject || listingTitle || "Commission request";
   }
 
   if (item.conversation.conversation_type === "listing_inquiry") {

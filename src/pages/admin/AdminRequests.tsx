@@ -163,10 +163,10 @@ const AdminRequests = () => {
       </Link>
 
       <div className={classes.header}>
-        <h1 className={classes.h1}>Admin requests</h1>
+        <h1 className={classes.h1}>Admin commissions</h1>
 
         <p className={classes.sub}>
-          Review buyer requests, creator responses, decline reasons, and frozen
+          Review commissions, creator responses, decline reasons, and frozen
           listing snapshots for dispute support.
         </p>
       </div>
@@ -175,11 +175,11 @@ const AdminRequests = () => {
         <div className={classes.card}>
           <div className={classes.section}>
             <h2 className={classes.sectionTitle}>
-              Stale requests ({staleRequests.length})
+              Stale commissions ({staleRequests.length})
             </h2>
 
             <p className={classes.text}>
-              No activity in 14+ days on an active request. May need a
+              No activity in 14+ days on an active commission. May need a
               non-response notice.
             </p>
 
@@ -190,7 +190,7 @@ const AdminRequests = () => {
                     className={classes.btnOutline}
                     to={`/admin/requests/${item.listing_request_id}`}
                   >
-                    View request
+                    View commission
                   </Link>
 
                   <span className={classes.textMuted}>
@@ -306,7 +306,7 @@ const AdminRequests = () => {
             </button>
 
             <div className={classes.pagerText}>
-              {isLoading ? "Loading…" : `${totalCount} request(s) found`}
+              {isLoading ? "Loading…" : `${totalCount} commission(s) found`}
             </div>
 
             {pageCount > 0 && (
@@ -320,15 +320,15 @@ const AdminRequests = () => {
 
       {error && (
         <div className={classes.errorCard}>
-          Requests could not be loaded right now.
+          Commissions could not be loaded right now.
         </div>
       )}
 
-      {isLoading && <div className={classes.loadingText}>Loading requests…</div>}
+      {isLoading && <div className={classes.loadingText}>Loading commissions…</div>}
 
       {!isLoading && !error && items.length === 0 && (
         <div className={classes.card}>
-          <p className={classes.text}>No requests matched the current filters.</p>
+          <p className={classes.text}>No commissions matched the current filters.</p>
         </div>
       )}
 
@@ -402,7 +402,7 @@ const AdminRequests = () => {
                     className={classes.btnPrimary}
                     to={`/admin/requests/${item.request.id}`}
                   >
-                    View request
+                    View commission
                   </Link>
 
                   <Link

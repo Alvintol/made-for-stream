@@ -35,7 +35,7 @@ const getPaymentMessage = ({
       className: classes.info,
       title: "Payment not completed",
       text:
-        "The checkout session is still open or was not completed. You can return to the request and try again.",
+        "The checkout session is still open or was not completed. You can return to the commission and try again.",
     };
   }
 
@@ -68,7 +68,7 @@ const PaymentReturn = () => {
         <h1 className={classes.title}>Payment status</h1>
         <p className={classes.text}>
           Thanks for returning to Made for Stream. Stripe confirms payment status
-          through webhooks, so this page may update slightly before the request
+          through webhooks, so this page may update slightly before the commission
           page does.
         </p>
       </section>
@@ -96,7 +96,7 @@ const PaymentReturn = () => {
 
       <div className={classes.actions}>
         <Link className={classes.btn} to="/requests">
-          Back to requests
+          Back to commissions
         </Link>
         <Link className={classes.btn} to="/messages">
           Open inbox

@@ -24,7 +24,7 @@ const MIN_REASON_LENGTH = 10;
 const MAX_REASON_LENGTH = 1000;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "This request could not be cancelled.";
+  error instanceof Error ? error.message : "This commission could not be cancelled.";
 
 // Sprint 4 (launch-scope.md section 5.1): either party may cancel an
 // accepted request unilaterally before any payment has been collected. No
@@ -55,7 +55,7 @@ const ListingRequestCancelBeforePaymentAction = ({
   return (
     <div className="space-y-3">
       <p className={classes.text}>
-        Cancel this request if the project should not go ahead. Nothing has
+        Cancel this commission if the project should not go ahead. Nothing has
         been paid yet, so this is unilateral -- no review, no settlement.
       </p>
 
@@ -90,7 +90,7 @@ const ListingRequestCancelBeforePaymentAction = ({
               disabled={isPending || !isReasonValid}
               onClick={() => void handleConfirm()}
             >
-              {isPending ? "Cancelling request…" : "Confirm cancellation"}
+              {isPending ? "Cancelling commission…" : "Confirm cancellation"}
             </button>
 
             <button
@@ -102,7 +102,7 @@ const ListingRequestCancelBeforePaymentAction = ({
                 setReason("");
               }}
             >
-              Keep request
+              Keep commission
             </button>
           </div>
         </FadeIn>
@@ -113,7 +113,7 @@ const ListingRequestCancelBeforePaymentAction = ({
           disabled={isPending}
           onClick={() => setIsConfirming(true)}
         >
-          Cancel request
+          Cancel commission
         </button>
       )}
     </div>

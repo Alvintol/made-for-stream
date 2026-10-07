@@ -87,7 +87,7 @@ const AdminNoticeClosurePanel = ({
       <div className={classes.title}>Non-response notices &amp; closure</div>
 
       {notices.length === 0 ? (
-        <p className={classes.text}>No notices have been sent on this request.</p>
+        <p className={classes.text}>No notices have been sent on this commission.</p>
       ) : (
         <ul className={classes.list}>
           {notices.map((notice) => (
@@ -177,7 +177,7 @@ const AdminNoticeClosurePanel = ({
 
         {closeRequest.error && (
           <div className={classes.errorBox}>
-            {getErrorMessage(closeRequest.error, "This request could not be closed.")}
+            {getErrorMessage(closeRequest.error, "This commission could not be closed.")}
           </div>
         )}
 
@@ -199,7 +199,7 @@ const AdminNoticeClosurePanel = ({
           </option>
           <option value="buyer_unresponsive">
             Buyer unresponsive (cancels unfinished work; refund available on
-            request)
+            commission)
           </option>
         </select>
 
@@ -218,7 +218,7 @@ const AdminNoticeClosurePanel = ({
         )}
 
         <label htmlFor="admin-closure-reason" className={classes.hint}>
-          Closure reason (10-1000 characters, recorded on the request)
+          Closure reason (10-1000 characters, recorded on the commission)
         </label>
 
         <textarea
@@ -240,7 +240,7 @@ const AdminNoticeClosurePanel = ({
           }
           onClick={() => void handleClose()}
         >
-          {closeRequest.isPending ? "Closing…" : "Administratively close request"}
+          {closeRequest.isPending ? "Closing…" : "Administratively close commission"}
         </button>
       </div>
     </div>

@@ -240,7 +240,7 @@ const ListingRequestMilestoneBuyerActions = ({
 
       <p className={classes.description}>
         Approve this milestone when the submitted work is
-        accepted. If something needs to change, request
+        accepted. If something needs to change, commission
         revisions and include clear notes for the creator.
       </p>
 

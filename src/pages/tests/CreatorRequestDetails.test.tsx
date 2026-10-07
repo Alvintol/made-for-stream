@@ -797,7 +797,7 @@ const request = {
   buyer_user_id: "buyer-1",
   creator_user_id: "creator-1",
   status: "submitted",
-  message: "Legacy request message.",
+  message: "Legacy commission message.",
   request_title: "Custom cozy emote pack",
   request_details: "I need three cozy emotes for my Twitch channel launch.",
   requested_timeline: "Flexible, ideally before June 10.",
@@ -943,15 +943,15 @@ describe("<CreatorRequestDetails />", () => {
     });
   });
 
-  it("renders structured buyer request details for the creator", () => {
+  it("renders structured buyer commission details for the creator", () => {
     renderPage();
 
     // A submitted request opens the buyer request section with its accept/decline controls.
-    expect(screen.getByRole("button", { name: /Buyer request/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /Commission request/ })).toHaveAttribute(
       "aria-expanded",
       "true"
     );
-    expect(screen.getByRole("button", { name: "Accept request" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept commission request" })).toBeInTheDocument();
     expect(
       within(screen.getByRole("region", { name: "Next step" })).getByText("Next step for you")
     ).toBeInTheDocument();
@@ -973,7 +973,7 @@ describe("<CreatorRequestDetails />", () => {
     expect(screen.getByText("Conversation thread loaded")).toBeInTheDocument();
   });
 
-  it("renders the agreement builder for an accepted request without an agreement", () => {
+  it("renders the agreement builder for an accepted commission without an agreement", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -998,7 +998,7 @@ describe("<CreatorRequestDetails />", () => {
     expect(screen.getByText("Mock agreement builder")).toBeInTheDocument();
   });
 
-  it("creates an agreement from the creator request detail page", () => {
+  it("creates an agreement from the creator commission detail page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1058,7 +1058,7 @@ describe("<CreatorRequestDetails />", () => {
     expect(screen.queryByText("Mock agreement builder")).not.toBeInTheDocument();
   });
 
-  it("sends a draft agreement from the creator request detail page", () => {
+  it("sends a draft agreement from the creator commission detail page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1094,7 +1094,7 @@ describe("<CreatorRequestDetails />", () => {
     });
   });
 
-  it("passes accepted request and buyer accepted agreement state into the work readiness card", () => {
+  it("passes accepted commission and buyer accepted agreement state into the work readiness card", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1217,7 +1217,7 @@ describe("<CreatorRequestDetails />", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("posts a progress update from the creator request detail page", () => {
+  it("posts a progress update from the creator commission detail page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1448,7 +1448,7 @@ describe("<CreatorRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("creates a change order from the creator request page", () => {
+  it("creates a change order from the creator commission page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1555,7 +1555,7 @@ describe("<CreatorRequestDetails />", () => {
     }
   );
 
-  it("sends a draft change order from the creator request page", () => {
+  it("sends a draft change order from the creator commission page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1668,7 +1668,7 @@ describe("<CreatorRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("creates a final delivery from the creator request page", () => {
+  it("creates a final delivery from the creator commission page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1826,7 +1826,7 @@ describe("<CreatorRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("submits a final-delivery draft from the creator request page", () => {
+  it("submits a final-delivery draft from the creator commission page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {
@@ -1931,19 +1931,19 @@ describe("<CreatorRequestDetails />", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: "Accept request",
+        name: "Accept commission request",
       })
     ).not.toBeInTheDocument();
 
     expect(
       screen.queryByRole("button", {
-        name: "Decline request",
+        name: "Decline commission request",
       })
     ).not.toBeInTheDocument();
 
     expect(
       screen.getByRole("link", {
-        name: "← Back to creator requests",
+        name: "← Back to creator commissions",
       })
     ).toHaveAttribute(
       "href",
@@ -2158,7 +2158,7 @@ describe("<CreatorRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("submits the active milestone from the creator request page", () => {
+  it("submits the active milestone from the creator commission page", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {
         request: {

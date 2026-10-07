@@ -85,7 +85,7 @@ const profileText = (
   profile?.handle ? `@${profile.handle}` : profile?.display_name ?? fallbackUserId;
 
 const requestTitle = (item: AdminPaymentIssueItem) =>
-  item.request ? getListingRequestDisplayTitle(item.request) : "Request not found";
+  item.request ? getListingRequestDisplayTitle(item.request) : "Commission not found";
 
 // status is never written by the refund/dispute webhook handlers
 // (docs/support/payments/refunds-and-disputes.md) -- a payment can be
@@ -102,7 +102,7 @@ const StatusDivergenceNote = ({
   return (
     <p className={classes.textMuted}>
       Status still reads <strong>Paid</strong> — this is recorded from Stripe but
-      not yet reflected in the request workflow. Reconcile manually.
+      not yet reflected in the commission workflow. Reconcile manually.
     </p>
   );
 };
@@ -136,7 +136,7 @@ const AdminPaymentIssues = () => {
           <code>charge.dispute.closed</code>). The payment's own{" "}
           <strong>status</strong> is not updated by those events yet — that
           derivation lands with the refund ledger — so check each row's status
-          against what Stripe actually shows before assuming the request
+          against what Stripe actually shows before assuming the commission
           workflow already reflects it.
         </p>
       </div>
@@ -286,7 +286,7 @@ const AdminPaymentIssues = () => {
                     className={classes.btnPrimary}
                     to={`/admin/requests/${item.payment.listing_request_id}`}
                   >
-                    View request
+                    View commission
                   </Link>
                 </div>
               </div>

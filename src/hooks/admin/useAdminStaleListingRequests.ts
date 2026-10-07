@@ -25,7 +25,7 @@ export const useAdminStaleListingRequests = (staleAfterDays = 14) =>
       );
 
       if (error) {
-        throw new Error(error.message || "Stale requests could not be loaded.");
+        throw new Error(error.message || "Stale commissions could not be loaded.");
       }
 
       return (data ?? []) as AdminStaleListingRequest[];

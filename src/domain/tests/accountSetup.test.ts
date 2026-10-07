@@ -52,7 +52,7 @@ describe("account setup steps", () => {
     expect(getNextAccountSetupStep(getAccountSetupSteps(value))).toBeNull();
   });
 
-  it("asks for application changes when reviewers request them", () => {
+  it("asks for application changes when reviewers commission them", () => {
     const steps = getAccountSetupSteps(
       input({ profileReady: true, hasLinkedPlatform: true, applicationStatus: "needs_changes" })
     );

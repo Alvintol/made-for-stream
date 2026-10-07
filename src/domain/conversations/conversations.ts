@@ -62,10 +62,10 @@ export const conversationInitiationReasonOptions: Array<{
     { value: "revision_policy", label: "Revision policy" },
     { value: "commercial_use", label: "Commercial-use question" },
     { value: "file_formats", label: "File format or source-file question" },
-    { value: "bundle_or_multiple_items", label: "Bundle or multiple item request" },
+    { value: "bundle_or_multiple_items", label: "Bundle or multiple item commission" },
     { value: "commission_availability", label: "Commission availability" },
     { value: "listing_clarification", label: "Clarification about a listing" },
-    { value: "before_requesting", label: "Question before submitting a request" },
+    { value: "before_requesting", label: "Question before sending a commission request" },
   ];
 
 export const getConversationInitiationReasonLabel = (

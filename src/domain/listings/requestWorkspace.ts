@@ -203,10 +203,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "declined",
       owner: null,
       tone: "closed",
-      actionTitle: "Request declined",
-      actionDescription: "This request is closed and read-only.",
-      waitingTitle: "Request declined",
-      waitingDescription: "This request is closed and read-only.",
+      actionTitle: "Commission request declined",
+      actionDescription: "This commission is closed and read-only.",
+      waitingTitle: "Commission request declined",
+      waitingDescription: "This commission is closed and read-only.",
     });
   }
 
@@ -215,10 +215,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "archived",
       owner: null,
       tone: "closed",
-      actionTitle: "Request archived",
-      actionDescription: "Archived requests are kept for your records and are read-only.",
-      waitingTitle: "Request archived",
-      waitingDescription: "Archived requests are kept for your records and are read-only.",
+      actionTitle: "Commission archived",
+      actionDescription: "Archived commissions are kept for your records and are read-only.",
+      waitingTitle: "Commission archived",
+      waitingDescription: "Archived commissions are kept for your records and are read-only.",
     });
   }
 
@@ -227,10 +227,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "cancelled",
       owner: null,
       tone: "closed",
-      actionTitle: "Request cancelled",
-      actionDescription: "This request was cancelled and is now read-only.",
-      waitingTitle: "Request cancelled",
-      waitingDescription: "This request was cancelled and is now read-only.",
+      actionTitle: "Commission cancelled",
+      actionDescription: "This commission was cancelled and is now read-only.",
+      waitingTitle: "Commission cancelled",
+      waitingDescription: "This commission was cancelled and is now read-only.",
     });
   }
 
@@ -305,10 +305,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "review-request",
       owner: "creator",
       tone: "action",
-      actionTitle: "Review this request",
+      actionTitle: "Review this commission",
       actionDescription: "Accept to start agreeing terms, or decline with a reason.",
-      actionLabel: "Review request",
-      waitingTitle: "Waiting for the creator to review your request",
+      actionLabel: "Review commission",
+      waitingTitle: "Waiting for the creator to review your commission request",
       waitingDescription: "You can agree terms once they accept.",
       sectionId: "request",
     });

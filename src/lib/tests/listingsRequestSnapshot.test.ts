@@ -30,7 +30,7 @@ const listing: PublicListingRow = {
 };
 
 describe("buildListingRequestSnapshot", () => {
-  it("captures the buyer-visible listing state at request time", () => {
+  it("captures the buyer-visible listing state at commission time", () => {
     const snapshot = buildListingRequestSnapshot(listing);
 
     expect(snapshot).toEqual({

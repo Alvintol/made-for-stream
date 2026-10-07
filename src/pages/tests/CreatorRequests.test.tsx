@@ -45,7 +45,7 @@ const createRequestItem = (
     buyer_user_id: "buyer-1",
     creator_user_id: "creator-1",
     status: "submitted",
-    message: "Legacy request message.",
+    message: "Legacy commission message.",
     request_title:
       "Custom cozy emote pack",
     request_details:
@@ -123,7 +123,7 @@ describe("<CreatorRequests />", () => {
     });
   });
 
-  it("shows the structured request title and keeps listing context", () => {
+  it("shows the structured commission title and keeps listing context", () => {
     renderPage();
 
     expect(
@@ -160,7 +160,7 @@ describe("<CreatorRequests />", () => {
 
     expect(
       screen.getByRole("link", {
-        name: "View request",
+        name: "View commission",
       })
     ).toHaveAttribute(
       "href",
@@ -168,7 +168,7 @@ describe("<CreatorRequests />", () => {
     );
   });
 
-  it("falls back to the listing title and legacy message for old requests", () => {
+  it("falls back to the listing title and legacy message for old commissions", () => {
     mocks.useMyCreatorRequests.mockReturnValue({
       data: {
         items: [
@@ -176,7 +176,7 @@ describe("<CreatorRequests />", () => {
             request_title: null,
             request_details: null,
             message:
-              "Legacy request message.",
+              "Legacy commission message.",
           }),
         ],
         totalCount: 1,
@@ -197,12 +197,12 @@ describe("<CreatorRequests />", () => {
 
     expect(
       screen.getByText(
-        "Legacy request message."
+        "Legacy commission message."
       )
     ).toBeInTheDocument();
   });
 
-  it("labels creator-archived requests", () => {
+  it("labels creator-archived commissions", () => {
     mocks.useMyCreatorRequests.mockReturnValue({
       data: {
         items: [
@@ -290,7 +290,7 @@ describe("<CreatorRequests />", () => {
     );
   });
 
-  it("loads declined creator requests in the archived view", () => {
+  it("loads declined creator commissions in the archived view", () => {
     mocks.useMyCreatorRequests.mockReturnValue({
       data: {
         items: [

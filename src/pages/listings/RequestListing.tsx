@@ -106,7 +106,7 @@ const fieldIds: Record<keyof ListingRequestFormErrors, string> = {
 const fieldOrder = Object.keys(fieldIds) as Array<keyof ListingRequestFormErrors>;
 
 const nextSteps = [
-  "The creator reviews your request and can ask questions in chat.",
+  "The creator reviews your commission request and can ask questions in chat.",
   "If they accept, you agree on scope, price and timeline.",
   "Payment happens only after you accept the agreement.",
 ];
@@ -218,7 +218,7 @@ const RequestListing = () => {
   if (error || !listing) {
     return (
       <StateCard backTo="/market" backLabel="Back to market" title="Listing not found">
-        This listing is not available for requests right now.
+        This listing is not available for commission requests right now.
       </StateCard>
     );
   }
@@ -230,7 +230,7 @@ const RequestListing = () => {
       <StateCard
         backTo={listingPath}
         backLabel="Back to listing"
-        title="Sign in to submit a request"
+        title="Sign in to send a commission request"
         actions={
           <>
             <Link className={classes.btnPrimarySm} to="/signin">
@@ -242,14 +242,14 @@ const RequestListing = () => {
           </>
         }
       >
-        You need to be signed in before sending a request to {creatorName}.
+        You need to be signed in before sending a commission request to {creatorName}.
       </StateCard>
     );
   }
 
   if (listing.fulfilment_mode !== "request") {
     return (
-      <StateCard backTo={listingPath} backLabel="Back to listing" title="Request flow unavailable">
+      <StateCard backTo={listingPath} backLabel="Back to listing" title="Commission flow unavailable">
         This listing is not using the request-based flow.
       </StateCard>
     );
@@ -258,13 +258,13 @@ const RequestListing = () => {
   if (user.id === listing.user_id) {
     return (
       <StateCard backTo={listingPath} backLabel="Back to listing" title="Own listing">
-        You cannot submit a buyer request for your own listing.
+        You cannot send a commission request for your own listing.
       </StateCard>
     );
   }
 
   if (activeRequestQuery.isLoading) {
-    return <div className={classes.loadingText}>Checking request status…</div>;
+    return <div className={classes.loadingText}>Checking commission status…</div>;
   }
 
   if (activeRequestQuery.data) {
@@ -272,11 +272,11 @@ const RequestListing = () => {
       <StateCard
         backTo={listingPath}
         backLabel="Back to listing"
-        title="Request already submitted"
+        title="Commission request already sent"
         actions={
           <>
             <Link className={classes.btnPrimarySm} to={`/requests/${activeRequestQuery.data.id}`}>
-              View existing request
+              View existing commission
             </Link>
             <Link className={classes.btnOutlineSm} to={listingPath}>
               Back to listing
@@ -284,8 +284,8 @@ const RequestListing = () => {
           </>
         }
       >
-        You already have an active request for this listing. Continue the conversation from
-        your request page.
+        You already have an active commission for this listing. Continue the conversation from
+        your commission page.
       </StateCard>
     );
   }
@@ -295,9 +295,9 @@ const RequestListing = () => {
       <StateCard
         backTo={listingPath}
         backLabel="Back to listing"
-        title="Requests are paused for this creator"
+        title="Commission requests are paused for this creator"
       >
-        This creator can&rsquo;t accept new requests right now. Please check back later.
+        This creator can&rsquo;t accept new commission requests right now. Please check back later.
       </StateCard>
     );
   }
@@ -314,7 +314,7 @@ const RequestListing = () => {
           ← <span className={classes.backText}>Back to listing</span>
         </Link>
         <div className={classes.headerText}>
-          <div className={classes.eyebrow}>New request</div>
+          <div className={classes.eyebrow}>New commission request</div>
           <h1 className={classes.h1}>What do you need?</h1>
         </div>
         <span className={classes.headerSpacer} aria-hidden="true" />
@@ -354,7 +354,7 @@ const RequestListing = () => {
             )}
 
             <p className={classes.muted}>
-              Your request saves these listing details as they are now, so later edits
+              Your commission request saves these listing details as they are now, so later edits
               won’t change what you asked for.
             </p>
 
@@ -375,14 +375,14 @@ const RequestListing = () => {
         <form className={classes.form} noValidate onSubmit={(event) => void handleSubmit(event)}>
           <div className={classes.group}>
             <div className={classes.groupHead}>
-              <h2 className={classes.groupTitle}>Your request</h2>
+              <h2 className={classes.groupTitle}>Your commission</h2>
               <span className={classes.groupHint}>Required</span>
             </div>
 
             <div className={classes.field}>
               <div className={classes.labelRow}>
                 <label className={classes.label} htmlFor="request-title">
-                  Request title / summary
+                  Commission title / summary
                 </label>
                 <Counter value={requestTitle} max={TITLE_MAX} />
               </div>
@@ -512,7 +512,7 @@ const RequestListing = () => {
               <div className={classes.submitError}>
                 {createRequestMutation.error instanceof Error
                   ? createRequestMutation.error.message
-                  : "Your request could not be submitted right now."}
+                  : "Your commission request could not be sent right now."}
               </div>
             )}
           </div>
@@ -528,7 +528,7 @@ const RequestListing = () => {
                 type="submit"
                 disabled={createRequestMutation.isPending}
               >
-                {createRequestMutation.isPending ? "Submitting…" : "Submit request"}
+                {createRequestMutation.isPending ? "Submitting…" : "Send commission request"}
               </button>
             </div>
           </div>

@@ -105,14 +105,14 @@ const getEmptyMilestoneMessage = (viewer: ListingRequestMilestoneViewer): string
     ? "No milestones are available yet. They will appear here once the buyer accepts a milestone-based agreement."
     : viewer === "buyer"
       ? "No milestones are available yet. They will appear here once the agreement is ready for milestone work."
-      : "No milestones are available for this request yet.";
+      : "No milestones are available for this commission yet.";
 
 const getCompletedMilestoneMessage = (viewer: ListingRequestMilestoneViewer): string =>
   viewer === "creator"
     ? "All milestones are complete or closed. You can now prepare the final delivery when the project is ready."
     : viewer === "buyer"
       ? "All milestones are complete or closed. The creator can now prepare the final delivery."
-      : "All milestones are complete or closed for this request.";
+      : "All milestones are complete or closed for this commission.";
 
 type MilestoneRowProps = {
   milestone: ListingRequestMilestoneRow;

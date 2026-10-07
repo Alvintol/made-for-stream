@@ -109,7 +109,7 @@ describe("<ListingRequestAgreementSummary />", () => {
     render(<ListingRequestAgreementSummary agreement={null} />);
 
     expect(
-      screen.getByText("No project agreement has been created for this request yet.")
+      screen.getByText("No project agreement has been created for this commission yet.")
     ).toBeInTheDocument();
   });
 

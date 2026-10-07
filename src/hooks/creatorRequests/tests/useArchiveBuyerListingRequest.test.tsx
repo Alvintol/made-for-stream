@@ -65,7 +65,7 @@ describe("useArchiveBuyerListingRequest", () => {
     });
   });
 
-  it("archives a buyer request through the focused RPC", async () => {
+  it("archives a buyer commission through the focused RPC", async () => {
     const { wrapper, invalidateSpy } = createWrapper();
 
     const { result } = renderHook(() => useArchiveBuyerListingRequest(), {
@@ -111,12 +111,12 @@ describe("useArchiveBuyerListingRequest", () => {
       result.current.mutateAsync({
         requestId: "request-1",
       })
-    ).rejects.toThrow("You must be signed in to archive this request.");
+    ).rejects.toThrow("You must be signed in to archive this commission.");
 
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("throws when the RPC returns no archived request", async () => {
+  it("throws when the RPC returns no archived commission", async () => {
     mocks.rpc.mockResolvedValue({
       data: [],
       error: null,
@@ -132,6 +132,6 @@ describe("useArchiveBuyerListingRequest", () => {
       result.current.mutateAsync({
         requestId: "request-1",
       })
-    ).rejects.toThrow("This request could not be archived.");
+    ).rejects.toThrow("This commission could not be archived.");
   });
 });

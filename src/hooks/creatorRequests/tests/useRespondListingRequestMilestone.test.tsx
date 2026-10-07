@@ -189,7 +189,7 @@ describe(
       });
     });
 
-    it("requests milestone revisions with a trimmed reason", async () => {
+    it("commissions milestone revisions with a trimmed reason", async () => {
       mocks.rpc.mockResolvedValue({
         data: [
           {

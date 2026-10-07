@@ -15,7 +15,7 @@ describe("ListingRequestCancelBeforePaymentAction", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel commission" }));
 
     const confirmButton = screen.getByRole("button", {
       name: "Confirm cancellation",
@@ -53,14 +53,14 @@ describe("ListingRequestCancelBeforePaymentAction", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel request" }));
-    fireEvent.click(screen.getByRole("button", { name: "Keep request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel commission" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep commission" }));
 
     expect(
       screen.queryByRole("button", { name: "Confirm cancellation" })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Cancel request" })
+      screen.getByRole("button", { name: "Cancel commission" })
     ).toBeInTheDocument();
   });
 

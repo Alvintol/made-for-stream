@@ -337,7 +337,7 @@ describe("ListingRequestMilestoneSummary", () => {
 
     expect(
       screen.getByText(
-        "All milestones are complete or closed for this request."
+        "All milestones are complete or closed for this commission."
       )
     ).toBeInTheDocument();
   });
@@ -366,7 +366,7 @@ describe("ListingRequestMilestoneSummary", () => {
 
     expect(
       screen.getByText(
-        "All milestones are complete or closed for this request."
+        "All milestones are complete or closed for this commission."
       )
     ).toBeInTheDocument();
 

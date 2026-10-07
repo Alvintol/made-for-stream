@@ -74,11 +74,11 @@ const viewContent: Record<
   }
 > = {
   active: {
-    title: "Creator requests",
+    title: "Creator commissions",
     description:
-      "Review active buyer requests tied to your listings.",
+      "Review active commissions tied to your listings.",
     emptyMessage:
-      "You do not have any active listing requests.",
+      "You do not have any active commissions.",
   },
 
   completed: {
@@ -90,11 +90,11 @@ const viewContent: Record<
   },
 
   archived: {
-    title: "Archived creator requests",
+    title: "Archived creator commissions",
     description:
-      "Review declined, cancelled, and archived buyer requests.",
+      "Review declined, cancelled, and archived commissions.",
     emptyMessage:
-      "You do not have any archived creator requests.",
+      "You do not have any archived creator commissions.",
   },
 };
 
@@ -190,7 +190,7 @@ const CreatorRequests = ({
           }
           to="/creator/requests"
         >
-          Active requests
+          Active commissions
         </Link>
 
         <Link
@@ -212,13 +212,13 @@ const CreatorRequests = ({
           }
           to="/creator/requests/archived"
         >
-          Archived requests
+          Archived commissions
         </Link>
 
         <div className={classes.pagerText}>
           {isLoading
             ? "Loading…"
-            : `${totalCount} request(s) found`}
+            : `${totalCount} commission(s) found`}
         </div>
 
         {pageCount > 0 && (
@@ -230,14 +230,14 @@ const CreatorRequests = ({
 
       {error && (
         <div className={classes.errorCard}>
-          Requests could not be loaded
+          Commissions could not be loaded
           right now.
         </div>
       )}
 
       {isLoading && (
         <div className={classes.loadingText}>
-          Loading requests…
+          Loading commissions…
         </div>
       )}
 
@@ -459,7 +459,7 @@ const CreatorRequests = ({
                       }
                       to={`/creator/requests/${item.request.id}`}
                     >
-                      View request
+                      View commission
                     </Link>
                   </div>
                 </div>

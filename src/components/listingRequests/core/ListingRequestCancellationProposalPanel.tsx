@@ -505,7 +505,7 @@ const ListingRequestCancellationProposalPanel = ({
                 disabled={isRespondPending}
                 onClick={() => void onAccept()}
               >
-                {isRespondPending ? "Saving…" : "Accept and cancel the request"}
+                {isRespondPending ? "Saving…" : "Accept and cancel the commission"}
               </button>
               <button
                 className={classes.btnOutline}

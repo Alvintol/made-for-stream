@@ -541,7 +541,7 @@ const request = {
   buyer_user_id: "buyer-1",
   creator_user_id: "creator-1",
   status: "submitted",
-  message: "Legacy request message.",
+  message: "Legacy commission message.",
   request_title: "Custom cozy emote pack",
   request_details: "I need three cozy emotes for my Twitch channel launch.",
   requested_timeline: "Flexible, ideally before June 10.",
@@ -665,7 +665,7 @@ describe("<AdminRequestDetails />", () => {
     });
   });
 
-  it("renders structured request details for admin review", () => {
+  it("renders structured commission details for admin review", () => {
     renderPage();
 
     expect(screen.getByText("Custom cozy emote pack")).toBeInTheDocument();
@@ -692,7 +692,7 @@ describe("<AdminRequestDetails />", () => {
     expect(screen.getByText("Conversation thread loaded")).toBeInTheDocument();
   });
 
-  it("confirms the starting payment from the admin request detail page", () => {
+  it("confirms the starting payment from the admin commission detail page", () => {
     mocks.useAdminRequest.mockReturnValue({
       data: {
         request: {
@@ -1073,7 +1073,7 @@ describe("<AdminRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("confirms a pending change-order payment from the admin request detail page", () => {
+  it("confirms a pending change-order payment from the admin commission detail page", () => {
     mocks.useAdminRequest.mockReturnValue({
       data: {
         request: {
@@ -1194,7 +1194,7 @@ describe("<AdminRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("confirms a pending final-balance payment from the admin request page", () => {
+  it("confirms a pending final-balance payment from the admin commission page", () => {
     mocks.useAdminRequest.mockReturnValue({
       data: {
         request: {
@@ -1333,7 +1333,7 @@ describe("<AdminRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("confirms a pending milestone payment from the admin request page", () => {
+  it("confirms a pending milestone payment from the admin commission page", () => {
     mocks.useAdminRequest.mockReturnValue({
       data: {
         request: {

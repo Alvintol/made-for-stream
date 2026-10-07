@@ -9,7 +9,7 @@ import {
   getListingRequestPaymentTypeLabel,
 } from "../payments/listingRequestPaymentDisplay";
 
-describe("listing request payment display", () => {
+describe("listing commission payment display", () => {
   it.each([
     [12345, "cad", "$123.45"],
     [12345, "USD", "US$123.45"],

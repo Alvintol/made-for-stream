@@ -57,9 +57,9 @@ const ListingRequestSubmissionDetails = ({
 
   return (
     <div className={classes.body}>
-      <p className={classes.title}>{titleText || "No request summary provided."}</p>
+      <p className={classes.title}>{titleText || "No commission summary provided."}</p>
 
-      <p className={classes.details}>{detailsText || "No request details provided."}</p>
+      <p className={classes.details}>{detailsText || "No commission details provided."}</p>
 
       <dl className={classes.facts}>
         <div className={classes.fact}>
