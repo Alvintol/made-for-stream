@@ -40,8 +40,7 @@ To do:
 
       | Role | Account | How |
       | --- | --- | --- |
-      | Admin | `imallbeans+twitch@gmail.com` | exists; sign in with Twitch |
-      | Buyer | `imallbeans@gmail.com` | exists; sign in with Google |
+      | Admin **and buyer** | `imallbeans+twitch@gmail.com` (handle `ImAllBeans`) | exists; sign in with Twitch |
       | Creator, CA / CAD | `meowington88@gmail.com` | exists and approved; sign in with Google |
       | Creator, US / USD | `alvin.tolentino@hotmail.com` (handle `PizzaButt`) | exists and approved |
       | Creator, IE / EUR | `trashmailtrash8888@gmail.com` (handle `TrashMailman`) | exists and approved |
@@ -51,8 +50,17 @@ To do:
       on the dev site choose the email sign-in and enter that address; the link
       arrives in the `imallbeans@gmail.com` inbox. **That email arriving is the
       proof that Supabase Auth mail works through Cloudflare** (Sprint 6).
-- [ ] **Buyer profile.** `imallbeans@gmail.com` signs in with Google and
-      completes profile setup (no row in `profiles` as of 2026-10-05).
+- [x] *(Not needed. Decision 2026-10-07: the admin account
+      `imallbeans+twitch@gmail.com` is the buyer; it has a profile and pays
+      standard fees, 5% and 5%. `imallbeans@gmail.com` is not used.)*
+      **Buyer profile.**
+- [ ] **Clear the buyer's old test request first.** The buyer has an
+      accepted, unpaid request from May on meowington's "222222222 updated"
+      (`e1ee74b1-a947-45a4-bbb6-b77cde0b5c05`), and a buyer can hold only one
+      open request per listing. Cancel it from the buyer's request page. This
+      is also section 3's "before payment" check. A rolled-back dry run on
+      2026-10-07 showed the cancel is allowed, cancels the agreement and its
+      unpaid payment, and frees the listing for a new request.
 - [x] *(Done; both applications `approved`, 2026-10-05.)* **Make the two new accounts creators.** Each completes its profile and
       submits a creator application; the admin approves both at
       `/admin/creator-applications`.
@@ -67,7 +75,7 @@ To do:
       `stripe_webhook_events` as `processed` (the first real account events).
 - [x] *(Done; verified 2026-10-07: meowington "222222222 updated" 123 cad and "Free Overlay"; PizzaButt "VTube Models" 500 usd; TrashMailman "Emote Pack" 100 eur.)* Each creator publishes one **paid** listing. The CA creator also
       publishes one **free** listing (checked in section 1b).
-- [ ] **Apply migration `20261007_147` before taking any payment.** Without
+- [x] *(Applied; confirmed 2026-10-07: the check below returns `0`.)* **Apply migration `20261007_147` before taking any payment.** Without
       it half of every payment's base is added to the application fee
       (`REC-005`). Check: `select public.resolve_listing_request_payment_recovery_instalment('00000000-0000-0000-0000-000000000000', 4000);`
       must return `0`.
