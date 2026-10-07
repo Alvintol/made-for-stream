@@ -85,7 +85,7 @@ const CreatorRecoveryBalanceSection = () => {
         You owe Made for Stream{" "}
         {formatPaymentCents(balance.outstanding_cents, balance.currency)} from
         a buyer refund that your held balance could not fully cover. New
-        buyer requests are blocked until this clears. It clears automatically
+        commissions are blocked until this clears. It clears automatically
         as it is recovered from your future payments, or you can settle it
         directly below.
       </div>

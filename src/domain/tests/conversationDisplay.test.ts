@@ -6,7 +6,7 @@ import {
 } from "../conversations/conversationDisplay";
 
 describe("conversation display helpers", () => {
-  it("uses the conversation subject before listing title for listing request conversations", () => {
+  it("uses the conversation subject before listing title for listing commission conversations", () => {
     const item = {
       conversation: {
         conversation_type: "listing_request",
@@ -21,7 +21,7 @@ describe("conversation display helpers", () => {
     expect(getConversationDisplayContext(item)).toBe("Listing: Custom Emote Pack");
   });
 
-  it("falls back to listing title for legacy listing request conversations", () => {
+  it("falls back to listing title for legacy listing commission conversations", () => {
     const item = {
       conversation: {
         conversation_type: "listing_request",
@@ -51,7 +51,7 @@ describe("conversation display helpers", () => {
     expect(getConversationDisplayContext(item)).toBeNull();
   });
 
-  it("falls back to safe copy when request title and listing title are missing", () => {
+  it("falls back to safe copy when commission title and listing title are missing", () => {
     const item = {
       conversation: {
         conversation_type: "listing_request",
@@ -60,6 +60,6 @@ describe("conversation display helpers", () => {
       listing: null,
     };
 
-    expect(getConversationDisplayTitle(item)).toBe("Listing request");
+    expect(getConversationDisplayTitle(item)).toBe("Commission request");
   });
 });

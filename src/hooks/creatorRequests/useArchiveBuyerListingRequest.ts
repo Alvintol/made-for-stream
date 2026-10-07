@@ -14,7 +14,7 @@ export const useArchiveBuyerListingRequest = () => {
   return useMutation({
     mutationFn: async ({ requestId }: ArchiveBuyerListingRequestInput) => {
       if (!user?.id) {
-        throw new Error("You must be signed in to archive this request.");
+        throw new Error("You must be signed in to archive this commission.");
       }
 
       const { data, error } = await supabase.rpc(
@@ -26,14 +26,14 @@ export const useArchiveBuyerListingRequest = () => {
 
       if (error) {
         throw new Error(
-          error.message || "This request could not be archived."
+          error.message || "This commission could not be archived."
         );
       }
 
       const archivedRequest = Array.isArray(data) ? data[0] : null;
 
       if (!archivedRequest?.id) {
-        throw new Error("This request could not be archived.");
+        throw new Error("This commission could not be archived.");
       }
 
       return archivedRequest.id as string;

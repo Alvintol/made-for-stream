@@ -134,16 +134,16 @@ const AdminDashboard = () => {
         </div>
 
         <div className={classes.toolCard}>
-          <h2 className={classes.toolTitle}>Requests and snapshots</h2>
+          <h2 className={classes.toolTitle}>Commissions and snapshots</h2>
 
           <p className={classes.toolText}>
-            Review buyer requests, creator responses, decline reasons, and frozen
+            Review commissions, creator responses, decline reasons, and frozen
             listing snapshots for dispute support.
           </p>
 
           <div className={classes.row}>
             <Link className={classes.btnPrimary} to="/admin/requests">
-              Review requests
+              Review commissions
             </Link>
           </div>
         </div>

@@ -29,7 +29,7 @@ export const getCreateListingRequestErrorMessage = (
     supabaseError.code === "42501" ||
     includesAny(joinedText, ["row-level security", "permission denied"])
   ) {
-    return "This listing is no longer available for buyer requests.";
+    return "This listing is no longer available for commission requests.";
   }
 
   // CON-007 (20260924_139): the creator's payout account is not ready, so
@@ -40,11 +40,11 @@ export const getCreateListingRequestErrorMessage = (
 
   // Constraint names from the structured request field migration.
   if (joinedText.includes("listing_requests_request_title_check")) {
-    return "Request summary must be between 3 and 120 characters.";
+    return "Commission summary must be between 3 and 120 characters.";
   }
 
   if (joinedText.includes("listing_requests_request_details_check")) {
-    return "Request details must be between 10 and 2000 characters.";
+    return "Commission details must be between 10 and 2000 characters.";
   }
 
   if (joinedText.includes("listing_requests_requested_timeline_check")) {
@@ -69,5 +69,5 @@ export const getCreateListingRequestErrorMessage = (
     return "This listing could not be found or is no longer available.";
   }
 
-  return "Your request could not be submitted right now.";
+  return "Your commission request could not be sent right now.";
 };

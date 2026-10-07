@@ -81,7 +81,7 @@ describe("<AdminPaymentIssues />", () => {
 
     expect(within(card).getByText(/Status still reads/)).toBeInTheDocument();
 
-    expect(within(card).getByRole("link", { name: "View request" })).toHaveAttribute(
+    expect(within(card).getByRole("link", { name: "View commission" })).toHaveAttribute(
       "href",
       "/admin/requests/request-1"
     );
@@ -119,7 +119,7 @@ describe("<AdminPaymentIssues />", () => {
     expect(within(card).queryByText(/Status still reads/)).not.toBeInTheDocument();
   });
 
-  it("shows a request-not-found fallback when the joined request is missing", () => {
+  it("shows a commission-not-found fallback when the joined commission is missing", () => {
     mocks.useAdminPaymentIssues.mockReturnValue({
       data: {
         items: [{ ...createIssueItem(), request: null }],
@@ -134,7 +134,7 @@ describe("<AdminPaymentIssues />", () => {
 
     renderPage();
 
-    expect(screen.getByText("Request not found")).toBeInTheDocument();
+    expect(screen.getByText("Commission not found")).toBeInTheDocument();
   });
 
   it("renders the empty state when nothing matches", () => {

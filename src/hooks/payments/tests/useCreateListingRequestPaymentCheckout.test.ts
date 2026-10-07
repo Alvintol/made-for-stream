@@ -5,7 +5,7 @@ const getCheckoutResponseErrorMessage = (
   status: number,
 ): string => json.error || `Stripe checkout failed (${status})`;
 
-describe("listing request payment checkout helpers", () => {
+describe("listing commission payment checkout helpers", () => {
   it("uses API errors when available", () => {
     expect(
       getCheckoutResponseErrorMessage(

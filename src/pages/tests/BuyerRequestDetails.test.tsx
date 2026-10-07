@@ -494,7 +494,7 @@ vi.mock(
               )
             }
           >
-            Mock request final revisions
+            Mock commission final revisions
           </button>
         </div>
       ) : null,
@@ -604,7 +604,7 @@ vi.mock(
               })
             }
           >
-            Mock request milestone revisions: {milestone.title}
+            Mock commission milestone revisions: {milestone.title}
           </button>
         </div>
       ) : null,
@@ -643,7 +643,7 @@ const request = {
   buyer_user_id: "buyer-1",
   creator_user_id: "creator-1",
   status: "submitted",
-  message: "Legacy request message.",
+  message: "Legacy commission message.",
   request_title: "Custom cozy emote pack",
   request_details: "I need three cozy emotes for my Twitch channel launch.",
   requested_timeline: "Flexible, ideally before June 10.",
@@ -862,11 +862,11 @@ describe("<BuyerRequestDetails />", () => {
   });
 
 
-  it("renders structured buyer request details", () => {
+  it("renders structured buyer commission details", () => {
     renderPage();
 
     // A submitted request opens its request section; the snapshot starts collapsed.
-    const requestToggle = screen.getByRole("button", { name: /Your request/ });
+    const requestToggle = screen.getByRole("button", { name: /Your commission/ });
     const snapshotToggle = screen.getByRole("button", { name: /Listing snapshot/ });
 
     expect(requestToggle).toHaveAttribute("aria-expanded", "true");
@@ -897,17 +897,17 @@ describe("<BuyerRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("asks for confirmation before archiving a submitted request", async () => {
+  it("asks for confirmation before archiving a submitted commission", async () => {
     renderPage();
 
     // Archiving lives in the header's Manage menu.
     fireEvent.click(screen.getByRole("button", { name: /Manage/ }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Archive request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive commission" }));
 
     expect(
       screen.getByText(
-        "Are you sure you want to archive this request? The creator will no longer see it as an active request."
+        "Are you sure you want to archive this commission? The creator will no longer see it as an active commission."
       )
     ).toBeInTheDocument();
 
@@ -928,17 +928,17 @@ describe("<BuyerRequestDetails />", () => {
     // Archiving lives in the header's Manage menu.
     fireEvent.click(screen.getByRole("button", { name: /Manage/ }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Archive request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive commission" }));
 
     expect(screen.getByRole("button", { name: "Confirm archive" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Keep request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep commission" }));
 
     expect(
       screen.queryByRole("button", { name: "Confirm archive" })
     ).not.toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: "Archive request" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Archive commission" })).toBeInTheDocument();
   });
 
   it("lets the buyer accept a sent project agreement after checking all acknowledgements", async () => {
@@ -1020,7 +1020,7 @@ describe("<BuyerRequestDetails />", () => {
     renderPage();
 
     expect(
-      screen.getByText("No project agreement has been created for this request yet.")
+      screen.getByText("No project agreement has been created for this commission yet.")
     ).toBeInTheDocument();
 
     expect(
@@ -1049,7 +1049,7 @@ describe("<BuyerRequestDetails />", () => {
 
   });
 
-  it("passes the accepted request and buyer accepted agreement into the work readiness card", () => {
+  it("passes the accepted commission and buyer accepted agreement into the work readiness card", () => {
     mocks.useBuyerRequest.mockReturnValue({
       data: {
         request: {
@@ -1558,13 +1558,13 @@ describe("<BuyerRequestDetails />", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: "Archive request",
+        name: "Archive commission",
       })
     ).not.toBeInTheDocument();
 
     expect(
       screen.getByRole("link", {
-        name: "← Back to my requests",
+        name: "← Back to my commissions",
       })
     ).toHaveAttribute(
       "href",
@@ -1732,7 +1732,7 @@ describe("<BuyerRequestDetails />", () => {
     ).toBeInTheDocument();
   });
 
-  it("requests revisions for a submitted final delivery", () => {
+  it("commissions revisions for a submitted final delivery", () => {
     mocks.useBuyerRequest.mockReturnValue({
       data: {
         request: {
@@ -1778,7 +1778,7 @@ describe("<BuyerRequestDetails />", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Mock request final revisions",
+        name: "Mock commission final revisions",
       })
     );
 

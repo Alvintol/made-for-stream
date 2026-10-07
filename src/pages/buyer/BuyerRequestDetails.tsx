@@ -308,13 +308,13 @@ const BuyerRequestDetails = () => {
     return (
       <div className={classes.page}>
         <Link to="/requests" className={classes.backLink}>
-          ← Back to my requests
+          ← Back to my commissions
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Request not found</h1>
+          <h1 className={classes.h1}>Commission not found</h1>
           <p className={classes.sub}>
-            This request could not be loaded from your account.
+            This commission could not be loaded from your account.
           </p>
         </div>
       </div>
@@ -365,13 +365,13 @@ const BuyerRequestDetails = () => {
 
   const requestReadOnlyMessage =
     request.status === "archived"
-      ? "Archived requests are read-only."
+      ? "Archived commissions are read-only."
       : request.status === "declined"
-        ? "Declined requests are read-only because the conversation has been ended."
+        ? "Declined commission requests are read-only because the conversation has been ended."
         : request.status === "completed"
           ? "Completed projects are read-only because the buyer approved the final delivery."
           : request.status === "cancelled"
-            ? "Cancelled requests are read-only."
+            ? "Cancelled commissions are read-only."
             : undefined;
 
   const creatorLabel = creatorText(creator, request.creator_user_id);
@@ -409,7 +409,7 @@ const BuyerRequestDetails = () => {
   const sections: WorkspaceSectionSpec[] = [
     {
       id: "request",
-      title: "Your request",
+      title: "Your commission",
       summary: "Brief, timeline, budget and references",
       ...flags("request"),
       defaultOpen: request.status === "submitted" || isCancellationProposalOpen,
@@ -644,23 +644,23 @@ const BuyerRequestDetails = () => {
     request.status === "submitted" ? (
       <ActionMenu>
         <p className={classes.text}>
-          Archive this request if you no longer want the creator to review it. You can
-          submit a new request for this listing after archiving.
+          Archive this commission if you no longer want the creator to review it. You can
+          send a new commission request for this listing after archiving.
         </p>
 
         {archiveRequestMutation.error && (
           <div className={classes.errorBox}>
             {archiveRequestMutation.error instanceof Error
               ? archiveRequestMutation.error.message
-              : "This request could not be archived."}
+              : "This commission could not be archived."}
           </div>
         )}
 
         {isArchiveConfirming ? (
           <FadeIn className={classes.warningBox}>
             <p>
-              Are you sure you want to archive this request? The creator will no longer
-              see it as an active request.
+              Are you sure you want to archive this commission? The creator will no longer
+              see it as an active commission.
             </p>
 
             <div className={classes.row}>
@@ -670,7 +670,7 @@ const BuyerRequestDetails = () => {
                 disabled={archiveRequestMutation.isPending}
                 onClick={() => void handleArchiveRequest()}
               >
-                {archiveRequestMutation.isPending ? "Archiving request…" : "Confirm archive"}
+                {archiveRequestMutation.isPending ? "Archiving commission…" : "Confirm archive"}
               </button>
 
               <button
@@ -679,7 +679,7 @@ const BuyerRequestDetails = () => {
                 disabled={archiveRequestMutation.isPending}
                 onClick={() => setIsArchiveConfirming(false)}
               >
-                Keep request
+                Keep commission
               </button>
             </div>
           </FadeIn>
@@ -690,7 +690,7 @@ const BuyerRequestDetails = () => {
             disabled={archiveRequestMutation.isPending}
             onClick={() => setIsArchiveConfirming(true)}
           >
-            Archive request
+            Archive commission
           </button>
         )}
       </ActionMenu>
@@ -710,8 +710,8 @@ const BuyerRequestDetails = () => {
       header={
         <StatusHeader
           backTo={backTo}
-          backLabel="Back to my requests"
-          eyebrow="My request"
+          backLabel="Back to my commissions"
+          eyebrow="My commission"
           title={snapshot.title}
           meta={meta}
           statusLabel={getListingRequestStatusLabel(request.status, request, request)}

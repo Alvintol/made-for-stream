@@ -51,7 +51,7 @@ const fillValidForm = () => {
 };
 
 describe("ListingRequestFinalDeliveryBuilder", () => {
-  it("does not render unless the request is accepted", () => {
+  it("does not render unless the commission is accepted", () => {
     render(
       <ListingRequestFinalDeliveryBuilder
         requestStatus="submitted"

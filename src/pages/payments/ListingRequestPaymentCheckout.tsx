@@ -396,7 +396,7 @@ const ListingRequestPaymentCheckout = () => {
 
       <div className={classes.actions}>
         <Link className={classes.btn} to="/requests">
-          Back to requests
+          Back to commissions
         </Link>
       </div>
     </main>

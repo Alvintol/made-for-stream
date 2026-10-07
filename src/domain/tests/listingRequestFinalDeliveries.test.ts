@@ -59,7 +59,7 @@ const createFinalDelivery = (
     ...overrides,
   }) as FinalDeliveryRow;
 
-describe("listing request final deliveries", () => {
+describe("listing commission final deliveries", () => {
   it("maps delivery statuses to display labels", () => {
     expect(
       getListingRequestFinalDeliveryStatusLabel("draft")

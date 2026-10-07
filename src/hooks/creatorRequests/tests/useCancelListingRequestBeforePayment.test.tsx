@@ -64,7 +64,7 @@ describe("useCancelListingRequestBeforePayment", () => {
     });
   });
 
-  it("cancels a request through the RPC with the given reason", async () => {
+  it("cancels a commission through the RPC with the given reason", async () => {
     const { wrapper, invalidateSpy } = createWrapper();
 
     const { result } = renderHook(() => useCancelListingRequestBeforePayment(), {
@@ -146,12 +146,12 @@ describe("useCancelListingRequestBeforePayment", () => {
         requestId: "request-1",
         reason: "Buyer no longer needs this commission.",
       })
-    ).rejects.toThrow("You must be signed in to cancel this request.");
+    ).rejects.toThrow("You must be signed in to cancel this commission.");
 
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("throws when the RPC returns no cancelled request", async () => {
+  it("throws when the RPC returns no cancelled commission", async () => {
     mocks.rpc.mockResolvedValue({ data: [], error: null });
 
     const { wrapper } = createWrapper();
@@ -165,6 +165,6 @@ describe("useCancelListingRequestBeforePayment", () => {
         requestId: "request-1",
         reason: "Buyer no longer needs this commission.",
       })
-    ).rejects.toThrow("This request could not be cancelled.");
+    ).rejects.toThrow("This commission could not be cancelled.");
   });
 });

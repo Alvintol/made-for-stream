@@ -382,13 +382,13 @@ const CreatorRequestDetails = () => {
     return (
       <div className={classes.page}>
         <Link to="/creator/requests" className={classes.backLink}>
-          ← Back to creator requests
+          ← Back to creator commissions
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Request not found</h1>
+          <h1 className={classes.h1}>Commission not found</h1>
           <p className={classes.sub}>
-            This request could not be loaded from your creator account.
+            This commission could not be loaded from your creator account.
           </p>
         </div>
       </div>
@@ -489,13 +489,13 @@ const CreatorRequestDetails = () => {
 
   const requestReadOnlyMessage =
     request.status === "archived"
-      ? "Archived requests are read-only."
+      ? "Archived commissions are read-only."
       : request.status === "declined"
-        ? "Declined requests are read-only because the conversation has been ended."
+        ? "Declined commission requests are read-only because the conversation has been ended."
         : request.status === "completed"
           ? "Completed projects are read-only because the buyer approved the final delivery."
           : request.status === "cancelled"
-            ? "Cancelled requests are read-only."
+            ? "Cancelled commissions are read-only."
             : undefined;
 
   const buyerLabel = buyerText(buyer, request.buyer_user_id);
@@ -550,7 +550,7 @@ const CreatorRequestDetails = () => {
   const sections: WorkspaceSectionSpec[] = [
     {
       id: "request",
-      title: "Buyer request",
+      title: "Commission request",
       summary: canRespondToRequest ? "Accept or decline" : "Brief, timeline, budget and references",
       ...flags("request"),
       defaultOpen: request.status === "submitted" || isCancellationProposalOpen,
@@ -594,7 +594,7 @@ const CreatorRequestDetails = () => {
             <div className={classes.respond}>
               {updateStatusMutation.error && (
                 <div className={classes.submitError}>
-                  The request status could not be updated right now.
+                  The commission status could not be updated right now.
                 </div>
               )}
 
@@ -606,7 +606,7 @@ const CreatorRequestDetails = () => {
                     onClick={() => void handleAcceptRequest()}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {updateStatusMutation.isPending ? "Updating…" : "Accept request"}
+                    {updateStatusMutation.isPending ? "Updating…" : "Accept commission request"}
                   </button>
                 )}
 
@@ -620,7 +620,7 @@ const CreatorRequestDetails = () => {
                     }}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {showDeclineForm ? "Cancel decline" : "Decline request"}
+                    {showDeclineForm ? "Cancel decline" : "Decline commission request"}
                   </button>
                 )}
               </div>
@@ -639,7 +639,7 @@ const CreatorRequestDetails = () => {
                       setDeclineReason(event.target.value);
                       setDeclineReasonError(null);
                     }}
-                    placeholder="Explain why this request is being declined for audit and client clarity."
+                    placeholder="Explain why this commission request is being declined for audit and client clarity."
                     maxLength={1000}
                   />
 
@@ -659,8 +659,8 @@ const CreatorRequestDetails = () => {
                       disabled={!canConfirmDecline}
                     >
                       {updateStatusMutation.isPending
-                        ? "Declining request…"
-                        : "Confirm decline request"}
+                        ? "Declining commission request…"
+                        : "Confirm decline"}
                     </button>
                   </div>
                 </div>
@@ -930,7 +930,7 @@ const CreatorRequestDetails = () => {
   const manageMenu = canArchiveListingRequest(request.status) ? (
     <ActionMenu>
       <p className={classes.text}>
-        Archive this request to remove it from your active queue without declining it.
+        Archive this commission to remove it from your active queue without declining it.
       </p>
 
       <button
@@ -939,7 +939,7 @@ const CreatorRequestDetails = () => {
         onClick={() => void handleArchiveRequest()}
         disabled={updateStatusMutation.isPending}
       >
-        {updateStatusMutation.isPending ? "Updating…" : "Archive request"}
+        {updateStatusMutation.isPending ? "Updating…" : "Archive commission"}
       </button>
     </ActionMenu>
   ) : canCancelListingRequestBeforePayment(request.status) &&
@@ -958,8 +958,8 @@ const CreatorRequestDetails = () => {
       header={
         <StatusHeader
           backTo={backTo}
-          backLabel="Back to creator requests"
-          eyebrow="Listing request"
+          backLabel="Back to creator commissions"
+          eyebrow="Commission request"
           title={snapshot.title}
           meta={meta}
           statusLabel={getListingRequestStatusLabel(request.status, request, request)}

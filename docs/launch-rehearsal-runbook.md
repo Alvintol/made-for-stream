@@ -118,6 +118,13 @@ buyer fee + tip + support + tax`, and `tax_treatment = 'not_collected'`.
 
 ## 1. Happy path, once in each currency (CAD, USD, EUR)
 
+**Wording (2026-10-07).** On screen and in emails a request is now called a
+**commission**, and a **commission request** until the creator accepts it:
+the buyer's button is "Send commission request", the creator's are "Accept
+commission request" and "Decline commission request", and the lists are
+"Commissions". This runbook, the web addresses (`/requests/...`), the
+database and its error messages, and the policies still say "request".
+
 Record the request id per currency: CAD `____` USD `____` EUR `____`
 
 - [ ] Buyer submits a request. Creator accepts it.

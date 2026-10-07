@@ -51,7 +51,7 @@ signals:
   - source: db
     match: "new row violates row-level security policy for table \"listing_requests\""
   - source: client
-    match: "Requests are paused for this creator"
+    match: "Commission requests are paused for this creator"
 auto_fix: none
 reason_not_automatable: "the balance is real money owed; nothing here is a bug to clear"
 escalate_with:

@@ -31,7 +31,7 @@ export const OPS_ALERTS = {
     playbook: "docs/support/requests/change-orders.md",
     title: "Accepted change order has no payment",
     meaning: "The buyer accepted a price increase, but the payment for the difference was never created, so they have no way to pay it.",
-    todo: "Do not create the payment by hand. Escalate with the change order and the request's payments.",
+    todo: "Do not create the payment by hand. Escalate with the change order and the commission's payments.",
     remind: true,
     describe: (d) =>
       `Price raised by ${formatAmount(d.price_delta)}; ${d.has_schedule_item ? "the payment row is missing" : "the schedule item and payment are both missing"}`,
@@ -42,7 +42,7 @@ export const OPS_ALERTS = {
     playbook: "docs/support/requests/request-lifecycle.md",
     title: "Project gone quiet",
     meaning: "An active project has had no messages or updates for over 14 days. One side may have stopped responding.",
-    todo: "Open the request and decide whether to nudge, send a notice, or close it.",
+    todo: "Open the commission and decide whether to nudge, send a notice, or close it.",
     remind: true,
     describe: (d) =>
       `No activity for ${Math.round(Number(d.days_since_activity) || 0)} days; ${d.has_open_notice ? "a notice is waiting for a reply" : "no notice has been sent"}`,

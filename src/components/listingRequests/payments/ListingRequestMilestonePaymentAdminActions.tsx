@@ -67,7 +67,7 @@ const getAdminMilestonePaymentStatusMessage = (
   milestones: ListingRequestMilestoneRow[]
 ): string => {
   if (milestones.length === 0) {
-    return "No milestone payments are configured for this request yet.";
+    return "No milestone payments are configured for this commission yet.";
   }
 
   const sortedMilestones =

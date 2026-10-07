@@ -100,7 +100,7 @@ const ListingRequestAgreementWorkReadinessCard = ({
           ? "The buyer accepted the project agreement and the starting payment requirement is cleared."
           : requestStatus === "accepted"
             ? "The buyer accepted the project agreement, but work should not begin until the required starting payment or deposit is marked paid."
-            : "This agreement was accepted, but the request is no longer in an active accepted state."}
+            : "This agreement was accepted, but the commission is no longer in an active accepted state."}
       </p>
 
       <div className={classes.metaGrid}>

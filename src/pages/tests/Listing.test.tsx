@@ -206,16 +206,16 @@ describe("<ListingPage /> report UI", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("points request-mode listing CTA to the buyer request flow", () => {
+  it("points commission-mode listing CTA to the buyer commission flow", () => {
     renderPage();
 
-    expect(screen.getByRole("link", { name: "Submit request" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Send commission request" })).toHaveAttribute(
       "href",
       "/listing/listing-1/request"
     );
   });
 
-  it("points request-mode listing CTA to the existing active request when one exists", () => {
+  it("points commission-mode listing CTA to the existing active commission when one exists", () => {
     mocks.useActiveListingRequestForListing.mockReturnValue({
       data: {
         id: "request-1",
@@ -232,15 +232,15 @@ describe("<ListingPage /> report UI", () => {
     renderPage();
 
     expect(
-      screen.getByRole("link", { name: "View existing request" })
+      screen.getByRole("link", { name: "View existing commission" })
     ).toHaveAttribute("href", "/requests/request-1");
 
     expect(
-      screen.queryByRole("link", { name: "Submit request" })
+      screen.queryByRole("link", { name: "Send commission request" })
     ).not.toBeInTheDocument();
   });
 
-  it("shows a checking state while loading the buyer active request", () => {
+  it("shows a checking state while loading the buyer active commission", () => {
     mocks.useActiveListingRequestForListing.mockReturnValue({
       data: null,
       isLoading: true,
@@ -249,10 +249,10 @@ describe("<ListingPage /> report UI", () => {
 
     renderPage();
 
-    expect(screen.getByText("Checking request…")).toBeInTheDocument();
+    expect(screen.getByText("Checking commission…")).toBeInTheDocument();
 
     expect(
-      screen.queryByRole("link", { name: "Submit request" })
+      screen.queryByRole("link", { name: "Send commission request" })
     ).not.toBeInTheDocument();
   });
 });

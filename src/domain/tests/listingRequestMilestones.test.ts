@@ -34,7 +34,7 @@ const validMilestones = [
   },
 ];
 
-describe("listing request milestones", () => {
+describe("listing commission milestones", () => {
   it("maps milestone statuses to display labels", () => {
     expect(
       getListingRequestMilestoneStatusLabel(

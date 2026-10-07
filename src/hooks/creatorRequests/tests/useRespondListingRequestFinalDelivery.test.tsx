@@ -182,7 +182,7 @@ describe(
     );
 
     it(
-      "requests revisions with a trimmed reason",
+      "commissions revisions with a trimmed reason",
       async () => {
         mocks.rpc.mockResolvedValue({
           data: [

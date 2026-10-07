@@ -238,7 +238,7 @@ describe(
       expect(mocks.from).not.toHaveBeenCalled();
     });
 
-    it("does not query without a request id", () => {
+    it("does not query without a commission id", () => {
       const { result } = renderHook(
         () =>
           useListingRequestMilestoneSubmissions(

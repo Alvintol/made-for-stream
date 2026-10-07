@@ -37,7 +37,7 @@ const createRpcFailure = (message: string) => ({
   },
   count: null,
   status: 400,
-  statusText: "Bad Request",
+  statusText: "Bad Commission",
 });
 
 const createWrapper = () => {

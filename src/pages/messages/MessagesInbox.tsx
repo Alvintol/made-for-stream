@@ -83,7 +83,7 @@ const profileText = (
 
 const conversationTypeText = (value: string) =>
   value === "listing_request"
-    ? "Request conversation"
+    ? "Commission conversation"
     : value === "listing_inquiry"
       ? "Listing inquiry"
       : "Creator inquiry";
@@ -161,7 +161,7 @@ const MessagesInbox = () => {
           <h1 className={classes.h1}>Messages</h1>
 
           <p className={classes.sub}>
-            Messages, listing inquiries, creator inquiries, and request conversations.
+            Messages, listing inquiries, creator inquiries, and commission conversations.
           </p>
         </div>
 

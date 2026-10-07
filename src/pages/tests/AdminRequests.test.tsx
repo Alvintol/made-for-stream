@@ -44,7 +44,7 @@ const createRequestItem = (overrides = {}) => ({
     buyer_user_id: "buyer-1",
     creator_user_id: "creator-1",
     status: "submitted",
-    message: "Legacy request message.",
+    message: "Legacy commission message.",
     request_title: "Custom cozy emote pack",
     request_details: "I need three cozy emotes for my Twitch channel launch.",
     requested_timeline: "Flexible, ideally before June 10.",
@@ -104,7 +104,7 @@ describe("<AdminRequests />", () => {
     });
   });
 
-  it("shows the structured request title while keeping listing context", () => {
+  it("shows the structured commission title while keeping listing context", () => {
     renderPage();
 
     expect(screen.getByText("Custom cozy emote pack")).toBeInTheDocument();
@@ -116,20 +116,20 @@ describe("<AdminRequests />", () => {
     expect(screen.getByText("Buyer: @buyeruser")).toBeInTheDocument();
     expect(screen.getByText("Creator: @creatoruser")).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: "View request" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View commission" })).toHaveAttribute(
       "href",
       "/admin/requests/request-1"
     );
   });
 
-  it("falls back to the listing title and legacy message for older requests", () => {
+  it("falls back to the listing title and legacy message for older commissions", () => {
     mocks.useAdminRequests.mockReturnValue({
       data: {
         items: [
           createRequestItem({
             request_title: null,
             request_details: null,
-            message: "Legacy request message.",
+            message: "Legacy commission message.",
           }),
         ],
         totalCount: 1,
@@ -146,10 +146,10 @@ describe("<AdminRequests />", () => {
     expect(
       screen.getByRole("heading", { name: "Custom Emote Pack" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Legacy request message.")).toBeInTheDocument();
+    expect(screen.getByText("Legacy commission message.")).toBeInTheDocument();
   });
 
-  it("labels buyer-withdrawn archived requests for admin review", () => {
+  it("labels buyer-withdrawn archived commissions for admin review", () => {
     mocks.useAdminRequests.mockReturnValue({
       data: {
         items: [
@@ -173,7 +173,7 @@ describe("<AdminRequests />", () => {
     expect(screen.getByText("Withdrawn by buyer")).toBeInTheDocument();
   });
 
-  it("labels creator-archived requests for admin review", () => {
+  it("labels creator-archived commissions for admin review", () => {
     mocks.useAdminRequests.mockReturnValue({
       data: {
         items: [
@@ -197,7 +197,7 @@ describe("<AdminRequests />", () => {
     expect(screen.getByText("Archived by creator")).toBeInTheDocument();
   });
 
-  it("renders completed requests and exposes the completed filter", () => {
+  it("renders completed commissions and exposes the completed filter", () => {
     mocks.useAdminRequests.mockReturnValue({
       data: {
         items: [

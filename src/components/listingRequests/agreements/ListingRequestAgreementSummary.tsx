@@ -279,7 +279,7 @@ const ListingRequestAgreementSummary = ({
   }
 
   if (!agreement) {
-    return <p className={classes.text}>No project agreement has been created for this request yet.</p>;
+    return <p className={classes.text}>No project agreement has been created for this commission yet.</p>;
   }
 
   return (

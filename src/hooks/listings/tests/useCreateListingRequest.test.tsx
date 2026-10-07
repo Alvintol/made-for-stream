@@ -90,7 +90,7 @@ describe("useCreateListingRequest", () => {
     });
   });
 
-  it("inserts a structured listing request payload with a frozen listing snapshot", async () => {
+  it("inserts a structured listing commission payload with a frozen listing snapshot", async () => {
     const { result } = renderHook(() => useCreateListingRequest(), {
       wrapper: createWrapper(),
     });
@@ -143,7 +143,7 @@ describe("useCreateListingRequest", () => {
     expect(mocks.maybeSingle).toHaveBeenCalled();
   });
 
-  it("stores optional request fields as empty-safe values", async () => {
+  it("stores optional commission fields as empty-safe values", async () => {
     const { result } = renderHook(() => useCreateListingRequest(), {
       wrapper: createWrapper(),
     });
@@ -152,7 +152,7 @@ describe("useCreateListingRequest", () => {
       await result.current.mutateAsync({
         listingId: "listing-1",
         creatorUserId: "creator-1",
-        requestTitle: "Simple emote request",
+        requestTitle: "Simple emote commission",
         requestDetails: "Please make a simple cozy emote.",
         requestedTimeline: "   ",
         budgetAmount: null,
@@ -163,7 +163,7 @@ describe("useCreateListingRequest", () => {
 
     expect(mocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        request_title: "Simple emote request",
+        request_title: "Simple emote commission",
         request_details: "Please make a simple cozy emote.",
         requested_timeline: null,
         budget_amount: null,
@@ -186,17 +186,17 @@ describe("useCreateListingRequest", () => {
       result.current.mutateAsync({
         listingId: "listing-1",
         creatorUserId: "creator-1",
-        requestTitle: "Simple emote request",
+        requestTitle: "Simple emote commission",
         requestDetails: "Please make a simple cozy emote.",
         listingSnapshot,
       })
-    ).rejects.toThrow("You must be signed in to submit a request.");
+    ).rejects.toThrow("You must be signed in to send a commission request.");
 
     expect(mocks.from).not.toHaveBeenCalled();
     expect(mocks.insert).not.toHaveBeenCalled();
   });
 
-  it("throws a clear error when Supabase does not return a request id", async () => {
+  it("throws a clear error when Supabase does not return a commission id", async () => {
     mocks.maybeSingle.mockResolvedValue({
       data: null,
       error: null,
@@ -210,11 +210,11 @@ describe("useCreateListingRequest", () => {
       result.current.mutateAsync({
         listingId: "listing-1",
         creatorUserId: "creator-1",
-        requestTitle: "Simple emote request",
+        requestTitle: "Simple emote commission",
         requestDetails: "Please make a simple cozy emote.",
         listingSnapshot,
       })
-    ).rejects.toThrow("The request could not be created.");
+    ).rejects.toThrow("The commission request could not be sent.");
   });
 
   it("throws buyer-friendly copy when Supabase blocks the insert", async () => {
@@ -234,10 +234,10 @@ describe("useCreateListingRequest", () => {
       result.current.mutateAsync({
         listingId: "listing-1",
         creatorUserId: "creator-1",
-        requestTitle: "Simple emote request",
+        requestTitle: "Simple emote commission",
         requestDetails: "Please make a simple cozy emote.",
         listingSnapshot,
       })
-    ).rejects.toThrow("This listing is no longer available for buyer requests.");
+    ).rejects.toThrow("This listing is no longer available for commission requests.");
   });
 });

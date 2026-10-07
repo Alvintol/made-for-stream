@@ -2,32 +2,32 @@ import { describe, expect, it } from "vitest";
 
 import { getCreateListingRequestErrorMessage } from "../listings/listingRequestErrors";
 
-describe("listing request error helpers", () => {
+describe("listing commission error helpers", () => {
   it("maps row-level security errors to unavailable listing copy", () => {
     expect(
       getCreateListingRequestErrorMessage({
         code: "42501",
         message: "new row violates row-level security policy",
       })
-    ).toBe("This listing is no longer available for buyer requests.");
+    ).toBe("This listing is no longer available for commission requests.");
   });
 
-  it("maps request title constraint errors", () => {
+  it("maps commission title constraint errors", () => {
     expect(
       getCreateListingRequestErrorMessage({
         message:
           'new row for relation "listing_requests" violates check constraint "listing_requests_request_title_check"',
       })
-    ).toBe("Request summary must be between 3 and 120 characters.");
+    ).toBe("Commission summary must be between 3 and 120 characters.");
   });
 
-  it("maps request details constraint errors", () => {
+  it("maps commission details constraint errors", () => {
     expect(
       getCreateListingRequestErrorMessage({
         message:
           'new row for relation "listing_requests" violates check constraint "listing_requests_request_details_check"',
       })
-    ).toBe("Request details must be between 10 and 2000 characters.");
+    ).toBe("Commission details must be between 10 and 2000 characters.");
   });
 
   it("maps timeline constraint errors", () => {
@@ -82,6 +82,6 @@ describe("listing request error helpers", () => {
       getCreateListingRequestErrorMessage({
         message: "Unexpected database issue.",
       })
-    ).toBe("Your request could not be submitted right now.");
+    ).toBe("Your commission request could not be sent right now.");
   });
 });

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import ListingRequestSubmissionDetails from "../listingRequests/core/ListingRequestSubmissionDetails";
 
 describe("<ListingRequestSubmissionDetails />", () => {
-  it("renders structured request details", () => {
+  it("renders structured commission details", () => {
     render(
       <ListingRequestSubmissionDetails
         requestTitle="Custom cozy emote pack"
@@ -35,15 +35,15 @@ describe("<ListingRequestSubmissionDetails />", () => {
       <ListingRequestSubmissionDetails
         requestTitle={null}
         requestDetails={null}
-        fallbackMessage="Legacy request message."
+        fallbackMessage="Legacy commission message."
         requestedTimeline={null}
         budgetAmount={null}
         referenceLinks={[]}
       />
     );
 
-    expect(screen.getByText("No request summary provided.")).toBeInTheDocument();
-    expect(screen.getByText("Legacy request message.")).toBeInTheDocument();
+    expect(screen.getByText("No commission summary provided.")).toBeInTheDocument();
+    expect(screen.getByText("Legacy commission message.")).toBeInTheDocument();
     expect(screen.getAllByText("Not provided")).toHaveLength(2);
     expect(screen.getByText("No Reference Links Provided.")).toBeInTheDocument();
   });

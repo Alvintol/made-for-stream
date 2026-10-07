@@ -91,7 +91,7 @@ describe("useActiveListingRequestForListing", () => {
     });
   });
 
-  it("loads the buyer active request for a listing", async () => {
+  it("loads the buyer active commission for a listing", async () => {
     const { result } = renderHook(
       () => useActiveListingRequestForListing("listing-1"),
       {

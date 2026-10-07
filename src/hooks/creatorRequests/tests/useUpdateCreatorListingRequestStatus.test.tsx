@@ -84,7 +84,7 @@ describe("useUpdateCreatorListingRequestStatus", () => {
     });
   });
 
-  it("updates request status and invalidates request, inbox, and active-request caches", async () => {
+  it("updates commission status and invalidates commission, inbox, and active-commission caches", async () => {
     const { wrapper, invalidateSpy } = createWrapper();
 
     const { result } = renderHook(() => useUpdateCreatorListingRequestStatus(), {
@@ -139,7 +139,7 @@ describe("useUpdateCreatorListingRequestStatus", () => {
     });
   });
 
-  it("throws clear copy when the request is no longer submitted", async () => {
+  it("throws clear copy when the commission is no longer submitted", async () => {
     mocks.maybeSingle.mockResolvedValue({
       data: null,
       error: null,
@@ -157,7 +157,7 @@ describe("useUpdateCreatorListingRequestStatus", () => {
         status: "accepted",
       })
     ).rejects.toThrow(
-      "This request is no longer under review and cannot be updated."
+      "This commission request is no longer under review and cannot be updated."
     );
 
     expect(mocks.from).toHaveBeenCalledWith("listing_requests");
@@ -200,7 +200,7 @@ describe("useUpdateCreatorListingRequestStatus", () => {
         requestId: "request-1",
         status: "accepted",
       })
-    ).rejects.toThrow("You must be signed in to update request status.");
+    ).rejects.toThrow("You must be signed in to update commission status.");
 
     expect(mocks.from).not.toHaveBeenCalled();
   });

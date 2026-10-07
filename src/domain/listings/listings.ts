@@ -41,10 +41,10 @@ export const getFulfilmentModeCopy = (
       primaryLabel: "Buy instantly soon",
     }
     : {
-      title: "Request flow coming soon",
+      title: "Commission flow coming soon",
       text:
         "This listing is intended to start with creator review or confirmation before work begins.",
-      primaryLabel: "Request this listing soon",
+      primaryLabel: "Commission commissions coming soon",
     };
 
 // Free listings skip Stripe entirely: a creator gives a listing away either
@@ -152,7 +152,7 @@ export const getListingStatusSummary = (listing: {
       ? {
           key: "draft",
           title: "Draft: only you can see this",
-          description: "Buyers cannot see or request this listing until you publish it.",
+          description: "Buyers cannot see or commission this listing until you publish it.",
         }
       : listing.is_active
         ? {
@@ -181,7 +181,7 @@ export const getListingRequestDisplayTitle = (
   const requestTitle = request.request_title?.trim();
   const listingTitle = request.listing_snapshot?.title?.trim();
 
-  return requestTitle || listingTitle || "Untitled request";
+  return requestTitle || listingTitle || "Untitled commission";
 };
 
 export const getListingRequestDisplayPreview = (

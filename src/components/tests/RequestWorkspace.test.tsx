@@ -186,17 +186,17 @@ describe("ActionMenu", () => {
   it("opens on click and closes on Escape", () => {
     render(
       <ActionMenu>
-        <button type="button">Archive request</button>
+        <button type="button">Archive commission</button>
       </ActionMenu>
     );
 
-    expect(screen.queryByRole("button", { name: "Archive request" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Archive commission" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Manage/ }));
-    expect(screen.getByRole("button", { name: "Archive request" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Archive commission" })).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("button", { name: "Archive request" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Archive commission" })).not.toBeInTheDocument();
   });
 });
 

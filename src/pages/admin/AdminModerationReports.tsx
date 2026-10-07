@@ -588,7 +588,7 @@ const AdminModerationReports = () => {
                       className={classes.btnOutline}
                       to={`/admin/requests/${item.conversation.listing_request_id}`}
                     >
-                      View request
+                      View commission
                     </Link>
                   )}
                 </div>

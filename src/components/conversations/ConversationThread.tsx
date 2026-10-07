@@ -1070,7 +1070,7 @@ const ConversationThread = ({
 
         {isAdmin && (
           <div className={classes.adminNote}>
-            Admins can review request messages, but cannot send replies.
+            Admins can review commission messages, but cannot send replies.
           </div>
         )}
       </div>

@@ -24,7 +24,7 @@ const RequestConversationThread = ({
   creatorLabel,
   viewer,
   requestReadOnly = false,
-  requestReadOnlyMessage = "This request is read-only.",
+  requestReadOnlyMessage = "This commission is read-only.",
 }: RequestConversationThreadProps) => {
   const {
     data: conversation,
@@ -63,7 +63,7 @@ const RequestConversationThread = ({
       header={
         <>
           <h2 className={classes.title}>Messages</h2>
-          <p className={classes.sub}>Follow-up messages linked to this request.</p>
+          <p className={classes.sub}>Follow-up messages linked to this commission.</p>
         </>
       }
     />

@@ -135,7 +135,7 @@ describe("ListingRequestAgreementWorkReadinessCard", () => {
     expect(screen.getByText("Available immediately")).toBeInTheDocument();
   });
 
-  it("does not mark work ready when the request is no longer accepted", () => {
+  it("does not mark work ready when the commission is no longer accepted", () => {
     render(
       <ListingRequestAgreementWorkReadinessCard
         requestStatus="archived"
@@ -149,7 +149,7 @@ describe("ListingRequestAgreementWorkReadinessCard", () => {
 
     expect(
       screen.getByText(
-        "This agreement was accepted, but the request is no longer in an active accepted state."
+        "This agreement was accepted, but the commission is no longer in an active accepted state."
       )
     ).toBeInTheDocument();
   });

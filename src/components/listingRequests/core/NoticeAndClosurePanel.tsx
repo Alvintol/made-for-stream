@@ -128,7 +128,7 @@ const NoticeAndClosurePanel = ({
       .maybeSingle();
 
     if (conversationError || !conversation) {
-      setClosureRequestError("This request's conversation could not be found.");
+      setClosureRequestError("This commission's conversation could not be found.");
       return;
     }
 
@@ -219,7 +219,7 @@ const NoticeAndClosurePanel = ({
             {isSenderOfLatestNotice ? "You sent" : "You received"} a final
             notice, granting until{" "}
             {new Date(clock.expiresAt).toLocaleString()}. After that,{" "}
-            {isSenderOfLatestNotice ? "you" : "the other party"} may request
+            {isSenderOfLatestNotice ? "you" : "the other party"} may commission
             administrative closure.
           </p>
         </div>

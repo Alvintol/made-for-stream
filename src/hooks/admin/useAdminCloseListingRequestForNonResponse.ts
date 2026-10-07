@@ -50,13 +50,13 @@ export const useAdminCloseListingRequestForNonResponse = () => {
       );
 
       if (error) {
-        throw new Error(error.message || "This request could not be closed.");
+        throw new Error(error.message || "This commission could not be closed.");
       }
 
       const result = (Array.isArray(data) ? data[0] : null) as CloseResult | null;
 
       if (!result?.closure_id) {
-        throw new Error("This request could not be closed.");
+        throw new Error("This commission could not be closed.");
       }
 
       if (result.branch === "creator_unresponsive") {

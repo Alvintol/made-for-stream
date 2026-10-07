@@ -72,7 +72,7 @@ const CreatorDashboard = () => {
           </Link>
 
           <Link className={classes.btnOutline} to="/creator/requests">
-            Requests
+            Commissions
           </Link>
 
           <Link className={classes.btnOutline} to="/settings/profile">

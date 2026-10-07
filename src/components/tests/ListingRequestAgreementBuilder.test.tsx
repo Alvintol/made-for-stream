@@ -55,7 +55,7 @@ const fillValidAgreementForm = () => {
 };
 
 describe("ListingRequestAgreementBuilder", () => {
-  it("does not render unless the request is accepted", () => {
+  it("does not render unless the commission is accepted", () => {
     const onCreateAgreement = vi.fn();
 
     render(

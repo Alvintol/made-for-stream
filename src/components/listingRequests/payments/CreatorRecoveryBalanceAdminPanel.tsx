@@ -67,7 +67,7 @@ const CreatorRecoveryBalanceAdminPanel = ({
       <div className={classes.warning}>
         This creator owes{" "}
         {formatPaymentCents(balance.outstanding_cents, balance.currency)} from
-        a platform-funded refund. New requests to them are blocked until it
+        a platform-funded refund. New commission requests to them are blocked until it
         clears. Write it off only if it is genuinely unrecoverable.
       </div>
 

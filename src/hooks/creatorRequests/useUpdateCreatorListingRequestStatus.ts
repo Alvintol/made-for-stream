@@ -18,7 +18,7 @@ export const useUpdateCreatorListingRequestStatus = () => {
   return useMutation({
     mutationFn: async (input: UpdateCreatorListingRequestStatusInput) => {
       if (!user?.id) {
-        throw new Error("You must be signed in to update request status.");
+        throw new Error("You must be signed in to update commission status.");
       }
 
       const trimmedReason = normaliseReason(input.reason);
@@ -47,7 +47,7 @@ export const useUpdateCreatorListingRequestStatus = () => {
 
       if (!data?.id) {
         throw new Error(
-          "This request is no longer under review and cannot be updated."
+          "This commission request is no longer under review and cannot be updated."
         );
       }
 

@@ -49,7 +49,7 @@ const fillRequiredFields = () => {
 };
 
 describe("ListingRequestChangeOrderBuilder", () => {
-  it("does not render unless the request and agreement are active", () => {
+  it("does not render unless the commission and agreement are active", () => {
     const { rerender } = render(
       <ListingRequestChangeOrderBuilder
         requestStatus="submitted"

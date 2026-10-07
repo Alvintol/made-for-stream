@@ -646,17 +646,17 @@ const AdminModerationReportDetails = () => {
                   </div>
 
                   <div className={classes.metaBlock}>
-                    <div className={classes.metaLabel}>Request link</div>
+                    <div className={classes.metaLabel}>Commission link</div>
                     <div className={classes.metaValue}>
                       {conversation.listing_request_id ? (
                         <Link
                           className={classes.backLink}
                           to={`/admin/requests/${conversation.listing_request_id}`}
                         >
-                          View linked request
+                          View linked commission
                         </Link>
                       ) : (
-                        "No linked request"
+                        "No linked commission"
                       )}
                     </div>
                   </div>
@@ -1300,7 +1300,7 @@ const AdminModerationReportDetails = () => {
                     className={classes.btnOutline}
                     to={`/admin/requests/${conversation.listing_request_id}`}
                   >
-                    Open request
+                    Open commission
                   </Link>
                 )}
               </div>

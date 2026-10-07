@@ -39,7 +39,7 @@ const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: Req
       <div className={classes.grid}>
         <div className={classes.next}>{nextStep}</div>
 
-        <div className={classes.tabs} role="tablist" aria-label="Request views">
+        <div className={classes.tabs} role="tablist" aria-label="Commission views">
           {tabs.map((tab) => (
             <button
               key={tab.id}

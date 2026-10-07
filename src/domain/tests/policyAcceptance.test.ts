@@ -28,7 +28,7 @@ describe("policy acceptance versions", () => {
     ]);
   });
 
-  it("ties the early-service request to the refund policy version", () => {
+  it("ties the early-service commission to the refund policy version", () => {
     expect(checkoutPolicyTypes).toContain("early_service_request");
     expect(currentPolicyVersions.early_service_request).toBe(refundPolicyVersion);
   });

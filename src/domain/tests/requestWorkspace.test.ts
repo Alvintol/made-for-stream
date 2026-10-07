@@ -29,12 +29,12 @@ const stateOf = (input: RequestWorkspaceInput) =>
   Object.fromEntries(getRequestStages(input).map((stage) => [stage.key, stage.state]));
 
 describe("getRequestStages", () => {
-  it("has no tracker for closed requests", () => {
+  it("has no tracker for closed commissions", () => {
     expect(getRequestStages({ requestStatus: "declined", agreement: null })).toEqual([]);
     expect(getRequestStages({ requestStatus: "archived", agreement: null })).toEqual([]);
   });
 
-  it("marks the review stage current for submitted requests", () => {
+  it("marks the review stage current for submitted commissions", () => {
     expect(stateOf({ requestStatus: "submitted", agreement: null })).toMatchObject({
       submitted: "current",
       agreement: "upcoming",
@@ -93,7 +93,7 @@ describe("getRequestStages", () => {
 });
 
 describe("getRequestNextStep", () => {
-  it("asks the creator to review a submitted request", () => {
+  it("asks the creator to review a submitted commission", () => {
     expect(getRequestNextStep({ requestStatus: "submitted", agreement: null })).toMatchObject({
       key: "review-request",
       owner: "creator",
@@ -101,7 +101,7 @@ describe("getRequestNextStep", () => {
     });
   });
 
-  it("reports closed and completed requests without an owner", () => {
+  it("reports closed and completed commissions without an owner", () => {
     expect(getRequestNextStep({ requestStatus: "declined", agreement: null })).toMatchObject({
       owner: null,
       tone: "closed",
@@ -117,7 +117,7 @@ describe("getRequestNextStep", () => {
     });
   });
 
-  it("has no tracker for a cancelled request", () => {
+  it("has no tracker for a cancelled commission", () => {
     expect(getRequestStages({ requestStatus: "cancelled", agreement: null })).toEqual([]);
   });
 
