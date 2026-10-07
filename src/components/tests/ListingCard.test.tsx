@@ -12,6 +12,16 @@ import {
 } from "../../providers/hub/HubProvider";
 import type { HubActions, HubState } from "../../providers/hub";
 
+// Prices are shown in the creator's own currency in these tests; the
+// conversion has its own tests (ListingPriceText, displayCurrency).
+vi.mock("../../hooks/money/useDisplayCurrency", () => ({
+  useDisplayCurrency: () => ({ displayCurrency: null, rates: null }),
+  useDisplayPreferences: () => ({ data: null, isLoading: false }),
+  useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useExchangeRates: () => ({ data: null }),
+}));
+
+
 // Mock Hub actions used by FavouriteButton inside ListingCard
 const mockSetFilters = vi.fn();
 const mockResetFilters = vi.fn();
@@ -163,7 +173,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("$18")).toBeInTheDocument();
+    expect(screen.getByText("$18 CAD")).toBeInTheDocument();
   });
 
   it("renders a starting_at price correctly", () => {
@@ -178,7 +188,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("From $90")).toBeInTheDocument();
+    expect(screen.getByText("From $90 CAD")).toBeInTheDocument();
   });
 
   it("renders a range price correctly", () => {
@@ -193,7 +203,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("$120–$420")).toBeInTheDocument();
+    expect(screen.getByText("$120–$420 CAD")).toBeInTheDocument();
   });
 
   it("links to the listing page", () => {

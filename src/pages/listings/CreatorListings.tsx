@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { useMyListings, type MyListingRow } from "../../hooks/listings/useMyListings";
 import { useDeleteListingDraft } from '../../hooks/listings/useDeleteListingDraft';
 import { getListingVisibilityLabel, isAdminHiddenListing } from '../../domain/listings/listings';
@@ -56,12 +57,7 @@ const classes = {
 } as const;
 
 // Formats the listing price for creator-facing cards
-const priceText = (listing: MyListingRow): string =>
-  listing.price_type === "fixed"
-    ? `$${listing.price_min}`
-    : listing.price_type === "starting_at"
-      ? `From $${listing.price_min}`
-      : `$${listing.price_min}–$${listing.price_max ?? listing.price_min}`;
+const priceText = (listing: MyListingRow): string => formatListingPrice(listing);
 
 // Formats the last updated date into a readable local date string
 const updatedText = (value: string): string => {

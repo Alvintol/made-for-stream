@@ -11,6 +11,8 @@ export type ListingRequestSnapshot = {
   price_type: "fixed" | "starting_at" | "range";
   price_min: number;
   price_max: number | null;
+  // Absent on snapshots taken before listings had a currency (those were CAD).
+  currency?: string;
   deliverables: string[];
   tags: string[];
   preview_url: string | null;
@@ -33,6 +35,7 @@ export const buildListingRequestSnapshot = (
   price_type: listing.price_type,
   price_min: listing.price_min,
   price_max: listing.price_max,
+  currency: listing.currency,
   deliverables: listing.deliverables,
   tags: listing.tags,
   preview_url: listing.preview_url,

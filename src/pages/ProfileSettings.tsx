@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useDisplayPreferences } from "../hooks/money/useDisplayCurrency";
+import { getDisplayCurrencySummary } from "../lib/money/displayCurrency";
+import DisplayCurrencySettings from "../components/settings/DisplayCurrencySettings";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../providers/AuthProvider";
@@ -152,6 +155,7 @@ const ProfileSettings = () => {
 
   const { user, session, loading } = useAuth();
   const { data: profile, isLoading, error, refetch } = useMyProfile();
+  const { data: displayPreferences } = useDisplayPreferences();
 
   const {
     data: platformAccounts = [],
@@ -680,6 +684,14 @@ const ProfileSettings = () => {
               <span className={classes.pill}>Manual review</span>
               <span className={classes.pill}>No instant activation</span>
             </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            id="settings-display-currency"
+            title="Country and currency"
+            summary={getDisplayCurrencySummary(displayPreferences)}
+          >
+            <DisplayCurrencySettings />
           </CollapsibleSection>
 
           <CollapsibleSection

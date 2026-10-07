@@ -21,6 +21,7 @@ const fetchMyListing = async (
       price_type,
       price_min,
       price_max,
+      currency,
       deliverables,
       tags,
       preview_url,

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import ListingPriceText from "../components/listings/ListingPriceText";
 import { Link } from "react-router-dom";
 import { CATEGORIES } from "../domain/catalog";
 import { normalizeTwitchLogin, type TwitchStream } from "../domain/twitch";
@@ -78,16 +79,6 @@ const offeringPill = (offeringType: string): string =>
         ? "Service"
         : offeringType;
 
-// Formats listing price text for display
-const priceText = (item: MarketListingItem["listing"]): string =>
-  item.price_type === "fixed"
-    ? `$${item.price_min}`
-    : item.price_type === "starting_at"
-      ? `From $${item.price_min}`
-      : item.price_type === "range"
-        ? `$${item.price_min}–$${item.price_max ?? item.price_min}`
-        : "";
-
 type SectionHeaderProps = {
   eyebrow: string;
   title: string;
@@ -163,7 +154,7 @@ const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
             </div>
           </div>
 
-          <div className={classes.featuredPrice}>{priceText(listing)}</div>
+          <div className={classes.featuredPrice}><ListingPriceText listing={listing} /></div>
         </div>
 
         <p className={classes.featuredShort}>{listing.short}</p>

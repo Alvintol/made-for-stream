@@ -11,6 +11,15 @@ const mocks = vi.hoisted(() => ({
   useActiveListingRequestForListing: vi.fn(),
 }));
 
+// Prices are shown in the creator's own currency in these tests; the
+// conversion has its own tests (ListingPriceText, displayCurrency).
+vi.mock("../../hooks/money/useDisplayCurrency", () => ({
+  useDisplayCurrency: () => ({ displayCurrency: null, rates: null }),
+  useDisplayPreferences: () => ({ data: null, isLoading: false }),
+  useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useExchangeRates: () => ({ data: null }),
+}));
+
 vi.mock("../../providers/AuthProvider", () => ({
   useAuth: mocks.useAuth,
 }));
@@ -138,7 +147,7 @@ describe("RequestListing", () => {
 
     expect(screen.getByText("Custom Emote Pack")).toBeInTheDocument();
     expect(screen.getByText("@creatoruser")).toBeInTheDocument();
-    expect(screen.getByText("$50")).toBeInTheDocument();
+    expect(screen.getByText("$50 CAD")).toBeInTheDocument();
     expect(screen.getByText("3 emotes")).toBeInTheDocument();
 
     expect(screen.getByLabelText("Request title / summary")).toBeInTheDocument();

@@ -14,6 +14,7 @@ export type PublicListingRow = {
   price_type: "fixed" | "starting_at" | "range";
   price_min: number;
   price_max: number | null;
+  currency: string;
   deliverables: string[];
   tags: string[];
   preview_url: string | null;
@@ -64,6 +65,7 @@ const fetchPublicListing = async (
       price_type,
       price_min,
       price_max,
+      currency,
       deliverables,
       tags,
       preview_url,

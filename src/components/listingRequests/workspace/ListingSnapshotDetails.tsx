@@ -1,4 +1,5 @@
 import type { ListingRequestSnapshot } from "../../../lib/listings/listingRequestSnapshot";
+import { formatListingPrice } from "../../../lib/money/displayCurrency";
 
 type ListingSnapshotDetailsProps = {
   snapshot: ListingRequestSnapshot;
@@ -31,12 +32,7 @@ const dateText = (value: string) => {
     });
 };
 
-const priceText = (snapshot: ListingRequestSnapshot) =>
-  snapshot.price_type === "fixed"
-    ? `$${snapshot.price_min}`
-    : snapshot.price_type === "starting_at"
-      ? `From $${snapshot.price_min}`
-      : `$${snapshot.price_min}–$${snapshot.price_max ?? snapshot.price_min}`;
+const priceText = (snapshot: ListingRequestSnapshot) => formatListingPrice(snapshot);
 
 const humanize = (value: string) => value.replace(/[_-]+/g, " ");
 

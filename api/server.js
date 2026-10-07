@@ -20,6 +20,7 @@ import {
 } from "./supportedCurrencies.js";
 import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
+import { getExchangeRates } from "./exchangeRates.js";
 import {
   buildCheckoutLineItems,
   buildTaxCalculationLineItems,
@@ -388,6 +389,20 @@ app.get("/api/health", (_req, res) => {
     ok: true,
     service: "made-for-stream-api",
   });
+});
+
+// Reference rates for showing approximate prices in a visitor's currency.
+// Public and display-only: see api/exchangeRates.js.
+app.get("/api/exchange-rates", async (_req, res) => {
+  const rates = await getExchangeRates();
+
+  if (!rates) {
+    return res.status(503).json({ error: "Exchange rates are not available right now." });
+  }
+
+  res.set("Cache-Control", "public, max-age=3600");
+
+  return res.json(rates);
 });
 
 app.get("/api/stripe/config", (_req, res) => {

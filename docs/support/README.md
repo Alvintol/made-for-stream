@@ -139,6 +139,7 @@ how it fails.
 | Payments | [`payments/refunds-and-disputes.md`](payments/refunds-and-disputes.md) |
 | Payments | [`payments/creator-recovery-balances.md`](payments/creator-recovery-balances.md) |
 | Payments | [`payments/tax.md`](payments/tax.md) |
+| Payments | [`payments/display-currency.md`](payments/display-currency.md) |
 | Discovery | [`discovery/twitch-live.md`](discovery/twitch-live.md) |
 | Operations | [`operations/alerting.md`](operations/alerting.md) — scheduled jobs and ops alerts |
 

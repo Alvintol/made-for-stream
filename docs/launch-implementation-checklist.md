@@ -1443,6 +1443,37 @@ in [`environments.md`](environments.md).
       three placeholder pictures. The "featured" cards below it still show
       the six newest listings, by design, until listings have a featured
       flag.
+- [ ] **Rehearsal finding, 2026-10-07: every agreement was created in CAD.**
+      The agreement form defaulted to CAD and was never told the creator's
+      currency, and nothing checked it, so the rehearsal's USD and EUR runs
+      would have been CAD runs. Listings had no currency at all and printed
+      every price with "$". **Decision (2026-10-07): an agreement is always in
+      the creator's payout currency, enforced by the database** (`AGR-008`).
+      Migration `20261007_146` gives listings a currency (the creator's payout
+      currency; CAD for creators with no payout account), refuses an agreement
+      or payment in any other currency, and the form now passes the creator's
+      currency. **Dry-run on the live database in a rolled-back transaction:**
+      backfill gave cad=10, eur=1, usd=1; a client cannot override a listing's
+      currency; a listing follows its creator's payout account; a CAD
+      agreement for a USD creator and a USD payment on a CAD agreement are
+      both refused; the existing CAD agreement is untouched. **Not tested:**
+      a real agreement in USD or EUR, which is the rehearsal's next step.
+- [ ] **Approximate prices in the visitor's currency (2026-10-07).** Cards
+      and grids show "≈" estimates in the visitor's currency; the listing
+      page shows the creator's real price first, then the estimate and a note.
+      Settings has a private "Country and currency" section. Rates are the
+      European Central Bank's daily reference rates, fetched by the API and
+      served at `GET /api/exchange-rates` (one live fetch checked: 15
+      currencies, dated 2026-10-06). Playbook: `payments/display-currency.md`.
+      **User actions, in this order:** apply `146`, deploy the API, then merge.
+      **Unit tests only on the website side; not seen in a browser.**
+- [ ] **Policy wording for converted prices (your decision, needs a version
+      bump).** Showing estimates to buyers probably wants a line in the Fee
+      Schedule or Buyer Terms: displayed conversions are estimates, the
+      charge is in the creator's currency, and the buyer's card provider sets
+      the rate. The Privacy Policy and Service Provider Register may also need
+      to mention the country field and that rates come from the ECB (the API
+      fetches them; no visitor data is sent). Not written.
 - [ ] **Existing listings still show pasted links** (11 on dev: 6 placeholder
       photos, 5 taken from other websites). They are left as they are and can
       still be published and edited. Not copied into our storage: five are

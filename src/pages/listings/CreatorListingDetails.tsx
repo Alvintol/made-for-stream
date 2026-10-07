@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { useMyListing } from "../../hooks/listings/useMyListing";
 import { useDeleteListingDraft } from "../../hooks/listings/useDeleteListingDraft";
 import {
@@ -119,13 +120,6 @@ const classes = {
   changeItem:
     "rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700",
 } as const;
-
-const priceText = (priceType: "fixed" | "starting_at" | "range", priceMin: number, priceMax: number | null) =>
-  priceType === "fixed"
-    ? `$${priceMin}`
-    : priceType === "starting_at"
-      ? `From $${priceMin}`
-      : `$${priceMin}–$${priceMax ?? priceMin}`;
 
 const dateText = (value: string) => {
   const date = new Date(value);
@@ -485,7 +479,7 @@ const CreatorListingDetails = () => {
               <div className={classes.metaBlock}>
                 <div className={classes.metaLabel}>Price</div>
                 <div className={classes.metaValue}>
-                  {priceText(listing.price_type, listing.price_min, listing.price_max)}
+                  {formatListingPrice(listing)}
                 </div>
               </div>
 

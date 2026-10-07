@@ -47,6 +47,10 @@ Stripe signature, or the ops cron secret.
   gcloud run deploy made-for-stream-api --source api --region us-central1
   ```
 
+- **Order matters when a change spans all three.** Apply the migration,
+  then deploy the API, then merge the website. The website reading a column
+  that does not exist yet breaks every page that lists it (seen with
+  `listings.currency`, `20261007_146`).
 - **Database:** migrations are applied by hand. `list_migrations` is unreliable
   on this project; compare objects directly.
 
