@@ -8,6 +8,8 @@ surfaces:
   - src/hooks/money/useDisplayCurrency.ts
   - src/components/listings/ListingPriceText.tsx
   - src/components/settings/DisplayCurrencySettings.tsx
+  - src/components/layout/RegionPicker.tsx   # top-bar button and dialog
+  - src/lib/i18n/languages.ts                # the language list (English only)
   - public.listings.currency
   - public.set_listing_currency()
   - public.sync_listing_currency_from_payment_account()
@@ -61,6 +63,12 @@ receipts show the real currency only.
 readable and writable only by their owner. They are deliberately not on
 `profiles`, which anyone can read.
 
+**Where it is set.** The globe button in the top bar opens a dialog with
+the same form as Settings → Country and currency. A signed-in person's choice
+is saved to `user_display_preferences`. A signed-out visitor's choice is kept
+in memory only and is gone when the page is reloaded; the "Saved" message
+says so. Nothing is written to browser storage.
+
 ## Quick triage
 
 | Symptom | Likely issue |
@@ -68,6 +76,8 @@ readable and writable only by their owner. They are deliberately not on
 | "Prices stopped showing in my currency" / no "≈" anywhere | [`CUR-001`](#cur-001--exchange-rates-unavailable) |
 | "The price on the card and at checkout don't match" | Expected. The card shows an estimate; checkout is in the creator's currency. See [`CUR-002`](#cur-002--buyer-charged-a-different-amount-than-the-estimate) |
 | "My listing shows the wrong currency" | [`CUR-003`](#cur-003--listing-is-in-the-wrong-currency) |
+| "I picked a currency and it went back after I refreshed" | Expected when signed out: the choice lasts for the page view. Signing in keeps it. See Known gaps |
+| "The language list only has English" | Expected. No other language exists yet (`src/lib/i18n/languages.ts`) |
 | "I can't save my country or currency" | [`CUR-004`](#cur-004--display-preference-cannot-be-saved) |
 
 ---
@@ -191,6 +201,13 @@ messages mean a country that is not two capital letters or a currency not in
 ---
 
 ## Known gaps
+
+- **A signed-out visitor's choice is not remembered.** Keeping it across
+  visits means browser storage, which needs a new line in the Cookie
+  Policy's Storage Register and a Cookie Policy version bump first.
+- **Language is a list of one.** The picker shows it, but there is no
+  translation system and nothing is saved. Adding a language means storing
+  the choice, setting the page language and translating the site's text.
 
 - **The country list is the 35 payout countries.** Other countries choose
   "Another country" and pick a currency by hand. Brazil has a supported

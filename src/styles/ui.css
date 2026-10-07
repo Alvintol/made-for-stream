@@ -391,21 +391,12 @@
     @apply container mx-auto h-[30px] px-4 sm:px-6;
   }
   .categoryRow {
-    @apply flex items-center gap-0.5 overflow-x-auto scroll-smooth sm:gap-1;
-    overflow-y: visible;
-    scrollbar-width: none;
-  }
-  .categoryRow::-webkit-scrollbar {
-    display: none;
-  }
-  .categoryTitle {
-    @apply mr-2 shrink-0 text-[11px] font-semibold tracking-[0.12em] uppercase;
-    color: rgb(var(--muted));
+    @apply flex items-center gap-0.5 sm:gap-1;
   }
 
   /* Chip text/padding steps up at each breakpoint so the full category set
-     (12 categories + All + Free) fits more of the rail before scrolling is
-     needed, while staying legible at the smallest sizes. */
+     (12 categories + All + Free) fits more of the rail before it collapses
+     into its menu, while staying legible at the smallest sizes. */
   .navChip {
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium transition duration-200 sm:px-2.5 sm:text-xs;
     color: rgb(var(--ink) / 0.72);
@@ -422,21 +413,45 @@
     border-color: rgb(var(--accent) / 0.2);
   }
 
-  /* Compact scroll affordance for the category rail — shown only below md,
-     where the full chip set is most likely to overflow the banner. */
-  .categoryScrollBtn {
-    @apply h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold leading-none transition duration-150;
-    color: rgb(var(--ink) / 0.6);
+  /* Drop-down that stands in for the page links or the category chips when
+     their row is short of room (see useCollapsed). */
+  .navMenu {
+    @apply absolute z-50 flex max-h-[70vh] flex-col items-start gap-1 overflow-y-auto rounded-2xl p-2;
+    background: rgb(var(--surface));
+    border: 1px solid var(--hairline-strong);
+    box-shadow: var(--shadow-md);
+  }
+  .navMenu > * {
+    @apply w-full justify-start;
+  }
+  .navMenu .navChip {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  /* Language and currency button in the top bar, and its dialog. */
+  .regionButton {
+    @apply inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2 text-xs font-semibold whitespace-nowrap transition duration-200;
+    color: rgb(var(--ink) / 0.72);
     border: 1px solid var(--hairline-strong);
     background: rgb(var(--surface));
   }
-  .categoryScrollBtn:hover {
+  .regionButton:hover {
     color: rgb(var(--ink));
     background: rgb(var(--accent-soft));
   }
-  .categoryScrollBtn:focus-visible {
+  .regionButton:focus-visible {
     outline: none;
     box-shadow: var(--ring);
+  }
+  .regionDialog {
+    @apply m-auto w-[min(34rem,calc(100vw-2rem))] rounded-2xl p-0;
+    color: rgb(var(--ink));
+    background: rgb(var(--surface));
+    border: 1px solid var(--hairline-strong);
+    box-shadow: var(--shadow-md);
+  }
+  .regionDialog::backdrop {
+    background: rgb(0 0 0 / 0.45);
   }
 
   .linkPill {

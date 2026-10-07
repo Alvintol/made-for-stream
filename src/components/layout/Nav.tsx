@@ -12,6 +12,8 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useSellerAccess } from '../../hooks/creatorApplication/useSellerAccess';
 import { useMyAdminAccess } from '../../hooks/admin/useMyAdminAccess';
 import { useMessagesInbox } from '../../hooks/conversations/useMessagesInbox';
+import { useCollapsed } from "../../hooks/useCollapsed";
+import RegionPicker from "./RegionPicker";
 import ThemeToggle from "./ThemeToggle";
 
 type CategoryLink = {
@@ -31,14 +33,20 @@ const classes = {
   brandLink: "shrink-0 text-lg font-black tracking-tight",
   brandWrap: "inline-flex items-center gap-2 whitespace-nowrap",
   brandImg: "brandMark h-7 w-7 shrink-0",
-  brandText: "font-display text-xs sm:text-base font-extrabold tracking-tight",
+  brandText: "hidden font-display text-base font-extrabold tracking-tight sm:inline",
   brandAccent: "text-[rgb(var(--brand))]",
 
   form: "flex min-w-0 w-full items-center gap-2",
   searchInput: "searchInput h-8 py-0",
   searchButton: "btnOutline btnSm h-8 hidden sm:inline-flex",
 
-  nav: "hidden items-center gap-1 md:flex",
+  nav: "flex shrink-0 items-center gap-1",
+  // Out of flow and unseen, but still measurable, while its menu stands in.
+  collapsed: "invisible absolute -left-[9999px] top-0 w-max",
+  menuButton: "themeToggle",
+  navMenu: "navMenu right-4 top-12 sm:right-6",
+  categoryMenu: "navMenu left-4 top-full sm:left-6",
+  categoryMenuButton: "navChip navChipActive whitespace-nowrap gap-1.5",
   navPillBase: "navPill",
   navPillActive: "navPillActive",
   navPillHot: "navPillHot",
@@ -53,15 +61,13 @@ const classes = {
   settingsPill:
     "navPill inline-flex h-8 w-8 items-center justify-center whitespace-nowrap px-0",
 
-  statementWrap: "flex shrink-0 items-center gap-3 border-l border-[var(--hairline)] pl-4",
-  statement: "hidden text-xs font-medium text-zinc-500 xl:inline",
+  statementWrap: "ml-auto flex shrink-0 items-center gap-3 border-l border-[var(--hairline)] pl-4",
+  statement: "hidden text-xs font-medium text-zinc-500 2xl:inline",
   aboutLink: "linkPill whitespace-nowrap py-0.5",
 
   categoryWrap: "categoryBar",
   categoryInner: "categoryBarInner flex items-center gap-2",
-  categoryRow: "categoryRow min-w-0 flex-1",
-  categoryTitle: "categoryTitle hidden 2xl:inline",
-  categoryScrollBtn: "categoryScrollBtn flex md:hidden",
+  categoryRow: "categoryRow shrink-0",
 
   chip: "navChip whitespace-nowrap",
   chipActive: "navChip navChipActive whitespace-nowrap",
@@ -107,11 +113,29 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
+
+// Room always kept for the search box before the page links give way.
+const MIN_SEARCH_WIDTH = 220;
+
 const Nav = () => {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const [q, setQ] = useState("");
+  const topRowRef = useRef<HTMLDivElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const categoryInnerRef = useRef<HTMLDivElement | null>(null);
   const categoryRowRef = useRef<HTMLDivElement | null>(null);
+  const [openMenu, setOpenMenu] = useState<"nav" | "categories" | null>(null);
+
+  // Each row swaps its links for a menu button when they stop fitting,
+  // whatever the screen size or the number of links.
+  const navCollapsed = useCollapsed(topRowRef, navRef, MIN_SEARCH_WIDTH);
+  const categoriesCollapsed = useCollapsed(categoryInnerRef, categoryRowRef);
 
   const { twitchByLogin, isFetching } = useTwitchStreams();
   const { user, loading } = useAuth();
@@ -157,17 +181,9 @@ const Nav = () => {
 
   const freeChipClass = isFreeRoute ? classes.chipActive : classes.chip;
 
-  // Scrolls the category rail by ~60% of its visible width per tap —
-  // primarily for small screens where the rail can't show every chip at once.
-  const scrollCategories = (direction: "left" | "right") => {
-    const node = categoryRowRef.current;
-    if (!node) return;
-    const amount = Math.round(node.clientWidth * 0.6) || 160;
-    node.scrollBy({
-      left: direction === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
-  };
+  const activeCategoryLabel = isFreeRoute
+    ? "Free"
+    : (categoryLinks.find((category) => category.key === activeCat)?.label ?? "All");
 
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -178,9 +194,141 @@ const Nav = () => {
     await supabase.auth.signOut();
   };
 
+  // The page links, shown in the top bar or, when it is short of room, in
+  // the menu behind the hamburger button.
+  const pageLinks = (
+    <>
+      <NavLink to="/market" className={({ isActive }) => getPillClass(isActive)}>
+        Market
+      </NavLink>
+
+      <NavLink to="/creators" className={({ isActive }) => getPillClass(isActive)}>
+        Creators
+      </NavLink>
+
+      <NavLink
+        to="/live"
+        className={({ isActive }) => getLivePillClass(isActive, liveCount)}
+      >
+        <span className={classes.navLabelWrap}>
+          <span>Live</span>
+
+          {liveCount > 0 && (
+            <span className={classes.navPillCount}>{liveCount}</span>
+          )}
+
+          {isFetching && <span className={classes.navPillDot} />}
+        </span>
+      </NavLink>
+
+      {!loading && user && !isSellerAccessLoading && canAccessCreatorRoutes && (
+        <NavLink
+          to="/creator/dashboard"
+          className={({ isActive }) => getAuthPillClass(isActive)}
+        >
+          Dashboard
+        </NavLink>
+      )}
+
+      {!loading && user && !isAdminLoading && isAdmin && (
+        <NavLink
+          to="/admin/dashboard"
+          className={({ isActive }) => getAuthPillClass(isActive)}
+        >
+          Admin
+        </NavLink>
+      )}
+
+      {!loading && user && (
+        <NavLink
+          to="/messages"
+          aria-label={
+            unreadMessageCount > 0
+              ? `Inbox, ${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
+              : "Inbox"
+          }
+          title={
+            unreadMessageCount > 0
+              ? `${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
+              : "Inbox"
+          }
+          className={({ isActive }) => getAuthPillClass(isActive)}
+        >
+          <span className={classes.navLabelWrap}>
+            <span>Inbox</span>
+
+            {unreadMessageCount > 0 && (
+              <span className={classes.navPillCount}>
+                {unreadMessageLabel}
+              </span>
+            )}
+          </span>
+        </NavLink>
+      )}
+      
+      {!loading && user && (
+        <NavLink
+          to="/settings/profile"
+          aria-label="Settings"
+          title="Settings"
+          className={({ isActive }) => getSettingsPillClass(isActive)}
+        >
+          <SettingsIcon />
+        </NavLink>
+      )}
+
+      {!loading && !user && (
+        <NavLink to="/signin" className={classes.signInButton}>
+          Sign in
+        </NavLink>
+      )}
+
+      {!loading && user && (
+        <button
+          type="button"
+          className={`${classes.navPillButton} ${classes.navPillIdle}`}
+          onClick={onSignOut}
+        >
+          Sign out
+        </button>
+      )}
+    </>
+  );
+
+  const categoryChips = (
+    <>
+      <Link to="/market" className={chipClass(null)}>
+        All
+      </Link>
+
+      <Link to="/free" className={freeChipClass}>
+        Free
+      </Link>
+
+      {categoryLinks.map((category) => (
+        <Link
+          key={category.key}
+          to={`/market?cat=${encodeURIComponent(category.key)}`}
+          className={chipClass(category.key)}
+        >
+          {category.label}
+        </Link>
+      ))}
+    </>
+  );
+
   return (
-    <header className={classes.header}>
-      <div className={classes.topRow}>
+    <header
+      className={classes.header}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setOpenMenu(null);
+      }}
+      onBlur={(event) => {
+        // Focus left the header: a click or tab elsewhere closes any menu.
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpenMenu(null);
+      }}
+    >
+      <div className={classes.topRow} ref={topRowRef}>
         <Link to="/" className={classes.brandLink}>
           <span className={classes.brandWrap}>
             <img
@@ -196,7 +344,7 @@ const Nav = () => {
           </span>
         </Link>
 
-        <form className={classes.form} onSubmit={onSubmit}>
+        <form className={classes.form} onSubmit={onSubmit} data-flexible>
           <input
             className={classes.searchInput}
             aria-label="Search marketplace"
@@ -210,147 +358,63 @@ const Nav = () => {
           </button>
         </form>
 
-        <nav className={classes.nav}>
-          <NavLink to="/market" className={({ isActive }) => getPillClass(isActive)}>
-            Market
-          </NavLink>
-
-          <NavLink to="/creators" className={({ isActive }) => getPillClass(isActive)}>
-            Creators
-          </NavLink>
-
-          <NavLink
-            to="/live"
-            className={({ isActive }) => getLivePillClass(isActive, liveCount)}
-          >
-            <span className={classes.navLabelWrap}>
-              <span>Live</span>
-
-              {liveCount > 0 && (
-                <span className={classes.navPillCount}>{liveCount}</span>
-              )}
-
-              {isFetching && <span className={classes.navPillDot} />}
-            </span>
-          </NavLink>
-
-          {!loading && user && !isSellerAccessLoading && canAccessCreatorRoutes && (
-            <NavLink
-              to="/creator/dashboard"
-              className={({ isActive }) => getAuthPillClass(isActive)}
-            >
-              Dashboard
-            </NavLink>
-          )}
-
-          {!loading && user && !isAdminLoading && isAdmin && (
-            <NavLink
-              to="/admin/dashboard"
-              className={({ isActive }) => getAuthPillClass(isActive)}
-            >
-              Admin
-            </NavLink>
-          )}
-
-          {!loading && user && (
-            <NavLink
-              to="/messages"
-              aria-label={
-                unreadMessageCount > 0
-                  ? `Inbox, ${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-                  : "Inbox"
-              }
-              title={
-                unreadMessageCount > 0
-                  ? `${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-                  : "Inbox"
-              }
-              className={({ isActive }) => getAuthPillClass(isActive)}
-            >
-              <span className={classes.navLabelWrap}>
-                <span>Inbox</span>
-
-                {unreadMessageCount > 0 && (
-                  <span className={classes.navPillCount}>
-                    {unreadMessageLabel}
-                  </span>
-                )}
-              </span>
-            </NavLink>
-          )}
-          
-          {!loading && user && (
-            <NavLink
-              to="/settings/profile"
-              aria-label="Settings"
-              title="Settings"
-              className={({ isActive }) => getSettingsPillClass(isActive)}
-            >
-              <SettingsIcon />
-            </NavLink>
-          )}
-
-          {!loading && !user && (
-            <NavLink to="/signin" className={classes.signInButton}>
-              Sign in
-            </NavLink>
-          )}
-
-          {!loading && user && (
-            <button
-              type="button"
-              className={`${classes.navPillButton} ${classes.navPillIdle}`}
-              onClick={onSignOut}
-            >
-              Sign out
-            </button>
-          )}
+        <nav
+          ref={navRef}
+          aria-label="Main"
+          aria-hidden={navCollapsed}
+          className={`${classes.nav} ${navCollapsed ? classes.collapsed : ""}`.trim()}
+        >
+          {pageLinks}
         </nav>
 
+        <RegionPicker compact={navCollapsed} />
+
         <ThemeToggle />
+
+        {navCollapsed && (
+          <button
+            type="button"
+            className={classes.menuButton}
+            aria-label="Menu"
+            aria-expanded={openMenu === "nav"}
+            onClick={() => setOpenMenu(openMenu === "nav" ? null : "nav")}
+          >
+            <MenuIcon />
+          </button>
+        )}
       </div>
 
+      {navCollapsed && openMenu === "nav" && (
+        <nav
+          aria-label="Menu"
+          className={classes.navMenu}
+          onClick={() => setOpenMenu(null)}
+        >
+          {pageLinks}
+        </nav>
+      )}
+
       <div className={classes.categoryWrap}>
-        <div className={classes.categoryInner}>
-          <button
-            type="button"
-            aria-label="Scroll categories left"
-            className={classes.categoryScrollBtn}
-            onClick={() => scrollCategories("left")}
+        <div className={classes.categoryInner} ref={categoryInnerRef}>
+          <div
+            ref={categoryRowRef}
+            aria-hidden={categoriesCollapsed}
+            className={`${classes.categoryRow} ${categoriesCollapsed ? classes.collapsed : ""}`.trim()}
           >
-            ‹
-          </button>
-
-          <div className={classes.categoryRow} ref={categoryRowRef}>
-            <span className={classes.categoryTitle}>Browse categories</span>
-
-            <Link to="/market" className={chipClass(null)}>
-              All
-            </Link>
-
-            <Link to="/free" className={freeChipClass}>
-              Free
-            </Link>
-
-            {categoryLinks.map((category) => (
-              <Link
-                key={category.key}
-                to={`/market?cat=${encodeURIComponent(category.key)}`}
-                className={chipClass(category.key)}
-              >
-                {category.label}
-              </Link>
-            ))}
+            {categoryChips}
           </div>
 
-          <button
-            type="button"
-            aria-label="Scroll categories right"
-            className={classes.categoryScrollBtn}
-            onClick={() => scrollCategories("right")}
-          >
-            ›
-          </button>
+          {categoriesCollapsed && (
+            <button
+              type="button"
+              className={classes.categoryMenuButton}
+              aria-expanded={openMenu === "categories"}
+              onClick={() => setOpenMenu(openMenu === "categories" ? null : "categories")}
+            >
+              <span aria-hidden="true">☰</span>
+              Categories: {activeCategoryLabel}
+            </button>
+          )}
 
           <div className={classes.statementWrap}>
             <span className={classes.statement}>
@@ -363,6 +427,16 @@ const Nav = () => {
           </div>
         </div>
       </div>
+
+      {categoriesCollapsed && openMenu === "categories" && (
+        <nav
+          aria-label="Categories"
+          className={classes.categoryMenu}
+          onClick={() => setOpenMenu(null)}
+        >
+          {categoryChips}
+        </nav>
+      )}
     </header>
   );
 };

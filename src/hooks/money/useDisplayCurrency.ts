@@ -29,18 +29,24 @@ export const useExchangeRates = () =>
     },
   });
 
-// The signed-in person's saved country and display currency. Private to
-// them (user_display_preferences, 20261007_146).
+// A signed-out visitor's choice. Held in memory only, so it lasts until the
+// page is reloaded: keeping it longer means browser storage, and that needs
+// an entry in the Cookie Policy's Storage Register first.
+let guestPreferences: DisplayPreferences | null = null;
+
+// The saved country and display currency. For a signed-in person it is
+// private to them (user_display_preferences, 20261007_146); for a visitor
+// it is whatever they picked on this page view.
 export const useDisplayPreferences = () => {
   const { user, loading } = useAuth();
   const userId = user?.id ?? null;
 
   return useQuery<DisplayPreferences | null>({
     queryKey: ["displayPreferences", userId],
-    enabled: !loading && Boolean(userId),
+    enabled: !loading,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId) return guestPreferences;
 
       const { data, error } = await supabase
         .from("user_display_preferences")
@@ -59,10 +65,11 @@ export const useSaveDisplayPreferences = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (preferences: DisplayPreferences) => {
       if (!user?.id) {
-        throw new Error("You must be signed in to save this.");
+        guestPreferences = preferences;
+        return;
       }
 
       const { error } = await supabase
@@ -74,6 +81,9 @@ export const useSaveDisplayPreferences = () => {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["displayPreferences", user?.id ?? null] }),
   });
+
+  // isGuest: the choice will not outlive this page view.
+  return { ...mutation, isGuest: !user };
 };
 
 // What a page needs to show approximate prices: the currency to show them
