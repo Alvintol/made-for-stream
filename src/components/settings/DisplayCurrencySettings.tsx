@@ -5,12 +5,14 @@ import {
   useDisplayPreferences,
   useSaveDisplayPreferences,
 } from "../../hooks/money/useDisplayCurrency";
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "../../lib/i18n/languages";
 import { getCurrencyForCountry, getCurrencyName } from "../../lib/money/displayCurrency";
 
 const classes = {
   text: "text-sm text-zinc-600",
   form: "grid gap-3 sm:grid-cols-2",
   field: "flex flex-col gap-1.5",
+  wideField: "flex flex-col gap-1.5 sm:col-span-2",
   label: "formLabel",
   hint: "formHint",
   input: "formControl",
@@ -63,6 +65,20 @@ const DisplayCurrencySettings = () => {
       </p>
 
       <div className={classes.form}>
+        <label className={classes.wideField}>
+          <span className={classes.label}>Language</span>
+          {/* ponytail: one language, so there is nothing to save yet. See
+              lib/i18n/languages.ts for what a second one needs. */}
+          <select className={classes.input} defaultValue={DEFAULT_LANGUAGE}>
+            {SUPPORTED_LANGUAGES.map((language) => (
+              <option key={language.code} value={language.code}>
+                {language.name}
+              </option>
+            ))}
+          </select>
+          <span className={classes.hint}>More languages are planned.</span>
+        </label>
+
         <label className={classes.field}>
           <span className={classes.label}>Country</span>
           <select
@@ -129,6 +145,8 @@ const DisplayCurrencySettings = () => {
       {justSaved && (
         <div className={classes.success} role="status">
           Saved. Prices across the site now follow this choice.
+          {savePreferences.isGuest &&
+            " Sign in to keep it: without an account it lasts until you reload or close this page."}
         </div>
       )}
 
