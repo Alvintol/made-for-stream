@@ -1,7 +1,7 @@
 # Launch Rehearsal Runbook (test mode)
 
 Sprint 8's last gate (`launch-implementation-checklist.md`). **Written 2026-09-23,
-updated 2026-10-05, section 0 partly done, sections 1 to 7 not yet run.** Nothing past section 0 has been executed; tick the boxes as you go and record
+updated 2026-10-07, section 0 nearly done, sections 1 to 7 not yet run.** Nothing past section 0 has been executed; tick the boxes as you go and record
 the ids you used, so "has this been rehearsed" has an answer.
 
 A passing run clears **CAD and USD** for launch. The EUR run proves the money path works
@@ -43,8 +43,8 @@ To do:
       | Admin | `imallbeans+twitch@gmail.com` | exists; sign in with Twitch |
       | Buyer | `imallbeans@gmail.com` | exists; sign in with Google |
       | Creator, CA / CAD | `meowington88@gmail.com` | exists and approved; sign in with Google |
-      | Creator, US / USD | `trashmailtrash8888@gmail.com` (handle `TrashMailman`) | exists and approved |
-      | Creator, IE / EUR | `alvin.tolentino@hotmail.com` (handle `PizzaButt`) | exists and approved |
+      | Creator, US / USD | `alvin.tolentino@hotmail.com` (handle `PizzaButt`) | exists and approved |
+      | Creator, IE / EUR | `trashmailtrash8888@gmail.com` (handle `TrashMailman`) | exists and approved |
 
       To create one: Supabase → Authentication → Users → **Add user → Create
       new user**, the email above, any password, **Auto Confirm User** on. Then
@@ -56,7 +56,7 @@ To do:
 - [x] *(Done; both applications `approved`, 2026-10-05.)* **Make the two new accounts creators.** Each completes its profile and
       submits a creator application; the admin approves both at
       `/admin/creator-applications`.
-- [ ] **Stripe payout setup, all three creators** (Settings → Payouts, Stripe
+- [x] *(Done; verified in the database 2026-10-07: meowington CA/cad, PizzaButt US/usd, TrashMailman IE/eur, all three flags true.)* **Stripe payout setup, all three creators** (Settings → Payouts, Stripe
       test data): CA with CAD, US with USD, IE with EUR. *(2026-10-05: IE was
       done and verified on `TrashMailman`, then that Stripe account was
       deleted. All three are to do again: `meowington88` CA, `PizzaButt` US,
@@ -65,8 +65,12 @@ To do:
       `creator_payment_accounts` shows `charges_enabled`, `payouts_enabled` and
       `details_submitted` all true, and a `v2.core.account…` row appears in
       `stripe_webhook_events` as `processed` (the first real account events).
-- [ ] Each creator publishes one **paid** listing. The CA creator also
+- [x] *(Done; verified 2026-10-07: meowington "222222222 updated" 123 cad and "Free Overlay"; PizzaButt "VTube Models" 500 usd; TrashMailman "Emote Pack" 100 eur.)* Each creator publishes one **paid** listing. The CA creator also
       publishes one **free** listing (checked in section 1b).
+- [ ] **Apply migration `20261007_147` before taking any payment.** Without
+      it half of every payment's base is added to the application fee
+      (`REC-005`). Check: `select public.resolve_listing_request_payment_recovery_instalment('00000000-0000-0000-0000-000000000000', 4000);`
+      must return `0`.
 - [ ] **Browser-check the Storage Register** (Cookie Policy §7) on the dev
       site: DevTools → Application. The published register lists
       `sb-itbgxxczuazwroniiyot-auth-token`, `creatorhub.pendingPolicyAcceptance`,
@@ -98,7 +102,8 @@ where related_listing_request_id = '<request>' order by accepted_at;
 ```
 
 For every paid row: `buyer_service_fee_cents = ceil(base × 5%)`, the same for the
-creator fee, **both `_minimum_cents` columns are 0**, `total_checkout_cents = base +
+creator fee, **`recovery_instalment_cents` is 0** and `application_fee_cents` is
+the two fees plus any contribution (`REC-005`), `currency` is the creator's, **both `_minimum_cents` columns are 0**, `total_checkout_cents = base +
 buyer fee + tip + support + tax`, and `tax_treatment = 'not_collected'`.
 
 ---
@@ -108,8 +113,10 @@ buyer fee + tip + support + tax`, and `tax_treatment = 'not_collected'`.
 Record the request id per currency: CAD `____` USD `____` EUR `____`
 
 - [ ] Buyer submits a request. Creator accepts it.
-- [ ] Creator builds a **milestone** agreement with a deposit and two milestones,
-      every payment ≥ 10.00. **Summary shows the fee line as a maximum**, with the
+- [ ] Creator builds a **milestone** agreement with two milestones (the
+      builder has no deposit on a milestone agreement; a deposit exists only
+      on "deposit and balance", which sections 2 and 3 can use),
+      every payment ≥ 10.00. **The amounts show the creator's currency.** **Summary shows the fee line as a maximum**, with the
       right figure (5% of each item, rounded up, summed).
 - [ ] Negative checks before sending (each must refuse with `AGR-005`'s message and
       send nothing):
@@ -144,7 +151,8 @@ Record the request id per currency: CAD `____` USD `____` EUR `____`
 - [ ] **Free listing:** the buyer requests the CA creator's free listing. It is
       accepted without touching Stripe (no `CON-007` refusal).
 - [ ] **Not-ready creator:** the buyer tries to request a listing from a seeded
-      creator who has no Stripe account. Refused with `CON-007`'s buyer message
+      creator who has no Stripe account (use Amatrine's "Cozy Emote Pack (12)";
+      the database refused it in a rolled-back dry run on 2026-10-07). Refused with `CON-007`'s buyer message
       ("This creator can't take new paid work right now…").
 - [ ] **Ops alert:** an alert email arrives at `ops@` for anything this run
       leaves open, and its "Open in admin" button opens the dev site.

@@ -1458,6 +1458,28 @@ in [`environments.md`](environments.md).
       agreement for a USD creator and a USD payment on a CAD agreement are
       both refused; the existing CAD agreement is untouched. **Not tested:**
       a real agreement in USD or EUR, which is the rehearsal's next step.
+      *(2026-10-07, later: `20261007_146` confirmed applied by querying the
+      catalog: column, table and all four triggers present, backfill cad=10,
+      eur=1, usd=1. A second rolled-back dry run, run as the real creators
+      through row-level security, sent and accepted a USD agreement for
+      PizzaButt and an EUR agreement for TrashMailman; each produced a
+      starting payment in the right currency. `AGR-008`, `AGR-005`, `AGR-007`
+      and `CON-007` each refused with their documented message. Still not
+      done: the same in a browser, with a real Stripe checkout.)*
+- [ ] **Rehearsal finding, 2026-10-07: half of every payment would have gone
+      to Made for Stream (`REC-005`).** The function that works out how much
+      of a payment to hold back for a creator's recovery balance returned
+      50% of the payment for a creator who owed **nothing**, instead of zero.
+      It has been wrong since `20260922_129`. Seen in the dry run above as an
+      application fee of 24.00 on a 40.00 deposit (expected 4.00). **No
+      payment was taken with it**: the only stored payments predate it and
+      carry a zero instalment. Fix: migration
+      `20261007_147_fix_recovery_instalment_without_balance.sql`, database
+      only, no API or website change. **Dry-run on the live database, rolled
+      back:** no balance gives 0; owing 5.00 gives 5.00; owing 90.00 on a
+      40.00 payment gives 20.00 (the 50% cap); a zero balance gives 0.
+      **To do (user):** apply `147` before any rehearsal payment. Playbook:
+      `payments/creator-recovery-balances.md`.
 - [ ] **Approximate prices in the visitor's currency (2026-10-07).** Cards
       and grids show "≈" estimates in the visitor's currency; the listing
       page shows the creator's real price first, then the estimate and a note.
