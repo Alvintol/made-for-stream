@@ -31,13 +31,21 @@ const DisplayCurrencySettings = () => {
 
   const saved = preferencesQuery.data ?? null;
 
-  // Null until the person changes something, so the saved values show.
-  const [countryDraft, setCountryDraft] = useState<string | null>(null);
-  const [currencyDraft, setCurrencyDraft] = useState<string | null>(null);
+  // Unsaved edits, tied to the saved values they were made against. This
+  // form is on screen twice on the settings page (here and behind the top
+  // bar's globe button): when either one saves, the saved values are read
+  // again and any older edits in the other are dropped, so both always agree.
+  const savedAt = preferencesQuery.dataUpdatedAt;
+  const [draft, setDraft] = useState<{
+    savedAt: number | undefined;
+    country?: string;
+    currency?: string;
+  }>({ savedAt });
   const [justSaved, setJustSaved] = useState(false);
 
-  const country = countryDraft ?? saved?.country_code ?? "";
-  const currency = currencyDraft ?? saved?.display_currency ?? "";
+  const edits = draft.savedAt === savedAt ? draft : { savedAt };
+  const country = edits.country ?? saved?.country_code ?? "";
+  const currency = edits.currency ?? saved?.display_currency ?? "";
 
   const countryOptions = useMemo(() => getPayoutCountryOptions(), []);
   const countryCurrency = getCurrencyForCountry(country);
@@ -86,7 +94,7 @@ const DisplayCurrencySettings = () => {
             value={country}
             disabled={preferencesQuery.isLoading}
             onChange={(event) => {
-              setCountryDraft(event.target.value);
+              setDraft({ ...edits, country: event.target.value });
               setJustSaved(false);
             }}
           >
@@ -110,7 +118,7 @@ const DisplayCurrencySettings = () => {
             value={currency}
             disabled={preferencesQuery.isLoading}
             onChange={(event) => {
-              setCurrencyDraft(event.target.value);
+              setDraft({ ...edits, currency: event.target.value });
               setJustSaved(false);
             }}
           >

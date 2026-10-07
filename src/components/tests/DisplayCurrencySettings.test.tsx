@@ -4,10 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   saved: null as { country_code: string | null; display_currency: string | null } | null,
   save: vi.fn(),
+  savedAt: 1,
 }));
 
 vi.mock("../../hooks/money/useDisplayCurrency", () => ({
-  useDisplayPreferences: () => ({ data: mocks.saved, isLoading: false }),
+  useDisplayPreferences: () => ({
+    data: mocks.saved,
+    isLoading: false,
+    dataUpdatedAt: mocks.savedAt,
+  }),
   useSaveDisplayPreferences: () => ({ mutateAsync: mocks.save, isPending: false, error: null }),
 }));
 
@@ -19,6 +24,7 @@ const currency = () => screen.getByLabelText(/^Show prices in/) as HTMLSelectEle
 describe("<DisplayCurrencySettings />", () => {
   beforeEach(() => {
     mocks.saved = null;
+    mocks.savedAt = 1;
     mocks.save.mockReset().mockResolvedValue(undefined);
   });
 
@@ -66,5 +72,23 @@ describe("<DisplayCurrencySettings />", () => {
     await waitFor(() =>
       expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd" }),
     );
+  });
+
+  it("drops an unsaved edit when the saved values change elsewhere", () => {
+    // The same form is also behind the top bar's globe button. A save there
+    // must show here, even over an edit that was never saved.
+    mocks.saved = { country_code: "CA", display_currency: null };
+
+    const { rerender } = render(<DisplayCurrencySettings />);
+
+    fireEvent.change(currency(), { target: { value: "usd" } });
+    expect(currency().value).toBe("usd");
+
+    mocks.saved = { country_code: "IE", display_currency: "eur" };
+    mocks.savedAt = 2;
+    rerender(<DisplayCurrencySettings />);
+
+    expect(country().value).toBe("IE");
+    expect(currency().value).toBe("eur");
   });
 });
