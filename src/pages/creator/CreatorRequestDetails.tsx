@@ -1,4 +1,5 @@
 import { Collapse } from "../../lib/motion";
+import { useCreatorPaymentAccount } from "../../hooks/payments/useCreatorPaymentAccount";
 import { Link, useParams } from "react-router-dom";
 import { useCreatorRequest } from "../../hooks/creatorRequests/useCreatorRequest";
 import { useUpdateCreatorListingRequestStatus } from "../../hooks/creatorRequests/useUpdateCreatorListingRequestStatus";
@@ -152,6 +153,11 @@ const CreatorRequestDetails = () => {
   const buyer = data?.buyer ?? null;
 
   const agreementQuery = useListingRequestAgreement(request?.id ?? null);
+
+  // An agreement is priced in the creator's payout currency; the database
+  // refuses any other (AGR-008).
+  const { data: paymentAccount } = useCreatorPaymentAccount();
+  const payoutCurrency = paymentAccount?.default_currency ?? "cad";
   const createAgreementMutation = useCreateListingRequestAgreement();
   const sendDraftAgreementMutation = useSendDraftListingRequestAgreement();
   const createProgressUpdateMutation =
@@ -699,6 +705,7 @@ const CreatorRequestDetails = () => {
                 {(close) => (
                   <ListingRequestAgreementBuilder
                     request={request}
+                    currency={payoutCurrency}
                     isPending={createAgreementMutation.isPending}
                     error={createAgreementMutation.error}
                     onCreateAgreement={thenClose(createAgreementMutation.mutateAsync, close)}

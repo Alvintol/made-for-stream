@@ -15,6 +15,15 @@ const mocks = vi.hoisted(() => ({
   refetch: vi.fn(),
 }));
 
+// Prices are shown in the creator's own currency in these tests; the
+// conversion has its own tests (ListingPriceText, displayCurrency).
+vi.mock("../../hooks/money/useDisplayCurrency", () => ({
+  useDisplayCurrency: () => ({ displayCurrency: null, rates: null }),
+  useDisplayPreferences: () => ({ data: null, isLoading: false }),
+  useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useExchangeRates: () => ({ data: null }),
+}));
+
 vi.mock("../../providers/AuthProvider", () => ({
   useAuth: () => ({ user: { id: "user-1" }, session: { access_token: "token" }, loading: false }),
 }));

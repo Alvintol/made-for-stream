@@ -65,6 +65,7 @@ const fetchPublicCreators = async (): Promise<PublicCreatorItem[]> => {
         price_type,
         price_min,
         price_max,
+        currency,
         deliverables,
         tags,
         status,

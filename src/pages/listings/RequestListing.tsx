@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useCreateListingRequest } from "../../hooks/listings/useCreateListingRequest";
@@ -90,12 +91,8 @@ const classes = {
   loadingText: "text-sm text-zinc-600",
 } as const;
 
-const priceText = (listing: PublicListingRow): string =>
-  listing.price_type === "fixed"
-    ? `$${listing.price_min}`
-    : listing.price_type === "starting_at"
-      ? `From $${listing.price_min}`
-      : `$${listing.price_min}–${listing.price_max ?? listing.price_min}`;
+// The creator's real price: a request is made, and later paid, in it.
+const priceText = (listing: PublicListingRow): string => formatListingPrice(listing);
 
 const fieldIds: Record<keyof ListingRequestFormErrors, string> = {
   requestTitle: "request-title",
@@ -464,7 +461,7 @@ const RequestListing = () => {
                 </label>
                 <div className={classes.money}>
                   <span className={classes.moneySign} aria-hidden="true">
-                    $
+                    {(listing.currency || "cad").toUpperCase()}
                   </span>
                   <input
                     id="budget-amount"

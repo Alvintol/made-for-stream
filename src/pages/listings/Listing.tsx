@@ -1,4 +1,5 @@
 import { FadeIn } from "../../lib/motion";
+import ListingPriceText from "../../components/listings/ListingPriceText";
 import ListingAnimatedPreview from "../../components/listings/ListingAnimatedPreview";
 import { Link, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
@@ -95,16 +96,6 @@ const classes = {
   field: "space-y-2",
   row: "flex flex-wrap items-center gap-3",
 } as const;
-
-// Formats the listing price for display
-const priceText = (listing: PublicListingRow): string =>
-  listing.price_type === "fixed"
-    ? `$${listing.price_min}`
-    : listing.price_type === "starting_at"
-      ? `From $${listing.price_min}`
-      : listing.price_type === "range"
-        ? `$${listing.price_min}–$${listing.price_max ?? listing.price_min}`
-        : "";
 
 // Formats the updated timestamp for buyer-facing display
 const updatedText = (value: string): string => {
@@ -264,7 +255,11 @@ const ListingPage = () => {
 
           <div className={classes.priceRow}>
             <div className={classes.price}>
-              {listing.is_free ? "Free" : priceText(listing)}
+              {listing.is_free ? (
+                "Free"
+              ) : (
+                <ListingPriceText listing={listing} variant="detailed" />
+              )}
             </div>
 
             {creatorLink ? (

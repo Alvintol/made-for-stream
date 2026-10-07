@@ -11,6 +11,15 @@ const mocks = vi.hoisted(() => ({
   useActiveListingRequestForListing: vi.fn(),
 }));
 
+// Prices are shown in the creator's own currency in these tests; the
+// conversion has its own tests (ListingPriceText, displayCurrency).
+vi.mock("../../hooks/money/useDisplayCurrency", () => ({
+  useDisplayCurrency: () => ({ displayCurrency: null, rates: null }),
+  useDisplayPreferences: () => ({ data: null, isLoading: false }),
+  useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useExchangeRates: () => ({ data: null }),
+}));
+
 vi.mock("../../hooks/listings/usePublicListing", () => ({
   usePublicListing: mocks.usePublicListing,
 }));

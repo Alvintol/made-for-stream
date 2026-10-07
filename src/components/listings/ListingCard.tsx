@@ -1,4 +1,5 @@
 import FavouriteButton from "../layout/FavouriteButton";
+import ListingPriceText from "./ListingPriceText";
 import { Link } from "react-router-dom";
 
 const classes = {
@@ -38,6 +39,7 @@ export type ListingCardListing = {
   price_type: "fixed" | "starting_at" | "range";
   price_min: number;
   price_max: number | null;
+  currency?: string | null;
   preview_url: string | null;
   is_free?: boolean;
 };
@@ -51,15 +53,6 @@ type ListingCardProps = {
   listing: ListingCardListing;
   creator: ListingCardCreator;
 };
-
-const priceText = (listing: ListingCardListing): string =>
-  listing.price_type === "fixed"
-    ? `$${listing.price_min}`
-    : listing.price_type === "starting_at"
-      ? `From $${listing.price_min}`
-      : listing.price_type === "range"
-        ? `$${listing.price_min}–$${listing.price_max ?? listing.price_min}`
-        : "";
 
 const ListingCard = ({ listing, creator }: ListingCardProps) => {
   const creatorLabel = creator.isLive ? `${creator.name} • Live` : creator.name;
@@ -109,7 +102,9 @@ const ListingCard = ({ listing, creator }: ListingCardProps) => {
           {listing.is_free ? (
             <span className={classes.freePrice}>$0</span>
           ) : (
-            <span className={classes.price}>{priceText(listing)}</span>
+            <span className={classes.price}>
+              <ListingPriceText listing={listing} />
+            </span>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { Link } from "react-router-dom";
 
 import {
@@ -398,23 +399,7 @@ const CreatorRequests = ({
                           classes.metaValue
                         }
                       >
-                        {item.request
-                          .listing_snapshot
-                          .price_type ===
-                          "fixed"
-                          ? `$${item.request.listing_snapshot.price_min}`
-                          : item.request
-                            .listing_snapshot
-                            .price_type ===
-                            "starting_at"
-                            ? `From $${item.request.listing_snapshot.price_min}`
-                            : `$${item.request.listing_snapshot.price_min}–${item.request
-                              .listing_snapshot
-                              .price_max ??
-                            item.request
-                              .listing_snapshot
-                              .price_min
-                            }`}
+                        {formatListingPrice(item.request.listing_snapshot)}
                       </div>
                     </div>
 

@@ -16,6 +16,9 @@ surfaces:
   - src/components/listingRequests/agreements/ListingRequestAgreementBuilder.tsx
   - src/domain/payments/supportedCurrencies.ts
   - api/supportedCurrencies.js
+  - public.enforce_listing_request_agreement_currency()
+  - public.enforce_listing_request_schedule_item_currency()
+  - supabase/migrations/20261007_146_add_listing_currency_and_display_preferences.sql
 unmatched_tier: 2
 ---
 
@@ -263,13 +266,54 @@ The same list lives in `api/supportedCurrencies.js` (the checkout backstop, and
 `src/domain/payments/supportedCurrencies.ts` (forms, and the payout-settings
 currency picker). `supportedCurrenciesSync.test.ts` keeps all three aligned.
 
-**Fix.** The creator prices the project in a supported currency. A creator whose
-Stripe default currency is unsupported can still sell in one their account can
-settle. Adding a currency means a migration row plus both code copies, and, for
+**Fix.** The creator prices the project in a supported currency. Since
+`20261007_146` that currency is always the creator's payout currency
+([`AGR-008`](#agr-008--agreement-or-payment-not-in-the-creators-currency)),
+and onboarding refuses an unsupported payout currency, so the two rules agree. Adding a currency means a migration row plus both code copies, and, for
 any currency beyond CAD/USD, clearing the tax gate first
 ([`../payments/tax.md`](../payments/tax.md)).
 
 **Money impact.** None.
+
+---
+
+## `AGR-008` — Agreement or payment not in the creator's currency
+
+```yaml
+id: AGR-008
+tier: 2
+signals:
+  - source: db
+    match: "/AGR-008: A project agreement must be priced in the creator's payout currency \\([A-Z]{3}\\), not [A-Z]{3}\\./"
+    where: "public.enforce_listing_request_agreement_currency() (20261007_146), errcode check_violation"
+  - source: db
+    match: "/AGR-008: A payment must be in its agreement's currency \\([A-Z]{3}\\), not [A-Z]{3}\\./"
+    where: "public.enforce_listing_request_schedule_item_currency() (20261007_146), errcode check_violation"
+auto_fix: none
+reason_not_automatable: "the page passes the right currency; seeing this means a stale page or a defect"
+escalate_with:
+  - "the creator's creator_payment_accounts.default_currency"
+  - "the currency the agreement or payment was sent with"
+  - "which screen produced it"
+```
+
+**Cause.** A project agreement must be in the creator's payout currency, and
+every payment in an agreement must be in that agreement's currency. The
+agreement form takes the currency from the creator's payout account, so a
+creator should never see this. Until 2026-10-07 the form sent CAD for every
+creator and nothing checked it: a US or Irish creator's agreement would have
+been written in Canadian dollars. A creator on a page loaded before that fix
+will hit this message; reloading clears it. Anything else producing it is a
+defect in whatever built the agreement, change order or schedule item.
+
+A creator with no payout account is not checked by this rule (other gates,
+`CON-007`, decide whether paid work can start).
+
+**Fix.** Reload and send again. If it persists, escalate with the values above.
+
+**Money impact.** None: the write is refused, so nothing is created in the
+wrong currency. Before the fix, the risk was a charge in a currency the
+creator's account does not settle in.
 
 ---
 
