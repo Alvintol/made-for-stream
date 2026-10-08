@@ -3,14 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   NOTIFICATION_EMAILS,
   getListingRequestUrl,
+  getNotificationUrl,
   renderNotificationEmail,
 } from "../notificationEmails.js";
 
 // Tests run from the repository root.
-const migration = readFileSync(
+const migration = [
   "supabase/migrations/20261007_148_add_listing_request_notifications.sql",
-  "utf8",
-);
+  "supabase/migrations/20261007_149_add_presence_message_emails_and_cancellation_warnings.sql",
+]
+  .map((file) => readFileSync(file, "utf8"))
+  .join("\n");
 
 // Every kind the database can queue: the third argument of each enqueue
 // call, and the kinds named in the reminders query.
@@ -38,7 +41,10 @@ describe("commission notification emails", () => {
         requestUrl: "https://example.test/requests/1",
       });
 
-      expect(email.subject, kind).toContain("Emote pack");
+      // Chat emails are about a person, not a commission title.
+      if (!["conversation_started", "message_received"].includes(kind)) {
+        expect(email.subject, kind).toContain("Emote pack");
+      }
       expect(email.html, kind).toContain("https://example.test/requests/1");
       expect(email.text, kind).not.toMatch(/undefined|null|\[object/);
       expect(email.html, kind).not.toMatch(/undefined|\[object/);
@@ -69,5 +75,40 @@ describe("commission notification emails", () => {
     expect(getListingRequestUrl("https://x.test", "abc", "creator")).toBe(
       "https://x.test/creator/requests/abc",
     );
+  });
+
+  it("opens the conversation for chat emails and the commission for the rest", () => {
+    const row = {
+      listing_request_id: "req",
+      conversation_id: "conv",
+      recipient_user_id: "buyer",
+    };
+
+    expect(getNotificationUrl("https://x.test", { ...row, kind: "message_received" }, "buyer")).toBe(
+      "https://x.test/messages/conv",
+    );
+    expect(getNotificationUrl("https://x.test", { ...row, kind: "payment_required" }, "buyer")).toBe(
+      "https://x.test/requests/req",
+    );
+    expect(
+      getNotificationUrl(
+        "https://x.test",
+        { ...row, listing_request_id: null, kind: "conversation_started" },
+        null,
+      ),
+    ).toBe("https://x.test/messages/conv");
+  });
+
+  it("states the deadline in a cancellation warning", () => {
+    const email = renderNotificationEmail({
+      kind: "cancellation_warning",
+      requestTitle: "Emote pack",
+      payload: { reason: "Please pay", response_days: 10, expires_at: "2026-10-17T12:00:00Z" },
+      requestUrl: "https://example.test/requests/1",
+    });
+
+    expect(email.subject).toContain("October 17, 2026");
+    expect(email.text).toContain("10-day cancellation timer");
+    expect(email.text).toContain("Please pay");
   });
 });

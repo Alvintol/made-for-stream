@@ -71,6 +71,13 @@ vi.mock(
   })
 );
 
+vi.mock("../../hooks/creatorRequests/useListingRequestCancellationWarnings", () => ({
+  CANCELLATION_WARNING_DAYS: [7, 10, 14],
+  useListingRequestCancellationWarnings: () => ({ data: [], isLoading: false }),
+  useSendListingRequestCancellationWarning: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useWithdrawListingRequestCancellationWarning: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+}));
+
 vi.mock("../../hooks/creatorRequests/useListingRequestNotices", () => ({
   useListingRequestNotices: () => ({ data: [], isLoading: false }),
 }));

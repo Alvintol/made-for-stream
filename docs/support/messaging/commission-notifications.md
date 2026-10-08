@@ -8,6 +8,13 @@ surfaces:
   - public.claim_listing_request_notifications()
   - public.notify_listing_request_change()                      # and the six other notify_listing_request_* trigger functions
   - supabase/migrations/20261007_148_add_listing_request_notifications.sql
+  - supabase/migrations/20261007_149_add_presence_message_emails_and_cancellation_warnings.sql
+  - public.user_presence
+  - public.touch_user_presence()
+  - public.is_user_online()
+  - public.notify_conversation_message()
+  - public.enqueue_unread_message_notifications()
+  - src/lib/presence/presence.ts
   - api/notificationEmails.js                                   # NOTIFICATION_EMAILS, renderNotificationEmail, getListingRequestUrl
   - api/emailTemplates.js                                       # renderActionEmail
   - api/server.js                                               # drainListingRequestNotifications, POST /api/notifications/drain, POST /api/internal/ops/alerts/run
@@ -81,9 +88,31 @@ after 3 days of waiting and once after 7:
 Each reminder is only queued during the day it falls due. Switching the
 feature on therefore does not email about things that were already old.
 
+**Chat messages and presence** (`20261007_149`):
+
+| When | Email (`kind`) | To |
+| --- | --- | --- |
+| The first message of a new inquiry conversation | `conversation_started`, always | the other person |
+| Any later message, **only if the recipient is not online** | `message_received` | the other person |
+| A cancellation warning is sent / two days before it runs out | `cancellation_warning` / `cancellation_warning_reminder` ([`cancellation-warnings.md`](../requests/cancellation-warnings.md)) | the recipient |
+| The recipient answers a warning, by a reply or a project step | `cancellation_warning_answered` | the sender |
+
+- **Online** means seen in the last five minutes (`is_user_online`). The
+  website reports activity (a click, a key, a scroll, returning to the tab) at
+  most once a minute through `touch_user_presence()`; a background tab reports
+  nothing.
+- **One email per unread stretch.** However many messages arrive, the
+  recipient gets one `message_received` email until they open the
+  conversation and read it.
+- **Safety net.** Someone who looked online but had left gets the email from
+  the hourly run, once a message has sat unread for ten minutes.
+- A person who muted a conversation gets no message emails for it.
+- **For live chat later (websockets):** the chat's Supabase Realtime channel
+  calls the same `reportPresence()` / `touch_user_presence()`. The email rule
+  does not change.
+
 **Not sent from here:** non-response first and final notices, receipts and
-payout emails ([`transactional-email.md`](transactional-email.md)), and chat
-messages (no email is sent for a new chat message).
+payout emails ([`transactional-email.md`](transactional-email.md)).
 
 ## Quick triage
 
@@ -94,6 +123,7 @@ messages (no email is sent for a new chat message).
 | Emails arrive up to an hour late | [`NOTIF-001`](#notif-001--notifications-are-not-being-sent-at-all), the website nudge is failing |
 | A row is `failed` with "no email template" | [`NOTIF-002`](#notif-002--a-kind-has-no-template) |
 | "The link in the email goes to a page that does not exist" | [`NOTIF-004`](#notif-004--email-link-opens-a-missing-page) |
+| "I was on the site and still got a message email" / "I was away and got none" | [`NOTIF-005`](#notif-005--message-email-sent-or-not-sent-against-expectation) |
 
 ---
 
@@ -233,10 +263,51 @@ creator.
 
 ---
 
+## `NOTIF-005` — Message email sent, or not sent, against expectation
+
+```yaml
+id: NOTIF-005
+tier: 2
+signals:
+  - source: user_report
+    match: "got a message email while on the site, or no email while away"
+  - source: db
+    match: "/NOTIF-005: message notification failed for conversation /"
+    where: "public.notify_conversation_message (a Postgres warning)"
+auto_fix: none
+reason_not_automatable: "usually expected behaviour that needs explaining"
+escalate_with:
+  - "select last_seen_at from public.user_presence where user_id = '<recipient>'"
+  - "the message_received rows for the conversation, with created_at and email_status"
+  - "the recipient's conversation_participants row: last_read_at, muted_at"
+```
+
+**Cause.** Almost always one of these, all working as designed:
+
+- *Got one while on the site:* they had the tab open but had not clicked,
+  typed or scrolled for five minutes, so they counted as away.
+- *Got none while away:* they were seen within five minutes of the message
+  (the hourly run sends it later if it stays unread); or they already had an
+  email for this unread stretch; or they muted the conversation; or it was
+  the other person's very first message on a commission, which is covered by
+  the "new commission request" email instead.
+
+The Postgres warning is different: the trigger itself failed. The chat
+message was still delivered in the app; only its email is missing.
+
+**Fix.** Explain. For the warning, read the error text in the database log
+and treat it as a defect.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
 
-- **No email for a new chat message.** Someone who is asked a question in
-  the chat is not emailed. Reminders cover the steps, not the conversation.
+- **Presence is activity, not a live connection.** Someone reading a long
+  page without touching it for five minutes counts as away. A websocket
+  presence channel will make this exact.
+- **Signing out does not mark someone offline** until five minutes pass.
 - **No per-person email preferences.** Every email here is about a
   commission the person is part of, so there is no unsubscribe.
 - **Reminders stop after 7 days.** After that the non-response notice

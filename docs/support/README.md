@@ -134,6 +134,7 @@ how it fails.
 | Messaging | [`messaging/moderation.md`](messaging/moderation.md) |
 | Messaging | [`messaging/transactional-email.md`](messaging/transactional-email.md) |
 | Messaging | [`messaging/commission-notifications.md`](messaging/commission-notifications.md) |
+| Requests | [`requests/cancellation-warnings.md`](requests/cancellation-warnings.md) |
 | Payments | [`payments/checkout.md`](payments/checkout.md) |
 | Payments | [`payments/webhooks.md`](payments/webhooks.md) |
 | Payments | [`payments/connect-onboarding.md`](payments/connect-onboarding.md) |

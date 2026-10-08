@@ -144,6 +144,20 @@ where n.listing_request_id = '<request>' order by n.created_at;
       right page. (Buyer links were broken before this change: `NOTIF-004`.)
 - [ ] The 3-day and 7-day reminders cannot be seen in a one-day rehearsal.
       They were checked by a rolled-back dry run only.
+- [ ] **Chat emails (needs `20261007_149`).** With the creator signed out
+      for more than five minutes, the buyer sends two chat messages: the
+      creator gets **one** email. With the creator active on the site, the
+      buyer sends another: **no** email.
+- [ ] **Cancellation warning (needs `20261007_149`).** On an active
+      commission the creator sends a warning ("Send cancellation warning",
+      10 days). The buyer gets the email and sees the deadline on the
+      commission page. The buyer replies in the chat: the panel now says the
+      warning was answered, and the creator gets an email. Send another while
+      a payment is due and have the buyer pay **without writing anything**:
+      the warning stops within a few seconds of the payment. Send a third and
+      withdraw it. The automatic
+      cancellation itself takes 7 days or more, so it was checked by a
+      rolled-back dry run only (`docs/support/requests/cancellation-warnings.md`).
 
 Record the request id per currency: CAD `____` USD `____` EUR `____`
 
@@ -166,7 +180,7 @@ Record the request id per currency: CAD `____` USD `____` EUR `____`
       `p_early_service_request_version`. Refused with `AGR-007`; the agreement stays
       `sent`.
 - [ ] Accept. `policy_acceptances` has an `early_service_request` row for the
-      request at the current Refund Policy version (`2026-09-24`).
+      request at the current Refund Policy version (`2026-10-07`).
 - [ ] Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
       contribution** on this payment. Billing-country step, tax row reads as
