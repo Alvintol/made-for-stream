@@ -21,8 +21,8 @@ const GlobeIcon = () => (
 
 // The language and currency button in the top bar, and the dialog it opens.
 // The dialog holds the same form as Settings → Preferences.
-// `compact` drops the text label when the top bar is short of room.
-const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
+// On a small screen it sits in the hamburger menu instead of the top bar.
+const RegionPicker = () => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { displayCurrency } = useDisplayCurrency();
 
@@ -42,7 +42,7 @@ const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
         onClick={() => dialogRef.current?.showModal()}
       >
         <GlobeIcon />
-        {!compact && <span>{label}</span>}
+        <span>{label}</span>
       </button>
 
       <dialog
