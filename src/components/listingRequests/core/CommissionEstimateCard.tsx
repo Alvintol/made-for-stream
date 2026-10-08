@@ -2,11 +2,13 @@ import { STANDARD_FEE_BPS } from "../../../domain/listings/listingRequestAgreeme
 import { formatFeeRateBps } from "../../../domain/payments/listingRequestPaymentDisplay";
 import { useDisplayCurrency } from "../../../hooks/money/useDisplayCurrency";
 import type { BuyerServiceFeeRate } from "../../../hooks/payments/useBuyerServiceFeeRate";
-import { convertAmount, formatCurrencyAmount } from "../../../lib/money/displayCurrency";
+import { convertAmount, formatCurrencyAmountRange } from "../../../lib/money/displayCurrency";
 
 type CommissionEstimateCardProps = {
   // In the creator's currency. Nothing is shown for a zero or missing amount.
   amount: number;
+  // The top of a budget range. Every line then shows a range.
+  amountMax?: number | null;
   currency: string;
   // What the amount is: "Your budget", "Listing price".
   amountLabel: string;
@@ -25,6 +27,7 @@ const classes = {
   discount: "flex items-baseline justify-between gap-3 font-semibold text-emerald-700",
   muted: "text-zinc-500",
   total: "flex items-baseline justify-between gap-3 border-t border-[var(--hairline)] pt-2 font-bold text-zinc-900",
+  amount: "text-right",
   approx: "text-right text-xs text-zinc-500",
   note: "text-xs leading-5 text-zinc-500",
 } as const;
@@ -41,24 +44,35 @@ const discountLabels: Record<BuyerServiceFeeRate["reason"], string> = {
 const feeCentsAt = (baseCents: number, feeBps: number): number =>
   Math.ceil((baseCents * feeBps) / 10000);
 
+// What one project price comes to, in cents.
+const estimateFor = (amount: number, feeBps: number) => {
+  const base = Math.round(amount * 100);
+  const standardFee = feeCentsAt(base, STANDARD_FEE_BPS);
+  // A rate can only lower the fee here, never raise it.
+  const fee = Math.min(standardFee, feeCentsAt(base, feeBps));
+
+  return { base, standardFee, discount: standardFee - fee, fee, total: base + fee };
+};
+
 // A mock invoice beside the commission request form, so the buyer service
 // fee is not a surprise at checkout. An example only: the creator sets the
 // real price in the agreement, and it may be paid in several payments.
 const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
-  const { amount, currency, amountLabel, feeRate } = props;
+  const { amount, amountMax = null, currency, amountLabel, feeRate } = props;
   const { displayCurrency, rates } = useDisplayCurrency();
 
   if (!Number.isFinite(amount) || amount <= 0) return null;
 
-  const baseCents = Math.round(amount * 100);
-  const standardFeeCents = feeCentsAt(baseCents, STANDARD_FEE_BPS);
-  // A rate can only lower the fee here, never raise it.
-  const feeCents = Math.min(standardFeeCents, feeCentsAt(baseCents, feeRate.feeBps));
-  const discountCents = standardFeeCents - feeCents;
-  const total = (baseCents + feeCents) / 100;
+  const low = estimateFor(amount, feeRate.feeBps);
+  const high = amountMax !== null && amountMax > amount ? estimateFor(amountMax, feeRate.feeBps) : null;
 
-  const converted = displayCurrency ? convertAmount(total, currency, displayCurrency, rates) : null;
-  const money = (cents: number) => formatCurrencyAmount(cents / 100, currency);
+  const money = (pick: (estimate: typeof low) => number) =>
+    formatCurrencyAmountRange(pick(low) / 100, high ? pick(high) / 100 : null, currency);
+
+  const convert = (cents: number) =>
+    displayCurrency ? convertAmount(cents / 100, currency, displayCurrency, rates) : null;
+  const convertedLow = convert(low.total);
+  const convertedHigh = high ? convert(high.total) : null;
 
   return (
     <section className={classes.card} aria-label="Estimated invoice">
@@ -70,16 +84,16 @@ const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
       <dl className={classes.rows}>
         <div className={classes.row}>
           <dt>{amountLabel}</dt>
-          <dd>{money(baseCents)}</dd>
+          <dd className={classes.amount}>{money((estimate) => estimate.base)}</dd>
         </div>
         <div className={classes.row}>
           <dt>Buyer service fee ({formatFeeRateBps(STANDARD_FEE_BPS)})</dt>
-          <dd>{money(standardFeeCents)}</dd>
+          <dd className={classes.amount}>{money((estimate) => estimate.standardFee)}</dd>
         </div>
-        {discountCents > 0 && (
+        {low.discount > 0 && (
           <div className={classes.discount}>
             <dt>{discountLabels[feeRate.reason]}</dt>
-            <dd>−{money(discountCents)}</dd>
+            <dd className={classes.amount}>−{money((estimate) => estimate.discount)}</dd>
           </div>
         )}
         <div className={classes.row}>
@@ -88,20 +102,26 @@ const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
         </div>
         <div className={classes.total}>
           <dt>Estimated total</dt>
-          <dd>{formatCurrencyAmount(total, currency)}</dd>
+          <dd className={classes.amount}>{money((estimate) => estimate.total)}</dd>
         </div>
       </dl>
 
-      {converted !== null && displayCurrency && (
+      {convertedLow !== null && displayCurrency && (
         <p className={classes.approx}>
-          ≈ {formatCurrencyAmount(Math.round(converted), displayCurrency)} in your currency
+          ≈{" "}
+          {formatCurrencyAmountRange(
+            Math.round(convertedLow),
+            convertedHigh === null ? null : Math.round(convertedHigh),
+            displayCurrency,
+          )}{" "}
+          in your currency
         </p>
       )}
 
       <p className={classes.note}>
         An example, not a quote. The creator sets the final price in the agreement, and you pay
         in {currency.toUpperCase()}.{" "}
-        {feeCents > 0
+        {low.fee > 0
           ? "The buyer service fee is added to each payment."
           : "No buyer service fee is added to your payments."}{" "}
         A tip is optional.

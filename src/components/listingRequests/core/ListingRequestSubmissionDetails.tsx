@@ -1,9 +1,16 @@
+import { formatCurrencyAmountRange } from "../../../lib/money/displayCurrency";
+
 type ListingRequestSubmissionDetailsProps = {
   requestTitle?: string | null;
   requestDetails?: string | null;
   fallbackMessage?: string | null;
   requestedTimeline?: string | null;
   budgetAmount?: number | string | null;
+  // The top of a budget range (20261008_151).
+  budgetAmountMax?: number | string | null;
+  // The listing's currency, which the budget is in. Without it the amount is
+  // shown with a bare "$", as it was before listings had a currency.
+  currency?: string | null;
   referenceLinks?: string[] | null;
 };
 
@@ -27,18 +34,27 @@ const cleanText = (value?: string | null): string => value?.trim() ?? "";
 const cleanLinks = (links?: string[] | null): string[] =>
   (links ?? []).map((link) => link.trim()).filter(Boolean);
 
-const formatBudgetAmount = (value?: number | string | null): string => {
-  if (value === null || value === undefined || value === "") {
-    return "Not provided";
-  }
+const toAmount = (value?: number | string | null): number | null => {
+  const numericValue = value === null || value === undefined || value === "" ? NaN : Number(value);
 
-  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
 
-  if (!Number.isFinite(numericValue)) {
-    return "Not provided";
-  }
+const formatBudgetAmount = (
+  value?: number | string | null,
+  maxValue?: number | string | null,
+  currency?: string | null,
+): string => {
+  const low = toAmount(value);
+  const high = toAmount(maxValue);
 
-  return numericValue % 1 === 0 ? `$${numericValue}` : `$${numericValue.toFixed(2)}`;
+  if (low === null) return "Not provided";
+
+  if (currency) return formatCurrencyAmountRange(low, high, currency);
+
+  const bare = (amount: number) => (amount % 1 === 0 ? `$${amount}` : `$${amount.toFixed(2)}`);
+
+  return high === null ? bare(low) : `${bare(low)}–${bare(high)}`;
 };
 
 // Rendered inside a workspace section, which supplies the title and collapse.
@@ -48,6 +64,8 @@ const ListingRequestSubmissionDetails = ({
   fallbackMessage,
   requestedTimeline,
   budgetAmount,
+  budgetAmountMax,
+  currency,
   referenceLinks,
 }: ListingRequestSubmissionDetailsProps) => {
   const titleText = cleanText(requestTitle);
@@ -69,7 +87,7 @@ const ListingRequestSubmissionDetails = ({
 
         <div className={classes.fact}>
           <dt className={classes.factLabel}>Budget</dt>
-          <dd className={classes.factValue}>{formatBudgetAmount(budgetAmount)}</dd>
+          <dd className={classes.factValue}>{formatBudgetAmount(budgetAmount, budgetAmountMax, currency)}</dd>
         </div>
       </dl>
 

@@ -183,6 +183,66 @@ describe("RequestListing", () => {
     expect(invoice.queryByText(/discount/i)).not.toBeInTheDocument();
   });
 
+  it("takes a budget range, and shows the range on every line of the invoice", async () => {
+    // 1 EUR = 1.5 CAD = 1 USD here.
+    mocks.display = {
+      displayCurrency: "usd",
+      rates: { base: "eur", date: "2026-10-08", rates: { eur: 1, cad: 1.5, usd: 1 } },
+    };
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^Budget/), { target: { value: "300 to 600" } });
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("$300–$600 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$15–$30 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$315–$630 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("≈ $210–$420 USD in your currency")).toBeInTheDocument();
+    expect(screen.getByText(/≈ \$200–\$400 USD\s+in your currency\./)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Commission title / summary"), {
+      target: { value: "Custom cozy emote pack" },
+    });
+    fireEvent.change(screen.getByLabelText("Details"), {
+      target: { value: "I need three cozy emotes for my Twitch channel launch." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
+
+    await waitFor(() =>
+      expect(mocks.createRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ budgetAmount: 300, budgetAmountMax: 600 }),
+      ),
+    );
+  });
+
+  it("keeps showing the listing price while the budget is text it cannot read", () => {
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^Budget/), { target: { value: "around 100" } });
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("Listing price")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
+
+    expect(screen.getByLabelText("Budget optional")).toHaveAccessibleDescription("Enter an amount such as 100, or a range such as 100-150. Put anything else about your budget in the details.");
+    expect(mocks.createRequest).not.toHaveBeenCalled();
+  });
+
+  it("puts the estimated invoice above the listing summary", () => {
+    renderPage();
+
+    const invoice = screen.getByRole("region", { name: "Estimated invoice" });
+    const listingTitle = within(screen.getByRole("complementary", { name: "Listing summary" })).getByText(
+      "Custom Emote Pack",
+    );
+
+    expect(invoice.compareDocumentPosition(listingTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("shows a subscriber's waived fee as a discount, ready for when subscriptions exist", () => {
     mocks.feeRate = { feeBps: 0, reason: "subscription" };
 
@@ -195,7 +255,7 @@ describe("RequestListing", () => {
     expect(invoice.getByText("−$2.50 CAD")).toBeInTheDocument();
     // Listing price 50, fee waived: the total is the price.
     expect(invoice.getAllByText("$50 CAD")).toHaveLength(2);
-    expect(screen.getByText("No buyer service fee is added when you pay.")).toBeInTheDocument();
+    expect(screen.getByText(/No buyer service fee is added when you pay\./)).toBeInTheDocument();
   });
 
   it("shows a reduced rate as a partial discount", () => {
@@ -349,7 +409,7 @@ describe("RequestListing", () => {
     expect(title).toHaveFocus();
     expect(screen.getByLabelText("Details")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByLabelText("Budget optional")).toHaveAccessibleDescription(
-      "Budget must be a valid amount between 0 and 999999.99."
+      "Enter an amount such as 100, or a range such as 100-150. Put anything else about your budget in the details."
     );
     expect(screen.getByLabelText("Deadline / timeline optional")).toHaveAttribute("aria-invalid", "false");
     expect(mocks.createRequest).not.toHaveBeenCalled();

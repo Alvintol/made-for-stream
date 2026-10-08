@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseListingRequestReferenceLinks,
+  BUDGET_FORMAT_MESSAGE,
+  parseListingRequestBudget,
   validateListingRequestForm,
 } from "../listings/listingRequestForm";
 
@@ -36,6 +38,7 @@ describe("listing commission form helpers", () => {
         "I need three cozy emotes for my Twitch channel launch.",
       requestedTimeline: "Flexible, ideally before June 10.",
       budgetAmount: 75,
+      budgetAmountMax: null,
       referenceLinks: [
         "https://example.com/reference-one",
         "https://example.com/reference-two",
@@ -58,6 +61,7 @@ describe("listing commission form helpers", () => {
       requestDetails: "Please make a simple cozy emote.",
       requestedTimeline: undefined,
       budgetAmount: null,
+      budgetAmountMax: null,
       referenceLinks: [],
     });
   });
@@ -88,9 +92,49 @@ describe("listing commission form helpers", () => {
     });
 
     expect(result.values).toBeNull();
-    expect(result.errors.budgetAmount).toBe(
-      "Budget must be a valid amount between 0 and 999999.99."
+    expect(result.errors.budgetAmount).toBe(BUDGET_FORMAT_MESSAGE);
+  });
+
+  it("reads a single budget amount however it is written", () => {
+    expect(parseListingRequestBudget("")).toBeNull();
+    expect(parseListingRequestBudget("   ")).toBeNull();
+    expect(parseListingRequestBudget("100")).toEqual({ min: 100, max: null });
+    expect(parseListingRequestBudget(" $1,250.50 ")).toEqual({ min: 1250.5, max: null });
+    expect(parseListingRequestBudget("CAD 100")).toEqual({ min: 100, max: null });
+    expect(parseListingRequestBudget("100usd")).toEqual({ min: 100, max: null });
+    // A comma before two digits is a decimal comma, not thousands.
+    expect(parseListingRequestBudget("100,50 €")).toEqual({ min: 100.5, max: null });
+  });
+
+  it("reads a budget range, in either order and with any common separator", () => {
+    const range = { min: 100, max: 150 };
+
+    expect(parseListingRequestBudget("100-150")).toEqual(range);
+    expect(parseListingRequestBudget("100 - 150")).toEqual(range);
+    expect(parseListingRequestBudget("$100 – $150")).toEqual(range);
+    expect(parseListingRequestBudget("100 to 150")).toEqual(range);
+    expect(parseListingRequestBudget("100 TO 150 CAD")).toEqual(range);
+    expect(parseListingRequestBudget("150-100")).toEqual(range);
+    // The same figure twice is one figure.
+    expect(parseListingRequestBudget("100-100")).toEqual({ min: 100, max: null });
+  });
+
+  it("refuses text it cannot be sure of, instead of guessing a number from it", () => {
+    ["around 100", "100ish", "100 per emote, 5 emotes", "cheap", "-1", "100-150-200", "1000000", "1.999"].forEach(
+      (text) => expect(parseListingRequestBudget(text)).toBe("invalid"),
     );
+  });
+
+  it("saves the two ends of a range", () => {
+    const result = validateListingRequestForm({
+      requestTitle: "Simple commission",
+      requestDetails: "Please make a simple cozy emote.",
+      requestedTimeline: "",
+      budgetText: "100 to 150",
+      referenceLinksText: "",
+    });
+
+    expect(result.values).toMatchObject({ budgetAmount: 100, budgetAmountMax: 150 });
   });
 
   it("rejects more than five reference links", () => {

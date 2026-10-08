@@ -30,6 +30,33 @@ describe("<ListingRequestSubmissionDetails />", () => {
     );
   });
 
+  it("shows a budget range in the listing's currency", () => {
+    render(
+      <ListingRequestSubmissionDetails
+        requestTitle="Custom cozy emote pack"
+        requestDetails="I need three cozy emotes for my Twitch channel launch."
+        budgetAmount={100}
+        budgetAmountMax={150}
+        currency="eur"
+      />
+    );
+
+    expect(screen.getByText("€100–€150 EUR")).toBeInTheDocument();
+  });
+
+  it("shows a single budget with its currency when the currency is known", () => {
+    render(
+      <ListingRequestSubmissionDetails
+        requestTitle="Custom cozy emote pack"
+        requestDetails="I need three cozy emotes for my Twitch channel launch."
+        budgetAmount={75}
+        currency="cad"
+      />
+    );
+
+    expect(screen.getByText("$75 CAD")).toBeInTheDocument();
+  });
+
   it("falls back to the legacy message when structured details are missing", () => {
     render(
       <ListingRequestSubmissionDetails

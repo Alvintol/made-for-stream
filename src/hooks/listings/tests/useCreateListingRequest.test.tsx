@@ -131,6 +131,7 @@ describe("useCreateListingRequest", () => {
       request_details: "I need three cozy emotes for my Twitch channel launch.",
       requested_timeline: "Flexible, ideally before June 10.",
       budget_amount: 75,
+      budget_amount_max: null,
       reference_links: [
         "https://example.com/reference-one",
         "https://example.com/reference-two",
@@ -167,6 +168,7 @@ describe("useCreateListingRequest", () => {
         request_details: "Please make a simple cozy emote.",
         requested_timeline: null,
         budget_amount: null,
+      budget_amount_max: null,
         reference_links: [],
         message: "Please make a simple cozy emote.",
       })

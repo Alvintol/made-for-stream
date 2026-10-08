@@ -38,6 +38,7 @@ const fetchBuyerRequest = async (
     request_details,
     requested_timeline,
     budget_amount,
+    budget_amount_max,
     reference_links,
     archived_at,
     archived_by_user_id,

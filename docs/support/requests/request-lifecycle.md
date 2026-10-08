@@ -56,6 +56,7 @@ database, its error messages (the `match:` strings below), the web addresses
 | "I can't archive this" | [`REQ-002`](#req-002--action-attempted-by-the-wrong-party) |
 | "My request was declined and the chat is gone" | [`REQ-004`](#req-004--conversation-missing-for-a-declined-request) |
 | "I need to cancel this request" | [`cancellation.md`](cancellation.md) |
+| "It won't accept my budget" | [`REQ-005`](#req-005--budget-not-accepted-on-the-request-form) |
 
 ---
 
@@ -252,6 +253,46 @@ history of why.
 treat it as an integrity problem rather than a series of one-offs.
 
 **Money impact.** None; declined requests have no payments.
+
+---
+
+## `REQ-005` — Budget not accepted on the request form
+
+```yaml
+id: REQ-005
+tier: 2
+signals:
+  - source: client
+    match: "Enter an amount such as 100, or a range such as 100-150. Put anything else about your budget in the details."
+    where: "src/domain/listings/listingRequestForm.ts, parseListingRequestBudget"
+  - source: db
+    match: "/violates check constraint \"listing_requests_budget_amount(_max)?_check\"/"
+    where: "public.listing_requests (20261008_151 for the _max constraint)"
+  - source: db
+    match: "/column \"?(listing_requests\\.)?budget_amount_max\"? does not exist|Could not find the 'budget_amount_max' column/"
+    where: "any page that reads a commission, when migration 20261008_151 is not applied"
+auto_fix: none
+reason_not_automatable: "explanation, not a fault; a missing migration needs a person"
+```
+
+**Cause.** The optional budget is one amount or a range, in the listing's
+currency. The form reads "100", "$1,250.50", "CAD 100", "100-150", "100 to
+150" and "$100 – $150"; a range is saved as `budget_amount` (bottom) and
+`budget_amount_max` (top, `20261008_151`). Anything it cannot be sure of
+("around 100", "100 per emote") is refused with the message above instead of
+guessing a number. While the budget is text it cannot read, the "Estimated
+invoice" card beside the form keeps showing the listing price.
+
+**What the user sees.** The message under the budget box, and the box focused.
+
+**Fix.** Explain the two accepted shapes; anything else about the budget goes
+in the details. The budget is information for the creator only: the price is
+set in the agreement.
+
+**If every commission page fails to load** with the "does not exist" signal,
+the website was deployed before migration `20261008_151`. Apply the migration.
+
+**Money impact.** None.
 
 ---
 
