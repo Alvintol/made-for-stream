@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useDisplayPreferences } from "../hooks/money/useDisplayCurrency";
-import { getDisplayCurrencySummary } from "../lib/money/displayCurrency";
-import DisplayCurrencySettings from "../components/settings/DisplayCurrencySettings";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../providers/AuthProvider";
@@ -27,7 +24,9 @@ import { FadeIn } from "../lib/motion";
 
 const classes = {
   page: "space-y-4",
-  layout: "grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]",
+  // The settings pages list already takes a column, so the checklist only
+  // sits beside the sections on very wide screens.
+  layout: "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_17rem]",
   sections: "card min-w-0 divide-y divide-[var(--hairline)] overflow-hidden hover:shadow-[var(--shadow-md)]",
 
   noticeInfo: "notice noticeInfo",
@@ -85,13 +84,13 @@ const classes = {
   badgeWaiting: "border-sky-200 bg-sky-50 text-sky-700",
 
   // Setup checklist
-  aside: "card p-4 hover:shadow-[var(--shadow-md)] lg:sticky lg:top-24",
+  aside: "card p-4 hover:shadow-[var(--shadow-md)] xl:sticky xl:top-24",
   asideHead: "flex items-center justify-between gap-3",
   asideTitle: "font-display text-sm font-bold text-zinc-900",
   asideCount: "text-xs font-medium text-zinc-500",
   bar: "mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200",
   barFill: "h-full rounded-full bg-gradient-to-r from-[rgb(var(--accent))] to-[rgb(var(--brand))] transition-[width] duration-500",
-  steps: "mt-3 hidden space-y-0.5 lg:block",
+  steps: "mt-3 hidden space-y-0.5 xl:block",
   step:
     "flex w-full items-start gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-[rgb(var(--ink)/0.04)]",
   stepIcon:
@@ -103,7 +102,7 @@ const classes = {
   stepLabel: "block text-sm font-semibold text-zinc-900",
   stepLabelMuted: "block text-sm font-semibold text-zinc-500",
   stepDetail: "block text-xs text-zinc-500",
-  next: "mt-3 flex items-center justify-between gap-3 border-t border-[var(--hairline)] pt-3 lg:hidden",
+  next: "mt-3 flex items-center justify-between gap-3 border-t border-[var(--hairline)] pt-3 xl:hidden",
   nextText: "min-w-0 text-xs text-zinc-600",
   allDone: "mt-3 text-xs text-zinc-500",
 
@@ -155,7 +154,6 @@ const ProfileSettings = () => {
 
   const { user, session, loading } = useAuth();
   const { data: profile, isLoading, error, refetch } = useMyProfile();
-  const { data: displayPreferences } = useDisplayPreferences();
 
   const {
     data: platformAccounts = [],
@@ -428,7 +426,7 @@ const ProfileSettings = () => {
       )}
 
       <div className={classes.layout}>
-        <aside className={`${classes.aside} lg:order-last`} aria-label="Account setup">
+        <aside className={`${classes.aside} xl:order-last`} aria-label="Account setup">
           <div className={classes.asideHead}>
             <span className={classes.asideTitle}>Account setup</span>
             <span className={classes.asideCount}>
@@ -484,7 +482,7 @@ const ProfileSettings = () => {
               </button>
             </div>
           ) : (
-            isSettled && <p className={`${classes.allDone} lg:hidden`}>Nothing needs your attention.</p>
+            isSettled && <p className={`${classes.allDone} xl:hidden`}>Nothing needs your attention.</p>
           )}
         </aside>
 
@@ -684,14 +682,6 @@ const ProfileSettings = () => {
               <span className={classes.pill}>Manual review</span>
               <span className={classes.pill}>No instant activation</span>
             </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            id="settings-display-currency"
-            title="Country and currency"
-            summary={getDisplayCurrencySummary(displayPreferences)}
-          >
-            <DisplayCurrencySettings />
           </CollapsibleSection>
 
           <CollapsibleSection

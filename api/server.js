@@ -2257,37 +2257,39 @@ const applyCheckoutTax = async ({ stripeClient, payment, req, userId }) => {
     throw new Error(TAX_CONFIG.configError);
   }
 
-  // The country saved in the buyer's settings is their billing country. What
-  // the checkout form sends counts only while nothing is saved, so a buyer
-  // cannot pick a different country for one payment.
-  const { data: preference, error: preferenceError } = await supabaseAdmin
-    .from("user_display_preferences")
-    .select("country_code")
+  // The buyer's billing location is the address in their private account
+  // details (public.user_account_details, 20261008_150), never what the
+  // checkout page sends, so it cannot be changed for one payment. Nobody
+  // pays without those details.
+  const { data: accountDetails, error: accountDetailsError } = await supabaseAdmin
+    .from("user_account_details")
+    .select("country_code, region, postal_code")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (preferenceError) {
-    throw new Error("Your billing country could not be read. Please try again.");
+  if (accountDetailsError) {
+    throw new Error("Your account details could not be read. Please try again.");
   }
 
-  const savedCountry = normalizeTaxCountry(preference?.country_code);
-  const billingCountry =
-    savedCountry || normalizeTaxCountry(req.body?.billingCountry);
+  const billingCountry = normalizeTaxCountry(accountDetails?.country_code);
 
   if (!billingCountry) {
-    throw new Error("Choose your billing country before paying.");
+    throw new Error("Add your account details in Settings before paying.");
   }
 
   const billingPostalCode =
-    String(req.body?.billingPostalCode || "").trim().slice(0, 20) || null;
-  const billingRegion =
-    String(req.body?.billingRegion || "").trim().toUpperCase().slice(0, 10) || null;
+    String(accountDetails.postal_code || "").trim().slice(0, 20) || null;
+  // Stripe Tax wants a state only where it is a code (Canada and the
+  // United States, where the database stores two letters).
+  const billingRegion = /^[A-Z]{2}$/.test(accountDetails.region || "")
+    ? accountDetails.region
+    : null;
 
   await recordTaxEvidence(
     payment.id,
     "billing_address_declared",
     billingCountry,
-    savedCountry ? "account_settings" : "buyer_checkout_form",
+    "account_details",
   );
 
   const ipCountry = getIpCountryFromRequest(req, TAX_CONFIG.ipCountryHeader);

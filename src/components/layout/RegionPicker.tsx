@@ -20,8 +20,7 @@ const GlobeIcon = () => (
 );
 
 // The language and currency button in the top bar, and the dialog it opens.
-// The dialog holds the Settings → Country and currency form without the
-// country: that is the billing country, and is set in Settings only.
+// The dialog holds the same form as Settings → Preferences.
 // `compact` drops the text label when the top bar is short of room.
 const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -71,7 +70,7 @@ const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
             </button>
           </div>
 
-          <DisplayCurrencySettings showCountry={false} />
+          <DisplayCurrencySettings />
         </div>
       </dialog>
     </>

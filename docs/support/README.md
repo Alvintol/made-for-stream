@@ -122,6 +122,7 @@ how it fails.
 | Auth | [`auth/sign-in.md`](auth/sign-in.md) |
 | Auth | [`auth/twitch-linking.md`](auth/twitch-linking.md) |
 | Profiles | [`profiles/profiles-and-media.md`](profiles/profiles-and-media.md) |
+| Profiles | [`profiles/account-details.md`](profiles/account-details.md) |
 | Creators | [`creators/applications.md`](creators/applications.md) |
 | Listings | [`listings/listings.md`](listings/listings.md) |
 | Requests | [`requests/request-lifecycle.md`](requests/request-lifecycle.md) |

@@ -38,7 +38,7 @@ listing). When a payout account is created, a second trigger moves that
 creator's listings onto its currency. A client cannot choose the value.
 
 **The display currency** is picked in this order:
-1. the currency the person chose in Settings → Country and currency;
+1. the currency the person chose in Settings → Preferences;
 2. else their saved country's currency;
 3. else, for anyone signed out or with nothing saved, a guess from the
    browser's language setting (`en-CA` gives Canada). The guess is made in
@@ -61,15 +61,15 @@ receipts show the real currency only.
 
 **Privacy.** Country and display currency live in `user_display_preferences`,
 readable and writable only by their owner. They are deliberately not on
-`profiles`, which anyone can read. Since 2026-10-08 the country is also the
-buyer's **billing country** at checkout: the API reads it to work out tax
-([`tax.md`](tax.md), `TAX-001`). The display currency still changes nothing
-anyone is charged.
+`profiles`, which anyone can read. Since `20261008_150` the country here is a
+copy of the address country in the person's private account details
+([`../profiles/account-details.md`](../profiles/account-details.md)), written
+by `sync_user_account_country()`; it is not edited on its own. The display
+currency still changes nothing anyone is charged.
 
-**Where it is set.** Settings → Country and currency has the country and
-the currency. The globe button in the top bar opens a dialog with language
-and currency only (2026-10-08): the country is set in Settings, or at a
-buyer's first checkout if none is saved. A signed-in person's choice
+**Where it is set.** Settings → Preferences, and the globe button in the top
+bar, which opens a dialog with the same form: language and currency. The
+country comes from Settings → Personal details. A signed-in person's choice
 is saved to `user_display_preferences`. A signed-out visitor's choice is kept
 in memory only and is gone when the page is reloaded; the "Saved" message
 says so. Nothing is written to browser storage.
@@ -214,12 +214,9 @@ messages mean a country that is not two capital letters or a currency not in
   translation system and nothing is saved. Adding a language means storing
   the choice, setting the page language and translating the site's text.
 
-- **The country list is every country** (the checkout billing list, since
-  2026-10-08). A country whose currency is not supported gets no default
-  display currency; the person picks one by hand.
-- **The Privacy Policy still says the billing country is "the billing country
-  you choose at checkout".** It is now the country in settings. The wording
-  needs updating with the next policy revision.
+- **A country whose currency is not supported gets no default display
+  currency;** the person picks one by hand. A signed-out visitor has no
+  country at all, so theirs follows the browser language.
 - **A buyer's optional budget on a request has no currency of its own.** It
   is entered against the listing's currency, but the request details still
   print it with a "$".

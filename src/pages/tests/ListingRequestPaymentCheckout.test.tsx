@@ -8,18 +8,14 @@ const mocks = vi.hoisted(() => ({
   payment: null as Record<string, unknown> | null,
   createCheckout: vi.fn(),
   setTipAndSupport: vi.fn(),
-  savedCountry: null as string | null,
-  savePreferences: vi.fn(),
+  billingCountry: "CA" as string | null,
 }));
 
-vi.mock("../../hooks/money/useDisplayCurrency", () => ({
-  useDisplayPreferences: () => ({
-    data: mocks.savedCountry
-      ? { country_code: mocks.savedCountry, display_currency: null }
-      : null,
+vi.mock("../../hooks/settings/useAccountDetails", () => ({
+  useAccountDetails: () => ({
+    data: mocks.billingCountry ? { country_code: mocks.billingCountry } : null,
     isLoading: false,
   }),
-  useSaveDisplayPreferences: () => ({ mutateAsync: mocks.savePreferences, isPending: false }),
 }));
 
 vi.mock("../../hooks/payments/useListingRequestPayments", () => ({
@@ -89,8 +85,7 @@ describe("ListingRequestPaymentCheckout", () => {
       checkout: { clientSecret: "cs_secret" },
     });
     mocks.setTipAndSupport.mockReset().mockResolvedValue({});
-    mocks.savedCountry = null;
-    mocks.savePreferences.mockReset().mockResolvedValue(undefined);
+    mocks.billingCountry = "CA";
   });
 
   it("shows what the buyer is paying before checkout", () => {
@@ -120,13 +115,20 @@ describe("ListingRequestPaymentCheckout", () => {
     expect(screen.getByText("$126.00")).toBeInTheDocument();
   });
 
-  it("requires a billing country before moving on to payment", async () => {
+  it("does not move on to payment for an account with no details", async () => {
+    mocks.billingCountry = null;
+
     renderCheckout();
+
+    expect(screen.getByRole("link", { name: "Add your account details" })).toHaveAttribute(
+      "href",
+      "/settings/personal",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
 
     expect(
-      await screen.findByText("Choose your billing country to continue."),
+      await screen.findByText("Add your account details in Settings before paying."),
     ).toBeInTheDocument();
     expect(mocks.setTipAndSupport).not.toHaveBeenCalled();
   });
@@ -137,12 +139,6 @@ describe("ListingRequestPaymentCheckout", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(mocks.createCheckout).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText(/^Billing country/), {
-      target: { value: "GB" },
-    });
-    fireEvent.change(screen.getByLabelText(/Postal or ZIP code/), {
-      target: { value: " SW1A 1AA " },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
     await waitFor(() => expect(mocks.setTipAndSupport).toHaveBeenCalled());
 
@@ -151,45 +147,25 @@ describe("ListingRequestPaymentCheckout", () => {
     await waitFor(() =>
       expect(mocks.createCheckout).toHaveBeenCalledWith({
         paymentId: "payment-1",
-        billingCountry: "GB",
-        billingPostalCode: "SW1A 1AA",
-      }),
-    );
-    expect(await screen.findByText("Stripe embedded checkout")).toBeInTheDocument();
-
-    // A buyer with no country saved has this one saved as theirs.
-    expect(mocks.savePreferences).toHaveBeenCalledWith({
-      country_code: "GB",
-      display_currency: null,
-    });
-  });
-
-  it("uses the country saved in settings and does not let it be changed here", async () => {
-    mocks.savedCountry = "CA";
-
-    renderCheckout();
-
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByText("Canada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Change in Settings" })).toHaveAttribute(
-      "href",
-      "/settings#settings-display-currency",
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Accept for request-1" }));
-
-    await waitFor(() =>
-      expect(mocks.createCheckout).toHaveBeenCalledWith({
-        paymentId: "payment-1",
         billingCountry: "CA",
       }),
     );
-    expect(mocks.savePreferences).not.toHaveBeenCalled();
+    expect(await screen.findByText("Stripe embedded checkout")).toBeInTheDocument();
+  });
+
+  it("shows the country from the account details and does not let it be changed here", () => {
+    renderCheckout();
+
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Postal or ZIP code/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Canada/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Change in Settings" })).toHaveAttribute(
+      "href",
+      "/settings/personal",
+    );
   });
 
   it("shows a tip and contribution saved on an earlier visit, so they can be removed", async () => {
-    mocks.savedCountry = "CA";
     mocks.payment = { ...mocks.payment, creator_tip_cents: 2415, platform_support_cents: 100 };
 
     renderCheckout();
@@ -212,9 +188,6 @@ describe("ListingRequestPaymentCheckout", () => {
   it("creates only one session when acceptance is reported more than once", async () => {
     renderCheckout();
 
-    fireEvent.change(screen.getByLabelText(/^Billing country/), {
-      target: { value: "CA" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
 
     const accept = await screen.findByRole("button", { name: "Accept for request-1" });

@@ -13,10 +13,7 @@ import {
   getListingRequestPaymentTitle,
 } from "../../domain/payments/listingRequestPaymentDisplay";
 import { describePaymentTaxLine } from "../../domain/payments/listingRequestPaymentTax";
-import {
-  useDisplayPreferences,
-  useSaveDisplayPreferences,
-} from "../../hooks/money/useDisplayCurrency";
+import { useAccountDetails } from "../../hooks/settings/useAccountDetails";
 import { useCreateListingRequestPaymentCheckout } from "../../hooks/payments/useCreateListingRequestPaymentCheckout";
 import { useListingRequestPayment } from "../../hooks/payments/useListingRequestPayments";
 import { useSetListingRequestPaymentTipAndSupport } from "../../hooks/payments/useSetListingRequestPaymentTipAndSupport";
@@ -46,10 +43,6 @@ const classes = {
   fieldInputWrap: "flex items-center gap-1 text-sm",
   fieldInput:
     "w-28 rounded-lg border border-zinc-300 px-2 py-1 text-right text-sm focus:border-zinc-500 focus:outline-none",
-  fieldSelect:
-    "w-56 rounded-lg border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none",
-  fieldText:
-    "w-32 rounded-lg border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none",
   pendingAmount: "text-zinc-500",
 } as const;
 
@@ -79,23 +72,19 @@ const ListingRequestPaymentCheckout = () => {
   const [extrasConfirmed, setExtrasConfirmed] = useState(false);
   const [extrasErrMsg, setExtrasErrMsg] = useState<string | null>(null);
 
-  // Sprint 7 (launch-scope.md section 12): the buyer's billing location,
-  // chosen before checkout. It is location evidence for tax and decides
-  // which jurisdiction's tax (if any) applies -- the API enforces that it
-  // is present, this only collects it.
-  //
-  // It is the country saved in Settings, and cannot be changed here: the API
-  // uses the saved one whatever this page sends. Only a buyer with none saved
-  // chooses here, and the choice is then saved as their country.
-  const preferencesQuery = useDisplayPreferences();
-  const savePreferences = useSaveDisplayPreferences();
-  const savedCountry = preferencesQuery.data?.country_code ?? "";
-  const [chosenCountry, setChosenCountry] = useState("");
-  const billingCountry = savedCountry || chosenCountry;
-  const [billingPostalCode, setBillingPostalCode] = useState("");
-  const billingCountryOptions = useMemo(() => getBillingCountryOptions(), []);
-  const savedCountryName =
-    billingCountryOptions.find((option) => option.code === savedCountry)?.name ?? savedCountry;
+  // Sprint 7 (launch-scope.md section 12): the buyer's billing location is
+  // location evidence for tax and decides which jurisdiction's tax (if any)
+  // applies. It is the address in the buyer's private account details and
+  // cannot be changed here: the API reads it from the database itself, so
+  // this page only shows the country.
+  const accountDetails = useAccountDetails();
+  const billingCountry = accountDetails.data?.country_code ?? "";
+  const billingCountryName = useMemo(
+    () =>
+      getBillingCountryOptions().find((option) => option.code === billingCountry)?.name ??
+      billingCountry,
+    [billingCountry],
+  );
 
   const parseAmountToCents = (value: string): number => {
     const trimmed = value.trim();
@@ -113,20 +102,13 @@ const ListingRequestPaymentCheckout = () => {
     setExtrasErrMsg(null);
 
     if (!billingCountry) {
-      setExtrasErrMsg("Choose your billing country to continue.");
+      setExtrasErrMsg("Add your account details in Settings before paying.");
       return;
     }
 
     try {
       const creatorTipCents = parseAmountToCents(tipInput);
       const platformSupportCents = parseAmountToCents(supportInput);
-
-      if (!savedCountry) {
-        await savePreferences.mutateAsync({
-          country_code: billingCountry,
-          display_currency: preferencesQuery.data?.display_currency ?? null,
-        });
-      }
 
       await setTipAndSupport.mutateAsync({
         paymentId,
@@ -139,7 +121,7 @@ const ListingRequestPaymentCheckout = () => {
       setExtrasErrMsg(getErrorMessage(error));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentId, tipInput, supportInput, billingCountry, savedCountry, preferencesQuery.data, savePreferences.mutateAsync, setTipAndSupport.mutateAsync]);
+  }, [paymentId, tipInput, supportInput, billingCountry, setTipAndSupport.mutateAsync]);
 
   // Stripe checkout opens only after the buyer has confirmed their tip and
   // contribution choice, then accepted the project terms and policies for
@@ -171,13 +153,9 @@ const ListingRequestPaymentCheckout = () => {
     setStripePromise(null);
 
     try {
-      const response = await createCheckout.mutateAsync({
-        paymentId,
-        billingCountry,
-        ...(billingPostalCode.trim()
-          ? { billingPostalCode: billingPostalCode.trim() }
-          : {}),
-      });
+      // The API reads the billing location from the account details itself;
+      // the country is still sent so an API from before that change accepts it.
+      const response = await createCheckout.mutateAsync({ paymentId, billingCountry });
 
       setClientSecret(response.checkout.clientSecret);
       setStripePromise(
@@ -189,7 +167,7 @@ const ListingRequestPaymentCheckout = () => {
       startedPaymentIdRef.current = null;
       setErrMsg(getErrorMessage(error));
     }
-  }, [createCheckout.mutateAsync, paymentId, billingCountry, billingPostalCode]);
+  }, [createCheckout.mutateAsync, paymentId, billingCountry]);
 
   useEffect(() => {
     if (!policiesAccepted) return;
@@ -344,58 +322,16 @@ const ListingRequestPaymentCheckout = () => {
 
           <div className="mt-4 space-y-3">
             <div className={classes.fieldRow}>
-              {savedCountry ? (
-                <>
-                  <span className={classes.fieldLabel}>
-                    Billing country
-                    <span className={classes.fieldHint}> — the country in your settings</span>
-                  </span>
-                  <span className="text-sm">
-                    {savedCountryName}{" "}
-                    <Link className={classes.feeLink} to="/settings#settings-display-currency">
-                      Change in Settings
-                    </Link>
-                  </span>
-                </>
-              ) : (
-                <>
-                  <label className={classes.fieldLabel} htmlFor="billing-country">
-                    Billing country
-                    <span className={classes.fieldHint}> — saved as the country in your settings</span>
-                  </label>
-                  <select
-                    id="billing-country"
-                    className={classes.fieldSelect}
-                    value={chosenCountry}
-                    disabled={preferencesQuery.isLoading}
-                    onChange={(event) => setChosenCountry(event.target.value)}
-                    required
-                  >
-                    <option value="">Choose a country</option>
-                    {billingCountryOptions.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-            </div>
-
-            <div className={classes.fieldRow}>
-              <label className={classes.fieldLabel} htmlFor="billing-postal-code">
-                Postal or ZIP code
-                <span className={classes.fieldHint}> — optional; used where tax depends on it</span>
-              </label>
-              <input
-                id="billing-postal-code"
-                className={classes.fieldText}
-                type="text"
-                autoComplete="postal-code"
-                maxLength={20}
-                value={billingPostalCode}
-                onChange={(event) => setBillingPostalCode(event.target.value)}
-              />
+              <span className={classes.fieldLabel}>
+                Billing country
+                <span className={classes.fieldHint}> — from your account details</span>
+              </span>
+              <span className="text-sm">
+                {billingCountry ? `${billingCountryName} ` : "Not set "}
+                <Link className={classes.feeLink} to="/settings/personal">
+                  {billingCountry ? "Change in Settings" : "Add your account details"}
+                </Link>
+              </span>
             </div>
           </div>
 
@@ -405,7 +341,7 @@ const ListingRequestPaymentCheckout = () => {
             <button
               type="button"
               className="btnPrimary"
-              disabled={setTipAndSupport.isPending || savePreferences.isPending}
+              disabled={setTipAndSupport.isPending || accountDetails.isLoading}
               onClick={() => void onConfirmExtras()}
             >
               {setTipAndSupport.isPending ? "Saving…" : "Continue to payment"}

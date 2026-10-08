@@ -1,4 +1,4 @@
-export const termsVersion = "2026-09-24";
+export const termsVersion = "2026-10-08";
 
 export const termsSections = [
   {
@@ -19,6 +19,7 @@ export const termsSections = [
     "title": "3. Eligibility and accounts",
     "body": [
       "Registered users must be at least 18 and meet any higher legal contracting age applicable to them. Creator applicants, sellers and payout recipients must satisfy the same requirement. You must have authority to bind any business you represent. Do not misstate your age, identity, authority or ownership of a linked account.",
+      "Before you can create a listing, send a commission request, send a project agreement or pay, you must give us the private account details described in the Privacy Policy: your legal name, date of birth and address and, if the account belongs to a business or other legal entity, its legal name. A business registration number and a tax number are optional unless the law requires us to collect them. These details are not shown to other users. They must be true, must be your own or those of the business you are authorised to represent, and must be kept up to date. We may restrict an account whose details are false, incomplete or out of date.",
       "Keep your account information accurate and access secure. Notify support promptly of suspected compromise. You are responsible for your conduct and authorised account activity; these Terms do not make you automatically liable for every unauthorised act irrespective of applicable law or fault."
     ]
   },
