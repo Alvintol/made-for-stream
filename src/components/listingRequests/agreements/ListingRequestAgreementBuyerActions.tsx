@@ -30,12 +30,14 @@ const classes = {
   title: "font-display text-base font-extrabold tracking-tight",
   subtitle: "font-display text-sm font-extrabold tracking-tight",
   consent: "space-y-2",
+  why: "cursor-pointer font-semibold underline underline-offset-2",
   text: "text-sm text-zinc-600",
-  checklist: "space-y-3",
-  checkboxRow:
-    "flex gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3",
-  checkbox: "mt-1 h-4 w-4 rounded border-zinc-300",
-  checkboxLabel: "text-sm font-semibold text-zinc-800",
+  // One list with hairlines, like the agreement summary: a card per item made
+  // a ten-item checklist very tall.
+  checklist: "divide-y divide-[var(--hairline)] rounded-xl border border-[var(--hairline)]",
+  checkboxRow: "flex gap-3 px-3 py-2",
+  checkbox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300",
+  checkboxLabel: "text-sm text-zinc-800",
   row: "flex flex-wrap items-center gap-3",
   errorBox:
     "notice noticeError",
@@ -108,9 +110,7 @@ const ListingRequestAgreementBuyerActions = ({
         <div className={classes.header}>
           <h2 className={classes.title}>Review and confirm agreement</h2>
           <p className={classes.text}>
-            Check each item to confirm you have read and understood the project
-            scope, payment schedule, timeline, update expectations, and change
-            order rules before accepting.
+            Tick each item to confirm you have read it, then accept.
           </p>
         </div>
 
@@ -151,7 +151,6 @@ const ListingRequestAgreementBuyerActions = ({
             above (Refund Policy section 1, launch-scope.md section 1.5). */}
         <div className={classes.consent}>
           <h3 className={classes.subtitle}>{earlyServiceRequestHeading}</h3>
-          <p className={classes.text}>{earlyServiceRequestExplanation}</p>
           <PolicyAcceptanceCheckbox
             id="agreement-early-service-request"
             checked={earlyServiceRequested}
@@ -160,6 +159,10 @@ const ListingRequestAgreementBuyerActions = ({
           >
             {earlyServiceRequestLabel}
           </PolicyAcceptanceCheckbox>
+          <details className={classes.text}>
+            <summary className={classes.why}>Why am I asked this?</summary>
+            <p className="mt-1">{earlyServiceRequestExplanation}</p>
+          </details>
         </div>
 
         <div className={classes.row}>

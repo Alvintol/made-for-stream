@@ -2252,12 +2252,27 @@ const recordTaxEvidence = async (paymentId, evidenceType, country, source) => {
   }
 };
 
-const applyCheckoutTax = async ({ stripeClient, payment, req }) => {
+const applyCheckoutTax = async ({ stripeClient, payment, req, userId }) => {
   if (TAX_CONFIG.configError) {
     throw new Error(TAX_CONFIG.configError);
   }
 
-  const billingCountry = normalizeTaxCountry(req.body?.billingCountry);
+  // The country saved in the buyer's settings is their billing country. What
+  // the checkout form sends counts only while nothing is saved, so a buyer
+  // cannot pick a different country for one payment.
+  const { data: preference, error: preferenceError } = await supabaseAdmin
+    .from("user_display_preferences")
+    .select("country_code")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (preferenceError) {
+    throw new Error("Your billing country could not be read. Please try again.");
+  }
+
+  const savedCountry = normalizeTaxCountry(preference?.country_code);
+  const billingCountry =
+    savedCountry || normalizeTaxCountry(req.body?.billingCountry);
 
   if (!billingCountry) {
     throw new Error("Choose your billing country before paying.");
@@ -2272,7 +2287,7 @@ const applyCheckoutTax = async ({ stripeClient, payment, req }) => {
     payment.id,
     "billing_address_declared",
     billingCountry,
-    "buyer_checkout_form",
+    savedCountry ? "account_settings" : "buyer_checkout_form",
   );
 
   const ipCountry = getIpCountryFromRequest(req, TAX_CONFIG.ipCountryHeader);
@@ -2938,7 +2953,7 @@ app.post("/api/stripe/checkout/session", async (req, res) => {
     // clears stale tax) and before any session is reused or created, so the
     // stored total -- which the webhook checks against amount_total -- is
     // always the one Stripe charges.
-    payment = await applyCheckoutTax({ stripeClient, payment, req });
+    payment = await applyCheckoutTax({ stripeClient, payment, req, userId });
 
     const metadata = getStripePaymentMetadata(payment);
 

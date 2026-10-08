@@ -175,8 +175,11 @@ export const getMinimumCreatorUpdateRule = (
     };
 };
 
-export const allowsMilestonePayments = (estimatedWorkDays: number): boolean =>
-  estimatedWorkDays > 14;
+// A website rule only: the database accepts a milestone plan of any length.
+export const MILESTONE_MINIMUM_WORK_DAYS = 7;
+
+export const allowsMilestonePayments =(estimatedWorkDays: number): boolean =>
+  estimatedWorkDays >= MILESTONE_MINIMUM_WORK_DAYS;
 
 export const canSendListingRequestAgreement = (
   status: ListingRequestAgreementStatus

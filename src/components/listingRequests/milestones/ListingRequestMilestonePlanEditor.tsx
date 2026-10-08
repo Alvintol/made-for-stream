@@ -98,18 +98,21 @@ const ListingRequestMilestonePlanEditor = ({
   estimatedWorkDays,
   currency = "cad",
   validationErrors = [],
-  disabled = false,
+  disabled: disabledByParent = false,
   onChange,
 }: ListingRequestMilestonePlanEditorProps) => {
+  const isEligible =
+    allowsMilestonePayments(estimatedWorkDays);
+
+  // The plan is shown but locked until the project is long enough.
+  const disabled = disabledByParent || !isEligible;
+
   const milestoneTotal =
     getListingRequestMilestonePlanTotal(milestones);
 
   const difference = roundCurrencyAmount(
     agreementTotal - milestoneTotal
   );
-
-  const isEligible =
-    allowsMilestonePayments(estimatedWorkDays);
 
   const updateMilestone = (
     index: number,
@@ -200,13 +203,13 @@ const ListingRequestMilestonePlanEditor = ({
       {isEligible ? (
         <div className={classes.eligibleNotice}>
           This project is eligible for milestone payments
-          because it is estimated to take more than 14
-          days.
+          because it is estimated to take at least 7 days.
         </div>
       ) : (
         <div className={classes.notice}>
-          Milestone payments require an estimated project
-          length greater than 14 days.
+          Milestone payments need an estimated project length
+          of at least 7 days. Raise the estimated work days to
+          edit this plan.
         </div>
       )}
 

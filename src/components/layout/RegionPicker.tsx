@@ -20,7 +20,8 @@ const GlobeIcon = () => (
 );
 
 // The language and currency button in the top bar, and the dialog it opens.
-// The dialog holds the same form as Settings → Country and currency.
+// The dialog holds the Settings → Country and currency form without the
+// country: that is the billing country, and is set in Settings only.
 // `compact` drops the text label when the top bar is short of room.
 const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -37,8 +38,8 @@ const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
         type="button"
         className={classes.button}
         aria-haspopup="dialog"
-        aria-label={`Language, country and currency (${label})`}
-        title="Language, country and currency"
+        aria-label={`Language and currency (${label})`}
+        title="Language and currency"
         onClick={() => dialogRef.current?.showModal()}
       >
         <GlobeIcon />
@@ -57,7 +58,7 @@ const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
         <div className={classes.body}>
           <div className={classes.header}>
             <h2 id="region-dialog-title" className={classes.title}>
-              Language, country and currency
+              Language and currency
             </h2>
 
             <button
@@ -70,7 +71,7 @@ const RegionPicker = ({ compact = false }: { compact?: boolean }) => {
             </button>
           </div>
 
-          <DisplayCurrencySettings />
+          <DisplayCurrencySettings showCountry={false} />
         </div>
       </dialog>
     </>

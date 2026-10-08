@@ -61,10 +61,15 @@ receipts show the real currency only.
 
 **Privacy.** Country and display currency live in `user_display_preferences`,
 readable and writable only by their owner. They are deliberately not on
-`profiles`, which anyone can read.
+`profiles`, which anyone can read. Since 2026-10-08 the country is also the
+buyer's **billing country** at checkout: the API reads it to work out tax
+([`tax.md`](tax.md), `TAX-001`). The display currency still changes nothing
+anyone is charged.
 
-**Where it is set.** The globe button in the top bar opens a dialog with
-the same form as Settings → Country and currency. A signed-in person's choice
+**Where it is set.** Settings → Country and currency has the country and
+the currency. The globe button in the top bar opens a dialog with language
+and currency only (2026-10-08): the country is set in Settings, or at a
+buyer's first checkout if none is saved. A signed-in person's choice
 is saved to `user_display_preferences`. A signed-out visitor's choice is kept
 in memory only and is gone when the page is reloaded; the "Saved" message
 says so. Nothing is written to browser storage.
@@ -209,9 +214,12 @@ messages mean a country that is not two capital letters or a currency not in
   translation system and nothing is saved. Adding a language means storing
   the choice, setting the page language and translating the site's text.
 
-- **The country list is the 35 payout countries.** Other countries choose
-  "Another country" and pick a currency by hand. Brazil has a supported
-  currency (BRL) but is not in the list.
+- **The country list is every country** (the checkout billing list, since
+  2026-10-08). A country whose currency is not supported gets no default
+  display currency; the person picks one by hand.
+- **The Privacy Policy still says the billing country is "the billing country
+  you choose at checkout".** It is now the country in settings. The wording
+  needs updating with the next policy revision.
 - **A buyer's optional budget on a request has no currency of its own.** It
   is entered against the listing's currency, but the request details still
   print it with a "$".

@@ -53,7 +53,8 @@ const classes = {
   smallTextarea: "formControl min-h-[84px]",
   money: "relative",
   moneySign: "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500",
-  moneyInput: "formControl pl-7",
+  // Room for a three-letter currency code, not a single "$".
+  moneyInput: "formControl pl-14",
   hint: "formHint",
   error: "formError",
   footer:
