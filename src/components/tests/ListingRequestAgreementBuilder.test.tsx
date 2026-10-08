@@ -68,6 +68,32 @@ describe("ListingRequestAgreementBuilder", () => {
     expect(screen.queryByText("Create project agreement")).not.toBeInTheDocument();
   });
 
+  it("shows an example in every empty field, without filling anything in", () => {
+    render(
+      <ListingRequestAgreementBuilder
+        request={createRequest()}
+        onCreateAgreement={vi.fn()}
+      />
+    );
+
+    ["Scope summary", "Included deliverables", "Required checklist items", "Total amount", "Deposit amount"].forEach(
+      (label) => {
+        const field = screen.getByLabelText(label) as HTMLInputElement;
+
+        expect(field.placeholder).toMatch(/^e\.g\./);
+        // An example is a hint only: it is never sent as the creator's words.
+        expect(field.value).toBe("");
+      }
+    );
+
+    fireEvent.change(screen.getByLabelText("Payment structure"), {
+      target: { value: "milestone_payments" },
+    });
+
+    expect((screen.getByLabelText("Milestone 1 title") as HTMLInputElement).placeholder).toMatch(/^e\.g\./);
+    expect((screen.getByLabelText("Milestone 1 description") as HTMLTextAreaElement).placeholder).toMatch(/^e\.g\./);
+  });
+
   it("creates and sends an agreement with valid defaults", () => {
     const onCreateAgreement = vi.fn();
 

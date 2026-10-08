@@ -500,6 +500,7 @@ const ListingRequestAgreementBuilder = ({
           <textarea
             className={classes.textarea}
             id="agreement-scope-summary"
+            placeholder="e.g. Six custom emotes of the buyer's fox character in my chibi style, drawn from the reference sheet they sent. Flat colour, no animation."
             value={form.scopeSummary}
             onChange={(event) =>
               updateField("scopeSummary", event.currentTarget.value)
@@ -523,6 +524,7 @@ const ListingRequestAgreementBuilder = ({
             <textarea
               className={classes.textarea}
               id="agreement-included-deliverables"
+              placeholder={"e.g.\n6 emotes as PNG files (112, 56 and 28 px)\n1 preview sheet\nLayered source file"}
               value={form.includedDeliverablesText}
               onChange={(event) =>
                 updateField(
@@ -546,6 +548,7 @@ const ListingRequestAgreementBuilder = ({
             <textarea
               className={classes.textarea}
               id="agreement-checklist"
+              placeholder={"e.g.\nBuyer sends character references before work starts\nSketches are approved before colouring\nUse on Twitch, YouTube and Discord is included"}
               value={form.checklistText}
               onChange={(event) =>
                 updateField("checklistText", event.currentTarget.value)
@@ -568,6 +571,7 @@ const ListingRequestAgreementBuilder = ({
             <input
               className={classes.input}
               id="agreement-total-amount"
+              placeholder="e.g. 100.00"
               min="0"
               step="0.01"
               type="number"
@@ -637,6 +641,7 @@ const ListingRequestAgreementBuilder = ({
               <input
                 className={classes.input}
                 id="agreement-deposit-amount"
+                placeholder="e.g. 30.00"
                 min="0"
                 step="0.01"
                 type="number"
@@ -731,6 +736,7 @@ const ListingRequestAgreementBuilder = ({
           <textarea
             className={classes.textarea}
             id="agreement-additional-cost"
+            placeholder="e.g. Extra emotes are 15.00 each. Any change to scope, price or timeline needs an accepted change order before I continue."
             value={form.additionalCostPolicy}
             onChange={(event) =>
               updateField("additionalCostPolicy", event.currentTarget.value)
@@ -750,6 +756,7 @@ const ListingRequestAgreementBuilder = ({
           <textarea
             className={classes.textarea}
             id="agreement-revision-policy"
+            placeholder="e.g. Two rounds of changes are included at the sketch stage. Changes after colouring, or further rounds, are 10.00 each through a change order."
             value={form.revisionPolicy}
             onChange={(event) =>
               updateField("revisionPolicy", event.currentTarget.value)
