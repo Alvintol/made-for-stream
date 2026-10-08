@@ -207,6 +207,30 @@ const applicationNote = (label, note) =>
 const paragraph = (html) =>
   `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3f3f46;">${html}</p>`;
 
+// The general "something happened, here is what to do" email used by the
+// commission notifications (api/notificationEmails.js). `lines` are our own
+// sentences; `note` is text a person wrote, shown quoted. Everything is
+// escaped here, so callers pass plain text.
+export const renderActionEmail = ({
+  subject,
+  title,
+  lines = [],
+  noteLabel = "",
+  note = "",
+  ctaUrl,
+  ctaLabel,
+}) => ({
+  subject,
+  text: [...lines, note ? `${noteLabel}: ${note}` : "", ctaUrl].filter(Boolean).join("\n\n"),
+  html: wrap(
+    escapeHtml(title),
+    lines.map((line) => paragraph(escapeHtml(line))).join("") +
+      applicationNote(escapeHtml(noteLabel), note),
+    ctaUrl,
+    escapeHtml(ctaLabel),
+  ),
+});
+
 export const renderCreatorApplicationDecisionEmail = ({ status, note = "" }) => {
   const applicationUrl = `${SITE_URL}/apply/creator`;
   const cleanNote = String(note || "").trim();

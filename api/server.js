@@ -20,6 +20,10 @@ import {
 } from "./supportedCurrencies.js";
 import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
+import {
+  getListingRequestUrl as buildListingRequestUrl,
+  renderNotificationEmail,
+} from "./notificationEmails.js";
 import { getExchangeRates } from "./exchangeRates.js";
 import {
   buildCheckoutLineItems,
@@ -1136,6 +1140,9 @@ const markListingRequestPaymentPaidFromCheckoutSession =
     // retry path and does not resend). Never awaited into the response --
     // a slow or failing send must not delay confirming the payment.
     sendPaymentReceiptEmailBestEffort({ payment });
+    // The creator's "the buyer paid" email was queued by the database when
+    // the payment turned paid. Not awaited, for the same reason.
+    void drainListingRequestNotifications();
 
     await applyPaidListingRequestPaymentWorkflow({
       paymentId: payment.id,
@@ -1275,7 +1282,98 @@ const backfillChargeDetailsForPayment = async ({
 // sendTransactionalEmail; getListingRequestRecipientEmail is the one piece
 // here that can throw (no email on file), so it's caught at each call site.
 const getListingRequestUrl = (listingRequestId, viewer) =>
-  `${APP_ORIGIN}/${viewer}/requests/${listingRequestId}`;
+  buildListingRequestUrl(APP_ORIGIN, listingRequestId, viewer);
+
+// Sends the commission notifications waiting in
+// public.listing_request_notifications (20261007_148). The database wrote
+// them; this only turns each row into an email and records what happened.
+// Safe to run from several places at once: claim_listing_request_notifications
+// hands each row to one caller only. Never throws.
+const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
+  const outcome = { sent: 0, failed: 0 };
+
+  try {
+    if (!supabaseAdmin) {
+      throw new Error("Supabase admin not configured");
+    }
+
+    const { data: rows, error } = await supabaseAdmin.rpc(
+      "claim_listing_request_notifications",
+      { p_limit: limit },
+    );
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    for (const row of rows || []) {
+      let result;
+
+      try {
+        const { data: request, error: requestError } = await supabaseAdmin
+          .from("listing_requests")
+          .select("id, request_title, buyer_user_id")
+          .eq("id", row.listing_request_id)
+          .maybeSingle();
+
+        if (requestError || !request) {
+          throw new Error(requestError?.message || "The commission no longer exists.");
+        }
+
+        const rendered = renderNotificationEmail({
+          kind: row.kind,
+          requestTitle: request.request_title,
+          payload: row.payload,
+          requestUrl: getListingRequestUrl(
+            request.id,
+            request.buyer_user_id === row.recipient_user_id ? "buyer" : "creator",
+          ),
+        });
+
+        if (!rendered) {
+          throw new Error(`NOTIF-002: no email template for kind "${row.kind}".`);
+        }
+
+        result = await sendTransactionalEmail(supabaseAdmin, {
+          to: await getSupabaseUserEmail(row.recipient_user_id),
+          ...rendered,
+        });
+      } catch (err) {
+        result = {
+          status: "failed",
+          providerMessageId: null,
+          failedReason: String(err?.message || err),
+        };
+      }
+
+      outcome[result.status === "sent" ? "sent" : "failed"] += 1;
+
+      if (result.status !== "sent") {
+        console.error(
+          `NOTIF-003: ${row.kind} for commission ${row.listing_request_id} was not sent: ${result.failedReason}`,
+        );
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from("listing_request_notifications")
+        .update({
+          email_status: result.status === "sent" ? "sent" : "failed",
+          email_provider_message_id: result.providerMessageId,
+          email_failed_reason: result.failedReason,
+        })
+        .eq("id", row.id);
+
+      if (updateError) {
+        console.error(`NOTIF-001: could not record a send: ${updateError.message}`);
+      }
+    }
+  } catch (err) {
+    console.error(`NOTIF-001: notification run failed: ${String(err?.message || err)}`);
+    outcome.error = String(err?.message || err);
+  }
+
+  return outcome;
+};
 
 // Sprint 6 checklist: "Templates: payment receipt, ... The last is not
 // optional once the payout hold ships (§6.3)." A receipt only makes sense
@@ -3483,6 +3581,22 @@ app.post(
 // email, so the frontend calls this immediately afterward with the new
 // notice's id, the same "write the DB state via RPC, then a best-effort
 // Express follow-up" pattern as the cancellation drain route above.
+// The website calls this after any action, so the other person's email goes
+// out within seconds instead of waiting for the hourly run. It sends
+// whatever is waiting, for anyone: nothing here depends on who is calling,
+// beyond being signed in.
+app.post("/api/notifications/drain", async (req, res) => {
+  try {
+    await requireSupabaseUserId(req);
+  } catch {
+    return res.status(401).json({ error: "Sign in to continue." });
+  }
+
+  const outcome = await drainListingRequestNotifications({ limit: 10 });
+
+  return res.status(outcome.error ? 500 : 200).json(outcome);
+});
+
 app.post("/api/notices/:noticeId/send-email", async (req, res) => {
   try {
     const userId = await requireSupabaseUserId(req);
@@ -4168,6 +4282,19 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       throw new Error("Supabase admin not configured");
     }
 
+    // Commission emails ride on this hourly run: add reminders for things
+    // left waiting, then send anything not yet sent. Its failures are
+    // logged (NOTIF-001) and never stop the ops alerts below.
+    const { error: remindersError } = await supabaseAdmin.rpc(
+      "enqueue_listing_request_reminders",
+    );
+
+    if (remindersError) {
+      console.error(`NOTIF-001: reminders could not be queued: ${remindersError.message}`);
+    }
+
+    const notifications = await drainListingRequestNotifications({ limit: 100 });
+
     const { data: rows, error: alertsError } =
       await supabaseAdmin.rpc("list_ops_alerts");
 
@@ -4245,6 +4372,7 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       emailed: plan.send ? plan.rows.length : 0,
       resolved: plan.deletes.length,
       emailStatus,
+      notifications,
     });
   } catch (err) {
     const message = String(err?.message || err);

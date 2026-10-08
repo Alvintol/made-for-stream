@@ -133,6 +133,7 @@ how it fails.
 | Messaging | [`messaging/conversations.md`](messaging/conversations.md) |
 | Messaging | [`messaging/moderation.md`](messaging/moderation.md) |
 | Messaging | [`messaging/transactional-email.md`](messaging/transactional-email.md) |
+| Messaging | [`messaging/commission-notifications.md`](messaging/commission-notifications.md) |
 | Payments | [`payments/checkout.md`](payments/checkout.md) |
 | Payments | [`payments/webhooks.md`](payments/webhooks.md) |
 | Payments | [`payments/connect-onboarding.md`](payments/connect-onboarding.md) |

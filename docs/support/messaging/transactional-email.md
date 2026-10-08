@@ -87,6 +87,13 @@ A dark version follows the reader's system setting through
 Gmail ignores it and darkens the light version itself, so a report of "the
 email looks different in Gmail's dark mode" is expected, not a bug.
 
+**Commission step emails** (request received, accepted, agreement, payments,
+milestones, reminders, cancelled, completed) are a separate, larger set since
+`20261007_148`, with their own queue and playbook:
+[`commission-notifications.md`](commission-notifications.md). They use the
+same sender (`sendTransactionalEmail`), so `EMAIL-001`, `EMAIL-002` and
+`EMAIL-004` below apply to them too.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |

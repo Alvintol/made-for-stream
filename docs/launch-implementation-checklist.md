@@ -1466,6 +1466,21 @@ in [`environments.md`](environments.md).
       starting payment in the right currency. `AGR-008`, `AGR-005`, `AGR-007`
       and `CON-007` each refused with their documented message. Still not
       done: the same in a browser, with a real Stripe checkout.)*
+- [ ] **Commission emails for every step (2026-10-07).** Until now only
+      receipts, non-response notices and payout emails were sent: a creator
+      was never told a request had arrived, and a buyer was never told it
+      was accepted, that an agreement was waiting or that a payment was due.
+      Migration `20261007_148` adds a queue filled by database triggers (31
+      kinds of email, six of them 3-day and 7-day reminders); the API sends them
+      after each action and hourly. **Defect found on the way: every buyer
+      link in receipt and notice emails opened a page that does not exist**
+      (`/buyer/requests/...`); fixed (`NOTIF-004`). **Dry-run on the live
+      database, rolled back:** a request, acceptance, agreement, buyer
+      acceptance, payment due and cancellation each queued the right email
+      for the right person, once. **Not tested:** a real send of the new
+      emails, the decline email, and the reminders' timing. **To do (user):**
+      apply `148`, deploy the API, merge. Playbook:
+      `messaging/commission-notifications.md`.
 - [ ] **Rehearsal finding, 2026-10-07: half of every payment would have gone
       to Made for Stream (`REC-005`).** The function that works out how much
       of a payment to hold back for a creator's recovery balance returned
