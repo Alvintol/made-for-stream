@@ -125,6 +125,26 @@ commission request" and "Decline commission request", and the lists are
 "Commissions". This runbook, the web addresses (`/requests/...`), the
 database and its error messages, and the policies still say "request".
 
+**Emails (2026-10-07, needs migration `20261007_148` and an API deploy).**
+Every step below now emails the other person within a few seconds. All test
+accounts deliver to inboxes you can read, so check as you go: the email
+arrives, it is addressed to the right side, and its button opens the right
+page while signed in as that account. The full list is in
+`docs/support/messaging/commission-notifications.md`. To see what was queued
+and sent for a request:
+
+```sql
+select n.kind, u.email, n.email_status, n.email_failed_reason
+from public.listing_request_notifications n
+join auth.users u on u.id = n.recipient_user_id
+where n.listing_request_id = '<request>' order by n.created_at;
+```
+
+- [ ] Each step's email arrived for the CAD run, and every button opened the
+      right page. (Buyer links were broken before this change: `NOTIF-004`.)
+- [ ] The 3-day and 7-day reminders cannot be seen in a one-day rehearsal.
+      They were checked by a rolled-back dry run only.
+
 Record the request id per currency: CAD `____` USD `____` EUR `____`
 
 - [ ] Buyer submits a request. Creator accepts it.
