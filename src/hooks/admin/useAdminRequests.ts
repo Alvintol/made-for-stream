@@ -29,6 +29,7 @@ export type AdminRequestRow = {
   request_details: string | null;
   requested_timeline: string | null;
   budget_amount: number | null;
+  budget_amount_max: number | null;
   reference_links: string[];
   archived_at: string | null;
   archived_by_user_id: string | null;
@@ -196,6 +197,7 @@ const fetchAdminRequests = async (
           request_details,
           requested_timeline,
           budget_amount,
+          budget_amount_max,
           reference_links,    
           archived_at,
           archived_by_user_id,

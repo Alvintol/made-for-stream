@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import {
   convertAmount,
-  formatCurrencyAmount,
+  formatCurrencyAmountRange,
   formatListingPrice,
 } from "../../lib/money/displayCurrency";
 import CommissionEstimateCard from "../../components/listingRequests/core/CommissionEstimateCard";
@@ -18,6 +18,7 @@ import {
 import { buildListingRequestSnapshot } from "../../lib/listings/listingRequestSnapshot";
 import { useAuth } from "../../providers/AuthProvider";
 import {
+  parseListingRequestBudget,
   parseListingRequestReferenceLinks,
   validateListingRequestForm,
   type ListingRequestFormErrors,
@@ -187,13 +188,14 @@ const RequestListing = () => {
   const { displayCurrency, rates } = useDisplayCurrency();
   const feeRate = useBuyerServiceFeeRate();
   const listingCurrency = listing?.currency || "cad";
-  const budgetNumber = Number(budgetText.trim());
-  const hasBudget = budgetText.trim() !== "" && Number.isFinite(budgetNumber) && budgetNumber > 0;
-  const estimateAmount = hasBudget ? budgetNumber : (listing?.price_min ?? 0);
-  const budgetInDisplayCurrency =
-    hasBudget && displayCurrency
-      ? convertAmount(budgetNumber, listingCurrency, displayCurrency, rates)
-      : null;
+  const typedBudget = parseListingRequestBudget(budgetText);
+  const budget = typedBudget && typedBudget !== "invalid" && typedBudget.min > 0 ? typedBudget : null;
+  const hasBudget = budget !== null;
+  const estimateAmount = budget ? budget.min : (listing?.price_min ?? 0);
+  const inDisplayCurrency = (amount: number | null | undefined) =>
+    amount && displayCurrency ? convertAmount(amount, listingCurrency, displayCurrency, rates) : null;
+  const budgetLowInDisplayCurrency = inDisplayCurrency(budget?.min);
+  const budgetHighInDisplayCurrency = inDisplayCurrency(budget?.max);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -225,6 +227,7 @@ const RequestListing = () => {
         requestDetails: result.values.requestDetails,
         requestedTimeline: result.values.requestedTimeline,
         budgetAmount: result.values.budgetAmount,
+        budgetAmountMax: result.values.budgetAmountMax,
         referenceLinks: result.values.referenceLinks,
         listingSnapshot: buildListingRequestSnapshot(listing),
       });
@@ -346,6 +349,14 @@ const RequestListing = () => {
 
       <div className={classes.layout}>
         <aside className={classes.aside} aria-label="Listing summary">
+          <CommissionEstimateCard
+            amount={estimateAmount}
+            amountMax={budget?.max ?? null}
+            currency={listingCurrency}
+            amountLabel={hasBudget ? "Your budget" : "Listing price"}
+            feeRate={feeRate}
+          />
+
           <div className={classes.listingCard}>
           {listing.preview_url && (
             <img className={`${classes.preview} hidden lg:block`} src={listing.preview_url} alt="" />
@@ -396,13 +407,6 @@ const RequestListing = () => {
             </div>
           </div>
           </div>
-
-          <CommissionEstimateCard
-            amount={estimateAmount}
-            currency={listingCurrency}
-            amountLabel={hasBudget ? "Your budget" : "Listing price"}
-            feeRate={feeRate}
-          />
         </aside>
 
         <form className={classes.form} noValidate onSubmit={(event) => void handleSubmit(event)}>
@@ -501,8 +505,8 @@ const RequestListing = () => {
                     className={classes.moneyInput}
                     value={budgetText}
                     onChange={(event) => setBudgetText(event.target.value)}
-                    placeholder={`e.g. ${listing.price_min}`}
-                    inputMode="decimal"
+                    placeholder={`e.g. ${listing.price_min} or ${listing.price_min}-${Math.round(listing.price_min * 1.5)}`}
+                    maxLength={40}
                     {...fieldProps("budgetAmount", "budget-amount-error")}
                   />
                 </div>
@@ -512,9 +516,17 @@ const RequestListing = () => {
                   </div>
                 )}
                 <div className={classes.hint}>
-                  {budgetInDisplayCurrency !== null && displayCurrency && (
+                  An amount or a range.{" "}
+                  {budgetLowInDisplayCurrency !== null && displayCurrency && (
                     <>
-                      ≈ {formatCurrencyAmount(Math.round(budgetInDisplayCurrency), displayCurrency)}{" "}
+                      ≈{" "}
+                      {formatCurrencyAmountRange(
+                        Math.round(budgetLowInDisplayCurrency),
+                        budgetHighInDisplayCurrency === null
+                          ? null
+                          : Math.round(budgetHighInDisplayCurrency),
+                        displayCurrency,
+                      )}{" "}
                       in your currency.{" "}
                     </>
                   )}

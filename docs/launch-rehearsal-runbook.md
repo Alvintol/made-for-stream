@@ -209,6 +209,11 @@ where n.listing_request_id = '<request>' order by n.created_at;
 
 Record the request id per currency: CAD `____` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `____` EUR `____`
 
+- [ ] *(Needs migration `20261008_151` applied before the website is merged.)*
+      The budget box takes an amount or a range: type `100 to 150` and the
+      "Estimated invoice" card (now above the listing summary) shows a range on
+      every line; type `around 100` and the form refuses it with a message
+      saying what it accepts.
 - [ ] Buyer submits a request. On the form: the budget box shows the
       creator's currency, the note under it states the 5% buyer service
       fee, and the "Estimated invoice" card beside the form follows the

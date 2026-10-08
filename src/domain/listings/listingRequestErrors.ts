@@ -55,6 +55,10 @@ export const getCreateListingRequestErrorMessage = (
     return "Budget must be a valid amount between 0 and 999999.99.";
   }
 
+  if (joinedText.includes("listing_requests_budget_amount_max_check")) {
+    return "The top of a budget range must be more than the bottom, and no more than 999999.99.";
+  }
+
   if (joinedText.includes("listing_requests_reference_links_check")) {
     return "Add up to 5 reference links.";
   }

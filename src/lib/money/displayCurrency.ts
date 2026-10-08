@@ -49,6 +49,21 @@ export const formatCurrencyAmount = (amount: number, currency?: string | null): 
   }
 };
 
+// "$100 CAD", or "$100–$150 CAD" for a range: one code for the pair.
+export const formatCurrencyAmountRange = (
+  low: number,
+  high: number | null | undefined,
+  currency?: string | null,
+): string => {
+  const highText = formatCurrencyAmount(high ?? low, currency);
+
+  if (high === null || high === undefined || high === low) return highText;
+
+  const code = normalise(currency).toUpperCase();
+
+  return `${formatCurrencyAmount(low, currency).replace(` ${code}`, "")}–${highText}`;
+};
+
 const priceRange = (listing: ListingPriceInput): { min: number; max: number | null } => ({
   min: listing.price_min,
   max:

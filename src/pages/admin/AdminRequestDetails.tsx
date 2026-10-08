@@ -293,6 +293,8 @@ const AdminRequestDetails = () => {
           fallbackMessage={request.message}
           requestedTimeline={request.requested_timeline}
           budgetAmount={request.budget_amount}
+          budgetAmountMax={request.budget_amount_max}
+          currency={request.listing_snapshot?.currency}
           referenceLinks={request.reference_links}
         />
       ),

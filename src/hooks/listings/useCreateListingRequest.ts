@@ -13,6 +13,8 @@ export type CreateListingRequestInput = {
   requestDetails: string;
   requestedTimeline?: string;
   budgetAmount?: number | null;
+  // The top of a budget range (20261008_151); null for a single figure.
+  budgetAmountMax?: number | null;
   referenceLinks?: string[];
   listingSnapshot: ListingRequestSnapshot;
 };
@@ -58,6 +60,7 @@ export const useCreateListingRequest = () => {
           request_details: requestDetails,
           requested_timeline: cleanOptionalText(input.requestedTimeline),
           budget_amount: input.budgetAmount ?? null,
+          budget_amount_max: input.budgetAmountMax ?? null,
           reference_links: cleanReferenceLinks(input.referenceLinks),
 
           // Frozen listing state for disputes/admin review.
