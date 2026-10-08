@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { nudgeNotificationEmails } from "../lib/notifications/nudgeNotificationEmails";
+import { startPresenceReporting } from "../lib/presence/presence";
 import AuthProvider from "./AuthProvider";
 import CookiePreferencesProvider from "./CookiePreferencesProvider";
 import ThemeProvider from "./ThemeProvider";
@@ -22,6 +23,10 @@ const AppProviders = (props: AppProvidersProps) => {
         },
       })
   );
+
+  // Tells the database this person is here, so chat emails are only sent
+  // to people who are away (lib/presence/presence.ts).
+  useEffect(() => startPresenceReporting(), []);
 
   return (
     <ThemeProvider>

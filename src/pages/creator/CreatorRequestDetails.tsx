@@ -80,6 +80,7 @@ import { useSubmitListingRequestCancellationStatement } from '../../hooks/creato
 import ListingRequestCancelBeforePaymentAction from '../../components/listingRequests/core/ListingRequestCancelBeforePaymentAction';
 import ListingRequestCancellationProposalPanel from '../../components/listingRequests/core/ListingRequestCancellationProposalPanel';
 import NoticeAndClosurePanel from '../../components/listingRequests/core/NoticeAndClosurePanel';
+import CancellationWarningPanel from '../../components/listingRequests/core/CancellationWarningPanel';
 
 const classes = {
   page: "space-y-6",
@@ -578,6 +579,14 @@ const CreatorRequestDetails = () => {
             <NoticeAndClosurePanel
               requestId={request.id}
               currentUserId={request.creator_user_id}
+            />
+          )}
+
+          {request.status === "accepted" && (
+            <CancellationWarningPanel
+              requestId={request.id}
+              currentUserId={request.creator_user_id}
+              currentUserRole="creator"
             />
           )}
 

@@ -22,6 +22,7 @@ import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
 import {
   getListingRequestUrl as buildListingRequestUrl,
+  getNotificationUrl,
   renderNotificationEmail,
 } from "./notificationEmails.js";
 import { getExchangeRates } from "./exchangeRates.js";
@@ -1310,24 +1311,28 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
       let result;
 
       try {
-        const { data: request, error: requestError } = await supabaseAdmin
-          .from("listing_requests")
-          .select("id, request_title, buyer_user_id")
-          .eq("id", row.listing_request_id)
-          .maybeSingle();
+        // A chat email about an inquiry has no commission behind it.
+        let request = null;
 
-        if (requestError || !request) {
-          throw new Error(requestError?.message || "The commission no longer exists.");
+        if (row.listing_request_id) {
+          const { data, error: requestError } = await supabaseAdmin
+            .from("listing_requests")
+            .select("id, request_title, buyer_user_id")
+            .eq("id", row.listing_request_id)
+            .maybeSingle();
+
+          if (requestError || !data) {
+            throw new Error(requestError?.message || "The commission no longer exists.");
+          }
+
+          request = data;
         }
 
         const rendered = renderNotificationEmail({
           kind: row.kind,
-          requestTitle: request.request_title,
+          requestTitle: request?.request_title,
           payload: row.payload,
-          requestUrl: getListingRequestUrl(
-            request.id,
-            request.buyer_user_id === row.recipient_user_id ? "buyer" : "creator",
-          ),
+          requestUrl: getNotificationUrl(APP_ORIGIN, row, request?.buyer_user_id ?? null),
         });
 
         if (!rendered) {
@@ -1350,7 +1355,7 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
 
       if (result.status !== "sent") {
         console.error(
-          `NOTIF-003: ${row.kind} for commission ${row.listing_request_id} was not sent: ${result.failedReason}`,
+          `NOTIF-003: ${row.kind} for commission ${row.listing_request_id || row.conversation_id} was not sent: ${result.failedReason}`,
         );
       }
 
@@ -3425,6 +3430,118 @@ app.post("/api/stripe/refunds", async (req, res) => {
 // the Stripe-side half of a DB-side cascade. Callable by either participant
 // on the request -- the amounts are already locked in by the accepted
 // statement, so there is no discretion left to gate behind an admin check.
+// Pays out every amount the database has flagged for refund on one
+// commission: an accepted cancellation statement, an administrative closure,
+// or an automatic cancellation after a cancellation warning. The amounts
+// were fixed by the database; nothing here decides how much. Safe to run
+// again: an item is skipped once its refund is recorded.
+const refundFlaggedAmountsForListingRequest = async (listingRequestId) => {
+  const { data: proposals, error: proposalsError } = await supabaseAdmin
+    .from("listing_request_cancellation_proposals")
+    .select("id")
+    .eq("listing_request_id", listingRequestId);
+
+  if (proposalsError) {
+    throw new Error(proposalsError.message);
+  }
+
+  const proposalIds = (proposals || []).map((proposal) => proposal.id);
+
+  const { data: flaggedItems, error: itemsError } = proposalIds.length
+    ? await supabaseAdmin
+        .from("listing_request_cancellation_proposal_items")
+        .select("payment_id, unearned_amount_cents")
+        .in("proposal_id", proposalIds)
+        .eq("is_operative", true)
+        .not("flagged_for_refund_at", "is", null)
+        .is("refunded_at", null)
+    : { data: [], error: null };
+
+  if (itemsError) {
+    throw new Error(itemsError.message);
+  }
+
+  // Sprint 6 (launch-scope.md section 7): the creator-unresponsive
+  // administrative closure branch flags unearned amounts the same way
+  // Sprint 4's cancellation acceptance does, into its own table since
+  // a closure has no cancellation proposal to hang an item off.
+  const { data: closures, error: closuresError } = await supabaseAdmin
+    .from("listing_request_closures")
+    .select("id")
+    .eq("listing_request_id", listingRequestId);
+
+  if (closuresError) {
+    throw new Error(closuresError.message);
+  }
+
+  const closureIds = (closures || []).map((closure) => closure.id);
+
+  const { data: closureFlaggedItems, error: closureItemsError } =
+    closureIds.length
+      ? await supabaseAdmin
+          .from("listing_request_closure_refund_items")
+          .select("payment_id, unearned_amount_cents")
+          .in("closure_id", closureIds)
+          .not("flagged_for_refund_at", "is", null)
+          .is("refunded_at", null)
+      : { data: [], error: null };
+
+  if (closureItemsError) {
+    throw new Error(closureItemsError.message);
+  }
+
+  const refunded = [];
+  const skipped = [];
+
+  for (const item of flaggedItems || []) {
+    if (item.unearned_amount_cents <= 0) {
+      continue;
+    }
+
+    try {
+      await issueListingRequestPaymentRefund({
+        paymentId: item.payment_id,
+        baseRefundCents: item.unearned_amount_cents,
+        reason:
+          "Cancellation accepted: unearned prepaid amount flagged for refund.",
+        initiatedVia: "cancellation_cascade",
+      });
+
+      refunded.push(item.payment_id);
+    } catch (err) {
+      skipped.push({
+        paymentId: item.payment_id,
+        reason: String(err?.message || err),
+      });
+    }
+  }
+
+  for (const item of closureFlaggedItems || []) {
+    if (item.unearned_amount_cents <= 0) {
+      continue;
+    }
+
+    try {
+      await issueListingRequestPaymentRefund({
+        paymentId: item.payment_id,
+        baseRefundCents: item.unearned_amount_cents,
+        reason:
+          "Administrative closure (creator unresponsive): unearned prepaid amount flagged for refund.",
+        initiatedVia: "closure_cascade",
+      });
+
+      refunded.push(item.payment_id);
+    } catch (err) {
+      skipped.push({
+        paymentId: item.payment_id,
+        reason: String(err?.message || err),
+      });
+    }
+  }
+
+  return { refunded, skipped };
+};
+
 app.post(
   "/api/stripe/refunds/drain-flagged-for-request",
   async (req, res) => {
@@ -3459,110 +3576,7 @@ app.post(
           .json({ error: "Listing request not found or not accessible." });
       }
 
-      const { data: proposals, error: proposalsError } = await supabaseAdmin
-        .from("listing_request_cancellation_proposals")
-        .select("id")
-        .eq("listing_request_id", listingRequestId);
-
-      if (proposalsError) {
-        throw new Error(proposalsError.message);
-      }
-
-      const proposalIds = (proposals || []).map((proposal) => proposal.id);
-
-      const { data: flaggedItems, error: itemsError } = proposalIds.length
-        ? await supabaseAdmin
-            .from("listing_request_cancellation_proposal_items")
-            .select("payment_id, unearned_amount_cents")
-            .in("proposal_id", proposalIds)
-            .eq("is_operative", true)
-            .not("flagged_for_refund_at", "is", null)
-            .is("refunded_at", null)
-        : { data: [], error: null };
-
-      if (itemsError) {
-        throw new Error(itemsError.message);
-      }
-
-      // Sprint 6 (launch-scope.md section 7): the creator-unresponsive
-      // administrative closure branch flags unearned amounts the same way
-      // Sprint 4's cancellation acceptance does, into its own table since
-      // a closure has no cancellation proposal to hang an item off.
-      const { data: closures, error: closuresError } = await supabaseAdmin
-        .from("listing_request_closures")
-        .select("id")
-        .eq("listing_request_id", listingRequestId);
-
-      if (closuresError) {
-        throw new Error(closuresError.message);
-      }
-
-      const closureIds = (closures || []).map((closure) => closure.id);
-
-      const { data: closureFlaggedItems, error: closureItemsError } =
-        closureIds.length
-          ? await supabaseAdmin
-              .from("listing_request_closure_refund_items")
-              .select("payment_id, unearned_amount_cents")
-              .in("closure_id", closureIds)
-              .not("flagged_for_refund_at", "is", null)
-              .is("refunded_at", null)
-          : { data: [], error: null };
-
-      if (closureItemsError) {
-        throw new Error(closureItemsError.message);
-      }
-
-      const refunded = [];
-      const skipped = [];
-
-      for (const item of flaggedItems || []) {
-        if (item.unearned_amount_cents <= 0) {
-          continue;
-        }
-
-        try {
-          await issueListingRequestPaymentRefund({
-            paymentId: item.payment_id,
-            baseRefundCents: item.unearned_amount_cents,
-            reason:
-              "Cancellation accepted: unearned prepaid amount flagged for refund.",
-            initiatedVia: "cancellation_cascade",
-          });
-
-          refunded.push(item.payment_id);
-        } catch (err) {
-          skipped.push({
-            paymentId: item.payment_id,
-            reason: String(err?.message || err),
-          });
-        }
-      }
-
-      for (const item of closureFlaggedItems || []) {
-        if (item.unearned_amount_cents <= 0) {
-          continue;
-        }
-
-        try {
-          await issueListingRequestPaymentRefund({
-            paymentId: item.payment_id,
-            baseRefundCents: item.unearned_amount_cents,
-            reason:
-              "Administrative closure (creator unresponsive): unearned prepaid amount flagged for refund.",
-            initiatedVia: "closure_cascade",
-          });
-
-          refunded.push(item.payment_id);
-        } catch (err) {
-          skipped.push({
-            paymentId: item.payment_id,
-            reason: String(err?.message || err),
-          });
-        }
-      }
-
-      return res.json({ refunded, skipped });
+      return res.json(await refundFlaggedAmountsForListingRequest(listingRequestId));
     } catch (err) {
       const message = String(err?.message || err);
       const status = /session|authorization/i.test(message) ? 401 : 400;
@@ -4293,6 +4307,44 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       console.error(`NOTIF-001: reminders could not be queued: ${remindersError.message}`);
     }
 
+    const { error: unreadError } = await supabaseAdmin.rpc(
+      "enqueue_unread_message_notifications",
+    );
+
+    if (unreadError) {
+      console.error(`NOTIF-001: unread messages could not be queued: ${unreadError.message}`);
+    }
+
+    // Cancellation warnings that ran out with no reply (20261007_149). The
+    // database cancels the commission and fixes any refund; this pays it.
+    const { data: autoCancelled, error: warningsError } = await supabaseAdmin.rpc(
+      "close_expired_listing_request_cancellation_warnings",
+    );
+
+    if (warningsError) {
+      console.error(`WARN-003: expired cancellation warnings were not processed: ${warningsError.message}`);
+    }
+
+    for (const cancelled of autoCancelled || []) {
+      if (cancelled.flagged_refunds > 0) {
+        try {
+          const { skipped } = await refundFlaggedAmountsForListingRequest(
+            cancelled.listing_request_id,
+          );
+
+          for (const item of skipped) {
+            console.error(
+              `WARN-004: refund not made for payment ${item.paymentId} on commission ${cancelled.listing_request_id}: ${item.reason}`,
+            );
+          }
+        } catch (err) {
+          console.error(
+            `WARN-004: refunds failed for commission ${cancelled.listing_request_id}: ${String(err?.message || err)}`,
+          );
+        }
+      }
+    }
+
     const notifications = await drainListingRequestNotifications({ limit: 100 });
 
     const { data: rows, error: alertsError } =
@@ -4373,6 +4425,7 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       resolved: plan.deletes.length,
       emailStatus,
       notifications,
+      autoCancelled: (autoCancelled || []).length,
     });
   } catch (err) {
     const message = String(err?.message || err);

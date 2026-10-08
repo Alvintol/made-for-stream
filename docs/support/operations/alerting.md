@@ -51,12 +51,15 @@ fails until all three agree.
 | Job | Route | Schedule | Healthy response |
 | --- | --- | --- | --- |
 | `mfs-connect-resync` | `POST /api/internal/ops/connect-resync` | `15 * * * *` | `200 {"selected":n,"refreshed":n,"lostReadiness":n,"failed":0}` |
-| `mfs-ops-alerts` | `POST /api/internal/ops/alerts/run` | `45 * * * *` | `200 {"open":n,"emailed":n,"resolved":n,"emailStatus":"sent"\|"not_needed","notifications":{"sent":n,"failed":n}}` |
+| `mfs-ops-alerts` | `POST /api/internal/ops/alerts/run` | `45 * * * *` | `200 {"open":n,"emailed":n,"resolved":n,"emailStatus":"sent"\|"not_needed","notifications":{"sent":n,"failed":n},"autoCancelled":n}` |
 
 Since `20261007_148` the alerts job also queues commission reminders and
 sends any commission email not yet sent
 ([`commission-notifications.md`](../messaging/commission-notifications.md),
-`NOTIF-001`). That part never changes the job's status code.
+`NOTIF-001`). Since `20261007_149` it also cancels commissions whose
+cancellation warning ran out unanswered and pays any refund that produces
+([`cancellation-warnings.md`](../requests/cancellation-warnings.md),
+`WARN-003`, `WARN-004`). Neither part changes the job's status code.
 
 Both send `Authorization: Bearer $OPS_CRON_SECRET`. Both are safe to run twice
 or to force-run by hand from the Cloud Scheduler console.

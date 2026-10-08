@@ -15,6 +15,30 @@ export const getListingRequestUrl = (appOrigin, listingRequestId, viewer) =>
     ? `${appOrigin}/creator/requests/${listingRequestId}`
     : `${appOrigin}/requests/${listingRequestId}`;
 
+// Chat emails open the conversation itself, the same page for both sides.
+const CONVERSATION_KINDS = new Set(["conversation_started", "message_received"]);
+
+// The page an email's button opens. `row` is a listing_request_notifications
+// row; `buyerUserId` is the commission's buyer, when there is a commission.
+export const getNotificationUrl = (appOrigin, row, buyerUserId) =>
+  row.conversation_id && (CONVERSATION_KINDS.has(row.kind) || !row.listing_request_id)
+    ? `${appOrigin}/messages/${row.conversation_id}`
+    : getListingRequestUrl(
+        appOrigin,
+        row.listing_request_id,
+        buyerUserId === row.recipient_user_id ? "buyer" : "creator",
+      );
+
+const deadline = (payload) =>
+  payload.expires_at
+    ? new Date(payload.expires_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : "the deadline";
+
 const formatCents = (cents, currency) =>
   typeof cents === "number" && currency
     ? `${new Intl.NumberFormat("en-US", {
@@ -280,6 +304,56 @@ export const NOTIFICATION_EMAILS = {
     ],
     cta: "Open commission",
   }),
+  conversation_started: (t, p) => ({
+    subject: `New message from ${p.sender || "someone on Made for Stream"}`,
+    title: "Someone started a conversation with you",
+    lines: [
+      `${p.sender || "Someone"} sent you a message${p.subject ? ` about "${p.subject}"` : ""}.`,
+      "Open the conversation to read it and reply.",
+    ],
+    cta: "Open conversation",
+  }),
+  message_received: (t, p) => ({
+    subject: `New message from ${p.sender || "someone on Made for Stream"}`,
+    title: "You have unread messages",
+    lines: [
+      `${p.sender || "Someone"} sent you a message${p.subject ? ` in "${p.subject}"` : ""} while you were away.`,
+      "You will not get another email about this conversation until you have read it.",
+    ],
+    cta: "Open conversation",
+  }),
+  cancellation_warning: (t, p) => ({
+    subject: `Cancellation warning: reply by ${deadline(p)} about "${t}"`,
+    title: "You have received a cancellation warning",
+    lines: [
+      `The other person on "${t}" has not heard from you and has started a ${p.response_days ? `${p.response_days}-day ` : ""}cancellation timer.`,
+      `Unless you respond by ${deadline(p)}, the commission will be cancelled automatically.`,
+      "Either of two things stops the timer at once: doing what is asked (for example paying, accepting or approving), or sending any reply in the commission's chat. You do not need to do both.",
+      "If the buyer is the one who does not respond, payments already made stay with the creator. If the creator does not respond, amounts paid for work not reached are refunded to the buyer.",
+    ],
+    noteLabel: "What they need from you",
+    note: p.reason,
+    cta: "Reply now",
+  }),
+  cancellation_warning_answered: (t) => ({
+    subject: `Your cancellation warning was answered: "${t}"`,
+    title: "The other person responded",
+    lines: [
+      `The other person on "${t}" responded to your cancellation warning, either with a message or by taking the next step. The timer has stopped and the commission continues.`,
+      "If things stall again you can send a new warning.",
+    ],
+    cta: "Open commission",
+  }),
+  cancellation_warning_reminder: (t, p) => ({
+    subject: `Last reminder: "${t}" will be cancelled on ${deadline(p)}`,
+    title: "A cancellation warning is about to run out",
+    lines: [
+      `"${t}" will be cancelled automatically on ${deadline(p)} unless you respond before then: do what is asked, or send any reply in its chat.`,
+    ],
+    noteLabel: "What they need from you",
+    note: p.reason,
+    cta: "Reply now",
+  }),
   request_cancelled: (t, p) => ({
     subject: `Cancelled: "${t}"`,
     title: "This commission was cancelled",
@@ -308,7 +382,7 @@ export const renderNotificationEmail = ({ kind, requestTitle, payload, requestUr
     return null;
   }
 
-  const content = build(requestTitle || "your commission", payload || {});
+  const content = build(requestTitle || "your conversation", payload || {});
 
   return renderActionEmail({ ...content, ctaUrl: requestUrl, ctaLabel: content.cta });
 };

@@ -1481,6 +1481,41 @@ in [`environments.md`](environments.md).
       emails, the decline email, and the reminders' timing. **To do (user):**
       apply `148`, deploy the API, merge. Playbook:
       `messaging/commission-notifications.md`.
+- [ ] **Chat emails, online presence and cancellation warnings (2026-10-07).**
+      Migration `20261007_149`. (1) A chat message is emailed only for the
+      first message of a new conversation, or when the recipient is not
+      online; one email per unread stretch. (2) "Online" is one database
+      function fed by site activity, built so live chat over websockets can
+      feed it later. (3) Either side can send a cancellation warning with a
+      7, 10 or 14 day timer; the other person stops it by taking a step in
+      the project (paying, accepting, approving, submitting) or by any chat
+      reply, and with neither the commission is cancelled automatically.
+      Nothing is cancelled unless a person started a warning.
+      **Decision (2026-10-07) on money:** if the buyer does not reply, the
+      creator keeps what was paid, deposits included; if the creator does
+      not reply, approved milestones stay paid and other amounts are
+      refunded for the milestones not reached. **Dry-run on the live
+      database, rolled back:** buyer silent, creator kept a 40.00 deposit;
+      creator silent, the whole 40.00 deposit was flagged for refund; a
+      milestone agreement with nothing paid cancelled with no refund; a chat
+      reply stopped a timer; accepting an agreement and a payment turning paid
+      each stopped a timer with no message, while the sender's own action and
+      merely opening checkout did not; 5 days and a second warning were refused; two
+      messages to an offline person queued one email, a message to an online
+      person none. **Not tested:** a real refund through Stripe from the
+      hourly job, the emails' real delivery, and the panel in a browser.
+      Playbook: `requests/cancellation-warnings.md`.
+- [x] *(Done 2026-10-07: Refund Policy version `2026-10-07`. Section 7
+      rewritten; one sentence each in sections 2 and 6. Fingerprint recorded,
+      `api/policyVersions.js` synced, so checkout asks buyers to accept the
+      new version.)* **Rewrite the Refund Policy for cancellation warnings.**
+- [ ] **Launch gate: counsel review of Refund Policy `2026-10-07`.** The new
+      section 7 was written without legal advice. In particular: a buyer who
+      does not respond to a cancellation warning does not get a deposit
+      back. Check this against EU and UK consumer law (unfair terms, and the
+      14-day cancellation right in section 1, which the text says still
+      applies). Also decide whether the older notice process, which has
+      different money outcomes, is removed.
 - [ ] **Rehearsal finding, 2026-10-07: half of every payment would have gone
       to Made for Stream (`REC-005`).** The function that works out how much
       of a payment to hold back for a creator's recovery balance returned
