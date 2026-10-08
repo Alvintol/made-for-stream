@@ -421,8 +421,12 @@
     border: 1px solid var(--hairline-strong);
     box-shadow: var(--shadow-md);
   }
+  /* The pills centre their own text with a utility class, which would win
+     over a plain rule here and leave some rows centred and others not. */
   .navMenu > * {
-    @apply w-full justify-start;
+    width: 100%;
+    margin-left: 0 !important;
+    justify-content: flex-start !important;
   }
   .navMenu .navChip {
     @apply px-3 py-1.5 text-sm;

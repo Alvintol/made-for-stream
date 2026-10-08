@@ -4,15 +4,25 @@ Sprint 8's last gate (`launch-implementation-checklist.md`). **Written 2026-09-2
 updated 2026-10-08, section 0 nearly done, section 1 started in CAD, sections 1b to 7 not yet run.** Tick the boxes as you go and record
 the ids you used, so "has this been rehearsed" has an answer.
 
-**Progress, 2026-10-08.** CAD request `6070950f-424c-4f60-9d17-4996a5ecee4b`:
-sent, accepted, a **deposit and balance** agreement sent and accepted by the
-buyer, and the five emails for those steps marked `sent` (confirmed in the
-database). The deposit payment `a13f62c3-5fb2-4237-98f5-69abd97e0f2f` is
-**not paid**: it carries a 24.15 tip and a 1.00 contribution from an earlier
-visit to the checkout page, and the fee arithmetic on it is correct (115 /
-115, application fee 330, recovery 0). The milestone run in section 1 has
-not started: the builder refused milestones on the default 14-day project.
-Not yet done: the 9.99 and early-start refusals, any payment.
+**Progress, 2026-10-08.** The first CAD request
+(`6070950f-424c-4f60-9d17-4996a5ecee4b`, a deposit and balance agreement
+accepted by the buyer) was **cancelled before any payment** so the run could
+restart with milestones. Confirmed in the database: the request, its
+agreement and its unpaid deposit payment are all `cancelled`, nothing was
+paid, and all six emails for it are marked `sent`, the last being
+`request_cancelled` to the buyer (the creator cancelled). All four rehearsal
+accounts have saved their private account details and accepted the
+`2026-10-08` Terms and Privacy Policy. **No new request exists yet:** section
+1 restarts from "Buyer submits a request". Not yet done: the 9.99 and
+early-start refusals, any payment.
+
+A second round of interface changes from this run is on branch
+`feat/request-invoice-inbox-dashboard` (website only, no migration, no API
+deploy): the estimated invoice and fee note on the request form, percentage
+shortcuts and an explanation of the contribution at checkout, a tidier top
+bar menu, the promotional email question on the account details form, inbox
+folders with search (newest 50 conversations, older ones on demand), and a
+real creator dashboard whose numbers are database counts.
 
 Defects found by this run and fixed on branch
 `fix/rehearsal-checkout-agreement-and-region` (needs an **API deploy**, then
@@ -197,9 +207,13 @@ where n.listing_request_id = '<request>' order by n.created_at;
       cancellation itself takes 7 days or more, so it was checked by a
       rolled-back dry run only (`docs/support/requests/cancellation-warnings.md`).
 
-Record the request id per currency: CAD `6070950f-424c-4f60-9d17-4996a5ecee4b` (deposit and balance; a milestone run is still needed) USD `____` EUR `____`
+Record the request id per currency: CAD `____` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `____` EUR `____`
 
-- [ ] Buyer submits a request. Creator accepts it.
+- [ ] Buyer submits a request. On the form: the budget box shows the
+      creator's currency, the note under it states the 5% buyer service
+      fee, and the "Estimated invoice" card beside the form follows the
+      budget as it is typed (and shows an estimate in the buyer's own
+      currency when that differs: the USD and EUR runs). Creator accepts it.
 - [ ] Creator builds a **milestone** agreement with two milestones (estimated
       work days must be 7 or more, or the milestone plan is locked; the
       builder has no deposit on a milestone agreement; a deposit exists only
@@ -226,7 +240,9 @@ Record the request id per currency: CAD `6070950f-424c-4f60-9d17-4996a5ecee4b` (
       country from the buyer's private account details and cannot be changed
       on the page (2026-10-08); the tax row reads as not collected. Leave the page and
       come back: the tip and contribution boxes show what was entered and
-      can be changed. Pay with `4242 4242 4242 4242`.
+      can be changed. The percentage buttons fill in a share of the project
+      payment, **Round up** brings the total to a whole number, and the
+      contribution explains what it is for. Both boxes start empty. Pay with `4242 4242 4242 4242`.
 - [ ] Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).
@@ -260,7 +276,9 @@ since `20260921_117`, so the check is now that **no minimum is charged at all**.
 
 ## 3. Cancellation
 
-- [ ] **Before payment:** accept an agreement, cancel before paying. Nothing is
+- [x] *(2026-10-08, request `6070950f-…`, cancelled by the creator after the
+      buyer accepted the agreement: request, agreement and the unpaid deposit
+      all `cancelled`, `paid_at` empty, buyer emailed.)* **Before payment:** accept an agreement, cancel before paying. Nothing is
       charged, and no payment row reaches `paid`.
 - [ ] **After work starts:** on a paid project, the buyer requests cancellation,
       the creator submits the itemised statement, and the buyer accepts it. The

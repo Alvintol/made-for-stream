@@ -12,7 +12,11 @@ import {
   type AccountDetailsForm,
 } from "../domain/settings/accountDetails";
 import { useMyProfile } from "../hooks/profile/useMyProfile";
-import { useAccountDetails, useSaveAccountDetails } from "../hooks/settings/useAccountDetails";
+import {
+  useAccountDetails,
+  useSaveAccountDetails,
+  useSaveMarketingEmails,
+} from "../hooks/settings/useAccountDetails";
 
 const classes = {
   card: "card space-y-4 p-5 hover:shadow-[var(--shadow-md)]",
@@ -43,6 +47,7 @@ const classes = {
   fieldError: "text-xs font-medium text-red-700",
   error: "notice noticeError",
   success: "notice noticeSuccess",
+  optIn: "flex items-start gap-3 text-sm",
   footer: "flex flex-wrap items-center justify-end gap-2",
 } as const;
 
@@ -109,6 +114,7 @@ const AccountDetailsSettings = () => {
   const navigate = useNavigate();
   const detailsQuery = useAccountDetails();
   const saveDetails = useSaveAccountDetails();
+  const saveMarketingEmails = useSaveMarketingEmails();
   const { data: profile } = useMyProfile();
 
   const details = detailsQuery.data ?? null;
@@ -118,6 +124,9 @@ const AccountDetailsSettings = () => {
   const [draft, setDraft] = useState<AccountDetailsForm | null>(null);
   const [errors, setErrors] = useState<AccountDetailsErrors>({});
   const [justSaved, setJustSaved] = useState(false);
+  // Asked once, with the first save. Never ticked for the person: consent to
+  // promotional email has to be their own act (Privacy Policy section 7).
+  const [wantsMarketingEmails, setWantsMarketingEmails] = useState(false);
 
   const form = draft ?? toAccountDetailsForm(details);
   const showForm = editing || !details;
@@ -174,6 +183,12 @@ const AccountDetailsSettings = () => {
     } catch {
       // Shown below from the mutation's error.
       return;
+    }
+
+    if (isFirstSave && wantsMarketingEmails) {
+      // The details are saved either way; the choice can be made again in
+      // Settings → Preferences if this fails.
+      await saveMarketingEmails.mutateAsync(true).catch(() => undefined);
     }
 
     setDraft(null);
@@ -449,6 +464,25 @@ const AccountDetailsSettings = () => {
               </Field>
             </div>
           </div>
+
+          {!details && (
+            <label className={classes.optIn}>
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300"
+                checked={wantsMarketingEmails}
+                onChange={(event) => setWantsMarketingEmails(event.currentTarget.checked)}
+              />
+              <span>
+                <span className="font-semibold text-zinc-900">
+                  Send me Made for Stream news, offers and monthly updates by email
+                </span>
+                <span className={`block ${classes.hint}`}>
+                  Optional. You can change this at any time in Settings, under Preferences.
+                </span>
+              </span>
+            </label>
+          )}
 
           {saveDetails.error && (
             <div className={classes.error} role="alert">

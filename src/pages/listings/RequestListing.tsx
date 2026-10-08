@@ -1,5 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { formatListingPrice } from "../../lib/money/displayCurrency";
+import {
+  convertAmount,
+  formatCurrencyAmount,
+  formatListingPrice,
+} from "../../lib/money/displayCurrency";
+import CommissionEstimateCard from "../../components/listingRequests/core/CommissionEstimateCard";
+import { formatFeeRateBps } from "../../domain/payments/listingRequestPaymentDisplay";
+import { useDisplayCurrency } from "../../hooks/money/useDisplayCurrency";
+import { useBuyerServiceFeeRate } from "../../hooks/payments/useBuyerServiceFeeRate";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useCreateListingRequest } from "../../hooks/listings/useCreateListingRequest";
@@ -68,7 +76,8 @@ const classes = {
   btnOutlineSm: "btnOutline btnSm",
 
   // Listing summary
-  aside: "card overflow-hidden hover:shadow-[var(--shadow-md)] lg:order-last lg:sticky lg:top-24",
+  aside: "space-y-4 lg:order-last lg:sticky lg:top-24",
+  listingCard: "card overflow-hidden hover:shadow-[var(--shadow-md)]",
   preview: "aspect-[16/9] w-full bg-zinc-100 object-cover",
   summary: "space-y-3 p-4",
   summaryTop: "flex items-start justify-between gap-3",
@@ -171,6 +180,20 @@ const RequestListing = () => {
     : creator?.display_name ?? "this creator";
 
   const referenceCount = parseListingRequestReferenceLinks(referenceLinksText).length;
+
+  // The estimate follows the budget as it is typed, and starts from the
+  // listing's price. Always in the creator's currency, which is what the
+  // buyer will pay in; the buyer's own currency is shown as an estimate.
+  const { displayCurrency, rates } = useDisplayCurrency();
+  const feeRate = useBuyerServiceFeeRate();
+  const listingCurrency = listing?.currency || "cad";
+  const budgetNumber = Number(budgetText.trim());
+  const hasBudget = budgetText.trim() !== "" && Number.isFinite(budgetNumber) && budgetNumber > 0;
+  const estimateAmount = hasBudget ? budgetNumber : (listing?.price_min ?? 0);
+  const budgetInDisplayCurrency =
+    hasBudget && displayCurrency
+      ? convertAmount(budgetNumber, listingCurrency, displayCurrency, rates)
+      : null;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -323,6 +346,7 @@ const RequestListing = () => {
 
       <div className={classes.layout}>
         <aside className={classes.aside} aria-label="Listing summary">
+          <div className={classes.listingCard}>
           {listing.preview_url && (
             <img className={`${classes.preview} hidden lg:block`} src={listing.preview_url} alt="" />
           )}
@@ -371,6 +395,14 @@ const RequestListing = () => {
               </ol>
             </div>
           </div>
+          </div>
+
+          <CommissionEstimateCard
+            amount={estimateAmount}
+            currency={listingCurrency}
+            amountLabel={hasBudget ? "Your budget" : "Listing price"}
+            feeRate={feeRate}
+          />
         </aside>
 
         <form className={classes.form} noValidate onSubmit={(event) => void handleSubmit(event)}>
@@ -479,6 +511,17 @@ const RequestListing = () => {
                     {formErrors.budgetAmount}
                   </div>
                 )}
+                <div className={classes.hint}>
+                  {budgetInDisplayCurrency !== null && displayCurrency && (
+                    <>
+                      ≈ {formatCurrencyAmount(Math.round(budgetInDisplayCurrency), displayCurrency)}{" "}
+                      in your currency.{" "}
+                    </>
+                  )}
+                  {feeRate.feeBps > 0
+                    ? `A ${formatFeeRateBps(feeRate.feeBps)} buyer service fee is added on top when you pay.`
+                    : "No buyer service fee is added when you pay."}
+                </div>
               </div>
             </div>
 
