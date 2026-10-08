@@ -44,6 +44,8 @@ const classes = {
   // Out of flow and unseen, but still measurable, while its menu stands in.
   collapsed: "invisible absolute -left-[9999px] top-0 w-max",
   menuButton: "themeToggle",
+  priority: "flex shrink-0 items-center gap-1",
+  menuSettings: "mt-1 flex items-center gap-2 border-t border-[var(--hairline)] px-1 pt-2",
   navMenu: "navMenu right-4 top-12 sm:right-6",
   categoryMoreWrap: "relative shrink-0",
   categoryMenu: "navMenu top-full mt-1 w-max",
@@ -235,11 +237,59 @@ const Nav = () => {
     await supabase.auth.signOut();
   };
 
+  // The links that matter most on a small screen. When the top bar is short
+  // of room they stay in it, beside the hamburger button, and the language,
+  // currency and theme buttons move into the menu instead: those are set
+  // once and rarely touched.
+  const dashboardLink = !loading && user && !isSellerAccessLoading && canAccessCreatorRoutes && (
+    <NavLink
+      to="/creator/dashboard"
+      className={({ isActive }) => getAuthPillClass(isActive)}
+    >
+      Dashboard
+    </NavLink>
+  );
+
+  const inboxLink = !loading && user && (
+    <NavLink
+      to="/messages"
+      aria-label={
+        unreadMessageCount > 0
+          ? `Inbox, ${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
+          : "Inbox"
+      }
+      title={
+        unreadMessageCount > 0
+          ? `${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
+          : "Inbox"
+      }
+      className={({ isActive }) => getAuthPillClass(isActive)}
+    >
+      <span className={classes.navLabelWrap}>
+        <InboxIcon />
+        <span className="navWord">Inbox</span>
+
+        {unreadMessageCount > 0 && (
+          <span className={classes.navPillCount}>
+            {unreadMessageLabel}
+          </span>
+        )}
+      </span>
+    </NavLink>
+  );
+
+  const signInLink = !loading && !user && (
+    <NavLink to="/signin" className={classes.signInButton}>
+      Sign in
+    </NavLink>
+  );
+
   // The page links, shown in the top bar or, when it is short of room, in
-  // the menu behind the hamburger button. Words first, then the three that
-  // are icons in the top bar (Live, Inbox, Settings); in the menu those three
-  // show their word instead (the .navIcon and .navWord rules in ui.css).
-  const pageLinks = (
+  // the menu behind the hamburger button (without the priority links, which
+  // are then in the top bar). Words first, then the three that are icons in
+  // the top bar (Live, Inbox, Settings); in the menu those show their word
+  // instead (the .navIcon and .navWord rules in ui.css).
+  const pageLinks = (withPriority: boolean) => (
     <>
       <NavLink to="/market" className={({ isActive }) => getPillClass(isActive)}>
         Market
@@ -249,14 +299,7 @@ const Nav = () => {
         Creators
       </NavLink>
 
-      {!loading && user && !isSellerAccessLoading && canAccessCreatorRoutes && (
-        <NavLink
-          to="/creator/dashboard"
-          className={({ isActive }) => getAuthPillClass(isActive)}
-        >
-          Dashboard
-        </NavLink>
-      )}
+      {withPriority && dashboardLink}
 
       {!loading && user && !isAdminLoading && isAdmin && (
         <NavLink
@@ -284,33 +327,7 @@ const Nav = () => {
         </span>
       </NavLink>
 
-      {!loading && user && (
-        <NavLink
-          to="/messages"
-          aria-label={
-            unreadMessageCount > 0
-              ? `Inbox, ${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-              : "Inbox"
-          }
-          title={
-            unreadMessageCount > 0
-              ? `${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-              : "Inbox"
-          }
-          className={({ isActive }) => getAuthPillClass(isActive)}
-        >
-          <span className={classes.navLabelWrap}>
-            <InboxIcon />
-            <span className="navWord">Inbox</span>
-
-            {unreadMessageCount > 0 && (
-              <span className={classes.navPillCount}>
-                {unreadMessageLabel}
-              </span>
-            )}
-          </span>
-        </NavLink>
-      )}
+      {withPriority && inboxLink}
       
       {!loading && user && (
         <NavLink
@@ -323,11 +340,7 @@ const Nav = () => {
         </NavLink>
       )}
 
-      {!loading && !user && (
-        <NavLink to="/signin" className={classes.signInButton}>
-          Sign in
-        </NavLink>
-      )}
+      {withPriority && signInLink}
 
       {!loading && user && (
         <button
@@ -388,12 +401,22 @@ const Nav = () => {
           aria-hidden={navCollapsed}
           className={`${classes.nav} ${navCollapsed ? classes.collapsed : ""}`.trim()}
         >
-          {pageLinks}
+          {pageLinks(true)}
         </nav>
 
-        <RegionPicker compact={navCollapsed} />
+        {navCollapsed ? (
+          <div className={classes.priority}>
+            {dashboardLink}
+            {inboxLink}
+            {signInLink}
+          </div>
+        ) : (
+          <>
+            <RegionPicker />
 
-        <ThemeToggle />
+            <ThemeToggle />
+          </>
+        )}
 
         {navCollapsed && (
           <button
@@ -412,9 +435,19 @@ const Nav = () => {
         <nav
           aria-label="Menu"
           className={classes.navMenu}
-          onClick={() => setOpenMenu(null)}
+          onClick={(event) => {
+            // Choosing a page closes the menu. The language, currency and
+            // theme buttons do not: their dialog lives inside the menu.
+            if (!(event.target as Element).closest("[data-keep-menu]")) setOpenMenu(null);
+          }}
         >
-          {pageLinks}
+          {pageLinks(false)}
+
+          <div className={classes.menuSettings} data-keep-menu>
+            <RegionPicker />
+
+            <ThemeToggle />
+          </div>
         </nav>
       )}
 
