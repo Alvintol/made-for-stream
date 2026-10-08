@@ -107,6 +107,16 @@ To do:
       it half of every payment's base is added to the application fee
       (`REC-005`). Check: `select public.resolve_listing_request_payment_recovery_instalment('00000000-0000-0000-0000-000000000000', 4000);`
       must return `0`.
+- [ ] **Every rehearsal account saves its private account details**
+      (needs migration `20261008_150`, an API deploy, then the website).
+      Each of the four accounts is sent to Settings → Personal details on
+      its next visit and can do nothing else until the form is saved; each
+      must also accept the new Terms and Privacy Policy (`2026-10-08`)
+      first. Use an address in the account's own country (CA, CA, US, IE):
+      it is the billing country at checkout. Check while there: the saved
+      details show as `********` until **Show details** is pressed, and
+      **Settings → Preferences** has the promotional email box, unticked.
+      Afterwards: `select count(*) from public.user_account_details;` is 4.
 - [ ] **Browser-check the Storage Register** (Cookie Policy §7) on the dev
       site: DevTools → Application. The published register lists
       `sb-itbgxxczuazwroniiyot-auth-token`, `creatorhub.pendingPolicyAcceptance`,
@@ -213,8 +223,8 @@ Record the request id per currency: CAD `6070950f-424c-4f60-9d17-4996a5ecee4b` (
 - [ ] Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
       contribution** on this payment. The billing country shows the
-      country from the buyer's settings and cannot be changed on the page
-      (2026-10-08); the tax row reads as not collected. Leave the page and
+      country from the buyer's private account details and cannot be changed
+      on the page (2026-10-08); the tax row reads as not collected. Leave the page and
       come back: the tip and contribution boxes show what was entered and
       can be changed. Pay with `4242 4242 4242 4242`.
 - [ ] Webhook marks it paid, and the workflow advances. The fee arithmetic above

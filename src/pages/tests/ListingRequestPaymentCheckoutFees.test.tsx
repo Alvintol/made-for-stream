@@ -29,9 +29,8 @@ vi.mock("../../hooks/payments/useSetListingRequestPaymentTipAndSupport", () => (
 
 // The embedded Stripe checkout only mounts after policy acceptance, which this
 // test never performs -- the fee disclosure renders above it either way.
-vi.mock("../../hooks/money/useDisplayCurrency", () => ({
-  useDisplayPreferences: () => ({ data: null, isLoading: false }),
-  useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false }),
+vi.mock("../../hooks/settings/useAccountDetails", () => ({
+  useAccountDetails: () => ({ data: { country_code: "CA" }, isLoading: false }),
 }));
 
 vi.mock("@stripe/react-stripe-js", () => ({

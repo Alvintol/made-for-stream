@@ -16,6 +16,8 @@ import Live from "./pages/Live";
 import Market from "./pages/Market";
 import NotFound from "./pages/NotFound";
 import ProfileSettings from "./pages/ProfileSettings";
+import AccountDetailsSettings from "./pages/AccountDetailsSettings";
+import PreferencesSettings from "./pages/PreferencesSettings";
 import SettingsLayout from "./components/settings/SettingsLayout";
 import SignIn from "./pages/SignIn";
 import AdminCreatorApplications from "./pages/admin/AdminCreatorApplications";
@@ -106,6 +108,8 @@ const App = () => {
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<ProfileSettings />} />
+              <Route path="personal" element={<AccountDetailsSettings />} />
+              <Route path="preferences" element={<PreferencesSettings />} />
               <Route path="reports" element={<MyReports />} />
             </Route>
             <Route

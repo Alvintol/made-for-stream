@@ -18,7 +18,6 @@ vi.mock("../../hooks/money/useDisplayCurrency", () => ({
 
 import DisplayCurrencySettings from "../settings/DisplayCurrencySettings";
 
-const country = () => screen.getByLabelText(/^Country/) as HTMLSelectElement;
 const currency = () => screen.getByLabelText(/^Show prices in/) as HTMLSelectElement;
 
 describe("<DisplayCurrencySettings />", () => {
@@ -28,35 +27,12 @@ describe("<DisplayCurrencySettings />", () => {
     mocks.save.mockReset().mockResolvedValue(undefined);
   });
 
-  it("says what the country is used for, and that it is not shown publicly", () => {
+  it("says the currency is for display only, and does not ask for a country", () => {
     render(<DisplayCurrencySettings />);
 
-    expect(screen.getByText(/Your country is your billing country when you pay/)).toBeInTheDocument();
-    expect(screen.getByText(/It is not shown on your profile/)).toBeInTheDocument();
     expect(screen.getByText(/you always pay in the creator's currency/)).toBeInTheDocument();
-  });
-
-  it("offers every country, because the country is the billing country", () => {
-    render(<DisplayCurrencySettings />);
-
-    // Brazil has no supported currency here, but a buyer can still live there.
-    expect(screen.getByRole("option", { name: "Brazil" })).toBeInTheDocument();
-  });
-
-  it("leaves the country out of the top bar's version, and keeps the saved one on save", async () => {
-    mocks.saved = { country_code: "CA", display_currency: null };
-
-    render(<DisplayCurrencySettings showCountry={false} />);
-
+    // The country is part of the private account details, not this form.
     expect(screen.queryByLabelText(/^Country/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/billing country/)).not.toBeInTheDocument();
-
-    fireEvent.change(currency(), { target: { value: "usd" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    await waitFor(() =>
-      expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd" }),
-    );
   });
 
   it("offers every currency the site supports", () => {
@@ -67,27 +43,18 @@ describe("<DisplayCurrencySettings />", () => {
     expect(screen.getByRole("option", { name: /CAD · Canadian Dollar/ })).toBeInTheDocument();
   });
 
-  it("saves a country and lets its currency be the default", async () => {
+  it("defaults to the currency of the country in the account details", () => {
+    mocks.saved = { country_code: "IE", display_currency: null };
+
     render(<DisplayCurrencySettings />);
 
-    fireEvent.change(country(), { target: { value: "IE" } });
-
     expect(screen.getByRole("option", { name: "My country's currency (EUR)" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    await waitFor(() =>
-      expect(mocks.save).toHaveBeenCalledWith({ country_code: "IE", display_currency: null }),
-    );
-    expect(await screen.findByRole("status")).toHaveTextContent("Saved");
   });
 
-  it("saves an explicit currency choice", async () => {
+  it("saves an explicit currency choice and leaves the country as it was", async () => {
     mocks.saved = { country_code: "CA", display_currency: null };
 
     render(<DisplayCurrencySettings />);
-
-    expect(country().value).toBe("CA");
 
     fireEvent.change(currency(), { target: { value: "usd" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -95,6 +62,7 @@ describe("<DisplayCurrencySettings />", () => {
     await waitFor(() =>
       expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd" }),
     );
+    expect(await screen.findByRole("status")).toHaveTextContent("Saved");
   });
 
   it("drops an unsaved edit when the saved values change elsewhere", () => {
@@ -111,7 +79,6 @@ describe("<DisplayCurrencySettings />", () => {
     mocks.savedAt = 2;
     rerender(<DisplayCurrencySettings />);
 
-    expect(country().value).toBe("IE");
     expect(currency().value).toBe("eur");
   });
 });

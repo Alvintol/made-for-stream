@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   sellerAccess: {} as Record<string, unknown>,
   paymentAccount: null as Record<string, unknown> | null,
   reports: [] as Array<Record<string, unknown>>,
+  accountDetails: { country_code: "CA" } as Record<string, unknown> | null,
   update: vi.fn(),
   refetch: vi.fn(),
 }));
@@ -22,6 +23,10 @@ vi.mock("../../hooks/money/useDisplayCurrency", () => ({
   useDisplayPreferences: () => ({ data: null, isLoading: false }),
   useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
   useExchangeRates: () => ({ data: null }),
+}));
+
+vi.mock("../../hooks/settings/useAccountDetails", () => ({
+  useAccountDetails: () => ({ data: mocks.accountDetails, isSuccess: true, isLoading: false }),
 }));
 
 vi.mock("../../providers/AuthProvider", () => ({
@@ -132,14 +137,30 @@ describe("<ProfileSettings /> in the settings layout", () => {
     mocks.sellerAccess = { ...member };
     mocks.paymentAccount = null;
     mocks.reports = [];
+    mocks.accountDetails = { country_code: "CA" };
   });
 
-  it("shows the account identity and settings tabs", () => {
+  it("shows the account identity and the settings pages", () => {
     mocks.reports = [{ id: "r1", has_unread_update: true }];
+    mocks.accountDetails = null;
 
     renderSettings();
 
     const header = screen.getByRole("banner");
+    const pages = screen.getByRole("navigation", { name: "Settings pages" });
+
+    expect(within(pages).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
+      "/settings/profile",
+      "/settings/personal",
+      "/settings/preferences",
+      "/settings/reports",
+    ]);
+    // An account with no details yet is pointed at the page that asks for them.
+    expect(within(pages).getByRole("link", { name: /Personal details/ })).toHaveTextContent(
+      "Required",
+    );
+    // Country and currency moved to their own pages.
+    expect(screen.queryByText("Country and currency")).not.toBeInTheDocument();
 
     expect(within(header).getByText("Pastel Fox")).toBeInTheDocument();
     expect(within(header).getByText("Member")).toBeInTheDocument();
@@ -147,7 +168,7 @@ describe("<ProfileSettings /> in the settings layout", () => {
       "href",
       "/creator/pastelfox"
     );
-    expect(within(header).getByRole("link", { name: /My reports/ })).toHaveTextContent("1");
+    expect(within(pages).getByRole("link", { name: /My reports/ })).toHaveTextContent("1");
   });
 
   it("keeps optional steps quiet and opens the profile when nothing is pending", () => {

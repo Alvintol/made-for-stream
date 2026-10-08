@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { getBillingCountryOptions } from "../../domain/payments/billingCountries";
+import { useState } from "react";
 import { SUPPORTED_CURRENCY_CODES } from "../../domain/payments/supportedCurrencies";
 import {
   useDisplayPreferences,
@@ -11,7 +10,6 @@ import { getCurrencyForCountry, getCurrencyName } from "../../lib/money/displayC
 const classes = {
   text: "text-sm text-zinc-600",
   form: "grid gap-3 sm:grid-cols-2",
-  field: "flex flex-col gap-1.5",
   wideField: "flex flex-col gap-1.5 sm:col-span-2",
   label: "formLabel",
   hint: "formHint",
@@ -22,12 +20,12 @@ const classes = {
   error: "notice noticeError",
 } as const;
 
-// Where a person says which country they are in and which currency they
-// want prices shown in. The country is their billing country at checkout
-// (the API reads it to work out tax); the currency only chooses how
-// approximate converted prices are shown and never what anyone is charged.
-// The top bar's globe button shows this form without the country.
-const DisplayCurrencySettings = ({ showCountry = true }: { showCountry?: boolean }) => {
+// Where a person chooses the language and the currency prices are shown in.
+// It only chooses how approximate converted prices are shown and never what
+// anyone is charged. The country it defaults from is the one in the person's
+// private account details (Settings → Personal details), copied here by the
+// database; a visitor has none.
+const DisplayCurrencySettings = () => {
   const preferencesQuery = useDisplayPreferences();
   const savePreferences = useSaveDisplayPreferences();
 
@@ -40,16 +38,15 @@ const DisplayCurrencySettings = ({ showCountry = true }: { showCountry?: boolean
   const savedAt = preferencesQuery.dataUpdatedAt;
   const [draft, setDraft] = useState<{
     savedAt: number | undefined;
-    country?: string;
     currency?: string;
   }>({ savedAt });
   const [justSaved, setJustSaved] = useState(false);
 
   const edits = draft.savedAt === savedAt ? draft : { savedAt };
-  const country = edits.country ?? saved?.country_code ?? "";
+  // Not edited here: it follows the account details.
+  const country = saved?.country_code ?? "";
   const currency = edits.currency ?? saved?.display_currency ?? "";
 
-  const countryOptions = useMemo(() => getBillingCountryOptions(), []);
   const countryCurrency = getCurrencyForCountry(country);
 
   const save = async () => {
@@ -69,8 +66,6 @@ const DisplayCurrencySettings = ({ showCountry = true }: { showCountry?: boolean
   return (
     <>
       <p className={classes.text}>
-        {showCountry &&
-          "Your country is your billing country when you pay: it decides whether tax applies. It is not shown on your profile. "}
         Creators set prices in their own currency, and you always pay in the creator's currency.
         We can also show an approximate price in yours.
       </p>
@@ -90,33 +85,7 @@ const DisplayCurrencySettings = ({ showCountry = true }: { showCountry?: boolean
           <span className={classes.hint}>More languages are planned.</span>
         </label>
 
-        {showCountry && (
-        <label className={classes.field}>
-          <span className={classes.label}>Country</span>
-          <select
-            className={classes.input}
-            value={country}
-            disabled={preferencesQuery.isLoading}
-            onChange={(event) => {
-              setDraft({ ...edits, country: event.target.value });
-              setJustSaved(false);
-            }}
-          >
-            <option value="">Not set</option>
-            {countryOptions.map((option) => (
-              <option key={option.code} value={option.code}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-          <span className={classes.hint}>
-            Used as your billing country at checkout. If it is not set, you are asked when you
-            first pay.
-          </span>
-        </label>
-        )}
-
-        <label className={showCountry ? classes.field : classes.wideField}>
+        <label className={classes.wideField}>
           <span className={classes.label}>Show prices in</span>
           <select
             className={classes.input}
