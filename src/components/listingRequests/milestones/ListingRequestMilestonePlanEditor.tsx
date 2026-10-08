@@ -282,6 +282,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.input}
                   disabled={disabled}
                   id={`milestone-${index}-title`}
+                  placeholder="e.g. Sketches approved"
                   maxLength={160}
                   value={milestone.title}
                   onChange={(event) =>
@@ -305,6 +306,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.input}
                   disabled={disabled}
                   id={`milestone-${index}-amount`}
+                  placeholder="e.g. 50.00"
                   min="0"
                   step="0.01"
                   type="number"
@@ -339,6 +341,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.textarea}
                   disabled={disabled}
                   id={`milestone-${index}-description`}
+                  placeholder="e.g. Rough sketches of all six emotes, sent for the buyer to approve before colouring starts."
                   maxLength={2000}
                   value={
                     milestone.description ?? ""
