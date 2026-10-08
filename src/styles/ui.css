@@ -428,6 +428,20 @@
     margin-left: 0 !important;
     justify-content: flex-start !important;
   }
+  /* Live, Inbox and Settings: an icon in the top bar, with the word kept for
+     screen readers; the word alone in the menu. */
+  .navIcon {
+    @apply h-4 w-4 shrink-0;
+  }
+  .navWord {
+    @apply sr-only;
+  }
+  .navMenu .navIcon {
+    display: none;
+  }
+  .navMenu .navWord {
+    @apply not-sr-only;
+  }
   .navMenu .navChip {
     @apply px-3 py-1.5 text-sm;
   }
