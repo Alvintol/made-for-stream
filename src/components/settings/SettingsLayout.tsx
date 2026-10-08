@@ -4,6 +4,7 @@ import { useSellerAccess } from "../../hooks/creatorApplication/useSellerAccess"
 import { useMyModerationReports } from "../../hooks/moderation/useMyModerationReports";
 import { useMyProfile } from "../../hooks/profile/useMyProfile";
 import { useAccountDetails } from "../../hooks/settings/useAccountDetails";
+import { hasChosenDisplayName } from "../../domain/settings/displayName";
 import { useProfilePlatformAccounts } from "../../hooks/profile/useProfilePlatformAccounts";
 
 const classes = {
@@ -62,7 +63,9 @@ const SettingsLayout = () => {
   const { data: reports = [] } = useMyModerationReports();
   const { isCreatorApproved } = useSellerAccess();
   const accountDetails = useAccountDetails();
-  const needsAccountDetails = accountDetails.isSuccess && !accountDetails.data;
+  const needsAccountDetails =
+    (accountDetails.isSuccess && !accountDetails.data) ||
+    (Boolean(profile) && !hasChosenDisplayName(profile));
 
   const twitchAccount = platformAccounts.find((account) => account.platform === "twitch") ?? null;
   const avatarUrl = getProfileAvatarUrl(profile, twitchAccount);

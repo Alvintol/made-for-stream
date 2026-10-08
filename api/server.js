@@ -22,6 +22,7 @@ import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
 import {
   getListingRequestUrl as buildListingRequestUrl,
+  getNotificationNames,
   getNotificationUrl,
   renderNotificationEmail,
 } from "./notificationEmails.js";
@@ -1317,7 +1318,7 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
         if (row.listing_request_id) {
           const { data, error: requestError } = await supabaseAdmin
             .from("listing_requests")
-            .select("id, request_title, buyer_user_id")
+            .select("id, request_title, buyer_user_id, creator_user_id")
             .eq("id", row.listing_request_id)
             .maybeSingle();
 
@@ -1328,11 +1329,49 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
           request = data;
         }
 
+        // Emails name people by their handle. Best effort: if the handles
+        // cannot be read the email still goes, saying "the buyer" and "the
+        // creator" as it did before.
+        let names = {};
+
+        try {
+          const parties =
+            request ||
+            (row.conversation_id
+              ? (
+                  await supabaseAdmin
+                    .from("conversations")
+                    .select("buyer_user_id, creator_user_id")
+                    .eq("id", row.conversation_id)
+                    .maybeSingle()
+                ).data
+              : null);
+
+          if (parties) {
+            const { data: profiles } = await supabaseAdmin
+              .from("profiles")
+              .select("user_id, handle")
+              .in("user_id", [parties.buyer_user_id, parties.creator_user_id]);
+
+            names = getNotificationNames({
+              buyerUserId: parties.buyer_user_id,
+              creatorUserId: parties.creator_user_id,
+              recipientUserId: row.recipient_user_id,
+              handleByUserId: Object.fromEntries(
+                (profiles || []).map((profile) => [profile.user_id, profile.handle]),
+              ),
+            });
+          }
+        } catch {
+          names = {};
+        }
+
         const rendered = renderNotificationEmail({
           kind: row.kind,
           requestTitle: request?.request_title,
           payload: row.payload,
           requestUrl: getNotificationUrl(APP_ORIGIN, row, request?.buyer_user_id ?? null),
+          names,
         });
 
         if (!rendered) {

@@ -53,134 +53,152 @@ const named = (payload, fallback) => (payload.title ? `"${payload.title}"` : fal
 const waited = (payload) =>
   payload.waiting_days ? `for ${payload.waiting_days} days` : "for a while";
 
+// How an email refers to the people involved: by handle (as it is written
+// on their profile, with no "@") when the account has one, and by role
+// ("the buyer", "the creator") when it does not, or when the handles could
+// not be read. `names` is { buyer, creator, other }, each a handle or empty;
+// `other` is whoever the recipient is not. Capitalised keys start a sentence.
+const people = (names = {}, payload = {}) => ({
+  buyer: names.buyer || "the buyer",
+  Buyer: names.buyer || "The buyer",
+  aBuyer: names.buyer || "A buyer",
+  creator: names.creator || "the creator",
+  Creator: names.creator || "The creator",
+  other: names.other || "the other person",
+  Other: names.other || "The other person",
+  // Chat emails: the database's own name for the sender is the fallback.
+  sender: names.other || payload.sender || "",
+});
+
 // Each entry: subject and title (short), lines (plain sentences), an
 // optional quoted note (the other person's own words), and the button.
-// `t` is the commission's title, `p` the row's payload.
+// `t` is the commission's title, `p` the row's payload, and `n` the people
+// involved (see `people` above): their handle where they have one.
 export const NOTIFICATION_EMAILS = {
-  request_received: (t) => ({
+  request_received: (t, p, n) => ({
     subject: `New commission request: "${t}"`,
     title: "You have a new commission request",
     lines: [
-      `A buyer sent you a commission request, "${t}".`,
+      `${n.aBuyer} sent you a commission request, "${t}".`,
       "Open it to read the details, ask questions in the chat, and accept or decline.",
     ],
     cta: "Review commission request",
   }),
-  request_reminder: (t, p) => ({
+  request_reminder: (t, p, n) => ({
     subject: `Still waiting on you: "${t}"`,
     title: "A commission request is waiting for your answer",
     lines: [
-      `"${t}" has been waiting ${waited(p)}. The buyer cannot move forward until you accept or decline it.`,
+      `"${t}" has been waiting ${waited(p)}. ${n.Buyer} cannot move forward until you accept or decline it.`,
     ],
     cta: "Review commission request",
   }),
-  request_accepted: (t) => ({
+  request_accepted: (t, p, n) => ({
     subject: `Accepted: "${t}"`,
-    title: "The creator accepted your commission request",
+    title: `${n.Creator} accepted your commission request`,
     lines: [
-      `Good news: the creator accepted "${t}".`,
-      "Next, the creator will send you a project agreement with the scope, price, timeline and payment schedule. You will get another email when it is ready. Nothing starts and nothing is charged until you review and accept that agreement.",
+      `Good news: ${n.creator} accepted "${t}".`,
+      `Next, ${n.creator} will send you a project agreement with the scope, price, timeline and payment schedule. You will get another email when it is ready. Nothing starts and nothing is charged until you review and accept that agreement.`,
     ],
     cta: "Open commission",
   }),
-  request_declined: (t, p) => ({
+  request_declined: (t, p, n) => ({
     subject: `Declined: "${t}"`,
-    title: "The creator declined your commission request",
-    lines: [`The creator is not able to take on "${t}". You have not been charged.`],
-    noteLabel: "The creator's reason",
+    title: `${n.Creator} declined your commission request`,
+    lines: [`${n.Creator} is not able to take on "${t}". You have not been charged.`],
+    noteLabel: `${n.Creator}'s reason`,
     note: p.reason,
     cta: "View commission",
   }),
-  request_withdrawn: (t) => ({
+  request_withdrawn: (t, p, n) => ({
     subject: `No longer waiting: "${t}"`,
     title: "A commission request was archived",
     lines: [
-      `The commission request "${t}" was archived by the other person before it was accepted. Nothing more is needed from you.`,
+      `The commission request "${t}" was archived by ${n.other} before it was accepted. Nothing more is needed from you.`,
     ],
     cta: "View commission",
   }),
-  agreement_sent: (t) => ({
+  agreement_sent: (t, p, n) => ({
     subject: `Action needed: review the agreement for "${t}"`,
     title: "Your project agreement is ready to review",
     lines: [
-      `The creator sent the project agreement for "${t}".`,
+      `${n.Creator} sent the project agreement for "${t}".`,
       "Please read the scope, price, timeline and payment schedule, tick each item to confirm you understand it, and accept or decline. Work cannot start until you accept.",
     ],
     cta: "Review agreement",
   }),
-  agreement_reminder: (t, p) => ({
+  agreement_reminder: (t, p, n) => ({
     subject: `Reminder: the agreement for "${t}" needs your answer`,
     title: "Your project agreement is still waiting",
     lines: [
-      `The agreement for "${t}" has been waiting ${waited(p)}. The creator cannot start until you accept or decline it.`,
+      `The agreement for "${t}" has been waiting ${waited(p)}. ${n.Creator} cannot start until you accept or decline it.`,
     ],
     cta: "Review agreement",
   }),
-  agreement_accepted: (t) => ({
+  agreement_accepted: (t, p, n) => ({
     subject: `Agreement accepted: "${t}"`,
-    title: "The buyer accepted your project agreement",
+    title: `${n.Buyer} accepted your project agreement`,
     lines: [
-      `The buyer read, acknowledged and accepted the agreement for "${t}".`,
+      `${n.Buyer} read, acknowledged and accepted the agreement for "${t}".`,
       "If the agreement has a payment due before work starts, wait for the payment email before you begin. Otherwise you can start now.",
     ],
     cta: "Open commission",
   }),
-  agreement_declined: (t) => ({
+  agreement_declined: (t, p, n) => ({
     subject: `Agreement declined: "${t}"`,
-    title: "The buyer declined your project agreement",
+    title: `${n.Buyer} declined your project agreement`,
     lines: [
-      `The buyer declined the agreement for "${t}". You can talk it through in the chat and send a revised agreement.`,
+      `${n.Buyer} declined the agreement for "${t}". You can talk it through in the chat and send a revised agreement.`,
     ],
     cta: "Open commission",
   }),
-  change_order_sent: (t, p) => ({
+  change_order_sent: (t, p, n) => ({
     subject: `Action needed: a change to "${t}"`,
-    title: "The creator proposed a change",
+    title: `${n.Creator} proposed a change`,
     lines: [
-      `The creator proposed a change order, ${named(p, "a change")}, on "${t}". It may change the scope, price, timeline or deliverables.`,
+      `${n.Creator} proposed a change order, ${named(p, "a change")}, on "${t}". It may change the scope, price, timeline or deliverables.`,
       "Nothing changes until you accept it. Please review and accept or decline.",
     ],
     cta: "Review change",
   }),
-  change_order_accepted: (t, p) => ({
+  change_order_accepted: (t, p, n) => ({
     subject: `Change accepted: "${t}"`,
-    title: "The buyer accepted your change order",
+    title: `${n.Buyer} accepted your change order`,
     lines: [
-      `The buyer accepted ${named(p, "your change order")} on "${t}". If it added to the price, the buyer has been asked to pay the difference.`,
+      `${n.Buyer} accepted ${named(p, "your change order")} on "${t}". If it added to the price, ${n.buyer} has been asked to pay the difference.`,
     ],
     cta: "Open commission",
   }),
-  change_order_declined: (t, p) => ({
+  change_order_declined: (t, p, n) => ({
     subject: `Change declined: "${t}"`,
-    title: "The buyer declined your change order",
+    title: `${n.Buyer} declined your change order`,
     lines: [
-      `The buyer declined ${named(p, "your change order")} on "${t}". The original agreement still applies.`,
+      `${n.Buyer} declined ${named(p, "your change order")} on "${t}". The original agreement still applies.`,
     ],
     cta: "Open commission",
   }),
-  payment_required: (t, p) => ({
+  payment_required: (t, p, n) => ({
     subject: `Payment due for "${t}"`,
     title: "A payment is due",
     lines: [
       `${p.title ? `"${p.title}"` : "A payment"} for "${t}" is ready to pay${amountOf(p) ? `: ${amountOf(p)}` : ""}.`,
-      "The project waits on this payment. You pay in the creator's currency on a secure Stripe page.",
+      `The project waits on this payment. You pay in ${n.creator}'s currency on a secure Stripe page.`,
     ],
     cta: "Pay now",
   }),
-  payment_reminder: (t, p) => ({
+  payment_reminder: (t, p, n) => ({
     subject: `Reminder: payment due for "${t}"`,
     title: "A payment is still waiting",
     lines: [
       `${p.title ? `"${p.title}"` : "A payment"} for "${t}"${amountOf(p) ? ` (${amountOf(p)})` : ""} has been unpaid ${waited(p)}.`,
-      "The creator is waiting on it. If something is wrong, reply in the commission's chat so the creator knows.",
+      `${n.Creator} is waiting on it. If something is wrong, reply in the commission's chat so ${n.creator} knows.`,
     ],
     cta: "Pay now",
   }),
-  payment_received: (t, p) => ({
+  payment_received: (t, p, n) => ({
     subject: `Payment received for "${t}"`,
-    title: "The buyer paid",
+    title: `${n.Buyer} paid`,
     lines: [
-      `The buyer paid ${p.title ? `"${p.title}"` : "a payment"} for "${t}"${amountOf(p) ? `: ${amountOf(p)} before fees` : ""}.`,
+      `${n.Buyer} paid ${p.title ? `"${p.title}"` : "a payment"} for "${t}"${amountOf(p) ? `: ${amountOf(p)} before fees` : ""}.`,
       "You can carry on with the next step of the project.",
     ],
     cta: "Open commission",
@@ -193,52 +211,52 @@ export const NOTIFICATION_EMAILS = {
     ],
     cta: "View commission",
   }),
-  payment_disputed: (t, p) => ({
+  payment_disputed: (t, p, n) => ({
     subject: `Payment disputed: "${t}"`,
     title: "A payment is being disputed",
     lines: [
-      `The buyer's bank opened a dispute on ${p.title ? `"${p.title}"` : "a payment"} for "${t}". Made for Stream will be in touch about what is needed from you.`,
+      `${n.Buyer}'s bank opened a dispute on ${p.title ? `"${p.title}"` : "a payment"} for "${t}". Made for Stream will be in touch about what is needed from you.`,
     ],
     cta: "View commission",
   }),
-  milestone_submitted: (t, p) => ({
+  milestone_submitted: (t, p, n) => ({
     subject: `Action needed: review ${named(p, "a milestone")} on "${t}"`,
     title: "A milestone is ready for your review",
     lines: [
-      `The creator submitted ${named(p, "a milestone")} on "${t}".`,
+      `${n.Creator} submitted ${named(p, "a milestone")} on "${t}".`,
       "Please review the work and approve it or ask for revisions. Approving it makes that milestone's payment due.",
     ],
     cta: "Review milestone",
   }),
-  milestone_review_reminder: (t, p) => ({
+  milestone_review_reminder: (t, p, n) => ({
     subject: `Reminder: ${named(p, "a milestone")} on "${t}" needs your review`,
     title: "A milestone is still waiting for your review",
     lines: [
-      `${named(p, "A milestone")} on "${t}" has been waiting ${waited(p)}. The creator cannot continue until you approve it or ask for revisions.`,
+      `${named(p, "A milestone")} on "${t}" has been waiting ${waited(p)}. ${n.Creator} cannot continue until you approve it or ask for revisions.`,
     ],
     cta: "Review milestone",
   }),
-  milestone_approved: (t, p) => ({
+  milestone_approved: (t, p, n) => ({
     subject: `Milestone approved: "${t}"`,
-    title: "The buyer approved your milestone",
+    title: `${n.Buyer} approved your milestone`,
     lines: [
-      `The buyer approved ${named(p, "your milestone")} on "${t}" and has been asked to pay for it. You will get an email when the payment arrives.`,
+      `${n.Buyer} approved ${named(p, "your milestone")} on "${t}" and has been asked to pay for it. You will get an email when the payment arrives.`,
     ],
     cta: "Open commission",
   }),
-  milestone_revision_requested: (t, p) => ({
+  milestone_revision_requested: (t, p, n) => ({
     subject: `Revisions needed: "${t}"`,
-    title: "The buyer asked for revisions",
-    lines: [`The buyer asked for changes to ${named(p, "your milestone")} on "${t}".`],
-    noteLabel: "What the buyer asked for",
+    title: `${n.Buyer} asked for revisions`,
+    lines: [`${n.Buyer} asked for changes to ${named(p, "your milestone")} on "${t}".`],
+    noteLabel: `What ${n.buyer} asked for`,
     note: p.reason,
     cta: "Open commission",
   }),
-  final_delivery_submitted: (t) => ({
+  final_delivery_submitted: (t, p, n) => ({
     subject: `Action needed: your final delivery for "${t}"`,
     title: "Your final delivery is ready to review",
     lines: [
-      `The creator submitted the final delivery for "${t}".`,
+      `${n.Creator} submitted the final delivery for "${t}".`,
       "Please review it and approve it or ask for revisions. Approving it completes the project.",
     ],
     cta: "Review delivery",
@@ -251,82 +269,82 @@ export const NOTIFICATION_EMAILS = {
     ],
     cta: "Review delivery",
   }),
-  final_delivery_revision_requested: (t, p) => ({
+  final_delivery_revision_requested: (t, p, n) => ({
     subject: `Revisions needed on the final delivery: "${t}"`,
-    title: "The buyer asked for revisions to the final delivery",
-    lines: [`The buyer asked for changes to the final delivery for "${t}".`],
-    noteLabel: "What the buyer asked for",
+    title: `${n.Buyer} asked for revisions to the final delivery`,
+    lines: [`${n.Buyer} asked for changes to the final delivery for "${t}".`],
+    noteLabel: `What ${n.buyer} asked for`,
     note: p.reason,
     cta: "Open commission",
   }),
-  progress_update_posted: (t, p) => ({
+  progress_update_posted: (t, p, n) => ({
     subject: `Progress update on "${t}"`,
-    title: "The creator posted a progress update",
-    lines: [`The creator posted ${named(p, "an update")} on "${t}".`],
+    title: `${n.Creator} posted a progress update`,
+    lines: [`${n.Creator} posted ${named(p, "an update")} on "${t}".`],
     cta: "Read update",
   }),
-  progress_update_overdue: (t) => ({
+  progress_update_overdue: (t, p, n) => ({
     subject: `A progress update is due on "${t}"`,
-    title: "You owe the buyer a progress update",
+    title: `You owe ${n.buyer} a progress update`,
     lines: [
       `Your agreement for "${t}" promises regular progress updates, and one is now overdue.`,
-      "Post a short update so the buyer knows where things stand. Missed updates are one of the things a buyer can raise if a project stalls.",
+      `Post a short update so ${n.buyer} knows where things stand. Missed updates are one of the things a buyer can raise if a project stalls.`,
     ],
     cta: "Post an update",
   }),
-  cancellation_statement_needed: (t, p) => ({
-    subject: `Action needed: the buyer asked to cancel "${t}"`,
-    title: "The buyer asked to cancel",
+  cancellation_statement_needed: (t, p, n) => ({
+    subject: `Action needed: ${n.buyer} asked to cancel "${t}"`,
+    title: `${n.Buyer} asked to cancel`,
     lines: [
-      `The buyer asked to cancel "${t}" after paying. Nothing is cancelled yet.`,
-      "Please submit your itemised statement of the work done against each payment, so the buyer can accept it or dispute it.",
+      `${n.Buyer} asked to cancel "${t}" after paying. Nothing is cancelled yet.`,
+      `Please submit your itemised statement of the work done against each payment, so ${n.buyer} can accept it or dispute it.`,
     ],
-    noteLabel: "The buyer's reason",
+    noteLabel: `${n.Buyer}'s reason`,
     note: p.reason,
     cta: "Submit statement",
   }),
-  cancellation_statement_ready: (t, p) => ({
+  cancellation_statement_ready: (t, p, n) => ({
     subject: `Action needed: cancellation statement for "${t}"`,
     title: "A cancellation statement needs your answer",
     lines: [
-      `The creator provided an itemised statement for cancelling "${t}": what was earned, and what would be refunded.`,
+      `${n.Creator} provided an itemised statement for cancelling "${t}": what was earned, and what would be refunded.`,
       "Please accept it or dispute it. Accepting cancels the rest of the project.",
     ],
     noteLabel: "The reason given",
     note: p.reason,
     cta: "Review statement",
   }),
-  cancellation_disputed: (t) => ({
+  cancellation_disputed: (t, p, n) => ({
     subject: `Cancellation statement disputed: "${t}"`,
-    title: "The buyer disputed your cancellation statement",
+    title: `${n.Buyer} disputed your cancellation statement`,
     lines: [
-      `The buyer did not accept your cancellation statement for "${t}". Made for Stream will review it. The project is not cancelled and no money has moved.`,
+      `${n.Buyer} did not accept your cancellation statement for "${t}". Made for Stream will review it. The project is not cancelled and no money has moved.`,
     ],
     cta: "Open commission",
   }),
-  conversation_started: (t, p) => ({
-    subject: `New message from ${p.sender || "someone on Made for Stream"}`,
+  conversation_started: (t, p, n) => ({
+    subject: `New message from ${n.sender || "someone on Made for Stream"}`,
     title: "Someone started a conversation with you",
     lines: [
-      `${p.sender || "Someone"} sent you a message${p.subject ? ` about "${p.subject}"` : ""}.`,
+      `${n.sender || "Someone"} sent you a message${p.subject ? ` about "${p.subject}"` : ""}.`,
       "Open the conversation to read it and reply.",
     ],
     cta: "Open conversation",
   }),
-  message_received: (t, p) => ({
-    subject: `New message from ${p.sender || "someone on Made for Stream"}`,
+  message_received: (t, p, n) => ({
+    subject: `New message from ${n.sender || "someone on Made for Stream"}`,
     title: "You have unread messages",
     lines: [
-      `${p.sender || "Someone"} sent you a message${p.subject ? ` in "${p.subject}"` : ""} while you were away.`,
+      `${n.sender || "Someone"} sent you a message${p.subject ? ` in "${p.subject}"` : ""} while you were away.`,
       "You will not get another email about this conversation until you have read it.",
     ],
     cta: "Open conversation",
   }),
-  cancellation_warning: (t, p) => ({
+  cancellation_warning: (t, p, n) => ({
     subject: `Cancellation warning: reply by ${deadline(p)} about "${t}"`,
     title: "You have received a cancellation warning",
     lines: [
-      `The other person on "${t}" has not heard from you and has started a ${p.response_days ? `${p.response_days}-day ` : ""}cancellation timer.`,
+      `${n.Other} on "${t}" has not heard from you and has started a ${p.response_days ? `${p.response_days}-day ` : ""}cancellation timer.`,
       `Unless you respond by ${deadline(p)}, the commission will be cancelled automatically.`,
       "Either of two things stops the timer at once: doing what is asked (for example paying, accepting or approving), or sending any reply in the commission's chat. You do not need to do both.",
       "If the buyer is the one who does not respond, payments already made stay with the creator. If the creator does not respond, amounts paid for work not reached are refunded to the buyer.",
@@ -335,11 +353,11 @@ export const NOTIFICATION_EMAILS = {
     note: p.reason,
     cta: "Reply now",
   }),
-  cancellation_warning_answered: (t) => ({
+  cancellation_warning_answered: (t, p, n) => ({
     subject: `Your cancellation warning was answered: "${t}"`,
-    title: "The other person responded",
+    title: `${n.Other} responded`,
     lines: [
-      `The other person on "${t}" responded to your cancellation warning, either with a message or by taking the next step. The timer has stopped and the commission continues.`,
+      `${n.Other} on "${t}" responded to your cancellation warning, either with a message or by taking the next step. The timer has stopped and the commission continues.`,
       "If things stall again you can send a new warning.",
     ],
     cta: "Open commission",
@@ -374,15 +392,29 @@ export const NOTIFICATION_EMAILS = {
   }),
 };
 
+// The handles of the two people on a commission or conversation, as the
+// `names` an email is written with. `handleByUserId` maps user ids to
+// handles; anyone missing from it is left out and named by role instead.
+export const getNotificationNames = ({ buyerUserId, creatorUserId, recipientUserId, handleByUserId }) => {
+  const handle = (userId) => String((userId && handleByUserId?.[userId]) || "").trim();
+  const otherUserId = recipientUserId === buyerUserId ? creatorUserId : buyerUserId;
+
+  return { buyer: handle(buyerUserId), creator: handle(creatorUserId), other: handle(otherUserId) };
+};
+
 // Null when the kind has no template (NOTIF-002).
-export const renderNotificationEmail = ({ kind, requestTitle, payload, requestUrl }) => {
+export const renderNotificationEmail = ({ kind, requestTitle, payload, requestUrl, names }) => {
   const build = NOTIFICATION_EMAILS[kind];
 
   if (!build) {
     return null;
   }
 
-  const content = build(requestTitle || "your conversation", payload || {});
+  const content = build(
+    requestTitle || "your conversation",
+    payload || {},
+    people(names, payload || {}),
+  );
 
   return renderActionEmail({ ...content, ctaUrl: requestUrl, ctaLabel: content.cta });
 };

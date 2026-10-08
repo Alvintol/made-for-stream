@@ -240,6 +240,16 @@ describe("<ProfileSettings /> in the settings layout", () => {
     );
   });
 
+  it("does not let the display name be removed", async () => {
+    renderSettings();
+
+    fireEvent.change(screen.getByLabelText(/^Display name/), { target: { value: " " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+
+    expect(await screen.findByText("Enter a display name of 2 to 50 characters.")).toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it("rejects an invalid handle without saving", () => {
     renderSettings();
 

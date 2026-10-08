@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   NOTIFICATION_EMAILS,
   getListingRequestUrl,
+  getNotificationNames,
   getNotificationUrl,
   renderNotificationEmail,
 } from "../notificationEmails.js";
@@ -62,6 +63,70 @@ describe("commission notification emails", () => {
     expect(email.text).toContain("€42.00 EUR");
     expect(email.html).toContain("&lt;b&gt;Logo&lt;/b&gt;");
     expect(email.html).not.toContain("<b>Logo</b>");
+  });
+
+  it("names people by their handle, with no @, when they have one", () => {
+    const names = { buyer: "ImAllBeans", creator: "meowington", other: "meowington" };
+    const render = (kind, payload = {}) =>
+      renderNotificationEmail({
+        kind,
+        requestTitle: "Emote pack",
+        payload,
+        requestUrl: "https://example.test/requests/1",
+        names,
+      });
+
+    expect(render("request_received").text).toContain('ImAllBeans sent you a commission request, "Emote pack".');
+    expect(render("request_accepted").html).toContain("meowington accepted your commission request");
+    expect(render("request_declined", { reason: "Fully booked" }).text).toContain("meowington's reason");
+    expect(render("payment_received").text).toContain("ImAllBeans paid");
+    expect(render("cancellation_warning").text).toContain('meowington on "Emote pack" has not heard from you');
+    // The database's own name for a chat sender gives way to the handle.
+    expect(render("message_received", { sender: "Meow Ington" }).subject).toBe("New message from meowington");
+
+    for (const kind of Object.keys(NOTIFICATION_EMAILS)) {
+      expect(render(kind).text, kind).not.toContain("@");
+    }
+  });
+
+  it("falls back to the role when a handle is missing or could not be read", () => {
+    const render = (kind, names, payload = {}) =>
+      renderNotificationEmail({
+        kind,
+        requestTitle: "Emote pack",
+        payload,
+        requestUrl: "https://example.test/requests/1",
+        names,
+      });
+
+    expect(render("request_received", undefined).text).toContain("A buyer sent you a commission request");
+    expect(render("request_accepted", { buyer: "", creator: "" }).html).toContain(
+      "The creator accepted your commission request",
+    );
+    expect(render("payment_reminder", {}).text).toContain("so the creator knows");
+    expect(render("message_received", {}, { sender: "Meow Ington" }).subject).toBe(
+      "New message from Meow Ington",
+    );
+    // Rules about buyers and creators in general keep the plain words.
+    expect(render("cancellation_warning", { buyer: "a", creator: "b", other: "b" }).text).toContain(
+      "If the buyer is the one who does not respond",
+    );
+  });
+
+  it("works out who is who from the commission and the recipient", () => {
+    const handleByUserId = { "buyer-1": "ImAllBeans", "creator-1": " meowington " };
+    const ids = { buyerUserId: "buyer-1", creatorUserId: "creator-1", handleByUserId };
+
+    expect(getNotificationNames({ ...ids, recipientUserId: "buyer-1" })).toEqual({
+      buyer: "ImAllBeans",
+      creator: "meowington",
+      other: "meowington",
+    });
+    expect(getNotificationNames({ ...ids, recipientUserId: "creator-1" }).other).toBe("ImAllBeans");
+    // An account with no handle is simply left unnamed.
+    expect(
+      getNotificationNames({ ...ids, recipientUserId: "buyer-1", handleByUserId: { "buyer-1": null } }),
+    ).toEqual({ buyer: "", creator: "", other: "" });
   });
 
   it("returns null for a kind it does not know", () => {
