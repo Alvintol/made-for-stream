@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getPayoutCountryOptions } from "../../domain/payments/supportedCountries";
+import { getBillingCountryOptions } from "../../domain/payments/billingCountries";
 import { SUPPORTED_CURRENCY_CODES } from "../../domain/payments/supportedCurrencies";
 import {
   useDisplayPreferences,
@@ -22,10 +22,12 @@ const classes = {
   error: "notice noticeError",
 } as const;
 
-// Where a signed-in person says which country they are in and which
-// currency they want prices shown in. Used only to show approximate
-// converted prices; it never changes what anyone is charged.
-const DisplayCurrencySettings = () => {
+// Where a person says which country they are in and which currency they
+// want prices shown in. The country is their billing country at checkout
+// (the API reads it to work out tax); the currency only chooses how
+// approximate converted prices are shown and never what anyone is charged.
+// The top bar's globe button shows this form without the country.
+const DisplayCurrencySettings = ({ showCountry = true }: { showCountry?: boolean }) => {
   const preferencesQuery = useDisplayPreferences();
   const savePreferences = useSaveDisplayPreferences();
 
@@ -47,7 +49,7 @@ const DisplayCurrencySettings = () => {
   const country = edits.country ?? saved?.country_code ?? "";
   const currency = edits.currency ?? saved?.display_currency ?? "";
 
-  const countryOptions = useMemo(() => getPayoutCountryOptions(), []);
+  const countryOptions = useMemo(() => getBillingCountryOptions(), []);
   const countryCurrency = getCurrencyForCountry(country);
 
   const save = async () => {
@@ -67,9 +69,10 @@ const DisplayCurrencySettings = () => {
   return (
     <>
       <p className={classes.text}>
-        Creators set prices in their own currency. Tell us where you are and we will also show
-        an approximate price in yours. We use this only to choose the currency you see. It is
-        not shown on your profile, and you always pay in the creator's currency.
+        {showCountry &&
+          "Your country is your billing country when you pay: it decides whether tax applies. It is not shown on your profile. "}
+        Creators set prices in their own currency, and you always pay in the creator's currency.
+        We can also show an approximate price in yours.
       </p>
 
       <div className={classes.form}>
@@ -87,6 +90,7 @@ const DisplayCurrencySettings = () => {
           <span className={classes.hint}>More languages are planned.</span>
         </label>
 
+        {showCountry && (
         <label className={classes.field}>
           <span className={classes.label}>Country</span>
           <select
@@ -98,7 +102,7 @@ const DisplayCurrencySettings = () => {
               setJustSaved(false);
             }}
           >
-            <option value="">Another country, or prefer not to say</option>
+            <option value="">Not set</option>
             {countryOptions.map((option) => (
               <option key={option.code} value={option.code}>
                 {option.name}
@@ -106,12 +110,13 @@ const DisplayCurrencySettings = () => {
             ))}
           </select>
           <span className={classes.hint}>
-            The list covers countries whose currency we can show. If yours is missing, choose a
-            currency on the right.
+            Used as your billing country at checkout. If it is not set, you are asked when you
+            first pay.
           </span>
         </label>
+        )}
 
-        <label className={classes.field}>
+        <label className={showCountry ? classes.field : classes.wideField}>
           <span className={classes.label}>Show prices in</span>
           <select
             className={classes.input}
@@ -152,7 +157,7 @@ const DisplayCurrencySettings = () => {
 
       {justSaved && (
         <div className={classes.success} role="status">
-          Saved. Prices across the site now follow this choice.
+          Saved.
           {savePreferences.isGuest &&
             " Sign in to keep it: without an account it lasts until you reload or close this page."}
         </div>

@@ -109,15 +109,20 @@ describe(
     it("shows when a project is not eligible", () => {
       render(
         <MilestoneEditorHarness
-          estimatedWorkDays={14}
+          estimatedWorkDays={6}
         />
       );
 
       expect(
         screen.getByText(
-          "Milestone payments require an estimated project length greater than 14 days."
+          /Milestone payments need an estimated project length\s+of at least 7 days\./
         )
       ).toBeInTheDocument();
+
+      // Shown, but locked until the project is long enough.
+      expect(
+        screen.getByRole("button", { name: "Add milestone" })
+      ).toBeDisabled();
     });
 
     it("adds a new milestone", () => {

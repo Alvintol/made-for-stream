@@ -13,6 +13,10 @@ import {
   getListingRequestPaymentTitle,
 } from "../../domain/payments/listingRequestPaymentDisplay";
 import { describePaymentTaxLine } from "../../domain/payments/listingRequestPaymentTax";
+import {
+  useDisplayPreferences,
+  useSaveDisplayPreferences,
+} from "../../hooks/money/useDisplayCurrency";
 import { useCreateListingRequestPaymentCheckout } from "../../hooks/payments/useCreateListingRequestPaymentCheckout";
 import { useListingRequestPayment } from "../../hooks/payments/useListingRequestPayments";
 import { useSetListingRequestPaymentTipAndSupport } from "../../hooks/payments/useSetListingRequestPaymentTipAndSupport";
@@ -64,8 +68,14 @@ const ListingRequestPaymentCheckout = () => {
   // launch-scope.md section 4: both default to zero and require an
   // affirmative choice before checkout opens -- entered as whole-currency-unit
   // strings so the buyer never sees "0" pre-filled as if it were a suggestion.
-  const [tipInput, setTipInput] = useState("");
-  const [supportInput, setSupportInput] = useState("");
+  // Null means "not edited on this visit": the box then shows what an earlier
+  // visit saved on the payment, so a buyer who comes back can change or remove it.
+  const [tipEdit, setTipEdit] = useState<string | null>(null);
+  const [supportEdit, setSupportEdit] = useState<string | null>(null);
+  const savedAmount = (cents: number | undefined): string =>
+    cents ? (cents / 100).toFixed(2) : "";
+  const tipInput = tipEdit ?? savedAmount(payment?.creator_tip_cents);
+  const supportInput = supportEdit ?? savedAmount(payment?.platform_support_cents);
   const [extrasConfirmed, setExtrasConfirmed] = useState(false);
   const [extrasErrMsg, setExtrasErrMsg] = useState<string | null>(null);
 
@@ -73,9 +83,19 @@ const ListingRequestPaymentCheckout = () => {
   // chosen before checkout. It is location evidence for tax and decides
   // which jurisdiction's tax (if any) applies -- the API enforces that it
   // is present, this only collects it.
-  const [billingCountry, setBillingCountry] = useState("");
+  //
+  // It is the country saved in Settings, and cannot be changed here: the API
+  // uses the saved one whatever this page sends. Only a buyer with none saved
+  // chooses here, and the choice is then saved as their country.
+  const preferencesQuery = useDisplayPreferences();
+  const savePreferences = useSaveDisplayPreferences();
+  const savedCountry = preferencesQuery.data?.country_code ?? "";
+  const [chosenCountry, setChosenCountry] = useState("");
+  const billingCountry = savedCountry || chosenCountry;
   const [billingPostalCode, setBillingPostalCode] = useState("");
   const billingCountryOptions = useMemo(() => getBillingCountryOptions(), []);
+  const savedCountryName =
+    billingCountryOptions.find((option) => option.code === savedCountry)?.name ?? savedCountry;
 
   const parseAmountToCents = (value: string): number => {
     const trimmed = value.trim();
@@ -101,6 +121,13 @@ const ListingRequestPaymentCheckout = () => {
       const creatorTipCents = parseAmountToCents(tipInput);
       const platformSupportCents = parseAmountToCents(supportInput);
 
+      if (!savedCountry) {
+        await savePreferences.mutateAsync({
+          country_code: billingCountry,
+          display_currency: preferencesQuery.data?.display_currency ?? null,
+        });
+      }
+
       await setTipAndSupport.mutateAsync({
         paymentId,
         creatorTipCents,
@@ -112,7 +139,7 @@ const ListingRequestPaymentCheckout = () => {
       setExtrasErrMsg(getErrorMessage(error));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentId, tipInput, supportInput, billingCountry, setTipAndSupport.mutateAsync]);
+  }, [paymentId, tipInput, supportInput, billingCountry, savedCountry, preferencesQuery.data, savePreferences.mutateAsync, setTipAndSupport.mutateAsync]);
 
   // Stripe checkout opens only after the buyer has confirmed their tip and
   // contribution choice, then accepted the project terms and policies for
@@ -282,7 +309,7 @@ const ListingRequestPaymentCheckout = () => {
                   inputMode="decimal"
                   placeholder="0"
                   value={tipInput}
-                  onChange={(event) => setTipInput(event.target.value)}
+                  onChange={(event) => setTipEdit(event.target.value)}
                 />
               </div>
             </div>
@@ -303,7 +330,7 @@ const ListingRequestPaymentCheckout = () => {
                   inputMode="decimal"
                   placeholder="0"
                   value={supportInput}
-                  onChange={(event) => setSupportInput(event.target.value)}
+                  onChange={(event) => setSupportEdit(event.target.value)}
                 />
               </div>
             </div>
@@ -317,23 +344,42 @@ const ListingRequestPaymentCheckout = () => {
 
           <div className="mt-4 space-y-3">
             <div className={classes.fieldRow}>
-              <label className={classes.fieldLabel} htmlFor="billing-country">
-                Billing country
-              </label>
-              <select
-                id="billing-country"
-                className={classes.fieldSelect}
-                value={billingCountry}
-                onChange={(event) => setBillingCountry(event.target.value)}
-                required
-              >
-                <option value="">Choose a country</option>
-                {billingCountryOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
+              {savedCountry ? (
+                <>
+                  <span className={classes.fieldLabel}>
+                    Billing country
+                    <span className={classes.fieldHint}> — the country in your settings</span>
+                  </span>
+                  <span className="text-sm">
+                    {savedCountryName}{" "}
+                    <Link className={classes.feeLink} to="/settings#settings-display-currency">
+                      Change in Settings
+                    </Link>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <label className={classes.fieldLabel} htmlFor="billing-country">
+                    Billing country
+                    <span className={classes.fieldHint}> — saved as the country in your settings</span>
+                  </label>
+                  <select
+                    id="billing-country"
+                    className={classes.fieldSelect}
+                    value={chosenCountry}
+                    disabled={preferencesQuery.isLoading}
+                    onChange={(event) => setChosenCountry(event.target.value)}
+                    required
+                  >
+                    <option value="">Choose a country</option>
+                    {billingCountryOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
 
             <div className={classes.fieldRow}>
@@ -358,8 +404,8 @@ const ListingRequestPaymentCheckout = () => {
           <div className={`mt-4 ${classes.actions}`}>
             <button
               type="button"
-              className="btn"
-              disabled={setTipAndSupport.isPending}
+              className="btnPrimary"
+              disabled={setTipAndSupport.isPending || savePreferences.isPending}
               onClick={() => void onConfirmExtras()}
             >
               {setTipAndSupport.isPending ? "Saving…" : "Continue to payment"}

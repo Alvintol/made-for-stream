@@ -1,8 +1,36 @@
 # Launch Rehearsal Runbook (test mode)
 
 Sprint 8's last gate (`launch-implementation-checklist.md`). **Written 2026-09-23,
-updated 2026-10-07, section 0 nearly done, sections 1 to 7 not yet run.** Nothing past section 0 has been executed; tick the boxes as you go and record
+updated 2026-10-08, section 0 nearly done, section 1 started in CAD, sections 1b to 7 not yet run.** Tick the boxes as you go and record
 the ids you used, so "has this been rehearsed" has an answer.
+
+**Progress, 2026-10-08.** CAD request `6070950f-424c-4f60-9d17-4996a5ecee4b`:
+sent, accepted, a **deposit and balance** agreement sent and accepted by the
+buyer, and the five emails for those steps marked `sent` (confirmed in the
+database). The deposit payment `a13f62c3-5fb2-4237-98f5-69abd97e0f2f` is
+**not paid**: it carries a 24.15 tip and a 1.00 contribution from an earlier
+visit to the checkout page, and the fee arithmetic on it is correct (115 /
+115, application fee 330, recovery 0). The milestone run in section 1 has
+not started: the builder refused milestones on the default 14-day project.
+Not yet done: the 9.99 and early-start refusals, any payment.
+
+Defects found by this run and fixed on branch
+`fix/rehearsal-checkout-agreement-and-region` (needs an **API deploy**, then
+the website merge):
+
+- Budget box on the commission request form: the currency code sat on top of
+  the typed amount.
+- Milestone payments needed more than 14 work days while the builder
+  defaults to 14. Now 7 days or more; the plan shows but is locked below that.
+- Checkout: a tip or contribution from an earlier visit showed in the total
+  but could not be changed or removed. The boxes now show the saved amounts.
+- Checkout: the billing country was a free choice on every payment. It is
+  now the country saved in Settings (enforced by the API); a buyer with none
+  saved chooses once and it is saved.
+- Checkout: "Continue to payment" was unstyled text.
+- Agreement acceptance: one compact list instead of a card per tick box; the
+  early-start explanation sits behind "Why am I asked this?".
+- Top bar globe: language and currency only. The country is set in Settings.
 
 A passing run clears **CAD and USD** for launch. The EUR run proves the money path works
 in a second currency in test mode. It does **not** clear EUR, GBP or any other wave 2
@@ -54,7 +82,7 @@ To do:
       `imallbeans+twitch@gmail.com` is the buyer; it has a profile and pays
       standard fees, 5% and 5%. `imallbeans@gmail.com` is not used.)*
       **Buyer profile.**
-- [ ] **Clear the buyer's old test request first.** The buyer has an
+- [x] *(Done; `cancelled`, confirmed in the database 2026-10-07.)* **Clear the buyer's old test request first.** The buyer has an
       accepted, unpaid request from May on meowington's "222222222 updated"
       (`e1ee74b1-a947-45a4-bbb6-b77cde0b5c05`), and a buyer can hold only one
       open request per listing. Cancel it from the buyer's request page. This
@@ -159,10 +187,11 @@ where n.listing_request_id = '<request>' order by n.created_at;
       cancellation itself takes 7 days or more, so it was checked by a
       rolled-back dry run only (`docs/support/requests/cancellation-warnings.md`).
 
-Record the request id per currency: CAD `____` USD `____` EUR `____`
+Record the request id per currency: CAD `6070950f-424c-4f60-9d17-4996a5ecee4b` (deposit and balance; a milestone run is still needed) USD `____` EUR `____`
 
 - [ ] Buyer submits a request. Creator accepts it.
-- [ ] Creator builds a **milestone** agreement with two milestones (the
+- [ ] Creator builds a **milestone** agreement with two milestones (estimated
+      work days must be 7 or more, or the milestone plan is locked; the
       builder has no deposit on a milestone agreement; a deposit exists only
       on "deposit and balance", which sections 2 and 3 can use),
       every payment ≥ 10.00. **The amounts show the creator's currency.** **Summary shows the fee line as a maximum**, with the
@@ -183,8 +212,11 @@ Record the request id per currency: CAD `____` USD `____` EUR `____`
       request at the current Refund Policy version (`2026-10-07`).
 - [ ] Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
-      contribution** on this payment. Billing-country step, tax row reads as
-      not collected. Pay with `4242 4242 4242 4242`.
+      contribution** on this payment. The billing country shows the
+      country from the buyer's settings and cannot be changed on the page
+      (2026-10-08); the tax row reads as not collected. Leave the page and
+      come back: the tip and contribution boxes show what was entered and
+      can be changed. Pay with `4242 4242 4242 4242`.
 - [ ] Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).

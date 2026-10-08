@@ -132,7 +132,7 @@ export const validateListingRequestMilestonePlan = (
     )
   ) {
     errors.push(
-      "Milestone payments require an estimated project length greater than 14 days."
+      "Milestone payments need an estimated project length of at least 7 days."
     );
   }
 

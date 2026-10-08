@@ -107,9 +107,9 @@ describe("listing commission agreement helpers", () => {
     });
   });
 
-  it("allows milestone payments only for projects longer than two weeks", () => {
-    expect(allowsMilestonePayments(14)).toBe(false);
-    expect(allowsMilestonePayments(15)).toBe(true);
+  it("allows milestone payments only for projects of a week or more", () => {
+    expect(allowsMilestonePayments(6)).toBe(false);
+    expect(allowsMilestonePayments(7)).toBe(true);
     expect(allowsMilestonePayments(30)).toBe(true);
   });
 

@@ -143,10 +143,10 @@ describe("listing commission milestones", () => {
     });
   });
 
-  it("requires a project longer than 14 days", () => {
+  it("requires a project of at least 7 days", () => {
     const result =
       validateListingRequestMilestonePlan({
-        estimatedWorkDays: 14,
+        estimatedWorkDays: 6,
         agreementTotal: 500,
         milestones: validMilestones,
       });
@@ -154,7 +154,7 @@ describe("listing commission milestones", () => {
     expect(result.isValid).toBe(false);
 
     expect(result.errors).toContain(
-      "Milestone payments require an estimated project length greater than 14 days."
+      "Milestone payments need an estimated project length of at least 7 days."
     );
   });
 

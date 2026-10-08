@@ -526,6 +526,11 @@ describe("ListingRequestAgreementBuilder", () => {
     fillValidAgreementForm();
 
     fireEvent.change(
+      screen.getByLabelText("Estimated work days"),
+      { target: { value: "6" } }
+    );
+
+    fireEvent.change(
       screen.getByLabelText(
         "Payment structure"
       ),
@@ -550,7 +555,7 @@ describe("ListingRequestAgreementBuilder", () => {
 
     expect(
       screen.getAllByText(
-        "Milestone payments require an estimated project length greater than 14 days."
+        "Milestone payments need an estimated project length of at least 7 days."
       ).length
     ).toBeGreaterThan(0);
 

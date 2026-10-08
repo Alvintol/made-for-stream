@@ -23,8 +23,9 @@ unmatched_tier: 2
 
 # Regional Sales Tax — Support Playbook
 
-Sprint 7 (`../../launch-scope.md` section 12). At checkout the buyer
-chooses a billing country. For a country Made for Stream collects tax in,
+Sprint 7 (`../../launch-scope.md` section 12). The buyer's billing country
+is the country saved in their settings (2026-10-08; a buyer with none saved
+chooses one at checkout and it is saved). For a country Made for Stream collects tax in,
 the API calculates tax with Stripe Tax and charges it as its own line.
 Tax is swept to the platform inside the application fee, and a Stripe Tax
 transaction is recorded on the platform account once the payment is paid.
@@ -90,6 +91,9 @@ signals:
     match: "Choose your billing country before paying."
     where: "POST /api/stripe/checkout/session"
   - source: api
+    match: "Your billing country could not be read. Please try again."
+    where: "POST /api/stripe/checkout/session"
+  - source: api
     match: "/Location evidence could not be recorded: /"
     where: "POST /api/stripe/checkout/session"
   - source: db
@@ -107,8 +111,13 @@ escalate_with:
 ```
 
 **Cause.** `applyCheckoutTax` in `api/server.js` runs before any Stripe
-session is created or reused. It requires a billing country, records it
-as `billing_address_declared` evidence, and records the IP country too if
+session is created or reused. It reads the buyer's saved country from
+`public.user_display_preferences.country_code` and uses that as the billing
+country, whatever the checkout page sent; only when nothing is saved does it
+use the country the page sent (and the page saves that choice). A failed
+read of the saved country refuses checkout rather than trusting the page.
+It records the country as `billing_address_declared` evidence (`source` is
+`account_settings` or `buyer_checkout_form`), and records the IP country too if
 `TAX_IP_COUNTRY_HEADER` is set. For a collecting country it then calls
 Stripe Tax. Stripe Tax rejects addresses it cannot place: US calculations
 need a ZIP code, and Canadian ones need a province.
@@ -118,7 +127,12 @@ match the declared billing country on record.
 **What the user sees.** The billing-country prompt on the checkout page,
 or a red error box after accepting the policies.
 
-**Fix.** Ask the buyer to pick their billing country. If the error names
+**Fix.** Ask the buyer to pick their billing country, or to correct it in
+Settings → Country and currency if checkout shows the wrong one. "Could not
+be read" is a database fault: retry, and escalate if it repeats. A buyer can
+still change the country in Settings before paying; a declared country that
+disagrees with the card or IP country is [`TAX-002`](#tax-002--location-evidence-insufficient-or-contradictory),
+which is where a wrong country is caught. If the error names
 an address, ask them to add a postal/ZIP code. Then reload the checkout
 page and continue. A jurisdiction-mismatch error from the database
 should not be reachable from the UI; escalate it.

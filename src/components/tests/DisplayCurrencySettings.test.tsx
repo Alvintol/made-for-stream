@@ -31,9 +31,32 @@ describe("<DisplayCurrencySettings />", () => {
   it("says what the country is used for, and that it is not shown publicly", () => {
     render(<DisplayCurrencySettings />);
 
-    expect(screen.getByText(/We use this only to choose the currency you see/)).toBeInTheDocument();
-    expect(screen.getByText(/It is\s+not shown on your profile/)).toBeInTheDocument();
+    expect(screen.getByText(/Your country is your billing country when you pay/)).toBeInTheDocument();
+    expect(screen.getByText(/It is not shown on your profile/)).toBeInTheDocument();
     expect(screen.getByText(/you always pay in the creator's currency/)).toBeInTheDocument();
+  });
+
+  it("offers every country, because the country is the billing country", () => {
+    render(<DisplayCurrencySettings />);
+
+    // Brazil has no supported currency here, but a buyer can still live there.
+    expect(screen.getByRole("option", { name: "Brazil" })).toBeInTheDocument();
+  });
+
+  it("leaves the country out of the top bar's version, and keeps the saved one on save", async () => {
+    mocks.saved = { country_code: "CA", display_currency: null };
+
+    render(<DisplayCurrencySettings showCountry={false} />);
+
+    expect(screen.queryByLabelText(/^Country/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/billing country/)).not.toBeInTheDocument();
+
+    fireEvent.change(currency(), { target: { value: "usd" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd" }),
+    );
   });
 
   it("offers every currency the site supports", () => {
