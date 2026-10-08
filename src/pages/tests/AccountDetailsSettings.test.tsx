@@ -6,11 +6,13 @@ const mocks = vi.hoisted(() => ({
   details: null as Record<string, unknown> | null,
   profileSetupSeen: true,
   save: vi.fn(),
+  saveMarketing: vi.fn(),
 }));
 
 vi.mock("../../hooks/settings/useAccountDetails", () => ({
   useAccountDetails: () => ({ data: mocks.details, isLoading: false, isError: false }),
   useSaveAccountDetails: () => ({ mutateAsync: mocks.save, isPending: false, error: null }),
+  useSaveMarketingEmails: () => ({ mutateAsync: mocks.saveMarketing }),
 }));
 
 vi.mock("../../hooks/profile/useMyProfile", () => ({
@@ -53,6 +55,7 @@ describe("<AccountDetailsSettings />", () => {
     mocks.details = null;
     mocks.profileSetupSeen = true;
     mocks.save.mockReset().mockResolvedValue(undefined);
+    mocks.saveMarketing.mockReset().mockResolvedValue(undefined);
   });
 
   it("asks a new account for its details and says they stay private", () => {
@@ -90,6 +93,11 @@ describe("<AccountDetailsSettings />", () => {
     fill(/^Province or state/, "AB");
     fill(/^Postal or ZIP code/, "T2T 2T2");
 
+    // Promotional email is asked here, and is never ticked for the person.
+    const optIn = screen.getByRole("checkbox", { name: /news, offers and monthly updates/ });
+    expect(optIn).not.toBeChecked();
+    fireEvent.click(optIn);
+
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
 
     await waitFor(() =>
@@ -104,6 +112,7 @@ describe("<AccountDetailsSettings />", () => {
       ),
     );
     expect(await screen.findByText("Profile page")).toBeInTheDocument();
+    expect(mocks.saveMarketing).toHaveBeenCalledWith(true);
   });
 
   it("requires the business name only for a business account", () => {
@@ -145,6 +154,9 @@ describe("<AccountDetailsSettings />", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
 
     expect(screen.getByLabelText(/^Legal first name/)).toHaveValue("Ada");
+
+    // The email question belongs to the first save only.
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
 
     fill(/^City or town/, "Edmonton");
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));

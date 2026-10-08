@@ -185,6 +185,78 @@ describe("ListingRequestPaymentCheckout", () => {
     );
   });
 
+  it("offers a percentage of the project payment as a tip or contribution, and says what the contribution is for", async () => {
+    renderCheckout();
+
+    expect(screen.getByText(/built and run by one developer/)).toBeInTheDocument();
+    // Nothing is chosen until the buyer chooses.
+    expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Tip 15% of the project payment" }));
+    fireEvent.click(screen.getByRole("button", { name: "Contribute 3% of the project payment" }));
+
+    expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(15);
+    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(3);
+
+    // An exact amount can still be typed over a percentage.
+    fireEvent.change(screen.getByLabelText(/^Support Made for Stream/), { target: { value: "2.5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
+
+    await waitFor(() =>
+      expect(mocks.setTipAndSupport).toHaveBeenCalledWith({
+        paymentId: "payment-1",
+        creatorTipCents: 1500,
+        platformSupportCents: 250,
+      }),
+    );
+  });
+
+  it("rounds the total up to a whole number, on the tip or on the contribution", async () => {
+    // 23.00 + 1.15 fee = 24.15, so 0.85 brings the total to 25.00.
+    mocks.payment = { ...mocks.payment, base_amount_cents: 2300, buyer_service_fee_cents: 115 };
+
+    renderCheckout();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Round your total up to a whole number with a tip" }),
+    );
+    expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(0.85);
+
+    // The total is whole now, so there is nothing left to round.
+    expect(
+      screen.getByRole("button", { name: "Round your total up to a whole number with a contribution" }),
+    ).toBeDisabled();
+
+    // Rounding adds to what is already there instead of replacing it.
+    fireEvent.change(screen.getByLabelText(/^Tip for the creator/), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Contribute 1.00" }));
+    fireEvent.change(screen.getByLabelText(/^Support Made for Stream/), { target: { value: "1.10" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Round your total up to a whole number with a contribution" }),
+    );
+    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(1.85);
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue to payment" }));
+
+    await waitFor(() =>
+      expect(mocks.setTipAndSupport).toHaveBeenCalledWith({
+        paymentId: "payment-1",
+        creatorTipCents: 0,
+        platformSupportCents: 185,
+      }),
+    );
+  });
+
+  it("adds nothing for the buyer: the contribution starts empty until they choose one", () => {
+    renderCheckout();
+
+    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Contribute 1.00" }));
+
+    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(1);
+  });
+
   it("creates only one session when acceptance is reported more than once", async () => {
     renderCheckout();
 

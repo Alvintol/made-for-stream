@@ -55,7 +55,9 @@ it sets the default display currency
 ([`../payments/display-currency.md`](../payments/display-currency.md)).
 
 **Promotional email.** `user_email_preferences.marketing_emails` is off unless
-the person ticks the box in **Settings → Preferences**.
+the person ticks the box, which is on the first-time account details form and
+in **Settings → Preferences**. It is never ticked for them: Canadian anti-spam
+law (CASL) and EU and UK rules do not accept a pre-ticked box as consent.
 `marketing_emails_changed_at` is set by the database and is the record of when
 consent was given or withdrawn. Nothing sends promotional email yet; whatever
 does must read this column and carry an unsubscribe link (Privacy Policy

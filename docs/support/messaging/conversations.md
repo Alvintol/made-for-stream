@@ -208,6 +208,43 @@ dispute.
 
 ---
 
+## The inbox (2026-10-08)
+
+`/messages` files every conversation in exactly one folder
+(`src/domain/conversations/inboxFolders.ts`):
+
+| Folder | What is in it |
+| --- | --- |
+| Messages | Listing and creator inquiries whose chat is open |
+| Active commissions | Commission conversations whose commission is `submitted` or `accepted` |
+| Completed commissions | Commission is `completed` |
+| Ended conversations | A closed or locked inquiry, or a commission that was declined, cancelled or archived |
+
+"Reports" in the folder list is a link to Settings → My reports, not a folder.
+The folder is in the address (`/messages?folder=ended`).
+
+**What is loaded.** The inbox reads the person's 50 most recently active
+conversations (`INBOX_PAGE_SIZE`), and for unread counts only the messages
+that arrived after their last read in conversations that can have any. The
+same query feeds the unread number in the top bar on every page, so it is
+kept small on purpose. When someone has more than 50 conversations, an
+**Older conversations** folder appears with the rest; those are fetched 50 at
+a time and only when that folder is opened. Folder counts and the instant
+search cover what is loaded, so an old conversation is found by opening Older
+conversations first. Capital letters never matter in either kind of search.
+
+**Search** matches every word typed against the conversation's title, listing,
+the other person and the latest message, as it is typed. Once three or more
+characters are typed and typing pauses, `useInboxMessageSearch` also asks the
+database which of the person's conversations contain that text in any message
+(`conversation_messages.body`, limited by row level security to their own).
+
+**"Search doesn't find a message I know is there."** The message search needs
+three characters, matches the text exactly as typed (not word by word), and
+returns at most 500 matching messages. If the database query fails, the inbox
+still filters on titles, people and the latest message and shows no error.
+The conversation must also be in the folder being viewed: search in **All**.
+
 ## Known gaps
 
 - **No documented export of a conversation** for dispute evidence. `REF-003`

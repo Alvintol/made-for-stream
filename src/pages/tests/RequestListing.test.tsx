@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,15 +9,24 @@ const mocks = vi.hoisted(() => ({
   usePublicListing: vi.fn(),
   createRequest: vi.fn(),
   useActiveListingRequestForListing: vi.fn(),
+  feeRate: { feeBps: 500, reason: "standard" },
+  display: { displayCurrency: null, rates: null } as {
+    displayCurrency: string | null;
+    rates: { base: "eur"; date: string; rates: Record<string, number> } | null;
+  },
 }));
 
 // Prices are shown in the creator's own currency in these tests; the
 // conversion has its own tests (ListingPriceText, displayCurrency).
 vi.mock("../../hooks/money/useDisplayCurrency", () => ({
-  useDisplayCurrency: () => ({ displayCurrency: null, rates: null }),
+  useDisplayCurrency: () => mocks.display,
   useDisplayPreferences: () => ({ data: null, isLoading: false }),
   useSaveDisplayPreferences: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
   useExchangeRates: () => ({ data: null }),
+}));
+
+vi.mock("../../hooks/payments/useBuyerServiceFeeRate", () => ({
+  useBuyerServiceFeeRate: () => mocks.feeRate,
 }));
 
 vi.mock("../../providers/AuthProvider", () => ({
@@ -88,6 +97,8 @@ const renderPage = () =>
 describe("RequestListing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.display = { displayCurrency: null, rates: null };
+    mocks.feeRate = { feeBps: 500, reason: "standard" };
 
     mocks.useAuth.mockReturnValue({
       user: {
@@ -147,7 +158,7 @@ describe("RequestListing", () => {
 
     expect(screen.getByText("Custom Emote Pack")).toBeInTheDocument();
     expect(screen.getByText("@creatoruser")).toBeInTheDocument();
-    expect(screen.getByText("$50 CAD")).toBeInTheDocument();
+    expect(screen.getAllByText("$50 CAD").length).toBeGreaterThan(0);
     expect(screen.getByText("3 emotes")).toBeInTheDocument();
 
     expect(screen.getByLabelText("Commission title / summary")).toBeInTheDocument();
@@ -155,6 +166,69 @@ describe("RequestListing", () => {
     expect(screen.getByLabelText("Deadline / timeline optional")).toBeInTheDocument();
     expect(screen.getByLabelText("Budget optional")).toBeInTheDocument();
     expect(screen.getByLabelText("References optional")).toBeInTheDocument();
+  });
+
+  it("shows an example invoice from the listing price, with the buyer service fee", () => {
+    renderPage();
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("Listing price")).toBeInTheDocument();
+    expect(invoice.getByText("Buyer service fee (5%)")).toBeInTheDocument();
+    expect(invoice.getByText("$2.50 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$52.50 CAD")).toBeInTheDocument();
+    expect(invoice.getByText(/An example, not a quote/)).toBeInTheDocument();
+    // The fee is also stated right under the budget box.
+    expect(screen.getByText(/A 5% buyer service fee is added on top when you pay/)).toBeInTheDocument();
+    expect(invoice.queryByText(/discount/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a subscriber's waived fee as a discount, ready for when subscriptions exist", () => {
+    mocks.feeRate = { feeBps: 0, reason: "subscription" };
+
+    renderPage();
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("Buyer service fee (5%)")).toBeInTheDocument();
+    expect(invoice.getByText("Subscriber discount")).toBeInTheDocument();
+    expect(invoice.getByText("−$2.50 CAD")).toBeInTheDocument();
+    // Listing price 50, fee waived: the total is the price.
+    expect(invoice.getAllByText("$50 CAD")).toHaveLength(2);
+    expect(screen.getByText("No buyer service fee is added when you pay.")).toBeInTheDocument();
+  });
+
+  it("shows a reduced rate as a partial discount", () => {
+    mocks.feeRate = { feeBps: 250, reason: "promotional" };
+
+    renderPage();
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("Promotional discount")).toBeInTheDocument();
+    expect(invoice.getByText("−$1.25 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$51.25 CAD")).toBeInTheDocument();
+  });
+
+  it("follows the budget as it is typed, and estimates it in the buyer's own currency", () => {
+    // 1 EUR = 1.5 CAD = 1 USD here, so 300 CAD is 200 USD.
+    mocks.display = {
+      displayCurrency: "usd",
+      rates: { base: "eur", date: "2026-10-08", rates: { eur: 1, cad: 1.5, usd: 1 } },
+    };
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^Budget/), { target: { value: "300" } });
+
+    const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
+
+    expect(invoice.getByText("Your budget")).toBeInTheDocument();
+    expect(invoice.getByText("$300 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$15 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("$315 CAD")).toBeInTheDocument();
+    expect(invoice.getByText("≈ $210 USD in your currency")).toBeInTheDocument();
+    expect(screen.getByText(/≈ \$200 USD\s+in your currency\./)).toBeInTheDocument();
   });
 
   it("submits a normal buyer commission with listing id and snapshot", async () => {

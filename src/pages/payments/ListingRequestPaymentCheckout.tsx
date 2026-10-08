@@ -40,7 +40,9 @@ const classes = {
   fieldRow: "flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between",
   fieldLabel: "text-sm font-semibold text-zinc-800",
   fieldHint: "text-xs text-zinc-500",
-  fieldInputWrap: "flex items-center gap-1 text-sm",
+  fieldInputWrap: "flex flex-wrap items-center gap-1.5 text-sm",
+  quickAmount: "btnOutline btnSm px-2",
+  aboutSupport: "mt-1 text-xs leading-5 text-zinc-500",
   fieldInput:
     "w-28 rounded-lg border border-zinc-300 px-2 py-1 text-right text-sm focus:border-zinc-500 focus:outline-none",
   pendingAmount: "text-zinc-500",
@@ -50,6 +52,15 @@ const getErrorMessage = (error: unknown): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
     : "Something went wrong.";
+
+// Shortcuts beside an amount box: a share of the project payment, worked out
+// to the cent and put in the box, where it can still be typed over. Nothing
+// is chosen until the buyer presses one.
+const TIP_PERCENTAGES = [5, 10, 15, 20];
+const SUPPORT_PERCENTAGES = [1, 3, 5];
+
+const percentOfCents = (cents: number, percent: number): string =>
+  (Math.round((cents * percent) / 100) / 100).toFixed(2);
 
 const ListingRequestPaymentCheckout = () => {
   const { paymentId = "" } = useParams<{ paymentId: string }>();
@@ -95,6 +106,24 @@ const ListingRequestPaymentCheckout = () => {
     }
     return Math.round(parsed * 100);
   };
+
+  // "Round up" adds the cents that bring what the buyer pays to a whole
+  // number, to whichever of the two they press it on. Tax, where it is
+  // collected, is worked out after this step and can move the total again.
+  const centsOrZero = (value: string): number => {
+    try {
+      return parseAmountToCents(value);
+    } catch {
+      return 0;
+    }
+  };
+  const tipCentsNow = centsOrZero(tipInput);
+  const supportCentsNow = centsOrZero(supportInput);
+  const totalCentsNow = payment
+    ? payment.base_amount_cents + payment.buyer_service_fee_cents + tipCentsNow + supportCentsNow
+    : 0;
+  const roundUpCents = (100 - (totalCentsNow % 100)) % 100;
+  const centsText = (cents: number): string => (cents / 100).toFixed(2);
 
   const onConfirmExtras = useCallback(async () => {
     if (!paymentId) return;
@@ -267,7 +296,9 @@ const ListingRequestPaymentCheckout = () => {
           <p className={classes.text}>
             Both are entirely optional and default to nothing added. A tip goes
             to the creator in full. A contribution supports Made for Stream and
-            is added to the total you pay.
+            is added to the total you pay. Press a percentage of the project
+            payment, type an exact amount, or press Round up to bring your
+            total to a whole number.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -277,6 +308,26 @@ const ListingRequestPaymentCheckout = () => {
                 <span className={classes.fieldHint}> — reaches them in full, no fee taken</span>
               </label>
               <div className={classes.fieldInputWrap}>
+                {TIP_PERCENTAGES.map((percent) => (
+                  <button
+                    key={percent}
+                    type="button"
+                    className={classes.quickAmount}
+                    aria-label={`Tip ${percent}% of the project payment`}
+                    onClick={() => setTipEdit(percentOfCents(payment.base_amount_cents, percent))}
+                  >
+                    {percent}%
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={classes.quickAmount}
+                  aria-label="Round your total up to a whole number with a tip"
+                  disabled={roundUpCents === 0}
+                  onClick={() => setTipEdit(centsText(tipCentsNow + roundUpCents))}
+                >
+                  Round up
+                </button>
                 <span className="text-xs text-zinc-500">{payment.currency.toUpperCase()}</span>
                 <input
                   id="tip-amount"
@@ -293,11 +344,46 @@ const ListingRequestPaymentCheckout = () => {
             </div>
 
             <div className={classes.fieldRow}>
-              <label className={classes.fieldLabel} htmlFor="support-amount">
-                Support Made for Stream
-                <span className={classes.fieldHint}> — added to your total</span>
-              </label>
+              <div>
+                <label className={classes.fieldLabel} htmlFor="support-amount">
+                  Support Made for Stream
+                  <span className={classes.fieldHint}> — added to your total</span>
+                </label>
+                <p className={classes.aboutSupport}>
+                  Made for Stream is built and run by one developer. A contribution helps pay for
+                  hosting and keeps the site running. It is optional and changes nothing about
+                  your commission.
+                </p>
+              </div>
               <div className={classes.fieldInputWrap}>
+                {SUPPORT_PERCENTAGES.map((percent) => (
+                  <button
+                    key={percent}
+                    type="button"
+                    className={classes.quickAmount}
+                    aria-label={`Contribute ${percent}% of the project payment`}
+                    onClick={() => setSupportEdit(percentOfCents(payment.base_amount_cents, percent))}
+                  >
+                    {percent}%
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={classes.quickAmount}
+                  aria-label="Contribute 1.00"
+                  onClick={() => setSupportEdit("1.00")}
+                >
+                  1.00
+                </button>
+                <button
+                  type="button"
+                  className={classes.quickAmount}
+                  aria-label="Round your total up to a whole number with a contribution"
+                  disabled={roundUpCents === 0}
+                  onClick={() => setSupportEdit(centsText(supportCentsNow + roundUpCents))}
+                >
+                  Round up
+                </button>
                 <span className="text-xs text-zinc-500">{payment.currency.toUpperCase()}</span>
                 <input
                   id="support-amount"

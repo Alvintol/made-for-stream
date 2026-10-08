@@ -67,6 +67,17 @@ copy of the address country in the person's private account details
 by `sync_user_account_country()`; it is not edited on its own. The display
 currency still changes nothing anyone is charged.
 
+**On the commission request form** the budget is entered in the creator's
+currency. Under it, and on the "Estimated invoice" card beside the form, the
+same amount is shown in the buyer's display currency when the two differ.
+The card adds the buyer service fee at the buyer's own rate
+(`src/components/listingRequests/core/CommissionEstimateCard.tsx`,
+`src/hooks/payments/useBuyerServiceFeeRate.ts`). Everyone is on the standard
+5% today; the hook is the one place to connect buyer subscriptions later, and
+a lower rate already shows as the standard fee with a discount line under it.
+It is an example, not a quote: the real amounts come from the agreement, at
+the rate the database locked on it.
+
 **Where it is set.** Settings → Preferences, and the globe button in the top
 bar, which opens a dialog with the same form: language and currency. The
 country comes from Settings → Personal details. A signed-in person's choice
