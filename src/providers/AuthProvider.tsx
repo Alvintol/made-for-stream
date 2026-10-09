@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
+import { PLACEHOLDER_DISPLAY_NAME } from "../domain/settings/displayName";
 import { supabase } from "../lib/supabaseClient";
 
 type AuthState = {
@@ -32,7 +33,6 @@ const AuthProvider = (props: AuthProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const ensuredUserIdRef = useRef<string | null>(null);
-  const lastEmailRef = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -54,11 +54,9 @@ const AuthProvider = (props: AuthProviderProps) => {
     if (loading) return;
 
     const userId = session?.user?.id ?? null;
-    const email = session?.user?.email ?? null;
 
     if (!userId) {
       ensuredUserIdRef.current = null;
-      lastEmailRef.current = null;
       return;
     }
 
@@ -81,11 +79,13 @@ const AuthProvider = (props: AuthProviderProps) => {
         }
 
         if (!existing?.user_id) {
-          const displayName = email ? email.split("@")[0] : "Creator";
-
+          // A placeholder until the person chooses their own public name on
+          // the first-time form (they cannot list, request or pay before
+          // then: 20261008_152). Never derived from the email address, which
+          // would show part of it in public.
           const { error: insertError } = await supabase.from("profiles").insert({
             user_id: userId,
-            display_name: displayName,
+            display_name: PLACEHOLDER_DISPLAY_NAME,
             display_name_auto: true,
             profile_setup_seen: false,
             auth_provider_last_used: session?.user?.app_metadata?.provider ?? null,
@@ -96,25 +96,6 @@ const AuthProvider = (props: AuthProviderProps) => {
             return;
           }
 
-          profileChanged = true;
-        }
-      }
-
-      // Sync display name from email only if it is still auto-managed
-      if (email && lastEmailRef.current !== email) {
-        lastEmailRef.current = email;
-
-        const nextDisplayName = email.split("@")[0] || "Creator";
-
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ display_name: nextDisplayName })
-          .eq("user_id", userId)
-          .eq("display_name_auto", true);
-
-        if (updateError) {
-          console.warn("[profiles] display_name sync failed:", updateError.message);
-        } else {
           profileChanged = true;
         }
       }

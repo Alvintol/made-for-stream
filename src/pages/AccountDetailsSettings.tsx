@@ -13,8 +13,14 @@ import {
 } from "../domain/settings/accountDetails";
 import { useMyProfile } from "../hooks/profile/useMyProfile";
 import {
+  DISPLAY_NAME_MAX,
+  getDisplayNameError,
+  hasChosenDisplayName,
+} from "../domain/settings/displayName";
+import {
   useAccountDetails,
   useSaveAccountDetails,
+  useSaveDisplayName,
   useSaveMarketingEmails,
 } from "../hooks/settings/useAccountDetails";
 
@@ -115,6 +121,7 @@ const AccountDetailsSettings = () => {
   const detailsQuery = useAccountDetails();
   const saveDetails = useSaveAccountDetails();
   const saveMarketingEmails = useSaveMarketingEmails();
+  const saveDisplayName = useSaveDisplayName();
   const { data: profile } = useMyProfile();
 
   const details = detailsQuery.data ?? null;
@@ -128,8 +135,14 @@ const AccountDetailsSettings = () => {
   // promotional email has to be their own act (Privacy Policy section 7).
   const [wantsMarketingEmails, setWantsMarketingEmails] = useState(false);
 
+  // The public display name is asked for on this form too, until the person
+  // has chosen one: an account cannot go further without it.
+  const needsDisplayName = Boolean(profile) && !hasChosenDisplayName(profile);
+  const [displayName, setDisplayName] = useState("");
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
+
   const form = draft ?? toAccountDetailsForm(details);
-  const showForm = editing || !details;
+  const showForm = editing || !details || needsDisplayName;
 
   const countryOptions = useMemo(() => getBillingCountryOptions(), []);
   const regionOptions = getRegionOptions(form.country_code);
@@ -167,8 +180,15 @@ const AccountDetailsSettings = () => {
     event.preventDefault();
 
     const result = validateAccountDetails(form);
+    const nameError = needsDisplayName ? getDisplayNameError(displayName) : null;
 
     setErrors(result.errors);
+    setDisplayNameError(nameError);
+
+    if (nameError) {
+      document.getElementById("account-display-name")?.focus();
+      return;
+    }
 
     if (!result.values) {
       const firstInvalid = Object.keys(result.errors)[0];
@@ -179,6 +199,7 @@ const AccountDetailsSettings = () => {
     const isFirstSave = !details;
 
     try {
+      if (needsDisplayName) await saveDisplayName.mutateAsync(displayName);
       await saveDetails.mutateAsync(result.values);
     } catch {
       // Shown below from the mutation's error.
@@ -230,9 +251,9 @@ const AccountDetailsSettings = () => {
       <div className={classes.head}>
         <div>
           <h1 className={classes.title}>
-            {details ? "Personal details" : "Finish setting up your account"}
+            {details && !needsDisplayName ? "Personal details" : "Finish setting up your account"}
           </h1>
-          {!details && (
+          {(!details || needsDisplayName) && (
             <p className={classes.text}>
               Add these details before you create a listing, send a commission request or pay.
               It takes a minute and you only do it once.
@@ -300,6 +321,42 @@ const AccountDetailsSettings = () => {
         <form className={classes.form} onSubmit={(event) => void onSubmit(event)} noValidate>
           {details && (
             <p className={classes.hint}>Your saved details are visible on screen while you edit.</p>
+          )}
+
+          {needsDisplayName && (
+            <div className={classes.group}>
+              <h2 className={classes.groupTitle}>Your public name</h2>
+              <div className={classes.field}>
+                <label className={classes.label} htmlFor="account-display-name">
+                  Display name
+                </label>
+                <input
+                  id="account-display-name"
+                  className={classes.input}
+                  value={displayName}
+                  maxLength={DISPLAY_NAME_MAX}
+                  autoComplete="nickname"
+                  placeholder="e.g. Pastel Fox"
+                  aria-invalid={Boolean(displayNameError)}
+                  aria-describedby={displayNameError ? "account-display-name-error" : undefined}
+                  onChange={(event) => {
+                    setDisplayName(event.currentTarget.value);
+                    setDisplayNameError(null);
+                  }}
+                />
+                {displayNameError ? (
+                  <span id="account-display-name-error" className={classes.fieldError}>
+                    {displayNameError}
+                  </span>
+                ) : (
+                  <span className={classes.hint}>
+                    Unlike the details below, this is public: it is the name buyers and creators
+                    see on your profile, your listings and your commissions. You can change it
+                    later in Settings.
+                  </span>
+                )}
+              </div>
+            </div>
           )}
 
           <fieldset className={classes.group}>
@@ -484,14 +541,14 @@ const AccountDetailsSettings = () => {
             </label>
           )}
 
-          {saveDetails.error && (
+          {(saveDisplayName.error || saveDetails.error) && (
             <div className={classes.error} role="alert">
-              {saveDetails.error.message}
+              {(saveDisplayName.error || saveDetails.error)?.message}
             </div>
           )}
 
           <div className={classes.footer}>
-            {details && (
+            {details && !needsDisplayName && (
               <button
                 type="button"
                 className="btnOutline btnSm"
@@ -505,7 +562,11 @@ const AccountDetailsSettings = () => {
                 Cancel
               </button>
             )}
-            <button type="submit" className="btnPrimary btnSm" disabled={saveDetails.isPending}>
+            <button
+              type="submit"
+              className="btnPrimary btnSm"
+              disabled={saveDetails.isPending || saveDisplayName.isPending}
+            >
               {saveDetails.isPending ? "Saving…" : "Save details"}
             </button>
           </div>

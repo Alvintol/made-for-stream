@@ -44,6 +44,15 @@ emails were sent.
    - the hourly ops job (`mfs-ops-alerts`), which also queues reminders. This
      is the safety net: an email is at most about an hour late.
 
+**How people are named (2026-10-08).** An email refers to the other person by
+their profile handle, written without the "@": "meowington accepted your
+commission request". The API looks the two handles up when it sends
+(`getNotificationNames`). An account with no handle, or a lookup that fails,
+falls back to "the buyer", "the creator" or "the other person"; the email is
+still sent. Sentences that state a rule about buyers and creators in general
+(the refund rule in a cancellation warning) keep the plain words. A buyer who
+asks "who is this email about?" can match the handle to the commission page.
+
 A failed send is retried up to three times, at least ten minutes apart.
 Queuing never blocks the step it describes: `enqueue_listing_request_notification`
 swallows its own errors and raises a warning (`NOTIF-003`).

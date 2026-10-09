@@ -127,6 +127,11 @@ To do:
       details show as `********` until **Show details** is pressed, and
       **Settings → Preferences** has the promotional email box, unticked.
       Afterwards: `select count(*) from public.user_account_details;` is 4.
+- [ ] **Display name (needs migration `20261008_152`).** The four rehearsal
+      accounts already chose theirs, so nothing changes for them. To see the
+      new step, sign in with an account that never chose one
+      (`imallbeans@gmail.com`): the first-time form has a Display name box at
+      the top, starts empty, and will not save without 2 to 50 characters.
 - [ ] **Browser-check the Storage Register** (Cookie Policy §7) on the dev
       site: DevTools → Application. The published register lists
       `sb-itbgxxczuazwroniiyot-auth-token`, `creatorhub.pendingPolicyAcceptance`,

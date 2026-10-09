@@ -11,6 +11,7 @@ import {
   useCreatorPaymentAccount,
 } from "../hooks/payments/useCreatorPaymentAccount";
 import { getProfileAvatarUrl } from "../domain/profileMedia";
+import { getDisplayNameError } from "../domain/settings/displayName";
 import {
   getAccountSetupProgress,
   getAccountSetupSteps,
@@ -304,12 +305,19 @@ const ProfileSettings = () => {
       return;
     }
 
+    const displayNameError = getDisplayNameError(nextDisplayName);
+
+    if (displayNameError) {
+      setErrMsg(displayNameError);
+      return;
+    }
+
     try {
       setBusy(true);
 
       const patch: Partial<ProfileRow> & Record<string, unknown> = {
         handle: nextHandle || null,
-        display_name: nextDisplayName || null,
+        display_name: nextDisplayName,
         bio: nextBio || null,
         profile_setup_seen: true,
         profile_setup_completed_at:
@@ -530,7 +538,7 @@ const ProfileSettings = () => {
                   placeholder="Your name"
                   autoComplete="name"
                 />
-                <span className={classes.fieldHelp}>Editing this turns off email-based naming.</span>
+                <span className={classes.fieldHelp}>Required. Shown publicly, 2–50 characters.</span>
               </label>
 
               <label className={classes.fieldWide}>

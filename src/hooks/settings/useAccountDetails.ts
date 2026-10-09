@@ -55,6 +55,27 @@ export const useSaveAccountDetails = () => {
   });
 };
 
+// Saves the public display name the person chose, which also marks it as
+// their own choice (display_name_auto = false, 20261008_152).
+export const useSaveDisplayName = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (displayName: string) => {
+      if (!user?.id) throw new Error("You must be signed in to choose a display name.");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName.trim(), display_name_auto: false })
+        .eq("user_id", user.id);
+
+      if (error) throw new Error("Your display name could not be saved. Please try again.");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["myProfile", user?.id ?? null] }),
+  });
+};
+
 // Whether the person has opted in to promotional email. No row means no.
 export const useMarketingEmails = () => {
   const { user, loading } = useAuth();

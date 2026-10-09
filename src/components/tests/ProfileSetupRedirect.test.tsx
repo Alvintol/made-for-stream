@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   user: { id: "user-1" } as { id: string } | null,
   profileSetupSeen: true,
+  nameChosen: true,
   details: { data: null as unknown, isSuccess: true, isLoading: false },
 }));
 
@@ -13,7 +14,14 @@ vi.mock("../../providers/AuthProvider", () => ({
 }));
 
 vi.mock("../../hooks/profile/useMyProfile", () => ({
-  useMyProfile: () => ({ data: { profile_setup_seen: mocks.profileSetupSeen }, isLoading: false }),
+  useMyProfile: () => ({
+    data: {
+      profile_setup_seen: mocks.profileSetupSeen,
+      display_name: mocks.nameChosen ? "Pastel Fox" : "New member",
+      display_name_auto: !mocks.nameChosen,
+    },
+    isLoading: false,
+  }),
 }));
 
 vi.mock("../../hooks/settings/useAccountDetails", () => ({
@@ -38,10 +46,20 @@ describe("<ProfileSetupRedirect />", () => {
   beforeEach(() => {
     mocks.user = { id: "user-1" };
     mocks.profileSetupSeen = true;
+    mocks.nameChosen = true;
     mocks.details = { data: null, isSuccess: true, isLoading: false };
   });
 
   it("sends a signed-in account with no details to the form, from any page", () => {
+    renderAt("/market");
+
+    expect(screen.getByText("at /settings/personal")).toBeInTheDocument();
+  });
+
+  it("also sends an account that has details but never chose a display name", () => {
+    mocks.details = { data: { country_code: "CA" }, isSuccess: true, isLoading: false };
+    mocks.nameChosen = false;
+
     renderAt("/market");
 
     expect(screen.getByText("at /settings/personal")).toBeInTheDocument();

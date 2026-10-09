@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   details: null as Record<string, unknown> | null,
   profileSetupSeen: true,
+  nameChosen: true,
+  saveName: vi.fn(),
   save: vi.fn(),
   saveMarketing: vi.fn(),
 }));
@@ -13,10 +15,17 @@ vi.mock("../../hooks/settings/useAccountDetails", () => ({
   useAccountDetails: () => ({ data: mocks.details, isLoading: false, isError: false }),
   useSaveAccountDetails: () => ({ mutateAsync: mocks.save, isPending: false, error: null }),
   useSaveMarketingEmails: () => ({ mutateAsync: mocks.saveMarketing }),
+  useSaveDisplayName: () => ({ mutateAsync: mocks.saveName, isPending: false, error: null }),
 }));
 
 vi.mock("../../hooks/profile/useMyProfile", () => ({
-  useMyProfile: () => ({ data: { profile_setup_seen: mocks.profileSetupSeen } }),
+  useMyProfile: () => ({
+    data: {
+      profile_setup_seen: mocks.profileSetupSeen,
+      display_name: mocks.nameChosen ? "Pastel Fox" : "New member",
+      display_name_auto: !mocks.nameChosen,
+    },
+  }),
 }));
 
 import AccountDetailsSettings from "../AccountDetailsSettings";
@@ -54,6 +63,8 @@ describe("<AccountDetailsSettings />", () => {
   beforeEach(() => {
     mocks.details = null;
     mocks.profileSetupSeen = true;
+    mocks.nameChosen = true;
+    mocks.saveName.mockReset().mockResolvedValue(undefined);
     mocks.save.mockReset().mockResolvedValue(undefined);
     mocks.saveMarketing.mockReset().mockResolvedValue(undefined);
   });
@@ -113,6 +124,60 @@ describe("<AccountDetailsSettings />", () => {
     );
     expect(await screen.findByText("Profile page")).toBeInTheDocument();
     expect(mocks.saveMarketing).toHaveBeenCalledWith(true);
+  });
+
+  it("makes a new account choose a public display name before anything is saved", async () => {
+    mocks.nameChosen = false;
+
+    renderPage();
+
+    const name = screen.getByLabelText("Display name");
+
+    // Never pre-filled, least of all from the email address.
+    expect(name).toHaveValue("");
+    expect(screen.getByText(/Unlike the details below, this is public/)).toBeInTheDocument();
+
+    fill(/^Legal first name/, "Ada");
+    fill(/^Legal last name/, "Buyer");
+    fill(/^Date of birth/, "1990-01-01");
+    fill(/^Country/, "IE");
+    fill(/^Street address/, "1 Main St");
+    fill(/^City or town/, "Dublin");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+    expect(name).toHaveAccessibleDescription("Enter a display name of 2 to 50 characters.");
+    expect(name).toHaveFocus();
+    expect(mocks.saveName).not.toHaveBeenCalled();
+    expect(mocks.save).not.toHaveBeenCalled();
+
+    fireEvent.change(name, { target: { value: " Pastel Fox " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+    await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    expect(mocks.saveName).toHaveBeenCalledWith(" Pastel Fox ");
+    // The name is saved first: details are useless without it.
+    expect(mocks.saveName.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.save.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("asks an account that has details but no chosen name for the name, and cannot be cancelled", () => {
+    mocks.details = saved;
+    mocks.nameChosen = false;
+
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "Finish setting up your account" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Display name")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Legal first name/)).toHaveValue("Ada");
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  });
+
+  it("does not ask for a display name once one has been chosen", () => {
+    renderPage();
+
+    expect(screen.queryByLabelText("Display name")).not.toBeInTheDocument();
   });
 
   it("requires the business name only for a business account", () => {

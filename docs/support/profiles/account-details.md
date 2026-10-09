@@ -36,6 +36,14 @@ account cannot:
 The three database triggers skip the database owner and the service role
 (`auth.uid()` is null), so seed data and repairs still work.
 
+**A public display name is required too (`20261008_152`).** A new profile is
+called "New member" (`display_name_auto = true`) until its owner chooses a
+name of 2 to 50 characters; it is never taken from the email address. The
+first-time form asks for it above the private details, and the same redirect
+and the same three triggers apply until it is chosen. Afterwards it is
+changed, but cannot be removed, in Settings → Profile and setup
+(`profiles_display_name_present`). The handle is still optional.
+
 **A row exists only when it is complete.** `validate_user_account_details()`
 refuses an incomplete save, so "has a row in `user_account_details`" is the
 whole test.
@@ -71,6 +79,7 @@ section 7).
 | "I can't create a listing / send a request / send an agreement" | [`ACC-001`](#acc-001--action-refused-because-account-details-are-missing) |
 | "Checkout says to add my account details" | [`ACC-001`](#acc-001--action-refused-because-account-details-are-missing) |
 | "The form won't save" | [`ACC-002`](#acc-002--account-details-refused-on-save) |
+| "It says to choose a display name" / "It won't accept my display name" | [`ACC-005`](#acc-005--display-name-missing-or-refused) |
 | "The billing country at checkout is wrong" | The person corrects their address in Settings → Personal details |
 | "I ticked the email box and it didn't stick" | [`ACC-004`](#acc-004--details-or-email-preference-cannot-be-read-or-saved) |
 
@@ -234,8 +243,55 @@ pay: treat a repeat as urgent.
 
 ---
 
+## `ACC-005` — Display name missing or refused
+
+```yaml
+id: ACC-005
+tier: 2
+signals:
+  - source: db
+    match: "Choose a public display name in Settings before you can do this."
+    where: "enforce_account_details(), on insert into listings, listing_requests, listing_request_agreements"
+  - source: client
+    match: "Enter a display name of 2 to 50 characters."
+    where: "src/domain/settings/displayName.ts (first-time form and Settings → Profile and setup)"
+  - source: client
+    match: "Your display name could not be saved. Please try again."
+    where: "src/hooks/settings/useAccountDetails.ts, useSaveDisplayName"
+  - source: db
+    match: "/violates check constraint \"profiles_display_name_present\"/"
+    where: "public.profiles"
+auto_fix: none
+reason_not_automatable: "the name is the account holder's own choice"
+escalate_with:
+  - "the user id, and: select display_name, display_name_auto from public.profiles where user_id = '<user>'"
+```
+
+**Cause.** The account is still on the placeholder name
+(`display_name_auto = true`), or the name typed is shorter than 2 or longer
+than 50 characters. The website sends such an account to the first-time form,
+so the database message normally means a direct call.
+
+**What the user sees.** "Finish setting up your account" with a Display name
+box at the top, or the message under that box.
+
+**Fix.** They choose a name on that form, or in Settings → Profile and setup.
+Do not set one for them: it is their public identity.
+
+**Offensive or impersonating names** are a moderation matter, not this
+playbook: see [`profiles-and-media.md`](profiles-and-media.md).
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
 
+- **Display names are not unique and not screened.** Two accounts can share
+  one, and nothing checks a name against a word list. Handles are unique.
+- **Paying is not gated on the display name**, only on the account details:
+  the API check reads `user_account_details`. A buyer cannot reach a payment
+  without having sent a request, which the display name does gate.
 - **Closing an account deletes its details** (`on delete cascade`). The
   Privacy Policy allows keeping what belongs to financial, tax and dispute
   records; before deleting an account that has paid or been paid, export its
