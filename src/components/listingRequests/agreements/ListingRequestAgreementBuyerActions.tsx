@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import {
   areRequiredAgreementAcknowledgementsChecked,
+  getAgreementAcknowledgementKeysBySection,
   getRequiredListingRequestAgreementAcknowledgements,
 } from "../../../domain/listings/listingRequestAgreements";
 import {
@@ -11,6 +12,7 @@ import {
 } from "../../../domain/legal/policyAcceptance";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import PolicyAcceptanceCheckbox from "../../legal/PolicyAcceptanceCheckbox";
+import ListingRequestAgreementSummary from "./ListingRequestAgreementSummary";
 
 type ListingRequestAgreementBuyerActionsProps = {
   agreement: ListingRequestAgreementRow | null;
@@ -24,6 +26,7 @@ type ListingRequestAgreementBuyerActionsProps = {
 };
 
 const classes = {
+  review: "space-y-5",
   card: "card p-6",
   section: "space-y-4",
   header: "space-y-1",
@@ -32,12 +35,6 @@ const classes = {
   consent: "space-y-2",
   why: "cursor-pointer font-semibold underline underline-offset-2",
   text: "text-sm text-zinc-600",
-  // One list with hairlines, like the agreement summary: a card per item made
-  // a ten-item checklist very tall.
-  checklist: "divide-y divide-[var(--hairline)] rounded-xl border border-[var(--hairline)]",
-  checkboxRow: "flex gap-3 px-3 py-2",
-  checkbox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300",
-  checkboxLabel: "text-sm text-zinc-800",
   row: "flex flex-wrap items-center gap-3",
   errorBox:
     "notice noticeError",
@@ -82,20 +79,33 @@ const ListingRequestAgreementBuyerActions = ({
       checkedKeys: checkedAcknowledgementKeys,
     });
 
-  const handleToggleAcknowledgement = (key: string) => {
-    setCheckedAcknowledgementKeys((currentKeys) =>
-      currentKeys.includes(key)
-        ? currentKeys.filter((currentKey) => currentKey !== key)
-        : [...currentKeys, key]
-    );
+  // One "I understand" box under a section stands for every acknowledgement
+  // about that section.
+  const handleToggleSection = (keys: string[], checked: boolean) => {
+    setCheckedAcknowledgementKeys((currentKeys) => {
+      const others = currentKeys.filter((currentKey) => !keys.includes(currentKey));
+
+      return checked ? [...others, ...keys] : others;
+    });
   };
+
+  const sections = Object.values(
+    getAgreementAcknowledgementKeysBySection(requiredAcknowledgements)
+  ).filter((keys) => keys.length > 0);
+  const confirmedSections = sections.filter((keys) =>
+    keys.every((key) => checkedAcknowledgementKeys.includes(key))
+  ).length;
 
   const handleAccept = async () => {
     if (!hasCheckedAllRequiredAcknowledgements || !earlyServiceRequested) {
       return;
     }
 
-    await onAccept(checkedAcknowledgementKeys, earlyServiceRequested);
+    // Every required key, in the database's own order.
+    await onAccept(
+      requiredAcknowledgements.map((acknowledgement) => acknowledgement.key),
+      earlyServiceRequested
+    );
   };
 
   const handleDecline = async () => {
@@ -105,47 +115,28 @@ const ListingRequestAgreementBuyerActions = ({
   const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
-    <div className={classes.card}>
+    <div className={classes.review}>
+      <ListingRequestAgreementSummary
+        agreement={agreement}
+        acknowledge={{
+          checkedKeys: checkedAcknowledgementKeys,
+          onToggle: handleToggleSection,
+          disabled: isPending,
+        }}
+      />
+
+      <div className={classes.card}>
       <div className={classes.section}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Review and confirm agreement</h2>
-          <p className={classes.text}>
-            Tick each item to confirm you have read it, then accept.
+          <h2 className={classes.title}>Accept or decline</h2>
+          <p className={classes.text} role="status">
+            {hasCheckedAllRequiredAcknowledgements
+              ? "You have confirmed every section of the agreement above."
+              : `Read each section of the agreement above and tick "I understand" under it: ${confirmedSections} of ${sections.length} confirmed.`}
           </p>
         </div>
 
         {errorMessage && <div className={classes.errorBox}>{errorMessage}</div>}
-
-        <div className={classes.checklist}>
-          {requiredAcknowledgements.map((acknowledgement) => {
-            const inputId = `agreement-acknowledgement-${acknowledgement.key}`;
-
-            return (
-              <label
-                key={acknowledgement.key}
-                className={classes.checkboxRow}
-                htmlFor={inputId}
-              >
-                <input
-                  id={inputId}
-                  className={classes.checkbox}
-                  type="checkbox"
-                  checked={checkedAcknowledgementKeys.includes(
-                    acknowledgement.key
-                  )}
-                  disabled={isPending}
-                  onChange={() =>
-                    handleToggleAcknowledgement(acknowledgement.key)
-                  }
-                />
-
-                <span className={classes.checkboxLabel}>
-                  {acknowledgement.label}
-                </span>
-              </label>
-            );
-          })}
-        </div>
 
         {/* Its own checkbox and wording, never folded into the acknowledgements
             above (Refund Policy section 1, launch-scope.md section 1.5). */}
@@ -188,6 +179,7 @@ const ListingRequestAgreementBuyerActions = ({
             Decline agreement
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

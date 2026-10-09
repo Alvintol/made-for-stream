@@ -1,6 +1,8 @@
 import { formatMoney as formatCurrencyAmount } from "../../../lib/formatMoney";
 import type { ReactNode } from "react";
 import {
+  getAgreementAcknowledgementKeysBySection,
+  getRequiredListingRequestAgreementAcknowledgements,
   getListingRequestAgreementStatusLabel,
   getListingRequestAgreementStatusSummary,
   getListingRequestBuyerHoldReasonLabel,
@@ -12,9 +14,18 @@ import {
 } from "../../../domain/listings/listingRequestAgreements";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 
+// When given, each section ends with an "I understand" box (the buyer,
+// reviewing a sent agreement). `checkedKeys` are acknowledgement keys.
+export type AgreementAcknowledgeControls = {
+  checkedKeys: string[];
+  onToggle: (keys: string[], checked: boolean) => void;
+  disabled?: boolean;
+};
+
 type ListingRequestAgreementSummaryProps = {
   agreement: ListingRequestAgreementRow | null;
   isLoading?: boolean;
+  acknowledge?: AgreementAcknowledgeControls;
 };
 
 const classes = {
@@ -40,7 +51,18 @@ const classes = {
   chip: "rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700",
   confirmedOn: "text-xs font-medium text-zinc-500",
   warning: "notice noticeWarning",
+  understand:
+    "flex items-start gap-2.5 rounded-xl bg-[rgb(var(--accent-soft))] px-3 py-2 text-sm font-semibold text-zinc-900",
+  understandBox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300",
 } as const;
+
+// Shown to everyone, and what the buyer's "policies" and "schedule"
+// confirmations refer to: they must be on the page to be understood.
+const CHANGE_ORDER_RULE =
+  "Any change to scope, price, timeline, deliverables or payments needs an accepted change order.";
+const FINAL_FILES_RULE =
+  "Final files or deliverables may be held until required payments are complete.";
+const HOLD_RULE = "Time the project spends waiting on the buyer is added to this date.";
 
 const formatMoney = (amount: number | null, currency: string): string =>
   amount === null
@@ -82,10 +104,30 @@ const groupAcknowledgementsByDay = (
   return [...groups.entries()];
 };
 
-const Group = ({ title, children }: { title: string; children: ReactNode }) => (
+type GroupProps = {
+  title: string;
+  children: ReactNode;
+  // The acknowledgement keys this section's "I understand" box stands for.
+  keys?: string[];
+  acknowledge?: AgreementAcknowledgeControls;
+};
+
+const Group = ({ title, children, keys = [], acknowledge }: GroupProps) => (
   <section className={classes.group}>
     <h3 className={classes.groupTitle}>{title}</h3>
     {children}
+    {acknowledge && keys.length > 0 && (
+      <label className={classes.understand}>
+        <input
+          type="checkbox"
+          className={classes.understandBox}
+          checked={keys.every((key) => acknowledge.checkedKeys.includes(key))}
+          disabled={acknowledge.disabled}
+          onChange={(event) => acknowledge.onToggle(keys, event.currentTarget.checked)}
+        />
+        <span>I understand the {title.toLowerCase()} above.</span>
+      </label>
+    )}
   </section>
 );
 
@@ -96,7 +138,17 @@ const TermRow = ({ label, children }: { label: string; children: ReactNode }) =>
   </div>
 );
 
-const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow }) => {
+const AgreementDetails = ({
+  agreement,
+  acknowledge,
+}: {
+  agreement: ListingRequestAgreementRow;
+  acknowledge?: AgreementAcknowledgeControls;
+}) => {
+  const keys = getAgreementAcknowledgementKeysBySection(
+    acknowledge ? getRequiredListingRequestAgreementAcknowledgements(agreement) : []
+  );
+
   const completedHoldDays = agreement.listing_request_timeline_holds
     .filter((hold) => hold.ended_at)
     .reduce((total, hold) => total + hold.rounded_extension_days, 0);
@@ -116,7 +168,7 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
 
   return (
     <>
-      <Group title="Terms">
+      <Group title="Terms" keys={keys.terms} acknowledge={acknowledge}>
         <dl className={classes.rows}>
           <TermRow label="Payment structure">
             {getListingRequestPaymentStructureLabel(agreement.payment_structure)}
@@ -140,11 +192,12 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
                 Includes +{completedHoldDays} day{completedHoldDays === 1 ? "" : "s"} from buyer-side holds.
               </p>
             )}
+            <p className={classes.note}>{HOLD_RULE}</p>
           </TermRow>
         </dl>
       </Group>
 
-      <Group title="Scope">
+      <Group title="Scope" keys={keys.scope} acknowledge={acknowledge}>
         <p className={classes.text}>{agreement.scope_summary}</p>
 
         {agreement.included_deliverables.length > 0 ? (
@@ -161,7 +214,7 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
       </Group>
 
       {checklist.length > 0 && (
-        <Group title="Scope checklist">
+        <Group title="Scope checklist" keys={keys.checklist} acknowledge={acknowledge}>
           <ul className={classes.rows}>
             {checklist.map((item) => (
               <li key={item.id} className={classes.row}>
@@ -186,7 +239,7 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
         </Group>
       )}
 
-      <Group title="Payment schedule">
+      <Group title="Payment schedule" keys={keys.schedule} acknowledge={acknowledge}>
         {schedule.length > 0 ? (
           <ul className={classes.rows}>
             {schedule.map((paymentItem) => (
@@ -211,17 +264,17 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
             {`Estimated Made for Stream fees: the buyer service fee is at most ${maximumFee}, and so is the creator platform fee (each ${STANDARD_FEE_BPS / 100}% of every payment, rounded up to the cent). These are maximums — a fee can be lower, never higher. Tips, contributions and any tax are separate.`}
           </p>
         )}
+        <p className={classes.text}>{FINAL_FILES_RULE}</p>
       </Group>
 
-      {policies.length > 0 && (
-        <Group title="Policies">
-          <ul className={classes.bullets}>
-            {policies.map((policy) => (
-              <li key={policy}>{policy}</li>
-            ))}
-          </ul>
-        </Group>
-      )}
+      <Group title="Policies" keys={keys.policies} acknowledge={acknowledge}>
+        <ul className={classes.bullets}>
+          {policies.map((policy) => (
+            <li key={policy}>{policy}</li>
+          ))}
+          <li>{CHANGE_ORDER_RULE}</li>
+        </ul>
+      </Group>
 
       {agreement.listing_request_agreement_acknowledgements.length > 0 && (
         <Group title="Buyer confirmations">
@@ -273,6 +326,7 @@ const AgreementDetails = ({ agreement }: { agreement: ListingRequestAgreementRow
 const ListingRequestAgreementSummary = ({
   agreement,
   isLoading = false,
+  acknowledge,
 }: ListingRequestAgreementSummaryProps) => {
   if (isLoading) {
     return <p className={classes.text}>Loading project agreement…</p>;
@@ -290,7 +344,7 @@ const ListingRequestAgreementSummary = ({
           Version {agreement.version_number} · {getListingRequestAgreementStatusSummary(agreement.status)}
         </span>
       </div>
-      <AgreementDetails agreement={agreement} />
+      <AgreementDetails agreement={agreement} acknowledge={acknowledge} />
     </div>
   );
 };

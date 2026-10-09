@@ -122,7 +122,7 @@ export const NOTIFICATION_EMAILS = {
     title: "Your project agreement is ready to review",
     lines: [
       `${n.Creator} sent the project agreement for "${t}".`,
-      "Please read the scope, price, timeline and payment schedule, tick each item to confirm you understand it, and accept or decline. Work cannot start until you accept.",
+      "Please read the scope, price, timeline and payment schedule, confirm each section as you read it, and accept or decline. Work cannot start until you accept.",
     ],
     cta: "Review agreement",
   }),

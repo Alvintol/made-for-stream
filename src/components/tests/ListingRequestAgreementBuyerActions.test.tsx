@@ -196,6 +196,59 @@ describe("<ListingRequestAgreementBuyerActions />", () => {
     expect(acceptButton).toBeEnabled();
   });
 
+  it("shows the agreement with one \"I understand\" box under each section, and no separate list", () => {
+    render(
+      <ListingRequestAgreementBuyerActions
+        agreement={agreement}
+        isPending={false}
+        error={null}
+        onAccept={onAccept}
+        onDecline={onDecline}
+      />
+    );
+
+    const sectionBoxes = [
+      "I understand the terms above.",
+      "I understand the scope above.",
+      "I understand the scope checklist above.",
+      "I understand the payment schedule above.",
+      "I understand the policies above.",
+    ];
+
+    sectionBoxes.forEach((label) => {
+      expect(screen.getByRole("checkbox", { name: label })).not.toBeChecked();
+    });
+    // The five sections and the separate early-start request, nothing else.
+    expect(screen.getAllByRole("checkbox")).toHaveLength(6);
+    expect(screen.queryByText(/I understand this payment item/)).not.toBeInTheDocument();
+
+    // The rules a section's box stands for are written out in that section.
+    expect(
+      screen.getByText("Final files or deliverables may be held until required payments are complete.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Any change to scope, price, timeline, deliverables or payments needs an accepted change order."
+      )
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole("status")).toHaveTextContent("0 of 5 confirmed");
+
+    fireEvent.click(screen.getByRole("checkbox", { name: sectionBoxes[3] }));
+    expect(screen.getByRole("status")).toHaveTextContent("1 of 5 confirmed");
+
+    // Unticking a section takes back everything it stood for.
+    fireEvent.click(screen.getByRole("checkbox", { name: sectionBoxes[3] }));
+    expect(screen.getByRole("status")).toHaveTextContent("0 of 5 confirmed");
+
+    sectionBoxes.forEach((label) => fireEvent.click(screen.getByRole("checkbox", { name: label })));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "You have confirmed every section of the agreement above."
+    );
+    // Still not enough without the early-start request.
+    expect(screen.getByRole("button", { name: "Accept project agreement" })).toBeDisabled();
+  });
+
   it("lets the buyer decline without checking acknowledgements", async () => {
     render(
       <ListingRequestAgreementBuyerActions
