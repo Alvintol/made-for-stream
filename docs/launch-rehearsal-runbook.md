@@ -236,8 +236,12 @@ Record the request id per currency: CAD `____` (the first attempt, `6070950f-…
   - [ ] the same through a direct RPC call (`create_listing_request_agreement`
         with a 9.99 schedule item), which proves the database refuses it, not just
         the form.
-- [ ] Send. Buyer opens it: the **early-start box is separate** from the
-      acknowledgements, and Accept stays disabled until it is ticked.
+- [ ] Send. Buyer opens it: each section of the agreement ends with its own
+      "I understand the … above." box (2026-10-08; there is no separate list
+      any more), the panel underneath counts them ("0 of 5 confirmed"), the
+      **early-start box is separate** from them, and Accept stays disabled
+      until every box and the early-start box are ticked. After accepting,
+      "Buyer confirmations" on the agreement lists every item individually.
 - [ ] Negative check: call `respond_listing_request_agreement` directly with
       `buyer_accepted`, every acknowledgement key and **no**
       `p_early_service_request_version`. Refused with `AGR-007`; the agreement stays

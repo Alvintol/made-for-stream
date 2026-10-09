@@ -142,6 +142,23 @@ describe("<ListingRequestAgreementSummary />", () => {
     expect(screen.getByText(/Confirmed on/)).toBeInTheDocument();
   });
 
+  it("has no confirmation boxes for anyone but a buyer reviewing it, and states the standing rules", () => {
+    render(<ListingRequestAgreementSummary agreement={agreement} />);
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Time the project spends waiting on the buyer is added to this date.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Final files or deliverables may be held until required payments are complete.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Any change to scope, price, timeline, deliverables or payments needs an accepted change order."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("renders an active timeline hold warning", () => {
     render(
       <ListingRequestAgreementSummary

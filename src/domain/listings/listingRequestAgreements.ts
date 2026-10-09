@@ -286,6 +286,52 @@ export const getRequiredListingRequestAgreementAcknowledgements = (
   ];
 };
 
+// The buyer confirms the agreement one displayed section at a time: an
+// "I understand" box under each section stands for every acknowledgement the
+// database requires about that section (respond_listing_request_agreement
+// still receives, checks and records each key). Anything not recognised
+// falls under "policies", which is always shown, so no key can be left
+// without a box.
+export type AgreementAcknowledgementSection =
+  | "terms"
+  | "scope"
+  | "checklist"
+  | "schedule"
+  | "policies";
+
+export const getAgreementAcknowledgementSection = (
+  key: string
+): AgreementAcknowledgementSection =>
+  key === "agreement:timeline"
+    ? "terms"
+    : key === "agreement:scope_summary"
+      ? "scope"
+      : key.startsWith("scope_item:")
+        ? "checklist"
+        : key === "agreement:payment_schedule" ||
+            key === "agreement:final_release_payment" ||
+            key.startsWith("payment_item:")
+          ? "schedule"
+          : "policies";
+
+export const getAgreementAcknowledgementKeysBySection = (
+  requiredAcknowledgements: ListingRequestAgreementAcknowledgement[]
+): Record<AgreementAcknowledgementSection, string[]> => {
+  const sections: Record<AgreementAcknowledgementSection, string[]> = {
+    terms: [],
+    scope: [],
+    checklist: [],
+    schedule: [],
+    policies: [],
+  };
+
+  requiredAcknowledgements.forEach((acknowledgement) => {
+    sections[getAgreementAcknowledgementSection(acknowledgement.key)].push(acknowledgement.key);
+  });
+
+  return sections;
+};
+
 export const areRequiredAgreementAcknowledgementsChecked = (input: {
   requiredAcknowledgements: ListingRequestAgreementAcknowledgement[];
   checkedKeys: string[];

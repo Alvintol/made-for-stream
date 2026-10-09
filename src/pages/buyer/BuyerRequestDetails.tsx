@@ -477,10 +477,14 @@ const BuyerRequestDetails = () => {
             onDecline={handleDeclineAgreement}
           />
 
-          <ListingRequestAgreementSummary
-            agreement={buyerVisibleAgreement}
-            isLoading={agreementQuery.isLoading}
-          />
+          {/* A sent agreement is shown by the panel above, with an
+              "I understand" box under each section. */}
+          {buyerVisibleAgreement?.status !== "sent" && (
+            <ListingRequestAgreementSummary
+              agreement={buyerVisibleAgreement}
+              isLoading={agreementQuery.isLoading}
+            />
+          )}
         </>
       ),
     },

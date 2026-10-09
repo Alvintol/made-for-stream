@@ -140,13 +140,25 @@ auto_fix: none
 reason_not_automatable: "acknowledgement is the buyer's act and the point of the feature"
 ```
 
-**Cause.** The buyer tried to accept without ticking every required confirmation.
+**Cause.** The buyer tried to accept without every required confirmation.
 
-**What the user sees.** Acceptance refused, sometimes without it being obvious
-which item is outstanding — worth checking whether the UI marks them clearly,
-because this is a conversion-critical moment.
+**How the buyer confirms (2026-10-08).** A sent agreement is shown with an
+"I understand the … above." box under each of its sections: Terms, Scope,
+Scope checklist (when there is one), Payment schedule and Policies. One box
+stands for every confirmation the database requires about that section
+(`getAgreementAcknowledgementSection` in
+`src/domain/listings/listingRequestAgreements.ts`); the website still sends
+every key, and `respond_listing_request_agreement` still checks and records
+each one with its own wording, so "Buyer confirmations" on an accepted
+agreement lists them item by item. The rules a box stands for are written in
+its section: buyer-side holds under Terms, held final files under Payment
+schedule, change orders under Policies.
 
-**Fix.** The buyer acknowledges the remaining items. **Nobody may acknowledge on
+**What the user sees.** The Accept button stays disabled, and the panel under
+the agreement says how many sections are confirmed ("3 of 5 confirmed"). The
+database message itself normally means a direct call.
+
+**Fix.** The buyer ticks the box under each remaining section. **Nobody may acknowledge on
 a buyer's behalf**, including support and including the agent. These
 confirmations are the evidence that the buyer agreed to specific terms, and an
 acknowledgement they did not make is worthless in a dispute — worse than
