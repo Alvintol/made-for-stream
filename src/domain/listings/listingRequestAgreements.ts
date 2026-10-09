@@ -286,6 +286,31 @@ export const getRequiredListingRequestAgreementAcknowledgements = (
   ];
 };
 
+// What a scope checklist line is: part of the work, or something the buyer
+// has to do (20261008_153). Shown beside the line, with the buyer's own
+// handle or display name in place of "the buyer".
+export type AgreementChecklistItemType = "included" | "buyer_provides" | "buyer_approves";
+
+// Null for a line that is not a checklist line (a milestone, an add-on).
+export const getAgreementChecklistItemLabel = (
+  itemType: string,
+  buyerName: string
+): string | null =>
+  itemType === "buyer_provides"
+    ? `${buyerName} provides`
+    : itemType === "buyer_approves"
+      ? `${buyerName} approves`
+      : itemType === "included"
+        ? "Included"
+        : null;
+
+// How a person is named on an agreement: their handle, else their display
+// name, else the fallback ("The buyer").
+export const getAgreementPersonName = (
+  profile: { handle?: string | null; display_name?: string | null } | null | undefined,
+  fallback: string
+): string => profile?.handle?.trim() || profile?.display_name?.trim() || fallback;
+
 // The buyer confirms the agreement one displayed section at a time: an
 // "I understand" box under each section stands for every acknowledgement the
 // database requires about that section (respond_listing_request_agreement

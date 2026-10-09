@@ -2,6 +2,7 @@ import { formatMoney as formatCurrencyAmount } from "../../../lib/formatMoney";
 import type { ReactNode } from "react";
 import {
   getAgreementAcknowledgementKeysBySection,
+  getAgreementChecklistItemLabel,
   getRequiredListingRequestAgreementAcknowledgements,
   getListingRequestAgreementStatusLabel,
   getListingRequestAgreementStatusSummary,
@@ -26,6 +27,9 @@ type ListingRequestAgreementSummaryProps = {
   agreement: ListingRequestAgreementRow | null;
   isLoading?: boolean;
   acknowledge?: AgreementAcknowledgeControls;
+  // The buyer's handle or display name, for "… provides" and "… approves"
+  // beside checklist lines.
+  buyerName?: string;
 };
 
 const classes = {
@@ -141,9 +145,11 @@ const TermRow = ({ label, children }: { label: string; children: ReactNode }) =>
 const AgreementDetails = ({
   agreement,
   acknowledge,
+  buyerName,
 }: {
   agreement: ListingRequestAgreementRow;
   acknowledge?: AgreementAcknowledgeControls;
+  buyerName: string;
 }) => {
   const keys = getAgreementAcknowledgementKeysBySection(
     acknowledge ? getRequiredListingRequestAgreementAcknowledgements(agreement) : []
@@ -222,9 +228,12 @@ const AgreementDetails = ({
                   <div className={classes.rowTitle}>{item.title}</div>
                   {item.description && <div className={classes.rowSub}>{item.description}</div>}
                 </div>
+                {/* A checklist line says who it is for; a milestone or other
+                    priced line says when its payment is due, as before. */}
                 <div className={classes.rowAside}>
                   {[
-                    getListingRequestPaymentTimingLabel(item.payment_timing),
+                    getAgreementChecklistItemLabel(item.item_type, buyerName) ??
+                      getListingRequestPaymentTimingLabel(item.payment_timing),
                     item.price_amount ? formatMoney(item.price_amount, agreement.currency) : null,
                     item.timeline_impact_days
                       ? `+${item.timeline_impact_days} day${item.timeline_impact_days === 1 ? "" : "s"}`
@@ -327,6 +336,7 @@ const ListingRequestAgreementSummary = ({
   agreement,
   isLoading = false,
   acknowledge,
+  buyerName = "The buyer",
 }: ListingRequestAgreementSummaryProps) => {
   if (isLoading) {
     return <p className={classes.text}>Loading project agreement…</p>;
@@ -344,7 +354,7 @@ const ListingRequestAgreementSummary = ({
           Version {agreement.version_number} · {getListingRequestAgreementStatusSummary(agreement.status)}
         </span>
       </div>
-      <AgreementDetails agreement={agreement} acknowledge={acknowledge} />
+      <AgreementDetails agreement={agreement} acknowledge={acknowledge} buyerName={buyerName} />
     </div>
   );
 };

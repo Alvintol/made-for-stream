@@ -47,6 +47,11 @@ vi.mock(
   })
 );
 
+// The buyer's own profile names them beside the agreement's checklist lines.
+vi.mock("../../hooks/profile/useMyProfile", () => ({
+  useMyProfile: () => ({ data: { handle: "pastelfox", display_name: "Pastel Fox" } }),
+}));
+
 vi.mock("../../hooks/creatorRequests/useListingRequestCancellationWarnings", () => ({
   CANCELLATION_WARNING_DAYS: [7, 10, 14],
   useListingRequestCancellationWarnings: () => ({ data: [], isLoading: false }),

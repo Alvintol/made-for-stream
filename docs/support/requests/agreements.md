@@ -142,6 +142,17 @@ reason_not_automatable: "acknowledgement is the buyer's act and the point of the
 
 **Cause.** The buyer tried to accept without every required confirmation.
 
+**Scope checklist lines (2026-10-08, `20261008_153`).** Each line says who it
+is for, on the right: "Included" for part of the work, and "<buyer> provides"
+or "<buyer> approves" for something the buyer has to do, using the buyer's
+handle (or display name, or "The buyer"). The creator writes the three kinds
+in three boxes on the agreement form; they are saved as
+`listing_request_agreement_items.item_type` `included`, `buyer_provides` and
+`buyer_approves`. None carries a price. A milestone line still shows when its
+payment is due. If creating an agreement fails with
+`violates check constraint "listing_request_agreement_items_item_type_check"`,
+the website was deployed before migration `20261008_153`: apply it.
+
 **How the buyer confirms (2026-10-08).** A sent agreement is shown with an
 "I understand the … above." box under each of its sections: Terms, Scope,
 Scope checklist (when there is one), Payment schedule and Policies. One box

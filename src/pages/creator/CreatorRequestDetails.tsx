@@ -32,6 +32,7 @@ import {
   type WorkspaceSectionSpec,
 } from "../../components/listingRequests/workspace/sectionSummaries";
 import { useEffect, useState } from 'react';
+import { getAgreementPersonName } from '../../domain/listings/listingRequestAgreements';
 import ListingRequestAgreementBuilder from '../../components/listingRequests/agreements/ListingRequestAgreementBuilder';
 import ListingRequestAgreementCreatorActions from '../../components/listingRequests/agreements/ListingRequestAgreementCreatorActions';
 import ListingRequestAgreementSummary from '../../components/listingRequests/agreements/ListingRequestAgreementSummary';
@@ -716,6 +717,7 @@ const CreatorRequestDetails = () => {
                 {(close) => (
                   <ListingRequestAgreementBuilder
                     request={request}
+                    buyerName={getAgreementPersonName(buyer, "The buyer")}
                     currency={payoutCurrency}
                     isPending={createAgreementMutation.isPending}
                     error={createAgreementMutation.error}
@@ -728,6 +730,7 @@ const CreatorRequestDetails = () => {
           <ListingRequestAgreementSummary
             agreement={agreement}
             isLoading={agreementQuery.isLoading}
+            buyerName={getAgreementPersonName(buyer, "The buyer")}
           />
         </>
       ),

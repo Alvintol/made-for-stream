@@ -18,7 +18,9 @@ export type CreateListingRequestAgreementItemInput = {
   | "included"
   | "optional_addon"
   | "required_payment_item"
-  | "milestone";
+  | "milestone"
+  | "buyer_provides"
+  | "buyer_approves";
   price_amount?: number | null;
   timeline_impact_days?: number | null;
   payment_timing: ListingRequestPaymentTiming;

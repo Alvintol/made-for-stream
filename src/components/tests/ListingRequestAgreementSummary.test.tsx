@@ -142,6 +142,56 @@ describe("<ListingRequestAgreementSummary />", () => {
     expect(screen.getByText(/Confirmed on/)).toBeInTheDocument();
   });
 
+  it("says who each scope checklist line is for, using the buyer's own name", () => {
+    const withBuyerLines = {
+      ...agreement,
+      listing_request_agreement_items: [
+        ...agreement.listing_request_agreement_items,
+        {
+          ...agreement.listing_request_agreement_items[0],
+          id: "item-provides",
+          title: "Character reference sheet",
+          description: null,
+          item_type: "buyer_provides" as const,
+          sort_order: 10,
+        },
+        {
+          ...agreement.listing_request_agreement_items[0],
+          id: "item-approves",
+          title: "Sketches before colouring",
+          description: null,
+          item_type: "buyer_approves" as const,
+          sort_order: 11,
+        },
+      ],
+    };
+
+    const { unmount } = render(
+      <ListingRequestAgreementSummary agreement={withBuyerLines} buyerName="ImAllBeans" />
+    );
+
+    // A title can also appear as a deliverable chip; the checklist line is the list item.
+    const lineFor = (title: string) =>
+      screen
+        .getAllByText(title)
+        .map((node) => node.closest("li"))
+        .find(Boolean) as HTMLElement;
+
+    expect(lineFor("Character reference sheet")).toHaveTextContent("ImAllBeans provides");
+    expect(lineFor("Sketches before colouring")).toHaveTextContent("ImAllBeans approves");
+    expect(lineFor("Starting soon screen")).toHaveTextContent("Included");
+    // The old wording said the same thing on every line and is gone.
+    expect(screen.queryByText(/no extra charge/)).not.toBeInTheDocument();
+    // The payment schedule still says when each payment is due.
+    expect(screen.getByText("Due before work starts")).toBeInTheDocument();
+
+    unmount();
+
+    // Without a name to use, the line still says whose it is.
+    render(<ListingRequestAgreementSummary agreement={withBuyerLines} />);
+    expect(lineFor("Character reference sheet")).toHaveTextContent("The buyer provides");
+  });
+
   it("has no confirmation boxes for anyone but a buyer reviewing it, and states the standing rules", () => {
     render(<ListingRequestAgreementSummary agreement={agreement} />);
 

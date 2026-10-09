@@ -8,6 +8,8 @@ import {
 import { getRequestNextStep, getRequestStages } from "../../domain/listings/requestWorkspace";
 import { useState } from 'react';
 
+import { getAgreementPersonName } from '../../domain/listings/listingRequestAgreements';
+import { useMyProfile } from '../../hooks/profile/useMyProfile';
 import ListingRequestAgreementBuyerActions from '../../components/listingRequests/agreements/ListingRequestAgreementBuyerActions';
 import ListingRequestAgreementSummary from '../../components/listingRequests/agreements/ListingRequestAgreementSummary';
 import ListingRequestAgreementWorkReadinessCard from '../../components/listingRequests/agreements/ListingRequestAgreementWorkReadinessCard';
@@ -106,6 +108,9 @@ const BuyerRequestDetails = () => {
 
   const agreementQuery = useListingRequestAgreement(request?.id ?? null);
   const respondAgreementMutation = useRespondListingRequestAgreement();
+  // The buyer's own name, for the lines of an agreement that are theirs to do.
+  const { data: myProfile } = useMyProfile();
+  const buyerName = getAgreementPersonName(myProfile, "The buyer");
   const respondChangeOrderMutation =
     useRespondListingRequestChangeOrder();
   const respondFinalDeliveryMutation =
@@ -475,6 +480,7 @@ const BuyerRequestDetails = () => {
             error={respondAgreementMutation.error}
             onAccept={handleAcceptAgreement}
             onDecline={handleDeclineAgreement}
+            buyerName={buyerName}
           />
 
           {/* A sent agreement is shown by the panel above, with an
@@ -483,6 +489,7 @@ const BuyerRequestDetails = () => {
             <ListingRequestAgreementSummary
               agreement={buyerVisibleAgreement}
               isLoading={agreementQuery.isLoading}
+              buyerName={buyerName}
             />
           )}
         </>

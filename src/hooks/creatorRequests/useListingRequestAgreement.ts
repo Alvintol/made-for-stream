@@ -14,7 +14,13 @@ export type ListingRequestAgreementItemRow = {
   agreement_id: string;
   title: string;
   description: string | null;
-  item_type: "included" | "optional_addon" | "required_payment_item" | "milestone";
+  item_type:
+    | "included"
+    | "optional_addon"
+    | "required_payment_item"
+    | "milestone"
+    | "buyer_provides"
+    | "buyer_approves";
   price_amount: number | null;
   timeline_impact_days: number | null;
   payment_timing: ListingRequestPaymentTiming;

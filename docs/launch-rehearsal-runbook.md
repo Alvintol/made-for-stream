@@ -230,6 +230,11 @@ Record the request id per currency: CAD `____` (the first attempt, `6070950f-…
       on "deposit and balance", which sections 2 and 3 can use),
       every payment ≥ 10.00. **The amounts show the creator's currency.** **Summary shows the fee line as a maximum**, with the
       right figure (5% of each item, rounded up, summed).
+- [ ] *(Needs migration `20261008_153` before the website is merged.)* On the
+      agreement form, fill "What <buyer> needs to provide" and "What <buyer>
+      needs to approve" as well as the required checklist. After sending, the
+      scope checklist shows "Included", "<buyer's handle> provides" and
+      "<buyer's handle> approves" beside the lines, on both sides' pages.
 - [ ] Negative checks before sending (each must refuse with `AGR-005`'s message and
       send nothing):
   - [ ] a 9.99 milestone, in the builder;

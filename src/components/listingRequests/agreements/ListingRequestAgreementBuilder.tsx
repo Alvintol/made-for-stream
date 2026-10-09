@@ -20,6 +20,8 @@ import { getInstalmentFloorMessage } from '../../../domain/payments/supportedCur
 import ListingRequestMilestonePlanEditor from '../milestones/ListingRequestMilestonePlanEditor';
 type ListingRequestAgreementBuilderProps = {
   request: Pick<ListingRequestRow, "id" | "status"> | null;
+  // The buyer's handle or display name, for the two "what … needs to" boxes.
+  buyerName?: string;
   isPending?: boolean;
   error?: unknown;
   currency?: string;
@@ -32,6 +34,9 @@ type BuilderFormState = {
   scopeSummary: string;
   includedDeliverablesText: string;
   checklistText: string;
+  // Checklist lines that are the buyer's to do (20261008_153).
+  buyerProvidesText: string;
+  buyerApprovesText: string;
   totalAmount: string;
   paymentStructure: ListingRequestPaymentStructure;
   depositAmount: string;
@@ -101,6 +106,8 @@ const defaultFormState: BuilderFormState = {
   scopeSummary: "",
   includedDeliverablesText: "",
   checklistText: "",
+  buyerProvidesText: "",
+  buyerApprovesText: "",
   totalAmount: "",
   paymentStructure: "deposit_balance",
   depositAmount: "",
@@ -153,7 +160,12 @@ const validateForm = (
     errors.includedDeliverablesText = "Add at least one included deliverable.";
   }
 
-  if (splitTextareaLines(form.checklistText).length === 0) {
+  if (
+    splitTextareaLines(form.checklistText).length +
+      splitTextareaLines(form.buyerProvidesText).length +
+      splitTextareaLines(form.buyerApprovesText).length ===
+    0
+  ) {
     errors.checklistText = "Add at least one required checklist item.";
   }
 
@@ -317,6 +329,7 @@ const ListingRequestAgreementBuilder = ({
   isPending = false,
   error,
   currency = "cad",
+  buyerName = "the buyer",
   onCreateAgreement,
 }: ListingRequestAgreementBuilderProps) => {
   const [form, setForm] = useState<BuilderFormState>(defaultFormState);
@@ -397,12 +410,20 @@ const ListingRequestAgreementBuilder = ({
       form.estimatedCompletionDate
     );
 
-    const checklistItems = splitTextareaLines(
-      form.checklistText
-    ).map((title, index) => ({
+    const checklistItems = (
+      [
+        ["included", form.checklistText],
+        ["buyer_provides", form.buyerProvidesText],
+        ["buyer_approves", form.buyerApprovesText],
+      ] as const
+    )
+      .flatMap(([itemType, text]) =>
+        splitTextareaLines(text).map((title) => ({ title, itemType }))
+      )
+      .map(({ title, itemType }, index) => ({
       title,
       description: null,
-      item_type: "included" as const,
+      item_type: itemType,
       price_amount: null,
       timeline_impact_days: 0,
       payment_timing:
@@ -548,18 +569,57 @@ const ListingRequestAgreementBuilder = ({
             <textarea
               className={classes.textarea}
               id="agreement-checklist"
-              placeholder={"e.g.\nBuyer sends character references before work starts\nSketches are approved before colouring\nUse on Twitch, YouTube and Discord is included"}
+              placeholder={"e.g.\nUse on Twitch, YouTube and Discord is included\nFlat colour, no animation"}
               value={form.checklistText}
               onChange={(event) =>
                 updateField("checklistText", event.currentTarget.value)
               }
             />
-            <p className={classes.help}>Add one required scope item per line.</p>
+            <p className={classes.help}>
+              Add one required scope item per line. The agreement shows these as
+              &ldquo;Included&rdquo;.
+            </p>
             {validationErrors.checklistText && (
               <p className={classes.errorText}>
                 {validationErrors.checklistText}
               </p>
             )}
+          </div>
+
+          <div className={classes.field}>
+            <label className={classes.label} htmlFor="agreement-buyer-provides">
+              What {buyerName} needs to provide
+            </label>
+            <textarea
+              className={classes.textarea}
+              id="agreement-buyer-provides"
+              placeholder={"e.g.\nCharacter reference sheet before work starts"}
+              value={form.buyerProvidesText}
+              onChange={(event) =>
+                updateField("buyerProvidesText", event.currentTarget.value)
+              }
+            />
+            <p className={classes.help}>
+              Optional, one per line. Shown as &ldquo;{buyerName} provides&rdquo;.
+            </p>
+          </div>
+
+          <div className={classes.field}>
+            <label className={classes.label} htmlFor="agreement-buyer-approves">
+              What {buyerName} needs to approve
+            </label>
+            <textarea
+              className={classes.textarea}
+              id="agreement-buyer-approves"
+              placeholder={"e.g.\nSketches, before colouring starts"}
+              value={form.buyerApprovesText}
+              onChange={(event) =>
+                updateField("buyerApprovesText", event.currentTarget.value)
+              }
+            />
+            <p className={classes.help}>
+              Optional, one per line. Shown as &ldquo;{buyerName} approves&rdquo;.
+            </p>
           </div>
         </div>
 
