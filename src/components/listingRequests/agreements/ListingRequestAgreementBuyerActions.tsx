@@ -23,6 +23,8 @@ type ListingRequestAgreementBuyerActionsProps = {
     earlyServiceRequested: boolean,
   ) => Promise<void> | void;
   onDecline: () => Promise<void> | void;
+  // The buyer's own handle or display name, shown beside checklist lines.
+  buyerName?: string;
 };
 
 const classes = {
@@ -55,6 +57,7 @@ const ListingRequestAgreementBuyerActions = ({
   error,
   onAccept,
   onDecline,
+  buyerName,
 }: ListingRequestAgreementBuyerActionsProps) => {
   const [checkedAcknowledgementKeys, setCheckedAcknowledgementKeys] = useState<
     string[]
@@ -118,6 +121,7 @@ const ListingRequestAgreementBuyerActions = ({
     <div className={classes.review}>
       <ListingRequestAgreementSummary
         agreement={agreement}
+        buyerName={buyerName}
         acknowledge={{
           checkedKeys: checkedAcknowledgementKeys,
           onToggle: handleToggleSection,

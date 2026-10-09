@@ -22,6 +22,7 @@ import {
   workspaceDate,
   type WorkspaceSectionSpec,
 } from "../../components/listingRequests/workspace/sectionSummaries";
+import { getAgreementPersonName } from '../../domain/listings/listingRequestAgreements';
 import ListingRequestAgreementSummary from '../../components/listingRequests/agreements/ListingRequestAgreementSummary';
 import ListingRequestAgreementWorkReadinessCard from '../../components/listingRequests/agreements/ListingRequestAgreementWorkReadinessCard';
 import ListingRequestChangeOrderSummary from '../../components/listingRequests/changeOrders/ListingRequestChangeOrderSummary';
@@ -308,6 +309,7 @@ const AdminRequestDetails = () => {
         <ListingRequestAgreementSummary
           agreement={agreement}
           isLoading={agreementQuery.isLoading}
+          buyerName={getAgreementPersonName(buyer, "The buyer")}
         />
       ),
     },

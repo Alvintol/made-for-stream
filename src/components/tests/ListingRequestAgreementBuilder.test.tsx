@@ -94,6 +94,68 @@ describe("ListingRequestAgreementBuilder", () => {
     expect((screen.getByLabelText("Milestone 1 description") as HTMLTextAreaElement).placeholder).toMatch(/^e\.g\./);
   });
 
+  it("saves what the buyer has to provide and approve as their own kinds of line", () => {
+    const onCreateAgreement = vi.fn();
+
+    render(
+      <ListingRequestAgreementBuilder
+        request={createRequest()}
+        buyerName="ImAllBeans"
+        onCreateAgreement={onCreateAgreement}
+      />
+    );
+
+    fillValidAgreementForm();
+
+    fireEvent.change(screen.getByLabelText("What ImAllBeans needs to provide"), {
+      target: { value: "Character reference sheet" },
+    });
+    fireEvent.change(screen.getByLabelText("What ImAllBeans needs to approve"), {
+      target: { value: "Sketches before colouring\nFinal colours" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Create and send agreement" }));
+
+    const items = onCreateAgreement.mock.calls[0][0].items as Array<{
+      title: string;
+      item_type: string;
+      sort_order: number;
+      price_amount: number | null;
+    }>;
+
+    expect(items.map((item) => [item.title, item.item_type, item.sort_order])).toEqual([
+      ["Sketch approval", "included", 0],
+      ["Final PNG delivery", "included", 1],
+      ["Character reference sheet", "buyer_provides", 2],
+      ["Sketches before colouring", "buyer_approves", 3],
+      ["Final colours", "buyer_approves", 4],
+    ]);
+    // None of them carries a price.
+    expect(items.every((item) => item.price_amount === null)).toBe(true);
+  });
+
+  it("accepts an agreement whose only checklist lines are the buyer's", () => {
+    const onCreateAgreement = vi.fn();
+
+    render(
+      <ListingRequestAgreementBuilder
+        request={createRequest()}
+        onCreateAgreement={onCreateAgreement}
+      />
+    );
+
+    fillValidAgreementForm();
+
+    fireEvent.change(screen.getByLabelText("Required checklist items"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("What the buyer needs to provide"), {
+      target: { value: "Character reference sheet" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Create and send agreement" }));
+
+    expect(onCreateAgreement).toHaveBeenCalled();
+  });
+
   it("creates and sends an agreement with valid defaults", () => {
     const onCreateAgreement = vi.fn();
 
