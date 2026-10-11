@@ -1,4 +1,8 @@
 import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import {
   render,
   screen,
 } from "@testing-library/react";
@@ -6,7 +10,17 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  getUrls: vi.fn(),
+}));
+
+vi.mock("../../lib/listings/milestonePreviewImage", () => ({
+  getMilestonePreviewImageUrls: mocks.getUrls,
+}));
+
 import ListingRequestMilestoneSummary from "../listingRequests/milestones/ListingRequestMilestoneSummary";
 import type { ListingRequestMilestoneRow } from "../../hooks/creatorRequests/useListingRequestMilestones";
 import type { ListingRequestMilestoneSubmissionRow } from "../../hooks/creatorRequests/useListingRequestMilestoneSubmissions";
@@ -56,6 +70,7 @@ const createSubmission = (
   delivery_links: [
     "https://example.com/concepts",
   ],
+  preview_image_paths: [],
   revision_request_reason: null,
   submitted_at: "2026-06-16T12:00:00.000Z",
   revision_requested_at: null,
@@ -217,6 +232,43 @@ describe("ListingRequestMilestoneSummary", () => {
     expect(
       screen.getByText("Jun 17, 2026")
     ).toBeInTheDocument();
+  });
+
+  it("shows the latest submission's preview images through temporary addresses", async () => {
+    mocks.getUrls.mockResolvedValue([
+      "https://example.com/signed/sketch",
+    ]);
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ListingRequestMilestoneSummary
+          milestones={[
+            createMilestone({ status: "submitted" }),
+          ]}
+          submissions={[
+            createSubmission({
+              preview_image_paths: [
+                "milestone-1/sketch.webp",
+              ],
+            }),
+          ]}
+          viewer="buyer"
+        />
+      </QueryClientProvider>
+    );
+
+    expect(
+      await screen.findByAltText(
+        "Milestone preview image 1"
+      )
+    ).toHaveAttribute(
+      "src",
+      "https://example.com/signed/sketch"
+    );
+
+    expect(mocks.getUrls).toHaveBeenCalledWith([
+      "milestone-1/sketch.webp",
+    ]);
   });
 
   it("renders revision request details", () => {

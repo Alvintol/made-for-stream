@@ -17,6 +17,7 @@ import { useSubmitListingRequestMilestone } from "../useSubmitListingRequestMile
 const mocks = vi.hoisted(() => ({
   useAuth: vi.fn(),
   rpc: vi.fn(),
+  upload: vi.fn(),
 }));
 
 vi.mock(
@@ -31,6 +32,9 @@ vi.mock(
   () => ({
     supabase: {
       rpc: mocks.rpc,
+      storage: {
+        from: () => ({ upload: mocks.upload }),
+      },
     },
   })
 );
@@ -199,6 +203,91 @@ describe(
             "conversationMessages",
           ],
         });
+      }
+    );
+
+    it(
+      "uploads preview images into the milestone's folder, then names them in the RPC",
+      async () => {
+        mocks.upload.mockResolvedValue({ error: null });
+
+        const { wrapper } = createWrapper();
+
+        const { result } = renderHook(
+          () =>
+            useSubmitListingRequestMilestone(),
+          {
+            wrapper,
+          }
+        );
+
+        const blob = new Blob(["prepared"], {
+          type: "image/webp",
+        });
+
+        await act(async () => {
+          await result.current.mutateAsync({
+            milestoneId: "milestone-1",
+            summary:
+              "The initial design concepts are ready.",
+            deliveryLinks: [],
+            previewImages: [blob],
+          });
+        });
+
+        expect(mocks.upload).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /^milestone-1\/[0-9a-f-]+\.webp$/
+          ),
+          blob,
+          { contentType: "image/webp" }
+        );
+
+        expect(mocks.rpc).toHaveBeenCalledWith(
+          "submit_listing_request_milestone",
+          expect.objectContaining({
+            p_preview_image_paths: [
+              mocks.upload.mock.calls[0][0],
+            ],
+          })
+        );
+      }
+    );
+
+    it(
+      "does not save the submission when a preview image fails to upload",
+      async () => {
+        mocks.upload.mockResolvedValue({
+          error: new Error(
+            "new row violates row-level security policy"
+          ),
+        });
+
+        const { wrapper } = createWrapper();
+
+        const { result } = renderHook(
+          () =>
+            useSubmitListingRequestMilestone(),
+          {
+            wrapper,
+          }
+        );
+
+        await expect(
+          result.current.mutateAsync({
+            milestoneId: "milestone-1",
+            summary:
+              "The initial design concepts are ready.",
+            deliveryLinks: [],
+            previewImages: [
+              new Blob(["prepared"], {
+                type: "image/webp",
+              }),
+            ],
+          })
+        ).rejects.toThrow("row-level security");
+
+        expect(mocks.rpc).not.toHaveBeenCalled();
       }
     );
 

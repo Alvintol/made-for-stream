@@ -45,6 +45,11 @@ vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({
   useCreatorPaymentAccount: () => ({ data: { default_currency: "cad" } }),
 }));
 
+// The creator's handle goes into the watermark on milestone preview images.
+vi.mock("../../hooks/profile/useMyProfile", () => ({
+  useMyProfile: () => ({ data: { handle: "meowington" } }),
+}));
+
 vi.mock(
   "../../hooks/payments/useListingRequestPayments",
   () => ({

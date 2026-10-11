@@ -1085,7 +1085,10 @@ deploy** (see the runbook's step 0).
       code default changed, but a set env var wins) and `EMAIL_COMPANY_ADDRESS` to
       the P.O. Box line in `api/.env.example`, so receipt footers carry it.
 - [ ] **Run the rehearsal** in [`launch-rehearsal-runbook.md`](launch-rehearsal-runbook.md)
-      (CAD, USD, EUR). Written, **not run**. It includes the Storage Register
+      (CAD, USD, EUR). **In progress since 2026-10-08, not finished:** the CAD
+      commission `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` has an accepted milestone
+      agreement and no payment yet; USD and EUR are not started. The runbook's
+      "Progress" section has the exact state. It includes the Storage Register
       browser check.
 - [ ] **Confirm processor terms are in place** before relying on the register as
       a GDPR sub-processor disclosure. Stripe's, Cloudflare's and Google Cloud's
@@ -1392,6 +1395,28 @@ in [`environments.md`](environments.md).
       Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
       clean, `npx vite build` clean. **Tick when the 27 are fixed or the
       rules are deliberately relaxed.**
+- [ ] **Milestone submissions can carry watermarked preview images
+      (2026-10-11).** The creator may add up to six JPEG, PNG or WebP images
+      when submitting a milestone. The page shrinks each to 1200 px and
+      always watermarks it ("Made for Stream · @handle"), reusing the listing
+      thumbnail code; only that copy is uploaded. Migration `20261011_154`
+      adds the private `milestone-previews` bucket, its upload and read
+      rules, `preview_image_paths` on submissions, and a fourth, optional
+      argument on `submit_listing_request_milestone`. Creator, buyer and
+      admins see the images under the milestone through one-hour addresses.
+      Playbook: `MIL-005`. **Dry-run on the live database in a rolled-back
+      transaction, 2026-10-11:** another creator and the buyer cannot upload
+      into the milestone's folder; the creator can; the buyer sees nothing
+      before submission and the image after; a third account and a signed-out
+      visitor see nothing; seven images, a file never uploaded and a file
+      from another milestone's folder are refused; the old three-argument
+      call still works; no upload, rename or delete is possible after
+      submission; the rollback left nothing behind. Ran after the change:
+      `npx vitest run` 1273 passing, `npx tsc --noEmit` clean, `npx vite
+      build` clean, eslint 29 problems (27 errors, 2 warnings; not grown).
+      **Not tested:** a real upload through Supabase Storage, the form and
+      the images in a browser, Safari. **For counsel:** the Privacy Policy
+      does not yet mention these images or how long they are kept.
 - [ ] **Listing thumbnails are uploads, with an optional watermark
       (2026-10-06).** The pasted link is gone. The page shrinks the image to
       1200 px, optionally watermarks it ("Made for Stream · @handle") and

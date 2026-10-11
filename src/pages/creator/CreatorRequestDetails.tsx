@@ -65,6 +65,7 @@ import { useSendDraftListingRequestAgreement } from '../../hooks/creatorRequests
 import { useSendDraftListingRequestChangeOrder } from '../../hooks/creatorRequests/useSendDraftListingRequestChangeOrder';
 import { useSendDraftListingRequestFinalDelivery } from '../../hooks/creatorRequests/useSendDraftListingRequestFinalDelivery';
 import { useSubmitListingRequestMilestone } from '../../hooks/creatorRequests/useSubmitListingRequestMilestone';
+import { useMyProfile } from '../../hooks/profile/useMyProfile';
 import { useListingRequestMilestoneSubmissions } from '../../hooks/creatorRequests/useListingRequestMilestoneSubmissions';
 import { useListingRequestMilestones } from '../../hooks/creatorRequests/useListingRequestMilestones';
 import ListingRequestMilestoneSubmissionForm from '../../components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm';
@@ -174,6 +175,7 @@ const CreatorRequestDetails = () => {
     useSendDraftListingRequestFinalDelivery();
   const submitMilestoneMutation =
     useSubmitListingRequestMilestone();
+  const { data: myProfile } = useMyProfile();
 
 
   const [showDeclineForm, setShowDeclineForm] = useState(false);
@@ -772,6 +774,7 @@ const CreatorRequestDetails = () => {
                 {(close) => (
                   <ListingRequestMilestoneSubmissionForm
                     milestone={activeMilestone}
+                    watermarkHandle={myProfile?.handle}
                     isPending={submitMilestoneMutation.isPending}
                     error={submitMilestoneMutation.error}
                     onSubmitMilestone={thenClose(submitMilestoneMutation.mutateAsync, close)}

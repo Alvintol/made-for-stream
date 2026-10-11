@@ -1,46 +1,68 @@
 # Launch Rehearsal Runbook (test mode)
 
 Sprint 8's last gate (`launch-implementation-checklist.md`). **Written 2026-09-23,
-updated 2026-10-08, section 0 nearly done, section 1 started in CAD, sections 1b to 7 not yet run.** Tick the boxes as you go and record
+updated 2026-10-09, section 0 nearly done, section 1 under way in CAD (agreement accepted, no payment yet), sections 1b to 7 not yet run.** Tick the boxes as you go and record
 the ids you used, so "has this been rehearsed" has an answer.
 
-**Progress, 2026-10-08.** The first CAD request
-(`6070950f-424c-4f60-9d17-4996a5ecee4b`, a deposit and balance agreement
-accepted by the buyer) was **cancelled before any payment** so the run could
-restart with milestones. Confirmed in the database: the request, its
-agreement and its unpaid deposit payment are all `cancelled`, nothing was
-paid, and all six emails for it are marked `sent`, the last being
-`request_cancelled` to the buyer (the creator cancelled). All four rehearsal
-accounts have saved their private account details and accepted the
-`2026-10-08` Terms and Privacy Policy. **No new request exists yet:** section
-1 restarts from "Buyer submits a request". Not yet done: the 9.99 and
-early-start refusals, any payment.
+**Progress, 2026-10-09 (all confirmed in the database).**
 
-A second round of interface changes from this run is on branch
-`feat/request-invoice-inbox-dashboard` (website only, no migration, no API
-deploy): the estimated invoice and fee note on the request form, percentage
-shortcuts and an explanation of the contribution at checkout, a tidier top
-bar menu, the promotional email question on the account details form, inbox
-folders with search (newest 50 conversations, older ones on demand), and a
-real creator dashboard whose numbers are database counts.
+- **CAD run, request `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a`** ("TEST NEW
+  COMMISSION" on meowington's "222222222 updated", budget saved as a range,
+  100 to 123). Sent by the buyer, accepted by the creator.
+- **Agreement `f1157fac-69ee-47b0-9b11-1065da171919`:** milestone payments, CAD,
+  total 100.00, two milestones ("sketches" 60.00, "coloured" 40.00), both
+  fee rates locked at 500 (5%), no starting payment. **Accepted by the buyer**
+  at 2026-10-09 00:26 UTC: 15 confirmations recorded item by item, and the
+  `early_service_request` row is recorded at Refund Policy `2026-10-07`.
+- **Emails, all `sent`:** `request_received` and `agreement_accepted` to
+  meowington; `request_accepted` and `agreement_sent` to the buyer.
+- **Not started:** both milestones are `pending`, there are no payment rows
+  and no cancellation warning. **Next step: the creator submits milestone 1.**
+- **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
+  steps are still to do): submitting milestone 2 first is refused
+  (`MIL-001`); milestone 1 submit and approve creates one payment, 60.00 CAD,
+  fees 3.00 and 3.00, total 63.00, no recovery instalment, no minimums; once
+  paid the milestone and its schedule line are `paid` and milestone 2 can be
+  submitted. A +5.00 change order is refused with `AGR-005`'s message; +15.00
+  is accepted and makes a 15.00 payment (fees 0.75 and 0.75, total 15.75),
+  and the agreement total becomes 115.00. Each step queued the right email
+  to the right person. Marking a payment paid was done by hand in the dry
+  run: the Stripe webhook itself has still never run on a milestone payment.
+- **Not done on this run, because the agreement was already accepted when
+  they were due:** the 9.99 direct-call refusal (`AGR-005`) and the
+  early-start direct-call refusal (`AGR-007`). Run both as roll-back dry runs
+  on the USD run, before the agreement is sent and before it is accepted.
+- **Its scope checklist lines all read "Included"**, including "buyer send
+  reference photos": the agreement was written before the form had the
+  "provides" and "approves" boxes (`20261008_153`). The USD run is the first
+  to use them.
+- **Earlier attempts.** `6070950f-…` (deposit and balance) was cancelled by
+  the creator before any payment: request, agreement and the unpaid deposit
+  are `cancelled`, nothing was paid, and the buyer was emailed. That is
+  section 3's "before payment" check. `e1ee74b1-…` is the May test request,
+  also cancelled.
+- **Accounts.** All four rehearsal accounts have private account details
+  (CA, CA, US, IE), a chosen display name and a handle, and have accepted the
+  `2026-10-08` Terms and Privacy Policy.
 
-Defects found by this run and fixed on branch
-`fix/rehearsal-checkout-agreement-and-region` (needs an **API deploy**, then
-the website merge):
+**Open, found during this run and not fixed:**
 
-- Budget box on the commission request form: the currency code sat on top of
-  the typed amount.
-- Milestone payments needed more than 14 work days while the builder
-  defaults to 14. Now 7 days or more; the plan shows but is locked below that.
-- Checkout: a tip or contribution from an earlier visit showed in the total
-  but could not be changed or removed. The boxes now show the saved amounts.
-- Checkout: the billing country was a free choice on every payment. It is
-  now the country saved in Settings (enforced by the API); a buyer with none
-  saved chooses once and it is saved.
-- Checkout: "Continue to payment" was unstyled text.
-- Agreement acceptance: one compact list instead of a card per tick box; the
-  early-start explanation sits behind "Why am I asked this?".
-- Top bar globe: language and currency only. The country is set in Settings.
+- The buyer and meowington each have their `2026-10-08` Terms and Privacy
+  acceptance recorded three times in `policy_acceptances`. Harmless, cause
+  not looked into.
+- Buyer-side on-screen checks for the CAD steps above were done by the
+  operator and are not individually ticked below; only what the database
+  shows is.
+
+**What changed in the product during this run** (all merged, PRs #152 to
+#161; migrations `20261008_150` to `153` applied; details in each playbook):
+private account details and a chosen display name are required before
+listing, requesting or paying; the billing location comes from those details;
+budgets can be a range and the request form shows an estimated invoice;
+checkout has tip shortcuts and "Round up"; the agreement is confirmed section
+by section, with examples on the form and "who is this for" on checklist
+lines; emails name people by handle; the inbox has folders and search; the
+creator dashboard and the top bar were rebuilt.
 
 A passing run clears **CAD and USD** for launch. The EUR run proves the money path works
 in a second currency in test mode. It does **not** clear EUR, GBP or any other wave 2
@@ -212,19 +234,19 @@ where n.listing_request_id = '<request>' order by n.created_at;
       cancellation itself takes 7 days or more, so it was checked by a
       rolled-back dry run only (`docs/support/requests/cancellation-warnings.md`).
 
-Record the request id per currency: CAD `____` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `____` EUR `____`
+Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `____` EUR `____`
 
 - [ ] *(Needs migration `20261008_151` applied before the website is merged.)*
       The budget box takes an amount or a range: type `100 to 150` and the
       "Estimated invoice" card (now above the listing summary) shows a range on
       every line; type `around 100` and the form refuses it with a message
       saying what it accepts.
-- [ ] Buyer submits a request. On the form: the budget box shows the
+- [x] *(CAD 2026-10-08: request `4fb4b602-…` sent with a budget range and accepted; both emails `sent`. USD and EUR to do.)* Buyer submits a request. On the form: the budget box shows the
       creator's currency, the note under it states the 5% buyer service
       fee, and the "Estimated invoice" card beside the form follows the
       budget as it is typed (and shows an estimate in the buyer's own
       currency when that differs: the USD and EUR runs). Creator accepts it.
-- [ ] Creator builds a **milestone** agreement with two milestones (estimated
+- [x] *(CAD 2026-10-09: agreement `f1157fac-…`, milestones 60.00 and 40.00 CAD, fee rates 500/500. USD and EUR to do.)* Creator builds a **milestone** agreement with two milestones (estimated
       work days must be 7 or more, or the milestone plan is locked; the
       builder has no deposit on a milestone agreement; a deposit exists only
       on "deposit and balance", which sections 2 and 3 can use),
@@ -251,7 +273,7 @@ Record the request id per currency: CAD `____` (the first attempt, `6070950f-…
       `buyer_accepted`, every acknowledgement key and **no**
       `p_early_service_request_version`. Refused with `AGR-007`; the agreement stays
       `sent`.
-- [ ] Accept. `policy_acceptances` has an `early_service_request` row for the
+- [x] *(CAD 2026-10-09: accepted 00:26 UTC, 15 confirmations, early-start row at `2026-10-07`; `agreement_accepted` email `sent`. USD and EUR to do.)* Accept. `policy_acceptances` has an `early_service_request` row for the
       request at the current Refund Policy version (`2026-10-07`).
 - [ ] Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
@@ -265,6 +287,18 @@ Record the request id per currency: CAD `____` (the first attempt, `6070950f-…
 - [ ] Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).
+- [ ] *(Needs migration `20261011_154` before the website is merged.)*
+      **Milestone preview images.** When submitting milestone 1 the creator
+      adds one or two images in "Preview images". Each thumbnail on the form
+      already carries "Made for Stream · @<creator handle>" across it. After
+      submitting, the creator and the buyer both see the watermarked images
+      under the milestone, and clicking one opens it in a new tab. Also try a
+      file that is not an image (refused with "Choose a JPEG, PNG or WebP
+      image.") and removing an image before submitting. In the database the
+      submission's `preview_image_paths` lists the files, and
+      `select public from storage.buckets where id = 'milestone-previews';`
+      is `false`. An image's address works for one hour for anyone who has
+      it, then stops (`MIL-005`).
 - [ ] Milestone 1: creator submits, buyer approves, milestone payment paid.
 - [ ] **Change order:** first try +5.00, which the creator's send must refuse
       (`AGR-005`, via the change-order trigger). Then +15.00: send, buyer accepts,
