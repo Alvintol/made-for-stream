@@ -3,6 +3,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { uploadMilestonePreviewImage } from "../../lib/listings/milestonePreviewImage";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -10,6 +11,9 @@ export type SubmitListingRequestMilestoneInput = {
   milestoneId: string;
   summary: string;
   deliveryLinks: string[];
+  // Prepared, watermarked copies (the form makes them). Uploaded here,
+  // just before the submission is saved.
+  previewImages?: Blob[];
 };
 
 export type SubmittedListingRequestMilestoneRow = {
@@ -44,6 +48,17 @@ export const useSubmitListingRequestMilestone =
           );
         }
 
+        const previewImagePaths: string[] = [];
+
+        for (const blob of input.previewImages ?? []) {
+          previewImagePaths.push(
+            await uploadMilestonePreviewImage({
+              milestoneId: input.milestoneId,
+              blob,
+            })
+          );
+        }
+
         const { data, error } = await supabase.rpc(
           "submit_listing_request_milestone",
           {
@@ -53,6 +68,11 @@ export const useSubmitListingRequestMilestone =
               normalizeDeliveryLinks(
                 input.deliveryLinks
               ),
+            // Only named when there are images, so a submission without
+            // any does not depend on migration 20261011_154.
+            ...(previewImagePaths.length > 0
+              ? { p_preview_image_paths: previewImagePaths }
+              : {}),
           }
         );
 

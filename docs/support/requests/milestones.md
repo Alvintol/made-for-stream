@@ -6,6 +6,12 @@ surfaces:
   - supabase/migrations/20260618_103_enforce_milestone_submission_sequence.sql
   - supabase/migrations/20260618_105_enforce_milestone_payment_sequence.sql
   - supabase/migrations/20260619_106_align_milestone_sequence_guards.sql
+  - supabase/migrations/20261011_154_add_milestone_preview_images.sql
+  - storage bucket milestone-previews (private)
+  - public.submit_listing_request_milestone
+  - src/lib/listings/milestonePreviewImage.ts
+  - src/components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm.tsx
+  - src/components/listingRequests/milestones/ListingRequestMilestoneSummary.tsx
 unmatched_tier: 2
 ---
 
@@ -32,6 +38,7 @@ be able to reach.
 | "Buyer approved but it didn't unlock" | [`WHK-002`](../payments/webhooks.md#whk-002--payment-marked-paid-but-the-workflow-did-not-advance) |
 | "My submission was rejected" | [`MIL-002`](#mil-002--submission-content-rejected) |
 | "It won't let me approve" | [`MIL-003`](#mil-003--invalid-milestone-response) |
+| "My image won't upload" / "I can't see the creator's images" | [`MIL-005`](#mil-005--milestone-preview-image-problems) |
 
 ---
 
@@ -45,6 +52,12 @@ signals:
     match: "Another milestone must be resolved before this milestone can be submitted."
   - source: db
     match: "Earlier milestones must be completed before this milestone can be submitted."
+  - source: db
+    match: "Previous milestones must be completed before this milestone can be submitted."
+  - source: db
+    match: "Previous milestones must be completed before this milestone can be approved."
+  - source: db
+    match: "Previous milestones must be completed before this milestone payment can be confirmed."
 auto_fix: none
 reason_not_automatable: "workflow integrity guard; retrying cannot help and may compound"
 escalate_with:
@@ -113,9 +126,11 @@ signals:
   - source: db
     match: "Milestone response must be buyer_approved or revision_requested."
   - source: db
-    match: "A revision request reason of at least 10 characters is required."
+    match: "Revision request reason must be between 10 and 2000 characters."
   - source: db
     match: "Approval responses cannot include a revision request reason."
+  - source: db
+    match: "This milestone is not awaiting your response."
   - source: db
     match: "Milestone could not be found."
 auto_fix: none
@@ -127,7 +142,9 @@ escalate_if:
 
 **Cause.** Mostly user input — a revision request with no reason. But an approval
 carrying a revision reason is a client bug, and "could not be found" is a data
-problem rather than either.
+problem rather than either. "Not awaiting your response" means the milestone
+is not `submitted` (already answered, or the page was stale), or the caller is
+not its buyer.
 
 **Fix.** For the input case, supply a reason. The 10-character minimum exists so
 the creator gets something actionable rather than "no".
@@ -176,8 +193,106 @@ a payment that never happened. Treat it as a last resort.
 
 ---
 
+## `MIL-005` — Milestone preview image problems
+
+```yaml
+id: MIL-005
+tier: 2
+signals:
+  - source: ui
+    match: "Choose a JPEG, PNG or WebP image."
+    where: "validateListingPreviewSource (src/lib/listings/listingPreviewImage.ts), shown under the Preview images box"
+  - source: ui
+    match: "That image is over 20 MB. Choose a smaller one."
+    where: "validateListingPreviewSource"
+  - source: ui
+    match: "That image could not be read. Try a different file."
+    where: "ListingRequestMilestoneSubmissionForm, when the browser cannot open the file"
+  - source: ui
+    match: "The preview images could not be loaded."
+    where: "ListingRequestMilestoneSummary, when the temporary addresses cannot be made"
+  - source: db
+    match: "A milestone submission can contain no more than 6 preview images."
+    where: "public.submit_listing_request_milestone (20261011_154), errcode 22023; the form shows the same words first"
+  - source: db
+    match: "A milestone preview image was not uploaded for this milestone. Choose the image again."
+    where: "public.submit_listing_request_milestone (20261011_154), errcode 22023"
+  - source: storage
+    match: "/Bucket not found|mime type .* is not supported|exceeded the maximum allowed size|row-level security/"
+    where: "Supabase Storage's answer to the upload, shown in the form's error box"
+  - source: db
+    match: "column listing_request_milestone_submissions.preview_image_paths does not exist"
+    where: "the milestone list, when the website is ahead of migration 20261011_154"
+auto_fix: none
+reason_not_automatable: "either the creator's file, or a missing migration or policy"
+escalate_if:
+  - "a buyer or creator reports seeing images from a commission that is not theirs"   # -> tier 3, private files
+escalate_with:
+  - "the exact message shown, the file's type and size, and the browser"
+  - "whether the milestone-previews bucket exists and is private (storage.buckets)"
+  - "the milestone's status and the submission's preview_image_paths"
+```
+
+**How it works.** When submitting a milestone the creator may add up to six
+images. The page shrinks each to at most 1200 pixels, repeats "Made for
+Stream · @handle" across it and re-saves it: the same steps as a listing
+thumbnail ([`LST-004`](../listings/listings.md)), except the watermark cannot
+be switched off. Only those copies are uploaded, when the form is submitted,
+to `milestone-previews/<milestone id>/`; the originals never reach us. The
+submission's `preview_image_paths` then names them. The bucket is **private**:
+the page shows each image through an address that works for one hour.
+
+**Who can do what** (storage policies in `20261011_154`):
+- Upload: only the milestone's creator, into that milestone's folder, and
+  only while the milestone is `pending` or `revision_requested`.
+- Read: the creator who uploaded it; the buyer and admins once a submission
+  they can see names it. Nobody else, and nobody signed out.
+- Change or delete: nobody. A submitted image cannot be swapped underneath
+  the buyer's approval.
+
+**Cause, by signal.**
+- The first three UI messages are about the file: wrong type, too large, or
+  one the browser cannot open. Only JPEG, PNG and WebP still images can be
+  watermarked; a PSD, PDF, GIF, video or archive goes in the delivery links
+  box instead.
+- "Not uploaded for this milestone" means the submission named a file that is
+  not in this milestone's folder or was not uploaded by this creator. The
+  page cannot do this by itself; it means a hand-made request, or the upload
+  and the submission were made by two different sessions.
+- "Bucket not found" means `20261011_154` has not been applied here. **While
+  that is so, the milestone list on every commission page shows an error
+  instead of the submissions** ("column
+  listing_request_milestone_submissions.preview_image_paths does not
+  exist"), because the page reads a column the migration adds. Apply the
+  migration.
+- "row-level security" on upload means the milestone is not one this creator
+  can submit right now: another tab already submitted it, or the buyer has
+  it under review.
+- A type or size refusal from Storage means the bucket's limits (2 MB; WebP
+  and JPEG) and the page's output have drifted apart.
+- "The preview images could not be loaded" on a page that used to show them:
+  reload. If it persists for a participant, check the read policy exists.
+
+**Fix.** As above. Nothing here is fixed by editing rows.
+
+**Money impact.** None directly. A creator who cannot attach images can still
+submit with links, so no payment is blocked.
+
+---
+
 ## Known gaps
 
+- **Milestone preview images are watermarked in the creator's browser.** That
+  protects the creator's original from the buyer, which is the point. It does
+  not stop a creator who bypasses the page from uploading an unmarked image
+  to their own milestone; the bucket still limits type and size.
+- **The watermark stays after the milestone is paid.** Clean files are handed
+  over through delivery links and the final delivery, not by removing it.
+- **Abandoned uploads stay in storage.** If the upload succeeds and the
+  submission then fails, the files remain, readable only by the creator.
+  Nothing cleans them up, and no retention period is set for these images.
+- **Milestone preview images are not scanned**, and the upload box has only
+  been exercised in tests and a database dry run, not in a real browser.
 - **No alerting on sequence-guard violations.** `MIL-001` is Tier 3 but nothing
   detects it automatically.
 - **Manual admin confirmation is still reachable in the admin UI** and is not

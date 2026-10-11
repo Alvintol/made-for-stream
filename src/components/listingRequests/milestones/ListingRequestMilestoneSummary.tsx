@@ -1,5 +1,7 @@
 import { formatMoney } from "../../../lib/formatMoney";
+import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { getMilestonePreviewImageUrls } from "../../../lib/listings/milestonePreviewImage";
 import {
   getActiveListingRequestMilestone,
   getListingRequestMilestonesAreComplete,
@@ -60,6 +62,8 @@ const classes = {
   factValue: "font-semibold text-zinc-800",
   links: "flex flex-wrap gap-2",
   link: "inline-flex items-center rounded-full border border-[var(--hairline-strong)] px-3 py-1 text-xs font-semibold text-[rgb(var(--accent-text))] transition hover:bg-[rgb(var(--accent-soft))]",
+  images: "grid grid-cols-2 gap-3 sm:grid-cols-3",
+  image: "w-full rounded-xl border border-[var(--hairline)] bg-zinc-100 object-contain",
   noSubmission: "text-xs text-zinc-500",
   revision: "notice noticeError",
 } as const;
@@ -113,6 +117,35 @@ const getCompletedMilestoneMessage = (viewer: ListingRequestMilestoneViewer): st
     : viewer === "buyer"
       ? "All milestones are complete or closed. The creator can now prepare the final delivery."
       : "All milestones are complete or closed for this commission.";
+
+// The submission's watermarked preview images. They are private files, so
+// each is shown through a temporary address that lasts an hour. The
+// addresses are fetched again when the tab is returned to after 50 minutes;
+// nothing runs on a timer.
+const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
+  const { data: urls = [], isError } = useQuery({
+    queryKey: ["milestonePreviewImageUrls", paths],
+    queryFn: () => getMilestonePreviewImageUrls(paths),
+    staleTime: 50 * 60 * 1000,
+  });
+
+  return isError ? (
+    <p className={classes.noSubmission}>The preview images could not be loaded.</p>
+  ) : (
+    <div className={classes.images}>
+      {urls.map((url, index) => (
+        <a href={url} key={paths[index] ?? url} rel="noreferrer" target="_blank">
+          <img
+            alt={`Milestone preview image ${index + 1}`}
+            className={classes.image}
+            loading="lazy"
+            src={url}
+          />
+        </a>
+      ))}
+    </div>
+  );
+};
 
 type MilestoneRowProps = {
   milestone: ListingRequestMilestoneRow;
@@ -192,6 +225,10 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
         {submission ? (
           <>
             <p className={classes.body}>{submission.summary}</p>
+
+            {submission.preview_image_paths?.length > 0 && (
+              <MilestonePreviewImages paths={submission.preview_image_paths} />
+            )}
 
             {submission.delivery_links.length > 0 && (
               <div className={classes.links}>

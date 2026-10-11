@@ -20,6 +20,7 @@ export type ListingRequestMilestoneSubmissionRow = {
   status: ListingRequestMilestoneSubmissionStatus;
   summary: string;
   delivery_links: string[];
+  preview_image_paths: string[];
   revision_request_reason: string | null;
   submitted_at: string;
   revision_requested_at: string | null;
@@ -65,6 +66,7 @@ export const useListingRequestMilestoneSubmissions = (
             status,
             summary,
             delivery_links,
+            preview_image_paths,
             revision_request_reason,
             submitted_at,
             revision_requested_at,

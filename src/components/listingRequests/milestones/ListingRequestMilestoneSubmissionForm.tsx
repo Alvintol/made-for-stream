@@ -8,6 +8,13 @@ import {
   canSubmitListingRequestMilestone,
 } from "../../../domain/listings/listingRequestMilestones";
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
+import {
+  getListingPreviewWatermarkText,
+  LISTING_PREVIEW_ACCEPT,
+  renderListingPreviewImage,
+  validateListingPreviewSource,
+} from "../../../lib/listings/listingPreviewImage";
+import { MILESTONE_PREVIEW_MAX_IMAGES } from "../../../lib/listings/milestonePreviewImage";
 import type { SubmitListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useSubmitListingRequestMilestone";
 
 type SubmittableMilestone = Pick<
@@ -17,6 +24,8 @@ type SubmittableMilestone = Pick<
 
 type ListingRequestMilestoneSubmissionFormProps = {
   milestone: SubmittableMilestone | null;
+  // The creator's handle, drawn into the watermark on preview images.
+  watermarkHandle?: string | null;
   isPending?: boolean;
   error?: unknown;
   onSubmitMilestone: (
@@ -27,6 +36,13 @@ type ListingRequestMilestoneSubmissionFormProps = {
 type MilestoneSubmissionFormState = {
   summary: string;
   deliveryLinksText: string;
+};
+
+// A watermarked copy ready to upload, and its in-page address for the
+// thumbnail.
+type PreparedPreviewImage = {
+  blob: Blob;
+  url: string;
 };
 
 type MilestoneSubmissionValidationErrors = {
@@ -58,6 +74,12 @@ const classes = {
   linksTextarea:
     "min-h-28 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgba(244,92,44,0.18)] disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500",
   help: "formHint",
+  fileInput: "formControl",
+  imageGrid: "grid grid-cols-2 gap-3 sm:grid-cols-3",
+  imageItem: "space-y-2",
+  image:
+    "w-full rounded-2xl border border-zinc-200 bg-zinc-100 object-contain",
+  btnRemove: "btnOutline btnSm",
   errorText:
     "formError",
   errorBox:
@@ -128,6 +150,7 @@ const validateForm = (
 
 const ListingRequestMilestoneSubmissionForm = ({
   milestone,
+  watermarkHandle,
   isPending = false,
   error,
   onSubmitMilestone,
@@ -145,9 +168,19 @@ const ListingRequestMilestoneSubmissionForm = ({
       {}
     );
 
+  const [previewImages, setPreviewImages] =
+    useState<PreparedPreviewImage[]>([]);
+
+  const [isPreparingImages, setIsPreparingImages] =
+    useState(false);
+
+  const [previewImageError, setPreviewImageError] =
+    useState<string | null>(null);
+
   useEffect(() => {
     setForm(defaultFormState);
     setValidationErrors({});
+    setPreviewImages([]);
   }, [milestone?.id]);
 
   if (
@@ -181,6 +214,77 @@ const ListingRequestMilestoneSubmissionForm = ({
     );
   };
 
+  const watermarkText =
+    getListingPreviewWatermarkText(watermarkHandle);
+
+  // Prepares the copies straight away, so the thumbnails on screen are
+  // exactly what will be uploaded and what the buyer will see.
+  const handlePreviewFiles = async (
+    files: File[]
+  ) => {
+    if (files.length === 0) {
+      return;
+    }
+
+    const sourceError = files
+      .map(validateListingPreviewSource)
+      .find(Boolean);
+
+    if (sourceError) {
+      setPreviewImageError(sourceError);
+      return;
+    }
+
+    if (
+      previewImages.length + files.length >
+      MILESTONE_PREVIEW_MAX_IMAGES
+    ) {
+      setPreviewImageError(
+        `A milestone submission can contain no more than ${MILESTONE_PREVIEW_MAX_IMAGES} preview images.`
+      );
+      return;
+    }
+
+    setIsPreparingImages(true);
+    setPreviewImageError(null);
+
+    try {
+      const blobs = await Promise.all(
+        files.map((file) =>
+          renderListingPreviewImage(file, {
+            watermarkText,
+          })
+        )
+      );
+
+      setPreviewImages((currentImages) => [
+        ...currentImages,
+        ...blobs.map((blob) => ({
+          blob,
+          url: URL.createObjectURL(blob),
+        })),
+      ]);
+    } catch {
+      setPreviewImageError(
+        "That image could not be read. Try a different file."
+      );
+    } finally {
+      setIsPreparingImages(false);
+    }
+  };
+
+  const removePreviewImage = (
+    image: PreparedPreviewImage
+  ) => {
+    URL.revokeObjectURL(image.url);
+
+    setPreviewImages((currentImages) =>
+      currentImages.filter(
+        (currentImage) => currentImage !== image
+      )
+    );
+  };
+
   const handleSubmit: SubmitEventHandler<
     HTMLFormElement
   > = async (event) => {
@@ -203,10 +307,18 @@ const ListingRequestMilestoneSubmissionForm = ({
         deliveryLinks: splitDeliveryLinks(
           form.deliveryLinksText
         ),
+        previewImages: previewImages.map(
+          (image) => image.blob
+        ),
       });
+
+      previewImages.forEach((image) =>
+        URL.revokeObjectURL(image.url)
+      );
 
       setForm(defaultFormState);
       setValidationErrors({});
+      setPreviewImages([]);
     } catch {
       // Mutation errors are rendered through the error prop.
     }
@@ -345,10 +457,95 @@ const ListingRequestMilestoneSubmissionForm = ({
           )}
         </div>
 
+        <div className={classes.field}>
+          <label
+            className={classes.label}
+            htmlFor="milestone-preview-images"
+          >
+            Preview images
+          </label>
+
+          <input
+            accept={LISTING_PREVIEW_ACCEPT}
+            className={classes.fileInput}
+            disabled={isPending || isPreparingImages}
+            id="milestone-preview-images"
+            multiple
+            type="file"
+            onChange={(event) => {
+              const files = Array.from(
+                event.currentTarget.files ?? []
+              );
+
+              // Cleared so the same file can be chosen again after
+              // it is removed.
+              event.currentTarget.value = "";
+
+              void handlePreviewFiles(files);
+            }}
+          />
+
+          <p className={classes.help}>
+            Optional. Up to{" "}
+            {MILESTONE_PREVIEW_MAX_IMAGES} JPEG, PNG
+            or WebP images. We upload a smaller copy
+            of each, at most 1200 pixels on its
+            longest side, with “{watermarkText}”
+            repeated across it. Your originals stay
+            on your device, and only you and the
+            buyer can see the copies. A watermark
+            discourages copying; it cannot fully
+            prevent it.
+          </p>
+
+          {previewImageError && (
+            <p
+              className={classes.errorText}
+              role="alert"
+            >
+              {previewImageError}
+            </p>
+          )}
+
+          {isPreparingImages && (
+            <p className={classes.help}>
+              Preparing your images…
+            </p>
+          )}
+
+          {previewImages.length > 0 && (
+            <ul className={classes.imageGrid}>
+              {previewImages.map((image, index) => (
+                <li
+                  className={classes.imageItem}
+                  key={image.url}
+                >
+                  <img
+                    alt={`Preview image ${index + 1} as the buyer will see it`}
+                    className={classes.image}
+                    src={image.url}
+                  />
+
+                  <button
+                    className={classes.btnRemove}
+                    disabled={isPending}
+                    type="button"
+                    onClick={() =>
+                      removePreviewImage(image)
+                    }
+                  >
+                    Remove image {index + 1}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <div className={classes.actions}>
           <button
             className={classes.btnPrimary}
-            disabled={isPending}
+            disabled={isPending || isPreparingImages}
             type="submit"
           >
             {isPending
