@@ -98,6 +98,10 @@ signals:
     match: "Change order status must be draft or sent."
   - source: db
     match: "Change order response must be buyer_accepted or buyer_declined."
+  - source: db
+    match: "This change order is not available for your response."   # already answered, or withdrawn by the creator first (CHG-006)
+  - source: db
+    match: "This agreement already has a pending change order."      # one open change order per agreement
 auto_fix: none
 reason_not_automatable: "sequencing guard"
 ```
@@ -253,6 +257,17 @@ submissions and other steps are no longer blocked. If it had been sent, the
 commission chat gets a line saying it was withdrawn. There is no separate
 edit: to change a change order the creator withdraws it and proposes a new
 one, and the form starts from the withdrawn one's details.
+
+**When both sides act at once.** Accepting, declining, sending and
+withdrawing each lock the change order's row and check its status before
+changing anything, so the first one to arrive wins and the other is refused
+with one of the messages here or "This change order is not available for your
+response." (`CHG-002`). Nothing is overwritten. An answer always names one
+change order, and a corrected change order is a new row, so a buyer on a
+stale page can never accept terms they were not shown: their Accept is
+refused, the list reloads, and the corrected one appears with a fresh panel.
+Only one change order can be open on an agreement at a time ("This agreement
+already has a pending change order.").
 
 **Cause, by signal.**
 - "Can no longer be withdrawn": the buyer accepted or declined first, it was
