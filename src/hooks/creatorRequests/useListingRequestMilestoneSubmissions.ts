@@ -21,6 +21,8 @@ export type ListingRequestMilestoneSubmissionRow = {
   summary: string;
   delivery_links: string[];
   preview_image_paths: string[];
+  // Set when the images were deleted under the retention rule (20261012_159).
+  preview_images_deleted_at?: string | null;
   revision_request_reason: string | null;
   submitted_at: string;
   revision_requested_at: string | null;
@@ -67,6 +69,7 @@ export const useListingRequestMilestoneSubmissions = (
             summary,
             delivery_links,
             preview_image_paths,
+            preview_images_deleted_at,
             revision_request_reason,
             submitted_at,
             revision_requested_at,
