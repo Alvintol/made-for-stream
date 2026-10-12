@@ -125,6 +125,11 @@ describe(
           }
         );
 
+        // The payment that is now due only shows once this list is refreshed.
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ["listingRequestPayments"],
+        });
+
         expect(
           invalidateSpy
         ).toHaveBeenCalledWith({
