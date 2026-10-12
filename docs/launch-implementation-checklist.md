@@ -1395,6 +1395,42 @@ in [`environments.md`](environments.md).
       Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
       clean, `npx vite build` clean. **Tick when the 27 are fixed or the
       rules are deliberately relaxed.**
+- [ ] **A failure log with a daily ops list, a reload notice, and change
+      orders that lower the price (2026-10-12).** Three things asked for
+      during the rehearsal.
+      (1) **Reload notice.** After any action that does not go through, a
+      notice offers "Reload page". Nothing reloads by itself; the automatic
+      list refresh added earlier the same day was removed.
+      (2) **Failure log.** The website reports every failed action and
+      failed page load to `public.log_app_failure()` (migration
+      `20261012_157`, table `app_failure_events`, 90 days, capped per
+      account). `list_ops_alerts()` gains `app_failure_summary` (`OPS-006`:
+      each distinct failure of the previous UTC day with its count, sent
+      once) and `app_failure_burst` (`OPS-007`: one account failing 25 times
+      in an hour); `api/opsAlerts.js` renders both, so **the API must be
+      redeployed**. It records only what the website reports, not direct
+      calls to the database or API.
+      (3) **Lowering the price.** Migration `20261012_158`: a change order
+      that lowers the total must say what each payment not yet due becomes,
+      and paid-or-due plus the new remaining payments must equal the new
+      total (`CHG-007`). Applied to the payment schedule, the milestone and
+      the agreement line when the buyer accepts. Before this, only the total
+      changed and the buyer would have kept paying the old amounts.
+      **Dry-run on the live database in rolled-back transactions,
+      2026-10-12:** the log refuses direct reads and writes, groups failures
+      that differ only in their numbers, caps one account at 120 an hour and
+      raises the burst alert; a discount with no split, a split that does
+      not add up, a payment under 10.00, a raised payment, a paid payment
+      and a total below what is paid are each refused; a valid one is sent,
+      is refused at acceptance if a payment became due in between, and
+      otherwise lowers the schedule, milestone and agreement line together;
+      the next milestone payment is then the lower amount with 5% fees; an
+      increase still works. Ran after the change: `npx vitest run` 1295
+      passing, `npx tsc --noEmit` clean, `npx vite build` clean, eslint not
+      grown. **Not tested:** any of it in a browser; the ops email with the
+      new sections end to end. **For counsel:** the Privacy Policy does not
+      mention the failure log (account id, page, and the refusal text, kept
+      90 days).
 - [ ] **Change orders can be withdrawn, cannot be dated in the past, and
       screens show the database's reason (2026-10-12).** Found in the
       rehearsal. (1) A refusal from the database showed only a generic line

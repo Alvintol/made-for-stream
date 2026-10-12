@@ -56,14 +56,6 @@ export const useSendDraftListingRequestChangeOrder = () => {
       return changeOrder;
     },
 
-    // A refusal here usually means the other person acted first (the buyer
-    // answered, or the creator withdrew it). Reload the list so the screen
-    // shows the change order as it is now, not a button that cannot work.
-    onError: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["listingRequestChangeOrders"],
-      });
-    },
 
     onSuccess: async (changeOrder) => {
       await Promise.all([

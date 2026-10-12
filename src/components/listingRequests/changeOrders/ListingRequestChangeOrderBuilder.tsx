@@ -20,7 +20,14 @@ type ChangeOrderAgreement = Pick<
   | "currency"
   | "total_amount"
   | "adjusted_estimated_completion_at"
->;
+> &
+  // The payment plan, needed only when the total is being lowered.
+  Partial<
+    Pick<
+      ListingRequestAgreementRow,
+      "listing_request_payment_schedule_items"
+    >
+  >;
 
 type ListingRequestChangeOrderBuilderProps = {
   requestStatus: string;
@@ -69,6 +76,7 @@ type BuilderValidationErrors = {
   impact?: string;
   revisedTotalAmount?: string;
   revisedCompletionDate?: string;
+  revisedPayments?: string;
 };
 
 const classes = {
@@ -167,6 +175,8 @@ const getStartingFormState = (
         sendNow: true,
       }
     : defaultFormState;
+
+const toCents = (value: number): number => Math.round(value * 100);
 
 const getErrorMessage = (error: unknown): string =>
   hasErrorMessage(error)
@@ -272,6 +282,11 @@ const ListingRequestChangeOrderBuilder = ({
   const [validationErrors, setValidationErrors] =
     useState<BuilderValidationErrors>({});
 
+  // What each payment not yet due becomes, when the total is lowered.
+  // Keyed by payment; a payment not in here keeps its current amount.
+  const [revisedPayments, setRevisedPayments] =
+    useState<Record<string, string>>({});
+
   if (
     requestStatus !== "accepted" ||
     !agreement ||
@@ -301,12 +316,109 @@ const ListingRequestChangeOrderBuilder = ({
     }));
   };
 
+  // Lowering the total after some of it is paid: the payments already paid
+  // or due are fixed, so the reduction has to come off the ones not yet due
+  // (the database checks the same sums: migration 20261012_158).
+  const schedule =
+    agreement.listing_request_payment_schedule_items ?? [];
+
+  const remainingPayments = schedule.filter(
+    (payment) => payment.status === "pending"
+  );
+
+  const settledCents = schedule
+    .filter(
+      (payment) =>
+        payment.status === "paid" ||
+        payment.status === "payment_required"
+    )
+    .reduce(
+      (total, payment) => total + toCents(payment.amount),
+      0
+    );
+
+  const revisedTotal = Number.parseFloat(
+    form.revisedTotalAmount
+  );
+
+  const lowersTotal =
+    form.changesPrice &&
+    Number.isFinite(revisedTotal) &&
+    revisedTotal < agreement.total_amount;
+
+  const getRevisedPayment = (payment: {
+    id: string;
+    amount: number;
+  }): string =>
+    revisedPayments[payment.id] ?? String(payment.amount);
+
+  const remainingTargetCents =
+    toCents(revisedTotal) - settledCents;
+
+  const remainingCents = remainingPayments.reduce(
+    (total, payment) =>
+      total +
+      toCents(
+        Number.parseFloat(getRevisedPayment(payment)) || 0
+      ),
+    0
+  );
+
+  const getRevisedPaymentsError = (): string | undefined => {
+    if (!lowersTotal) {
+      return undefined;
+    }
+
+    if (remainingPayments.length === 0) {
+      return "Nothing is left to pay on this project, so a change order cannot lower its price. Money already paid can only be returned as a refund.";
+    }
+
+    const amounts = remainingPayments.map((payment) =>
+      Number.parseFloat(getRevisedPayment(payment))
+    );
+
+    if (
+      amounts.some(
+        (amount) => !Number.isFinite(amount) || amount < 0
+      )
+    ) {
+      return "Enter an amount for every remaining payment.";
+    }
+
+    if (
+      amounts.some(
+        (amount, index) =>
+          amount > remainingPayments[index].amount
+      )
+    ) {
+      return "A lower total cannot raise a remaining payment.";
+    }
+
+    return remainingCents === remainingTargetCents
+      ? undefined
+      : `The remaining payments must add up to ${formatMoney(
+          remainingTargetCents / 100,
+          agreement.currency
+        )}. They add up to ${formatMoney(
+          remainingCents / 100,
+          agreement.currency
+        )}.`;
+  };
+
   const handleSubmit: SubmitEventHandler<
     HTMLFormElement
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form, agreement);
+    const revisedPaymentsError = getRevisedPaymentsError();
+
+    const nextErrors: BuilderValidationErrors = {
+      ...validateForm(form, agreement),
+      ...(revisedPaymentsError
+        ? { revisedPayments: revisedPaymentsError }
+        : {}),
+    };
+
     setValidationErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -347,6 +459,17 @@ const ListingRequestChangeOrderBuilder = ({
           revisedTotalAmount,
         revised_completion_at:
           revisedCompletionAt,
+        ...(lowersTotal
+          ? {
+              revised_payment_amounts:
+                remainingPayments.map((payment) => ({
+                  payment_schedule_item_id: payment.id,
+                  amount: Number.parseFloat(
+                    getRevisedPayment(payment)
+                  ),
+                })),
+            }
+          : {}),
       },
     };
 
@@ -625,6 +748,79 @@ const ListingRequestChangeOrderBuilder = ({
               )}
             </div>
           </div>
+        )}
+
+        {lowersTotal && (
+          <fieldset className={classes.fieldset}>
+            <legend className={classes.legend}>
+              Remaining payments
+            </legend>
+
+            <p className={classes.help}>
+              This lowers the total, so say what each payment
+              that is not yet due becomes. Payments already
+              paid or due stay as they are (
+              {formatMoney(
+                settledCents / 100,
+                agreement.currency
+              )}
+              ), so the payments below must add up to{" "}
+              {formatMoney(
+                remainingTargetCents / 100,
+                agreement.currency
+              )}
+              . Money already paid can only be returned as a
+              refund.
+            </p>
+
+            {remainingPayments.map((payment) => (
+              <div
+                className={classes.field}
+                key={payment.id}
+              >
+                <label
+                  className={classes.label}
+                  htmlFor={`change-order-payment-${payment.id}`}
+                >
+                  {payment.title} (now{" "}
+                  {formatMoney(
+                    payment.amount,
+                    agreement.currency
+                  )}
+                  )
+                </label>
+
+                <input
+                  className={classes.input}
+                  id={`change-order-payment-${payment.id}`}
+                  max={payment.amount}
+                  min="0"
+                  step="0.01"
+                  type="number"
+                  value={getRevisedPayment(payment)}
+                  onChange={(event) => {
+                    const { value } = event.currentTarget;
+
+                    setRevisedPayments((current) => ({
+                      ...current,
+                      [payment.id]: value,
+                    }));
+
+                    setValidationErrors((current) => ({
+                      ...current,
+                      revisedPayments: undefined,
+                    }));
+                  }}
+                />
+              </div>
+            ))}
+
+            {validationErrors.revisedPayments && (
+              <p className={classes.errorText}>
+                {validationErrors.revisedPayments}
+              </p>
+            )}
+          </fieldset>
         )}
 
         {form.changesTimeline && (
