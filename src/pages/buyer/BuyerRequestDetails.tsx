@@ -594,6 +594,9 @@ const BuyerRequestDetails = () => {
       content: (
         <>
           <ListingRequestChangeOrderBuyerActions
+            // A fresh panel per change order: if the creator withdraws one and
+            // sends another, a half-finished "confirm accept" must not carry over.
+            key={activeSentChangeOrder?.id ?? "none"}
             changeOrder={activeSentChangeOrder}
             isPending={respondChangeOrderMutation.isPending}
             error={respondChangeOrderMutation.error}

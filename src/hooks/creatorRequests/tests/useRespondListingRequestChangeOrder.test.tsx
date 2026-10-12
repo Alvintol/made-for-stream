@@ -224,7 +224,7 @@ describe("useRespondListingRequestChangeOrder", () => {
       ),
     });
 
-    const { wrapper } = createWrapper();
+    const { wrapper, invalidateSpy } = createWrapper();
 
     const { result } = renderHook(
       () => useRespondListingRequestChangeOrder(),
@@ -241,6 +241,12 @@ describe("useRespondListingRequestChangeOrder", () => {
     ).rejects.toThrow(
       "This change order is not available for your response."
     );
+
+    // The creator withdrew it first: the list is reloaded so the buyer sees
+    // it as it is now, not an Accept button that cannot work.
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["listingRequestChangeOrders"],
+    });
   });
 
   it("throws when the RPC returns no response row", async () => {
