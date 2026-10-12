@@ -425,4 +425,169 @@ describe("ListingRequestChangeOrderBuilder", () => {
       screen.getByText(/starts from the change order you withdrew/)
     ).toBeInTheDocument();
   });
+
+  describe("lowering the total after part of it is paid", () => {
+    // 300 in total: 100 paid, 50 due, and two payments of 75 not yet due.
+    const partPaidAgreement = {
+      ...agreement,
+      listing_request_payment_schedule_items: [
+        { id: "pay-1", title: "Sketches", amount: 100, status: "paid" },
+        { id: "pay-2", title: "Line art", amount: 50, status: "payment_required" },
+        { id: "pay-3", title: "Colour", amount: 75, status: "pending" },
+        { id: "pay-4", title: "Final files", amount: 75, status: "pending" },
+      ],
+    } as unknown as Parameters<
+      typeof ListingRequestChangeOrderBuilder
+    >[0]["agreement"];
+
+    const startDiscount = (onCreateChangeOrder = vi.fn()) => {
+      render(
+        <ListingRequestChangeOrderBuilder
+          requestStatus="accepted"
+          agreement={partPaidAgreement}
+          onCreateChangeOrder={onCreateChangeOrder}
+        />
+      );
+
+      fillRequiredFields();
+
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: "Price" })
+      );
+
+      fireEvent.change(
+        screen.getByLabelText("Revised project total"),
+        { target: { value: "270" } }
+      );
+
+      return onCreateChangeOrder;
+    };
+
+    const submit = () =>
+      fireEvent.submit(
+        screen
+          .getByRole("button", { name: "Create and send change order" })
+          .closest("form") as HTMLFormElement
+      );
+
+    it("asks what each payment not yet due becomes, and leaves paid and due ones alone", () => {
+      startDiscount();
+
+      expect(
+        screen.getByLabelText(/^Colour \(now/)
+      ).toHaveValue(75);
+      expect(
+        screen.getByLabelText(/^Final files \(now/)
+      ).toHaveValue(75);
+      expect(
+        screen.queryByLabelText(/^Sketches \(now/)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText(/^Line art \(now/)
+      ).not.toBeInTheDocument();
+    });
+
+    it("refuses to send until the remaining payments add up to the new total", () => {
+      const onCreateChangeOrder = startDiscount();
+
+      // 150 paid or due + 75 + 75 is 300, not 270.
+      submit();
+
+      expect(
+        screen.getByText(/The remaining payments must add up to/)
+      ).toBeInTheDocument();
+      expect(onCreateChangeOrder).not.toHaveBeenCalled();
+    });
+
+    it("refuses a plan that raises a remaining payment", () => {
+      const onCreateChangeOrder = startDiscount();
+
+      fireEvent.change(screen.getByLabelText(/^Colour \(now/), {
+        target: { value: "80" },
+      });
+      fireEvent.change(screen.getByLabelText(/^Final files \(now/), {
+        target: { value: "40" },
+      });
+
+      submit();
+
+      expect(
+        screen.getByText(
+          "A lower total cannot raise a remaining payment."
+        )
+      ).toBeInTheDocument();
+      expect(onCreateChangeOrder).not.toHaveBeenCalled();
+    });
+
+    it("sends the new amount of every remaining payment once they add up", async () => {
+      const onCreateChangeOrder = startDiscount();
+
+      fireEvent.change(screen.getByLabelText(/^Final files \(now/), {
+        target: { value: "45" },
+      });
+
+      submit();
+
+      expect(onCreateChangeOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisedTotalAmount: 270,
+          proposedSnapshot: expect.objectContaining({
+            revised_payment_amounts: [
+              { payment_schedule_item_id: "pay-3", amount: 75 },
+              { payment_schedule_item_id: "pay-4", amount: 45 },
+            ],
+          }),
+        })
+      );
+    });
+
+    it("says a price cannot be lowered when nothing is left to pay", () => {
+      const onCreateChangeOrder = vi.fn();
+
+      render(
+        <ListingRequestChangeOrderBuilder
+          requestStatus="accepted"
+          agreement={
+            {
+              ...agreement,
+              listing_request_payment_schedule_items: [
+                { id: "pay-1", title: "Sketches", amount: 300, status: "paid" },
+              ],
+            } as unknown as Parameters<
+              typeof ListingRequestChangeOrderBuilder
+            >[0]["agreement"]
+          }
+          onCreateChangeOrder={onCreateChangeOrder}
+        />
+      );
+
+      fillRequiredFields();
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: "Price" })
+      );
+      fireEvent.change(
+        screen.getByLabelText("Revised project total"),
+        { target: { value: "250" } }
+      );
+      submit();
+
+      expect(
+        screen.getByText(/Nothing is left to pay on this project/)
+      ).toBeInTheDocument();
+      expect(onCreateChangeOrder).not.toHaveBeenCalled();
+    });
+
+    it("does not ask about remaining payments when the total goes up", () => {
+      startDiscount();
+
+      fireEvent.change(
+        screen.getByLabelText("Revised project total"),
+        { target: { value: "320" } }
+      );
+
+      expect(
+        screen.queryByText("Remaining payments")
+      ).not.toBeInTheDocument();
+    });
+  });
 });

@@ -19,9 +19,14 @@ const migration = readRepoFile(
   "supabase/migrations/20260924_139_add_connect_account_state_and_ops_alerts.sql",
 );
 
-const listOpsAlertsBody = migration.slice(
-  migration.indexOf("create or replace function public.list_ops_alerts()"),
-  migration.indexOf("revoke all on function public.list_ops_alerts()"),
+// list_ops_alerts() was last redefined here (two failure-log branches added).
+const latestListOpsAlerts = readRepoFile(
+  "supabase/migrations/20261012_157_add_app_failure_log_and_ops_summary.sql",
+);
+
+const listOpsAlertsBody = latestListOpsAlerts.slice(
+  latestListOpsAlerts.indexOf("create or replace function public.list_ops_alerts()"),
+  latestListOpsAlerts.indexOf("revoke all on function public.list_ops_alerts()"),
 );
 
 describe("alert registry", () => {
@@ -301,6 +306,8 @@ describe("renderOpsAlertDigest", () => {
       paid_wave2_currency: { currency: "eur", status: "paid" },
       payment_account_lost_readiness: { stripe_account_id: "acct_1", active_listing_count: 1, requirements_past_due_count: 2 },
       payment_account_mirror_stale: { stripe_account_id: "acct_2" },
+      app_failure_summary: { day: "2026-10-11", source: "action", route: "/creator/requests/:id", code: "P0001", message: "Each payment in a project must be at least 10.00 CAD, and this one is 5.00 CAD.", occurrences: 7, accounts: 2, signed_out: 0 },
+      app_failure_burst: { user_id: "user-9", occurrences: 40, distinct_failures: 12, most_common: "This change order is not available for your response." },
     };
 
     const rows = Object.entries(OPS_ALERTS).map(([alertId, alert]) => ({
@@ -314,7 +321,13 @@ describe("renderOpsAlertDigest", () => {
 
     const { subject, text, html } = render(rows);
 
-    expect(subject).toBe("[Made for Stream ops] 9 open alerts");
+    expect(subject).toBe("[Made for Stream ops] 11 open alerts");
+    expect(text).toContain(
+      "7 times, 2 accounts: \"Each payment in a project must be at least 10.00 CAD, and this one is 5.00 CAD.\" (an action on /creator/requests/:id, code P0001)",
+    );
+    expect(text).toContain(
+      "Account user-9: 40 failures in the last hour, 12 different kinds; most often \"This change order is not available for your response.\"",
+    );
     expect(text).toContain("52.50 CAD payment, still \"checkout opened\"");
     expect(text).toContain("Price raised by 25.00; the payment row is missing");
     expect(text).toContain("Taxed as GB; evidence is contradictory (points to IE)");

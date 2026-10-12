@@ -253,4 +253,42 @@ describe("ListingRequestChangeOrderSummary", () => {
       screen.getByText("Declined by buyer")
     ).toBeInTheDocument();
   });
+
+  it("shows what each remaining payment becomes when the total is lowered", () => {
+    const base = createChangeOrder();
+
+    render(
+      <ListingRequestChangeOrderSummary
+        changeOrders={[
+          {
+            ...base,
+            status: "sent",
+            sent_at: "2026-06-08T12:00:00.000Z",
+            changes_price: true,
+            price_delta: -30,
+            revised_total_amount: 270,
+            proposed_snapshot: {
+              ...base.proposed_snapshot,
+              revised_payment_amounts: [
+                {
+                  payment_schedule_item_id: "pay-4",
+                  title: "Final files",
+                  current_amount: 75,
+                  amount: 45,
+                },
+              ],
+            },
+          },
+        ]}
+        viewer="buyer"
+      />
+    );
+
+    expect(
+      screen.getByText("Payment: Final files")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/75\.00.*becomes.*45\.00/)
+    ).toBeInTheDocument();
+  });
 });

@@ -75,6 +75,33 @@ const formatDate = (value?: string | null): string =>
       }).format(new Date(value))
     : "Not set";
 
+type RevisedPayment = {
+  payment_schedule_item_id: string;
+  title: string;
+  current_amount: number;
+  amount: number;
+};
+
+// What each payment not yet due becomes when a change order lowers the
+// total. The database writes this list itself (migration 20261012_158), so
+// the titles and current amounts are not the creator's say-so.
+const getRevisedPayments = (
+  changeOrder: ListingRequestChangeOrderRow
+): RevisedPayment[] => {
+  const entries =
+    changeOrder.proposed_snapshot.revised_payment_amounts;
+
+  return Array.isArray(entries)
+    ? entries.filter(
+        (entry): entry is RevisedPayment =>
+          typeof entry?.payment_schedule_item_id === "string" &&
+          typeof entry.title === "string" &&
+          typeof entry.current_amount === "number" &&
+          typeof entry.amount === "number"
+      )
+    : [];
+};
+
 const getSnapshotCurrency = (
   changeOrder: ListingRequestChangeOrderRow
 ): string => {
@@ -326,6 +353,37 @@ const ListingRequestChangeOrderSummary = ({
                                   : "Not set"}
                               </div>
                             </div>
+
+                            {getRevisedPayments(changeOrder).map(
+                              (payment) => (
+                                <div
+                                  className={classes.metaBlock}
+                                  key={
+                                    payment.payment_schedule_item_id
+                                  }
+                                >
+                                  <div
+                                    className={classes.metaLabel}
+                                  >
+                                    Payment: {payment.title}
+                                  </div>
+
+                                  <div
+                                    className={classes.metaValue}
+                                  >
+                                    {formatMoney(
+                                      payment.current_amount,
+                                      currency
+                                    )}{" "}
+                                    becomes{" "}
+                                    {formatMoney(
+                                      payment.amount,
+                                      currency
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            )}
                           </>
                         )}
 

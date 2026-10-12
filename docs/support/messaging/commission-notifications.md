@@ -115,6 +115,10 @@ feature on therefore does not email about things that were already old.
   conversation and read it.
 - **Safety net.** Someone who looked online but had left gets the email from
   the hourly run, once a message has sat unread for ten minutes.
+- **Automatic lines are not messages.** The lines the site writes into a
+  chat ("The creator sent a project change order ...") never cause a
+  `message_received` email, on either path. Until `20261012_156` the safety
+  net did send one for them.
 - A person who muted a conversation gets no message emails for it.
 - **For live chat later (websockets):** the chat's Supabase Realtime channel
   calls the same `reportPresence()` / `touch_user_presence()`. The email rule
@@ -300,6 +304,14 @@ escalate_with:
   email for this unread stretch; or they muted the conversation; or it was
   the other person's very first message on a commission, which is covered by
   the "new commission request" email instead.
+
+- *Got "X sent you a message" and nobody had written anything:* before
+  `20261012_156` the hourly run counted the site's own automatic chat lines
+  as messages, so a step that already had its own email (a change order
+  sent, a payment confirmed) could be followed about fifteen minutes later
+  by a message email. Check the `message_received` row's `created_at`
+  against `conversation_messages`: if the newest line before it has
+  `message_type = 'system'`, this was it. Fixed; it should not recur.
 
 The Postgres warning is different: the trigger itself failed. The chat
 message was still delivered in the app; only its email is missing.

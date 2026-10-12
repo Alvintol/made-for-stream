@@ -11,6 +11,9 @@ surfaces:
   - src/components/listingRequests/changeOrders/ListingRequestChangeOrderCreatorActions.tsx
   - src/components/listingRequests/changeOrders/ListingRequestChangeOrderBuilder.tsx
   - src/lib/errorMessage.ts
+  - supabase/migrations/20261012_158_let_change_orders_lower_remaining_payments.sql
+  - public.check_listing_request_change_order_reduction
+  - public.handle_listing_request_change_order_reduction
 unmatched_tier: 2
 ---
 
@@ -32,6 +35,7 @@ parties actually agreed, and does the money still add up?**
 | "Buyer accepted but no payment appeared" | [`CHG-003`](#chg-003--accepted-change-order-did-not-create-its-payment) |
 | "The new price isn't reflected" | [`CHG-003`](#chg-003--accepted-change-order-did-not-create-its-payment) |
 | "It won't take my completion date" | [`CHG-005`](#chg-005--revised-completion-date-is-not-in-the-future) |
+| "I gave a discount and the buyer is still asked for the old amount" / "It won't let me lower the price" | [`CHG-007`](#chg-007--lowering-the-price-after-part-of-it-is-paid) |
 | "I sent a change order by mistake" / "I can't withdraw it" | [`CHG-006`](#chg-006--withdrawing-a-change-order) |
 | "It just says it could not be created, with no reason" | Fixed 2026-10-12: screens used to drop the database's message and show a generic line. Ask for a reload; the real reason now shows. |
 
@@ -265,7 +269,11 @@ with one of the messages here or "This change order is not available for your
 response." (`CHG-002`). Nothing is overwritten. An answer always names one
 change order, and a corrected change order is a new row, so a buyer on a
 stale page can never accept terms they were not shown: their Accept is
-refused, the list reloads, and the corrected one appears with a fresh panel.
+refused with the reason, and a notice at the bottom of the page offers
+**Reload page**. The page is not reloaded for them (that would discard what
+they were typing); after reloading, the corrected one appears with a fresh
+panel. The refusal is also logged
+([`OPS-006`](../operations/alerting.md#ops-006--yesterdays-failures-on-the-site)).
 Only one change order can be open on an agreement at a time ("This agreement
 already has a pending change order.").
 
@@ -282,18 +290,115 @@ payment is only created when the buyer accepts.
 
 ---
 
+## `CHG-007` — Lowering the price after part of it is paid
+
+```yaml
+id: CHG-007
+tier: 2
+signals:
+  - source: db
+    match: "A lower total must say what each remaining payment becomes."
+    where: "public.check_listing_request_change_order_reduction (20261012_158), errcode 22023"
+  - source: db
+    match: "/The remaining payments must add up to the new total: [0-9.]+ already paid or due plus [0-9.]+ remaining is [0-9.]+, not [0-9.]+\\./"
+    where: "public.check_listing_request_change_order_reduction, errcode 22023"
+  - source: db
+    match: "A change order can only lower payments that are not yet due."
+    where: "public.check_listing_request_change_order_reduction, errcode P0001"
+  - source: db
+    match: "A lower total cannot raise a remaining payment."
+    where: "public.check_listing_request_change_order_reduction, errcode 22023"
+  - source: db
+    match: "Enter an amount for every remaining payment."
+    where: "public.check_listing_request_change_order_reduction, errcode 22023"
+  - source: db
+    match: "Nothing is left to pay on this project, so a change order cannot lower its price. Money already paid can only be returned as a refund."
+    where: "public.check_listing_request_change_order_reduction, errcode P0001"
+  - source: db
+    match: "The payment plan changed after this change order was sent, so it can no longer be accepted as written. Ask the creator to withdraw it and send a new one."
+    where: "public.handle_listing_request_change_order_reduction, when the buyer accepts; errcode P0001"
+  - source: ui
+    match: "/The remaining payments must add up to .+\\. They add up to .+\\./"
+    where: "ListingRequestChangeOrderBuilder, before anything is sent"
+auto_fix: none
+reason_not_automatable: "the creator decides how a discount is spread; nobody may rewrite agreed amounts for them"
+escalate_if:
+  - "an agreement's total_amount does not equal the sum of its payment schedule (not cancelled or waived)"   # -> tier 3, the books do not add up
+escalate_with:
+  - "the agreement's total_amount, and every payment schedule item with its amount and status"
+  - "the change order's revised_total_amount and proposed_snapshot -> 'revised_payment_amounts'"
+```
+
+**The rule.** A change order that lowers the total must say what every
+payment that is not yet due becomes, and
+
+    paid or due  +  the new remaining payments  =  the new total.
+
+- Only payments still `pending` can be lowered. One that is due or paid is
+  fixed.
+- No remaining payment may go up, and each must still be at least the
+  instalment floor ([`AGR-005`](agreements.md#agr-005--a-payment-is-below-the-instalment-floor)).
+- The total cannot go below what is already paid or due plus the floor for
+  each remaining payment. **Money already paid is never returned by a change
+  order**; that is a refund ([`refunds-and-disputes.md`](../payments/refunds-and-disputes.md)).
+- If nothing is left to pay, the price cannot be lowered this way at all.
+
+**How it works.** On the creator's form, entering a total lower than the
+current one opens "Remaining payments": one box per payment not yet due,
+starting at its current amount, with the sum they must reach. The database
+checks the same sums when the change order is drafted or sent and keeps its
+own copy of the list (each payment's real title and current amount), which
+is what the buyer sees: "Payment: Colour, 40.00 becomes 15.00". When the
+buyer accepts, it checks again and then changes the amount on the payment
+schedule, the milestone and the agreement line together with the total. The
+fee on each later payment is worked out from its new, lower amount. A price
+**increase** is unchanged: a separate payment for the difference
+(`CHG-003`).
+
+**Cause, by signal.**
+- "Must add up" / "must say what each remaining payment becomes": the split
+  is missing or wrong. The form catches this first; from the database it
+  means a hand-made request or a stale page.
+- "Can only lower payments that are not yet due": the plan names a payment
+  that is due or paid, or one that became due after the page was opened.
+- "The payment plan changed after this change order was sent": between
+  sending and the buyer's Accept, one of the remaining payments became due
+  (a milestone was approved) or was paid. The buyer cannot accept it; the
+  creator withdraws it ([`CHG-006`](#chg-006--withdrawing-a-change-order))
+  and sends a new one against the plan as it now stands.
+
+**Before `20261012_158`.** Accepting a lower total changed `total_amount`
+and nothing else, so the remaining payments kept their old amounts and the
+buyer would have gone on paying the old price. One agreement in the
+rehearsal was left that way (total 90.00, payment schedule 115.00) and
+needed a one-off correction. If an older agreement shows a total lower than
+its schedule, that is this; correct the unpaid amounts with the creator's
+agreement, never the paid ones.
+
+**Money impact.** Direct. Before the fix the buyer was over-asked by the
+amount of the discount. After it, a wrong split is refused rather than
+applied.
+
+---
+
 ## Known gaps
 
+- **Nothing alerts when an agreement's total and its payment schedule
+  disagree.** `CHG-007` now keeps them equal for discounts, but there is no
+  standing check that would catch a new way of breaking them.
+- **A payment that is already due cannot be discounted.** Once a milestone
+  is approved its payment is fixed; a discount on it is a refund after it is
+  paid.
 - **The buyer is not emailed when a change order is withdrawn.** They were
   emailed when it was sent, so an email can lead to a change order that is no
   longer there to answer. The commission chat says what happened.
 - **"Cancelled" does not say who cancelled.** A change order withdrawn by the
   creator and one closed because the whole commission was cancelled look the
   same in the list.
-- **Interaction with existing milestone schedules is undocumented.** What a price
-  change does to already-created milestone schedule items is not specified
-  anywhere, and `AGR-001` totals checks may or may not still reconcile
-  afterwards. Worth resolving before launch.
+- **A price increase is its own payment, not spread over the milestones.**
+  The milestone amounts stay as agreed and the difference is paid at once
+  (`CHG-003`); a price decrease lowers the unpaid milestones (`CHG-007`).
+  Either way the schedule adds up to the total.
 - **`CHG-003` alerting runs through `list_ops_alerts()`** (Sprint 9), which
   reports an accepted price-increasing change order with no schedule item or no
   payment 15 minutes after acceptance. The detail says which is missing

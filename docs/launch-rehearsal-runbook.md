@@ -49,6 +49,33 @@ the ids you used, so "has this been rehearsed" has an answer.
   refused, and the creator can withdraw a change order until the buyer
   answers. **Next step, after that ships: meowington withdraws
   `f436a9d4-…`, then sends +15.00.**
+- **2026-10-12 21:25 UTC, after PRs #165 and #166:** meowington withdrew
+  `f436a9d4-…` with the new button. It is `cancelled`, the chat has the
+  "withdrew" line, and no hold is open, so milestone 2 is no longer blocked.
+- **Defect found in the emails, fixed on `fix/system-message-emails`
+  (migration `20261012_156`):** at 20:45 the buyer was sent a
+  `message_received` email ("meowington sent you a message") although
+  nobody had written anything; the hourly safety net had counted the
+  automatic "change order sent" chat line as a message (`NOTIF-005`).
+- **Change order +15.00, done for real on 2026-10-12 (confirmed in the
+  database).** Sent, accepted, and paid at 21:34 UTC: base 15.00, buyer fee
+  0.75, creator fee 0.75, total 15.75 CAD, application fee 1.50, recovery 0,
+  minimums 0, `not_collected`. Emails `sent`: `change_order_sent` and
+  `payment_required` to the buyer, `change_order_accepted` and
+  `payment_received` to meowington.
+- **Defect found by the operator, fixed on
+  `feat/failure-log-refresh-and-discounts` (migration `20261012_158`):** a
+  change order lowering the total by 25.00 ("Discount", version 3) was
+  accepted, and only the agreement's total changed. The agreement says
+  **90.00** but its payment schedule still adds up to **115.00** (60.00 and
+  15.00 paid, "coloured" still 40.00), so the buyer would be asked for 40.00
+  where 15.00 is owed. **Before milestone 2 is submitted, the one-off
+  correction in `CHG-007` must be run** ("coloured" becomes 15.00).
+  Version 4 ("discount", no price change) was declined by the buyer; its
+  email was sent.
+- **Also on that branch:** a reload notice after any failed action instead
+  of an automatic refresh; every failure logged
+  (`20261012_157`, `OPS-006`, `OPS-007`) and listed daily in the ops email.
 - **Milestone 2 is `pending`;** there is no cancellation warning.
 - **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
   steps are still to do): submitting milestone 2 first is refused
@@ -336,6 +363,23 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       (`AGR-005`, via the change-order trigger), **with the reason shown on the
       form** ("Each payment in a project must be at least 10.00 …"). Then
       +15.00: send, buyer accepts, payment paid.
+- [ ] *(Needs migration `20261012_158` before the website is merged.)*
+      **Lowering the price.** On a commission with one payment made and at
+      least one not yet due, the creator proposes a lower total. The form
+      opens "Remaining payments"; it will not send until they add up to the
+      new total less what is paid or due, and refuses an amount under
+      10.00. The buyer sees "Payment: <name>, X becomes Y" before accepting.
+      After accepting, the next milestone's payment is the lower amount and
+      `select total_amount` on the agreement equals the sum of its payment
+      schedule. A total below what is already paid is refused (`CHG-007`).
+- [ ] *(Needs migration `20261012_157`, then an API deploy, then the
+      website.)* **Failures are logged and offered a reload.** Cause a
+      refusal (a +5.00 change order): the form shows the reason, and a
+      notice at the bottom offers "Reload page" without reloading by
+      itself. `select source, route, code, message from
+      public.app_failure_events order by id desc limit 5;` shows it. The
+      next day's first ops email after 00:00 UTC lists it under "Yesterday's
+      failures on the site" with its count (`OPS-006`).
 - [ ] *(Needs migration `20261012_155` before the website is merged.)*
       **Withdrawing a change order.** The date box will not take a date
       before tomorrow (`CHG-005`). The creator sends a change order, then

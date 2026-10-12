@@ -110,6 +110,30 @@ export const OPS_ALERTS = {
     describe: (d) => `Stripe account ${d.stripe_account_id || "?"}`,
     link: () => null,
   },
+  // One line per distinct failure the website reported yesterday (UTC). The
+  // subject id carries the day, so each line is sent once and never repeated.
+  app_failure_summary: {
+    playbookIssue: "OPS-006",
+    playbook: "docs/support/operations/alerting.md",
+    title: "Yesterday's failures on the site",
+    meaning: "Each line is one thing that did not go through for someone yesterday (UTC), with how many times it happened. Most are ordinary: a form refused something, or someone acted on an out-of-date page.",
+    todo: "Look for a line you do not recognise, a high count, or the same line from many accounts. Those are the failures a rehearsal did not find.",
+    remind: false,
+    describe: (d) =>
+      `${plural(d.occurrences, "time")}, ${plural(d.accounts, "account")}${Number(d.signed_out) ? ` and ${d.signed_out} signed out` : ""}: "${d.message}" (${d.source === "load" ? "loading" : "an action on"} ${d.route || "an unknown page"}${d.code ? `, code ${d.code}` : ""})`,
+    link: () => null,
+  },
+  app_failure_burst: {
+    playbookIssue: "OPS-007",
+    playbook: "docs/support/operations/alerting.md",
+    title: "One account is failing over and over",
+    meaning: "One account (or everyone signed out, taken together) has had 25 or more failures within an hour. Either a screen is broken for them, or someone is probing the site.",
+    todo: "Read the account's rows in app_failure_events. The same failure repeated is usually a broken screen; many different ones in a row is someone testing what the site will accept.",
+    remind: false,
+    describe: (d) =>
+      `${d.user_id ? `Account ${d.user_id}` : "Signed-out visitors"}: ${plural(d.occurrences, "failure")} in the last hour, ${plural(d.distinct_failures, "different kind")}; most often "${d.most_common}"`,
+    link: () => null,
+  },
 };
 
 export const OPS_ALERT_REMINDER_MS = 24 * 60 * 60 * 1000;

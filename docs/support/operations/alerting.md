@@ -35,6 +35,8 @@ all is well. Check the jobs' last run status.
 | `paid_wave2_currency` | [`TAX-007`](../payments/tax.md#tax-007--paid-sale-in-a-currency-whose-tax-advice-is-open) | any paid payment not in CAD or USD (**sent once, never repeated**) |
 | `payment_account_lost_readiness` | [`CON-003`](../payments/connect-onboarding.md#con-003--stripe-restricted-an-account-and-we-did-not-notice) | a creator lost readiness and still has live listings |
 | `payment_account_mirror_stale` | [`CON-006`](../payments/connect-onboarding.md#con-006--payment-account-mirror-is-not-being-refreshed) | a mirror row not refreshed in 48 h |
+| `app_failure_summary` | [`OPS-006`](#ops-006--yesterdays-failures-on-the-site) | every distinct failure the website reported yesterday (UTC), with its count (**sent once, the day after**) |
+| `app_failure_burst` | [`OPS-007`](#ops-007--one-account-is-failing-over-and-over) | one account with 25 or more failures within an hour (**sent once per burst**) |
 
 **Frequency.** An alert is emailed the first time a subject (a payment, a
 request, a creator) appears, then again every 24 hours while it stays open.
@@ -271,6 +273,91 @@ steady request in the gateway logs and stop it at the source.
 **Money impact.** No money moves wrongly. While it lasts nobody can sign in
 or pay, and Stripe webhooks fail (Stripe retries them). Afterwards, check
 `PAY-005` and force-run both scheduler jobs.
+
+---
+
+## `OPS-006` — Yesterday's failures on the site
+
+```yaml
+id: OPS-006
+tier: 2
+signals:
+  - source: db
+    where: public.app_failure_events
+    match: "rows with occurred_at in the previous UTC day, grouped by source, route, code and signature"
+  - source: email
+    match: "ops digest section \"Yesterday's failures on the site\""
+auto_fix: none
+reason_not_automatable: "a list to read, not a fault; a person decides which line is a defect"
+escalate_if:
+  - "a line nobody recognises, or one whose count or number of accounts keeps growing day to day"
+escalate_with:
+  - "select * from public.app_failure_events where signature = '<the line with numbers as #>' order by occurred_at desc limit 50"
+```
+
+**What it is.** Since `20261012_157` the website reports every action that
+did not go through and every page that could not load something, to
+`public.log_app_failure()`. Once a day, in the first hourly run after
+midnight UTC, the digest lists each distinct failure of the day before with
+how many times it happened and for how many accounts. Numbers and ids are
+ignored when deciding what counts as "the same" failure, so "at least 10.00
+CAD, and this one is 5.00" and "... 7.50" are one line. At most the 40 most
+frequent are listed.
+
+**Reading it.** Most lines are ordinary and need nothing: a form refused
+something, with the reason the person was shown; or someone acted on a page
+that was out of date. Look for a message that reads like a fault rather than
+a refusal (a missing column, "row-level security", "could not be found"), a
+high count on one page, or the same line from many accounts. Those are the
+failures the rehearsal did not walk into; file each against its playbook.
+
+**What it does not see.** Only what the website reports. A person calling
+the database or the API directly, without the website, is in Supabase's and
+Cloud Run's own request logs, not here. One account can log at most 120
+failures an hour (500 for everyone signed out, together); rows are kept 90
+days. Nothing is listed on a day with no failures.
+
+**Money impact.** None by itself.
+
+---
+
+## `OPS-007` — One account is failing over and over
+
+```yaml
+id: OPS-007
+tier: 2
+signals:
+  - source: db
+    where: public.app_failure_events
+    match: "25 or more rows for one user_id (or for user_id null) with occurred_at in the last hour"
+  - source: email
+    match: "ops digest section \"One account is failing over and over\""
+auto_fix: none
+reason_not_automatable: "telling a broken screen from someone probing needs a person"
+escalate_if:
+  - "many different failures in a row from one account, on pages it has no business on"   # -> tier 3
+escalate_with:
+  - "select occurred_at, source, route, code, message from public.app_failure_events where user_id = '<id>' order by occurred_at desc limit 200"
+```
+
+**Cause.** Two very different things look the same here.
+
+- *A broken screen.* The same failure, over and over, on one page: the
+  person keeps pressing a button that cannot work. Fix the screen; nobody is
+  doing anything wrong.
+- *Someone testing the site.* Many different failures in a short time,
+  across pages: refusals from steps that are not theirs to take, amounts the
+  rules do not allow, pages they cannot open. The refusals mean the rules
+  held. Treat it as Tier 3 if any of them is an authorization refusal on
+  someone else's commission, and check the account's other activity.
+
+"Signed-out visitors" is everyone without a session taken together, so a
+burst there is usually sign-in trouble, not one person.
+
+**Fix.** None automated. The alert is sent once per burst and clears by
+itself an hour after the failures stop.
+
+**Money impact.** None by itself.
 
 ---
 
