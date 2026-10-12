@@ -3,7 +3,7 @@ import {
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import CheckoutPolicyAcceptance from "../../components/legal/CheckoutPolicyAcceptance";
 import { getBillingCountryOptions } from "../../domain/payments/billingCountries";
@@ -40,11 +40,20 @@ const classes = {
   fieldRow: "flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between",
   fieldLabel: "text-sm font-semibold text-zinc-800",
   fieldHint: "text-xs text-zinc-500",
-  fieldInputWrap: "flex flex-wrap items-center gap-1.5 text-sm",
+  // The tip card: one boxed row per extra. On wide screens the words sit in
+  // a left column and the controls in a fixed right column behind a divider,
+  // so both rows line up; on a phone the controls drop underneath.
+  extras: "mt-4 overflow-hidden rounded-2xl border border-zinc-300",
+  extraRow:
+    "grid gap-4 border-t border-zinc-300 p-4 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_19rem]",
+  extraControls:
+    "space-y-2 border-t border-zinc-300 pt-4 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0",
+  quickAmounts: "grid grid-cols-[repeat(4,minmax(0,1fr))_auto] gap-1.5",
   quickAmount: "btnOutline btnSm px-2",
+  amountBox: "flex items-center gap-2",
   aboutSupport: "mt-1 text-xs leading-5 text-zinc-500",
   fieldInput:
-    "w-28 rounded-lg border border-zinc-300 px-2 py-1 text-right text-sm focus:border-zinc-500 focus:outline-none",
+    "min-w-0 flex-1 rounded-lg border border-zinc-300 px-2 py-1 text-right text-sm focus:border-zinc-500 focus:outline-none",
   pendingAmount: "text-zinc-500",
 } as const;
 
@@ -61,6 +70,60 @@ const SUPPORT_PERCENTAGES = [1, 3, 5];
 
 const percentOfCents = (cents: number, percent: number): string =>
   (Math.round((cents * percent) / 100) / 100).toFixed(2);
+
+type ExtraAmountRowProps = {
+  inputId: string;
+  label: string;
+  hint: string;
+  description: string;
+  currency: string;
+  value: string;
+  onChange: (value: string) => void;
+  // The shortcut buttons: four amounts, then Round up.
+  children: ReactNode;
+};
+
+// One row of the tip card. The tip and the contribution both use it, which
+// is what keeps their words, buttons and amount boxes in the same places.
+const ExtraAmountRow = ({
+  inputId,
+  label,
+  hint,
+  description,
+  currency,
+  value,
+  onChange,
+  children,
+}: ExtraAmountRowProps) => (
+  <div className={classes.extraRow}>
+    <div>
+      <label className={classes.fieldLabel} htmlFor={inputId}>
+        {label}
+        <span className={classes.fieldHint}> — {hint}</span>
+      </label>
+      <p className={classes.aboutSupport}>{description}</p>
+    </div>
+
+    <div className={classes.extraControls}>
+      <div className={classes.quickAmounts}>{children}</div>
+
+      <div className={classes.amountBox}>
+        <span className={classes.fieldHint}>{currency}</span>
+        <input
+          id={inputId}
+          className={classes.fieldInput}
+          type="number"
+          min={0}
+          step="0.01"
+          inputMode="decimal"
+          placeholder="0"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </div>
+    </div>
+  </div>
+);
 
 const ListingRequestPaymentCheckout = () => {
   const { paymentId = "" } = useParams<{ paymentId: string }>();
@@ -301,103 +364,76 @@ const ListingRequestPaymentCheckout = () => {
             total to a whole number.
           </p>
 
-          <div className="mt-4 space-y-3">
-            <div className={classes.fieldRow}>
-              <label className={classes.fieldLabel} htmlFor="tip-amount">
-                Tip for the creator
-                <span className={classes.fieldHint}> — reaches them in full, no fee taken</span>
-              </label>
-              <div className={classes.fieldInputWrap}>
-                {TIP_PERCENTAGES.map((percent) => (
-                  <button
-                    key={percent}
-                    type="button"
-                    className={classes.quickAmount}
-                    aria-label={`Tip ${percent}% of the project payment`}
-                    onClick={() => setTipEdit(percentOfCents(payment.base_amount_cents, percent))}
-                  >
-                    {percent}%
-                  </button>
-                ))}
+          <div className={classes.extras}>
+            <ExtraAmountRow
+              inputId="tip-amount"
+              label="Tip for the creator"
+              hint="reaches them in full, no fee taken"
+              description="A thank-you on top of the project payment. It is optional and changes nothing about your commission."
+              currency={payment.currency.toUpperCase()}
+              value={tipInput}
+              onChange={setTipEdit}
+            >
+              {TIP_PERCENTAGES.map((percent) => (
                 <button
+                  key={percent}
                   type="button"
                   className={classes.quickAmount}
-                  aria-label="Round your total up to a whole number with a tip"
-                  disabled={roundUpCents === 0}
-                  onClick={() => setTipEdit(centsText(tipCentsNow + roundUpCents))}
+                  aria-label={`Tip ${percent}% of the project payment`}
+                  onClick={() => setTipEdit(percentOfCents(payment.base_amount_cents, percent))}
                 >
-                  Round up
+                  {percent}%
                 </button>
-                <span className="text-xs text-zinc-500">{payment.currency.toUpperCase()}</span>
-                <input
-                  id="tip-amount"
-                  className={classes.fieldInput}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={tipInput}
-                  onChange={(event) => setTipEdit(event.target.value)}
-                />
-              </div>
-            </div>
+              ))}
+              <button
+                type="button"
+                className={classes.quickAmount}
+                aria-label="Round your total up to a whole number with a tip"
+                disabled={roundUpCents === 0}
+                onClick={() => setTipEdit(centsText(tipCentsNow + roundUpCents))}
+              >
+                Round up
+              </button>
+            </ExtraAmountRow>
 
-            <div className={classes.fieldRow}>
-              <div>
-                <label className={classes.fieldLabel} htmlFor="support-amount">
-                  Support Made for Stream
-                  <span className={classes.fieldHint}> — added to your total</span>
-                </label>
-                <p className={classes.aboutSupport}>
-                  Made for Stream is built and run by one developer. A contribution helps pay for
-                  hosting and keeps the site running. It is optional and changes nothing about
-                  your commission.
-                </p>
-              </div>
-              <div className={classes.fieldInputWrap}>
-                {SUPPORT_PERCENTAGES.map((percent) => (
-                  <button
-                    key={percent}
-                    type="button"
-                    className={classes.quickAmount}
-                    aria-label={`Contribute ${percent}% of the project payment`}
-                    onClick={() => setSupportEdit(percentOfCents(payment.base_amount_cents, percent))}
-                  >
-                    {percent}%
-                  </button>
-                ))}
+            <ExtraAmountRow
+              inputId="support-amount"
+              label="Support Made for Stream"
+              hint="added to your total"
+              description="Made for Stream is built and run by one developer. A contribution helps pay for hosting and keeps the site running. It is optional and changes nothing about your commission."
+              currency={payment.currency.toUpperCase()}
+              value={supportInput}
+              onChange={setSupportEdit}
+            >
+              {SUPPORT_PERCENTAGES.map((percent) => (
                 <button
+                  key={percent}
                   type="button"
                   className={classes.quickAmount}
-                  aria-label="Contribute 1.00"
-                  onClick={() => setSupportEdit("1.00")}
+                  aria-label={`Contribute ${percent}% of the project payment`}
+                  onClick={() => setSupportEdit(percentOfCents(payment.base_amount_cents, percent))}
                 >
-                  1.00
+                  {percent}%
                 </button>
-                <button
-                  type="button"
-                  className={classes.quickAmount}
-                  aria-label="Round your total up to a whole number with a contribution"
-                  disabled={roundUpCents === 0}
-                  onClick={() => setSupportEdit(centsText(supportCentsNow + roundUpCents))}
-                >
-                  Round up
-                </button>
-                <span className="text-xs text-zinc-500">{payment.currency.toUpperCase()}</span>
-                <input
-                  id="support-amount"
-                  className={classes.fieldInput}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={supportInput}
-                  onChange={(event) => setSupportEdit(event.target.value)}
-                />
-              </div>
-            </div>
+              ))}
+              <button
+                type="button"
+                className={classes.quickAmount}
+                aria-label="Contribute 1.00"
+                onClick={() => setSupportEdit("1.00")}
+              >
+                1.00
+              </button>
+              <button
+                type="button"
+                className={classes.quickAmount}
+                aria-label="Round your total up to a whole number with a contribution"
+                disabled={roundUpCents === 0}
+                onClick={() => setSupportEdit(centsText(supportCentsNow + roundUpCents))}
+              >
+                Round up
+              </button>
+            </ExtraAmountRow>
           </div>
 
           <h2 className={`mt-6 ${classes.summaryTitle}`}>Billing location</h2>
