@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import {
   useState,
   type SubmitEventHandler,
@@ -88,7 +89,7 @@ const defaultFormState: ProgressUpdateFormState = {
 };
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The project progress update could not be posted.";
 

@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { useMyListing } from "../../hooks/listings/useMyListing";
@@ -33,7 +34,7 @@ const statusBannerTone: Record<ListingStatusKey, string> = {
 };
 
 const getErrorText = (error: unknown, fallback: string): string =>
-  error instanceof Error && error.message ? error.message : fallback;
+  hasErrorMessage(error) && error.message ? error.message : fallback;
 
 const classes = {
   page: "space-y-6",

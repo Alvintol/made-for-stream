@@ -62,6 +62,12 @@ export const canSendListingRequestChangeOrder = (
   status: ListingRequestChangeOrderStatus
 ): boolean => status === "draft";
 
+// The creator can take back their own change order until the buyer has
+// answered it. The database decides (withdraw_listing_request_change_order).
+export const canWithdrawListingRequestChangeOrder = (
+  status: ListingRequestChangeOrderStatus
+): boolean => status === "draft" || status === "sent";
+
 export const canBuyerRespondToListingRequestChangeOrder = (
   status: ListingRequestChangeOrderStatus
 ): boolean => status === "sent";
@@ -162,6 +168,25 @@ export const getSentListingRequestChangeOrder = <
   getLatestListingRequestChangeOrder(
     changeOrders.filter(
       (changeOrder) => changeOrder.status === "sent"
+    )
+  );
+
+// The one change order still waiting on someone: a draft, or one sent and
+// not yet answered. There is never more than one.
+export const getPendingListingRequestChangeOrder = <
+  TChangeOrder extends {
+    status: string;
+    created_at: string;
+    id: string;
+  },
+>(
+  changeOrders: TChangeOrder[]
+): TChangeOrder | null =>
+  getLatestListingRequestChangeOrder(
+    changeOrders.filter(
+      (changeOrder) =>
+        changeOrder.status === "draft" ||
+        changeOrder.status === "sent"
     )
   );
 

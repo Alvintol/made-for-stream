@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { FadeIn } from "../../../lib/motion";
@@ -47,7 +48,7 @@ const EARLY_REVIEW_LABELS: Record<ListingRequestEarlyReviewCategory, string> = {
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
-  error instanceof Error ? error.message : fallback;
+  hasErrorMessage(error) ? error.message : fallback;
 
 // Sprint 6 (launch-scope.md section 7): the non-response notice clock and
 // early-review request, in the workspace. Administrative closure itself is

@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import {
   useEffect,
   useMemo,
@@ -396,7 +397,7 @@ const EditListing = () => {
       navigate(`/creator/listings/${updated.id}`);
     } catch (error) {
       const message =
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "The listing draft could not be updated.";
 

@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { FadeIn } from "../../../lib/motion";
@@ -24,7 +25,7 @@ const MIN_REASON_LENGTH = 10;
 const MAX_REASON_LENGTH = 1000;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "This commission could not be cancelled.";
+  hasErrorMessage(error) ? error.message : "This commission could not be cancelled.";
 
 // Sprint 4 (launch-scope.md section 5.1): either party may cancel an
 // accepted request unilaterally before any payment has been collected. No

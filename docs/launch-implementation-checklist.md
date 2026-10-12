@@ -1395,6 +1395,29 @@ in [`environments.md`](environments.md).
       Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
       clean, `npx vite build` clean. **Tick when the 27 are fixed or the
       rules are deliberately relaxed.**
+- [ ] **Change orders can be withdrawn, cannot be dated in the past, and
+      screens show the database's reason (2026-10-12).** Found in the
+      rehearsal. (1) A refusal from the database showed only a generic line
+      ("could not be created"): Supabase returns refusals as plain objects and
+      34 screens only read the message from a real `Error`. They now use
+      `hasErrorMessage` (`src/lib/errorMessage.ts`), so the wording in the
+      playbooks is what people see. This also means a technical database
+      message, where one occurs, is shown as it is. (2) Migration
+      `20261012_155` refuses a change order whose revised completion date has
+      passed (`CHG-005`) and adds `withdraw_listing_request_change_order`
+      (`CHG-006`): the creator can withdraw a draft or an unanswered change
+      order, which ends the hold that blocks milestone submissions. The form
+      then starts from the withdrawn one, which is how a change order is
+      edited. **Dry-run on the live database in a rolled-back transaction,
+      2026-10-12:** another account and the buyer cannot withdraw; the
+      creator can, once; milestone 2 is blocked while the change order is
+      open and allowed after; a past date is refused as a draft and as sent,
+      a future one accepted; a new change order can be sent and accepted
+      afterwards; an answered one cannot be withdrawn; nothing was left
+      behind. Ran after the change: `npx vitest run` 1282 passing, `npx tsc
+      --noEmit` clean, `npx vite build` clean, eslint 29 problems (27 errors,
+      2 warnings; not grown). **Not tested:** any of it in a browser. **Not
+      built:** an email to the buyer when a change order is withdrawn.
 - [ ] **Milestone submissions can carry watermarked preview images
       (2026-10-11).** The creator may add up to six JPEG, PNG or WebP images
       when submitting a milestone. The page shrinks each to 1200 px and

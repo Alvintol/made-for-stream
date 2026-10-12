@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
@@ -481,13 +482,13 @@ const CreateListing = () => {
         navigate(detailsPath, {
           state: {
             publishError:
-              publishError instanceof Error ? publishError.message : "please try again.",
+              hasErrorMessage(publishError) ? publishError.message : "please try again.",
           },
         });
       }
     } catch (error) {
       const message =
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "The listing draft could not be saved.";
 

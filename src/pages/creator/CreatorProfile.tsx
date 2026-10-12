@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { Collapse } from "../../lib/motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
@@ -222,7 +223,7 @@ const CreatorProfile = () => {
       setIsProfileReportOpen(false);
     } catch (error) {
       setProfileReportError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Profile report could not be submitted."
       );

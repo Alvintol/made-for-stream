@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { Collapse } from "../../../lib/motion";
 import { useState } from "react";
 
@@ -46,7 +47,7 @@ const getErrorMessage = (error: unknown): string | null => {
   }
 
   if (
-    error instanceof Error &&
+    hasErrorMessage(error) &&
     error.message
   ) {
     return error.message;

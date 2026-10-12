@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { Collapse } from "../../../lib/motion";
 import { useState } from "react";
 
@@ -49,7 +50,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The project change order response could not be saved.";
 

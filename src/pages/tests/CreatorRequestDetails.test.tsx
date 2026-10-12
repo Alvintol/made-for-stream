@@ -514,6 +514,18 @@ vi.mock(
 );
 
 vi.mock(
+  "../../hooks/creatorRequests/useWithdrawListingRequestChangeOrder",
+  () => ({
+    useWithdrawListingRequestChangeOrder:
+      () => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+        error: null,
+      }),
+  })
+);
+
+vi.mock(
   "../../components/listingRequests/changeOrders/ListingRequestChangeOrderCreatorActions",
   () => ({
     default: ({

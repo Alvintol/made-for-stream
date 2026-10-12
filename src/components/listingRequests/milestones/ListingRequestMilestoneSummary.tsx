@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
@@ -69,7 +70,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Milestones could not be loaded.";
+  hasErrorMessage(error) ? error.message : "Milestones could not be loaded.";
 
 const formatDate = (value?: string | null): string =>
   value

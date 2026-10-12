@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import type {
   ListingRequestProgressUpdateKind,
 } from "../../../hooks/creatorRequests/useCreateListingRequestProgressUpdate";
@@ -52,7 +53,7 @@ const formatDate = (value: string): string =>
   }).format(new Date(value));
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "Project progress updates could not be loaded.";
 

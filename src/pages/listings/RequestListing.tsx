@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { useState, type FormEvent, type ReactNode } from "react";
 import {
   convertAmount,
@@ -566,7 +567,7 @@ const RequestListing = () => {
 
             {createRequestMutation.error && (
               <div className={classes.submitError}>
-                {createRequestMutation.error instanceof Error
+                {hasErrorMessage(createRequestMutation.error)
                   ? createRequestMutation.error.message
                   : "Your commission request could not be sent right now."}
               </div>

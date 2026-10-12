@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
 import type {
   ListingRequestAgreementRow,
@@ -38,7 +39,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The change-order payment could not be confirmed.";
 

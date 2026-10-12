@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import {
   useState,
   type SubmitEventHandler,
@@ -71,7 +72,7 @@ const defaultFormState: BuilderFormState = {
 };
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The final project delivery could not be created.";
 

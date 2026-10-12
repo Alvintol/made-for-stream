@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
 import { getListingRequestPaymentStructureLabel } from "../../../domain/listings/listingRequestAgreements";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
@@ -47,7 +48,7 @@ const getStartingPaymentAmount = (
 ): number => agreement.deposit_amount ?? agreement.total_amount;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The starting payment could not be confirmed.";
 

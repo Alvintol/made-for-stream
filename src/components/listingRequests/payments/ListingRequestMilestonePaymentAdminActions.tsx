@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { getOrderedListingRequestMilestones, isListingRequestMilestoneTerminal } from '../../../domain/listings/listingRequestMilestones';
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
 
@@ -35,7 +36,7 @@ const getErrorMessage = (
   }
 
   if (
-    error instanceof Error &&
+    hasErrorMessage(error) &&
     error.message
   ) {
     return error.message;

@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { canBuyerRespondToListingRequestFinalDelivery } from "../../../domain/listings/listingRequestFinalDeliveries";
@@ -59,7 +60,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The final delivery response could not be saved.";
 

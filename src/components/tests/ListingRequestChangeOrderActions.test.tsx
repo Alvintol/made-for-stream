@@ -24,6 +24,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
       <ListingRequestChangeOrderCreatorActions
         changeOrder={null}
         onSendChangeOrder={vi.fn()}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 
@@ -40,6 +41,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
           status: "sent",
         }}
         onSendChangeOrder={vi.fn()}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 
@@ -55,6 +57,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
       <ListingRequestChangeOrderCreatorActions
         changeOrder={draftChangeOrder}
         onSendChangeOrder={vi.fn()}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 
@@ -78,6 +81,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
       <ListingRequestChangeOrderCreatorActions
         changeOrder={draftChangeOrder}
         onSendChangeOrder={onSendChangeOrder}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 
@@ -98,6 +102,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
         changeOrder={draftChangeOrder}
         isPending
         onSendChangeOrder={vi.fn()}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 
@@ -118,6 +123,7 @@ describe("ListingRequestChangeOrderCreatorActions", () => {
           )
         }
         onSendChangeOrder={vi.fn()}
+        onWithdrawChangeOrder={vi.fn()}
       />
     );
 

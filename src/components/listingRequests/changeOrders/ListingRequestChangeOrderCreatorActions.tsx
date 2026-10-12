@@ -1,4 +1,8 @@
-import { canSendListingRequestChangeOrder } from "../../../domain/listings/listingRequestChangeOrders";
+import { hasErrorMessage } from "../../../lib/errorMessage";
+import {
+  canSendListingRequestChangeOrder,
+  canWithdrawListingRequestChangeOrder,
+} from "../../../domain/listings/listingRequestChangeOrders";
 import type { ListingRequestChangeOrderRow } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
 
 type ListingRequestChangeOrderCreatorActionsProps = {
@@ -9,6 +13,11 @@ type ListingRequestChangeOrderCreatorActionsProps = {
   isPending?: boolean;
   error?: unknown;
   onSendChangeOrder: (
+    changeOrderId: string
+  ) => Promise<unknown> | unknown;
+  isWithdrawing?: boolean;
+  withdrawError?: unknown;
+  onWithdrawChangeOrder: (
     changeOrderId: string
   ) => Promise<unknown> | unknown;
 };
@@ -26,29 +35,49 @@ const classes = {
   actions: "flex flex-wrap items-center gap-3",
   btnPrimary:
     "btnPrimary",
+  btnOutline:
+    "btnOutline",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
-    ? error.message
-    : "The project change order could not be sent.";
+const getErrorMessage = (
+  error: unknown,
+  fallback: string
+): string =>
+  hasErrorMessage(error) ? error.message : fallback;
 
 const ListingRequestChangeOrderCreatorActions = ({
   changeOrder,
   isPending = false,
   error,
   onSendChangeOrder,
+  isWithdrawing = false,
+  withdrawError,
+  onWithdrawChangeOrder,
 }: ListingRequestChangeOrderCreatorActionsProps) => {
   if (
     !changeOrder ||
-    !canSendListingRequestChangeOrder(changeOrder.status)
+    !canWithdrawListingRequestChangeOrder(changeOrder.status)
   ) {
     return null;
   }
 
-  const errorMessage = error
-    ? getErrorMessage(error)
-    : null;
+  const isDraft = canSendListingRequestChangeOrder(
+    changeOrder.status
+  );
+
+  const errorMessage = withdrawError
+    ? getErrorMessage(
+        withdrawError,
+        "The project change order could not be withdrawn."
+      )
+    : error
+      ? getErrorMessage(
+          error,
+          "The project change order could not be sent."
+        )
+      : null;
+
+  const isBusy = isPending || isWithdrawing;
 
   return (
     <div className={classes.card}>
@@ -59,13 +88,18 @@ const ListingRequestChangeOrderCreatorActions = ({
           </h2>
 
           <p className={classes.text}>
-            This change order is saved as a private draft.
-            Send it when it is ready for buyer review.
+            {isDraft
+              ? "This change order is saved as a private draft. Send it when it is ready for buyer review."
+              : "This change order is with the buyer, who has not answered yet. Other project steps wait until they do."}{" "}
+            To change or cancel it, withdraw it. You can then
+            propose a new one, which starts from the same
+            details.
           </p>
         </div>
 
         <div className={classes.draft}>
-          Draft: {changeOrder.title}
+          {isDraft ? "Draft" : "Awaiting buyer review"}:{" "}
+          {changeOrder.title}
         </div>
 
         {errorMessage && (
@@ -75,17 +109,32 @@ const ListingRequestChangeOrderCreatorActions = ({
         )}
 
         <div className={classes.actions}>
+          {isDraft && (
+            <button
+              className={classes.btnPrimary}
+              disabled={isBusy}
+              type="button"
+              onClick={() =>
+                void onSendChangeOrder(changeOrder.id)
+              }
+            >
+              {isPending
+                ? "Sending change order…"
+                : "Send draft to buyer"}
+            </button>
+          )}
+
           <button
-            className={classes.btnPrimary}
-            disabled={isPending}
+            className={classes.btnOutline}
+            disabled={isBusy}
             type="button"
             onClick={() =>
-              void onSendChangeOrder(changeOrder.id)
+              void onWithdrawChangeOrder(changeOrder.id)
             }
           >
-            {isPending
-              ? "Sending change order…"
-              : "Send draft to buyer"}
+            {isWithdrawing
+              ? "Withdrawing change order…"
+              : "Withdraw change order"}
           </button>
         </div>
       </div>
