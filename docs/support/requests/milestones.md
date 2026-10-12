@@ -8,6 +8,9 @@ surfaces:
   - supabase/migrations/20260619_106_align_milestone_sequence_guards.sql
   - supabase/migrations/20261011_154_add_milestone_preview_images.sql
   - storage bucket milestone-previews (private)
+  - supabase/migrations/20261012_159_add_commission_image_retention.sql
+  - public.commission_image_retention
+  - api/server.js   # deleteExpiredCommissionImages, in the hourly ops run
   - public.submit_listing_request_milestone
   - src/lib/listings/milestonePreviewImage.ts
   - src/components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm.tsx
@@ -40,6 +43,7 @@ be able to reach.
 | "My submission was rejected" | [`MIL-002`](#mil-002--submission-content-rejected) |
 | "It won't let me approve" | [`MIL-003`](#mil-003--invalid-milestone-response) |
 | "My image won't upload" / "I can't see the creator's images" | [`MIL-005`](#mil-005--milestone-preview-image-problems) |
+| "The images on my old commission are gone" / "Keep the images, there is a dispute" | [`MIL-006`](#mil-006--commission-images-deleted-after-the-retention-period) |
 
 ---
 
@@ -281,17 +285,100 @@ submit with links, so no payment is blocked.
 
 ---
 
+## `MIL-006` — Commission images deleted after the retention period
+
+```yaml
+id: MIL-006
+tier: 2
+signals:
+  - source: ui
+    match: "The preview images for this milestone were deleted 180 days after the commission closed, as our Privacy Policy describes."
+    where: "ListingRequestMilestoneSummary, when preview_images_deleted_at is set"
+  - source: api
+    match: "/IMG-001: expired commission images could not be listed: /"
+    where: "api/server.js deleteExpiredCommissionImages"
+  - source: api
+    match: "/IMG-001: images of commission .+ were not deleted: /"
+    where: "api/server.js deleteExpiredCommissionImages, when Storage refuses the removal"
+  - source: db
+    match: "/IMG-001: commission .+ still has [0-9]+ stored image\\(s\\), so it was not marked as deleted\\./"
+    where: "public.mark_commission_images_deleted (20261012_159), errcode P0001"
+auto_fix: none
+reason_not_automatable: "deletion is deliberate and cannot be undone; a hold is a human decision"
+escalate_if:
+  - "images were deleted while a payment dispute on that commission was open"   # -> tier 3
+escalate_with:
+  - "select * from public.commission_image_retention where listing_request_id = '<request>'"
+  - "the commission's status and when it closed"
+```
+
+**The rule** (Privacy Policy `2026-10-12`, section 8). Images uploaded to a
+commission stay while it is open. Once it is completed, cancelled, declined
+or archived they are kept **180 days** and then deleted. 180 days covers
+the time in which a card payment can ordinarily be disputed, with room to
+answer one. The number lives in one place:
+`public.commission_image_retention_days()`.
+
+**How it works.** When a commission that has images closes, one row is
+written to `commission_image_retention` with the date its images may go. A
+commission with no images gets no row, and reopening one removes its row, so
+the check only ever looks at commissions that have something to delete.
+Completing and later archiving keeps the first date. The hourly ops job
+(`mfs-ops-alerts`, see [`alerting.md`](../operations/alerting.md)) asks the
+database what is due, removes the files through the Storage API, and only
+then has the database record it: `deleted_at`, the number of files, and on
+each submission an empty `preview_image_paths` and
+`preview_images_deleted_at`. The milestone's written summary and links stay.
+Both sides then see the line quoted above in place of the images.
+
+**Keeping images for a dispute.** Before the date passes, an admin puts the
+commission on hold (a reason is required):
+
+```sql
+update public.commission_image_retention
+   set on_hold = true, hold_reason = 'Chargeback opened 2027-01-10'
+ where listing_request_id = '<request>';
+```
+
+A commission on hold is skipped until `on_hold` is set back to `false`.
+Nothing applies a hold automatically when a dispute is opened; that is a
+gap, below.
+
+**Cause, by signal.**
+- The UI line is the rule working. Deleted images cannot be brought back;
+  the creator has the originals, which never left their device.
+- `IMG-001` from the API: the list or the removal failed. Nothing was
+  marked as deleted, and the next hourly run tries again. Repeating for the
+  same commission means Storage is refusing it; check the bucket exists.
+- `IMG-001` from the database: the API asked to mark a commission as done
+  while files were still stored. It refuses, so the record never says
+  "deleted" while a file remains.
+
+**Money impact.** None. Losing images that a dispute needed is the risk;
+that is what the hold is for.
+
+---
+
 ## Known gaps
 
+- **A hold is not applied automatically when a payment dispute opens.** An
+  admin has to set it (`MIL-006`). Until that is automated, check
+  `commission_image_retention` whenever a dispute arrives on a closed
+  commission.
+- **Only milestone preview images are covered**, because they are the only
+  commission images that exist. Reference images, when built, must be added
+  to `public.list_commission_image_paths()`. Listing images are not
+  covered: a listing can be made active again and needs its image.
 - **Milestone preview images are watermarked in the creator's browser.** That
   protects the creator's original from the buyer, which is the point. It does
   not stop a creator who bypasses the page from uploading an unmarked image
   to their own milestone; the bucket still limits type and size.
 - **The watermark stays after the milestone is paid.** Clean files are handed
   over through delivery links and the final delivery, not by removing it.
-- **Abandoned uploads stay in storage.** If the upload succeeds and the
-  submission then fails, the files remain, readable only by the creator.
-  Nothing cleans them up, and no retention period is set for these images.
+- **Abandoned uploads stay until the commission's images are deleted.** If
+  the upload succeeds and the submission then fails, the file remains,
+  readable only by the creator, and goes with the rest 180 days after the
+  commission closes (`MIL-006`).
 - **Milestone preview images are not scanned**, and the upload box has only
   been exercised in tests and a database dry run, not in a real browser.
 - **No alerting on sequence-guard violations.** `MIL-001` is Tier 3 but nothing

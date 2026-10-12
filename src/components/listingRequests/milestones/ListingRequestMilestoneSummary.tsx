@@ -231,6 +231,13 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
               <MilestonePreviewImages paths={submission.preview_image_paths} />
             )}
 
+            {submission.preview_images_deleted_at && (
+              <p className={classes.noSubmission}>
+                The preview images for this milestone were deleted 180 days after the
+                commission closed, as our Privacy Policy describes.
+              </p>
+            )}
+
             {submission.delivery_links.length > 0 && (
               <div className={classes.links}>
                 {submission.delivery_links.map((deliveryLink, index) => (

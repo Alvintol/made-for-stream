@@ -4339,6 +4339,60 @@ app.post("/api/internal/ops/connect-resync", async (req, res) => {
   }
 });
 
+// Deletes the stored images of commissions whose retention period has run
+// out (20261012_159; playbook MIL-006). The database knows which ones are
+// due and keeps the record; only the Storage API can remove a file. A
+// commission is marked as done only after its files are gone, so anything
+// that fails here is simply tried again on the next hourly run.
+const deleteExpiredCommissionImages = async () => {
+  const { data: due, error } = await supabaseAdmin.rpc(
+    "list_commission_images_due_for_deletion",
+    { p_limit: 20 },
+  );
+
+  if (error) {
+    console.error(`IMG-001: expired commission images could not be listed: ${error.message}`);
+    return 0;
+  }
+
+  let commissions = 0;
+
+  for (const item of due || []) {
+    const paths = item.paths || [];
+
+    if (paths.length > 0) {
+      const { error: removeError } = await supabaseAdmin.storage
+        .from(item.bucket)
+        .remove(paths);
+
+      if (removeError) {
+        console.error(
+          `IMG-001: images of commission ${item.listing_request_id} were not deleted: ${removeError.message}`,
+        );
+        continue;
+      }
+    }
+
+    const { error: markError } = await supabaseAdmin.rpc(
+      "mark_commission_images_deleted",
+      { p_listing_request_id: item.listing_request_id, p_file_count: paths.length },
+    );
+
+    if (markError) {
+      console.error(markError.message);
+      continue;
+    }
+
+    commissions += 1;
+  }
+
+  if (commissions > 0) {
+    console.log(`Deleted the stored images of ${commissions} closed commission(s).`);
+  }
+
+  return commissions;
+};
+
 // Runs list_ops_alerts() and emails OPS_ALERT_EMAIL when something is new,
 // or daily while it stays open. A failed send returns 502, so the Cloud
 // Scheduler job shows the failure, and the next run tries again.
@@ -4400,6 +4454,9 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
         }
       }
     }
+
+    // Commission images past their retention period (MIL-006).
+    await deleteExpiredCommissionImages();
 
     const notifications = await drainListingRequestNotifications({ limit: 100 });
 

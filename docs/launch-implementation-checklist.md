@@ -1395,6 +1395,32 @@ in [`environments.md`](environments.md).
       Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
       clean, `npx vite build` clean. **Tick when the 27 are fixed or the
       rules are deliberately relaxed.**
+- [ ] **Commission images are deleted 180 days after a commission closes,
+      and the Privacy Policy says so (2026-10-12).** Migration
+      `20261012_159`: one row in `commission_image_retention` per closed
+      commission that has images, so the check never scans the rest; the
+      hourly ops job removes what is due through the Storage API and the
+      database records it (`MIL-006`). An admin hold keeps images for a
+      dispute. **The API must be redeployed.** Privacy Policy `2026-10-12`
+      (every account re-accepts): it now names commission images and the
+      records of failed actions and page-load errors, says why those records
+      are kept (to correct faults without relying on reports, and to notice
+      misuse), and sets 180 days for the images and 90 days for the records.
+      **The 180 days is a working choice, not legal advice:** it is the usual
+      card-dispute period (about 120 days) plus time to answer. **Dry-run on
+      the live database in a rolled-back transaction, 2026-10-12:** no row
+      while a commission is open; a row at closing with 180 days; reopening
+      removes it; archiving later keeps the first date; nothing is due
+      early; a hold needs a reason and stops deletion; marking as deleted is
+      refused while a file remains and, once the file is gone, empties the
+      submission's image list and records the date; the website cannot read
+      or call any of it. Ran after the change: `npx vitest run` 1296
+      passing, `npx tsc --noEmit` clean, `npx vite build` clean, eslint not
+      grown. **Not tested:** a real deletion through the Storage API (the
+      dry run stood in for it); the note on the page in a browser. **Not
+      built:** an automatic hold when a dispute opens; reference images;
+      any clean-up of listing images. **For counsel:** the 180 days, and the
+      new Privacy Policy wording.
 - [ ] **A failure log with a daily ops list, a reload notice, and change
       orders that lower the price (2026-10-12).** Three things asked for
       during the rehearsal.

@@ -3,6 +3,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import {
+  fireEvent,
   render,
   screen,
 } from "@testing-library/react";
@@ -269,6 +270,30 @@ describe("ListingRequestMilestoneSummary", () => {
     expect(mocks.getUrls).toHaveBeenCalledWith([
       "milestone-1/sketch.webp",
     ]);
+  });
+
+  it("says so when the preview images were deleted after the commission closed", () => {
+    render(
+      <ListingRequestMilestoneSummary
+        milestones={[createMilestone({ status: "paid" })]}
+        submissions={[
+          createSubmission({
+            status: "buyer_approved",
+            preview_image_paths: [],
+            preview_images_deleted_at: "2027-04-20T00:45:00.000Z",
+          }),
+        ]}
+        viewer="buyer"
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Initial design direction/ })
+    );
+
+    expect(
+      screen.getByText(/were deleted 180 days after the commission closed/)
+    ).toBeInTheDocument();
   });
 
   it("renders revision request details", () => {

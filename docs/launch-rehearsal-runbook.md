@@ -358,6 +358,16 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `select public from storage.buckets where id = 'milestone-previews';`
       is `false`. An image's address works for one hour for anyone who has
       it, then stops (`MIL-005`).
+- [ ] *(Needs migration `20261012_159`, then an API deploy, then the
+      website.)* **Image retention.** A closed commission that has images
+      gets one row: `select listing_request_id, closed_at, delete_after,
+      on_hold, deleted_at from public.commission_image_retention;` shows the
+      CAD commission after it is completed, with `delete_after` 180 days
+      on. The deletion itself cannot be seen in a one-day rehearsal; it was
+      checked by a rolled-back dry run only (`MIL-006`).
+- [ ] **Privacy Policy `2026-10-12`.** Every account is asked to accept it
+      on its next visit. Sections 2, 3 and 8 mention the failure records and
+      the 180 days for commission images.
 - [ ] Milestone 1: creator submits, buyer approves, milestone payment paid.
 - [ ] **Change order:** first try +5.00, which the creator's send must refuse
       (`AGR-005`, via the change-order trigger), **with the reason shown on the
