@@ -16,8 +16,21 @@ the ids you used, so "has this been rehearsed" has an answer.
   `early_service_request` row is recorded at Refund Policy `2026-10-07`.
 - **Emails, all `sent`:** `request_received` and `agreement_accepted` to
   meowington; `request_accepted` and `agreement_sent` to the buyer.
-- **Not started:** both milestones are `pending`, there are no payment rows
-  and no cancellation warning. **Next step: the creator submits milestone 1.**
+- **Milestone 1, done for real on 2026-10-11 (confirmed in the database):**
+  meowington submitted "sketches" with one preview image (stored as an
+  89 KB WebP in the private `milestone-previews` bucket: the first real
+  upload, migration `20261011_154` confirmed applied). The buyer approved it
+  at 23:42 UTC. One payment row exists: `milestone_payment`, 60.00 CAD, fees
+  3.00 and 3.00, total 63.00, `requires_checkout`. Emails `sent`:
+  `milestone_submitted` and `payment_required` to the buyer,
+  `milestone_approved` to meowington. **Next step: the buyer pays it, with a
+  tip and a contribution.**
+- **Defect found on that step, fixed on `fix/refresh-payments-after-approval`:**
+  after the buyer clicked Approve, no pay button appeared until the page was
+  reloaded. Approving did not refresh the payments list. The same was true
+  of accepting an agreement, accepting a change order and approving a final
+  delivery; all four now refresh it.
+- **Milestone 2 is `pending`;** there is no cancellation warning.
 - **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
   steps are still to do): submitting milestone 2 first is refused
   (`MIL-001`); milestone 1 submit and approve creates one payment, 60.00 CAD,

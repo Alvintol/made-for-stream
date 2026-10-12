@@ -108,6 +108,12 @@ export const useRespondListingRequestMilestone =
 
       onSuccess: async (responseRow) => {
         await Promise.all([
+          // Accepting or approving makes the database create the payment
+          // that is now due, so the pay button needs the fresh list.
+          queryClient.invalidateQueries({
+            queryKey: ["listingRequestPayments"],
+          }),
+
           queryClient.invalidateQueries({
             queryKey: [
               "listingRequestMilestones",

@@ -66,6 +66,12 @@ export const useRespondListingRequestAgreement = () => {
     onSuccess: async () => {
       // Refresh all request/agreement/message surfaces that can show agreement state.
       await Promise.all([
+        // Accepting or approving makes the database create the payment
+        // that is now due, so the pay button needs the fresh list.
+        queryClient.invalidateQueries({
+          queryKey: ["listingRequestPayments"],
+        }),
+
         queryClient.invalidateQueries({
           queryKey: ["listingRequestAgreements"],
         }),

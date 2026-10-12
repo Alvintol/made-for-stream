@@ -36,6 +36,7 @@ be able to reach.
 | --- | --- |
 | "I can't submit this milestone" | [`MIL-001`](#mil-001--milestone-submitted-out-of-order) |
 | "Buyer approved but it didn't unlock" | [`WHK-002`](../payments/webhooks.md#whk-002--payment-marked-paid-but-the-workflow-did-not-advance) |
+| "I approved it and there is no way to pay" | Reload the page. Before 2026-10-11 approving did not refresh the payments list, so the pay button only showed after a reload. If it is still missing after a reload, the payment row was not created: [`CHG-003`](change-orders.md#chg-003--accepted-change-order-did-not-create-its-payment) describes the same check. |
 | "My submission was rejected" | [`MIL-002`](#mil-002--submission-content-rejected) |
 | "It won't let me approve" | [`MIL-003`](#mil-003--invalid-milestone-response) |
 | "My image won't upload" / "I can't see the creator's images" | [`MIL-005`](#mil-005--milestone-preview-image-problems) |
