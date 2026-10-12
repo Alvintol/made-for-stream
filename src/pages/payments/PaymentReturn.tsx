@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { Link, useSearchParams } from "react-router-dom";
 import { useListingRequestPaymentCheckoutStatus } from "../../hooks/payments/useListingRequestPaymentCheckoutStatus";
 
@@ -83,7 +84,7 @@ const PaymentReturn = () => {
 
       {error && (
         <div className={classes.error}>
-          {error instanceof Error ? error.message : "Unable to check payment."}
+          {hasErrorMessage(error) ? error.message : "Unable to check payment."}
         </div>
       )}
 

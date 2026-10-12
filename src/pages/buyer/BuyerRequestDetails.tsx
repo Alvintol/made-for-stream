@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
 import { Link, useParams } from "react-router-dom";
 import { useBuyerRequest } from "../../hooks/creatorRequests/useBuyerRequest";
@@ -672,7 +673,7 @@ const BuyerRequestDetails = () => {
 
         {archiveRequestMutation.error && (
           <div className={classes.errorBox}>
-            {archiveRequestMutation.error instanceof Error
+            {hasErrorMessage(archiveRequestMutation.error)
               ? archiveRequestMutation.error.message
               : "This commission could not be archived."}
           </div>

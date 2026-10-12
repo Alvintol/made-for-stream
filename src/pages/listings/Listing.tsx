@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
 import ListingPriceText from "../../components/listings/ListingPriceText";
 import ListingAnimatedPreview from "../../components/listings/ListingAnimatedPreview";
@@ -181,7 +182,7 @@ const ListingPage = () => {
       setIsReportOpen(false);
     } catch (error) {
       setReportError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Listing report could not be submitted."
       );

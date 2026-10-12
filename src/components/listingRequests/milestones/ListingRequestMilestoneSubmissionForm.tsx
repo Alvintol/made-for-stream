@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import {
   useEffect,
   useState,
@@ -98,7 +99,7 @@ const defaultFormState: MilestoneSubmissionFormState = {
 const getErrorMessage = (
   error: unknown
 ): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The milestone submission could not be saved.";
 

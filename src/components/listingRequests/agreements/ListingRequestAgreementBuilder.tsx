@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useMemo, useState, type SubmitEventHandler } from "react";
 
 import {
@@ -123,7 +124,7 @@ const defaultFormState: BuilderFormState = {
 };
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The project agreement could not be created.";
 

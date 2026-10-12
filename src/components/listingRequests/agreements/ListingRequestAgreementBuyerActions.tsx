@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useMemo, useState } from "react";
 
 import {
@@ -47,7 +48,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The project agreement response could not be saved.";
 

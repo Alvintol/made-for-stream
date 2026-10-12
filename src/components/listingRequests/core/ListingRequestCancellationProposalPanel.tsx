@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useMemo, useState } from "react";
 
 import { FadeIn } from "../../../lib/motion";
@@ -61,7 +62,7 @@ const formatCents = (cents: number, currency: string) =>
   }).format(cents / 100);
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
-  error instanceof Error ? error.message : fallback;
+  hasErrorMessage(error) ? error.message : fallback;
 
 type StatementFormProps = {
   paidPayments: ListingRequestPaymentRow[];

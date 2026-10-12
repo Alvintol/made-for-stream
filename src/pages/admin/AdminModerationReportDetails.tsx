@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../lib/errorMessage";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -359,7 +360,7 @@ const AdminModerationReportDetails = () => {
       setConversationActionMessage("Conversation locked by admin.");
     } catch (error) {
       setConversationActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Conversation could not be locked right now."
       );
@@ -383,7 +384,7 @@ const AdminModerationReportDetails = () => {
       setConversationActionMessage("Admin lock removed. Conversation reopened.");
     } catch (error) {
       setConversationActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Conversation could not be reopened right now."
       );
@@ -407,7 +408,7 @@ const AdminModerationReportDetails = () => {
       setModerationActionNote("");
     } catch (error) {
       setListingActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Listing could not be hidden right now."
       );
@@ -431,7 +432,7 @@ const AdminModerationReportDetails = () => {
       setModerationActionNote("");
     } catch (error) {
       setListingActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Listing could not be restored right now."
       );
@@ -455,7 +456,7 @@ const AdminModerationReportDetails = () => {
       setModerationActionNote("");
     } catch (error) {
       setProfileActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Profile could not be marked under review right now."
       );
@@ -479,7 +480,7 @@ const AdminModerationReportDetails = () => {
       setModerationActionNote("");
     } catch (error) {
       setProfileActionError(
-        error instanceof Error
+        hasErrorMessage(error)
           ? error.message
           : "Profile review flag could not be cleared right now."
       );

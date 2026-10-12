@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney as formatCurrencyAmount } from "../../../lib/formatMoney";
 import {
   getListingRequestChangeOrderImpactLabels,
@@ -63,7 +64,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "Project change orders could not be loaded.";
 

@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { useListingRequestNotices } from "../../../hooks/creatorRequests/useListingRequestNotices";
@@ -30,7 +31,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
-  error instanceof Error ? error.message : fallback;
+  hasErrorMessage(error) ? error.message : fallback;
 
 // Sprint 6 (launch-scope.md section 7): admin's view of the notice clock,
 // early-review queue, and the closure action itself.

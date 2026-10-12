@@ -63,6 +63,7 @@ import { useListingRequestFinalDeliveries } from '../../hooks/creatorRequests/us
 import { useListingRequestProgressUpdates } from '../../hooks/creatorRequests/useListingRequestProgressUpdates';
 import { useSendDraftListingRequestAgreement } from '../../hooks/creatorRequests/useSendDraftListingRequestAgreement';
 import { useSendDraftListingRequestChangeOrder } from '../../hooks/creatorRequests/useSendDraftListingRequestChangeOrder';
+import { useWithdrawListingRequestChangeOrder } from '../../hooks/creatorRequests/useWithdrawListingRequestChangeOrder';
 import { useSendDraftListingRequestFinalDelivery } from '../../hooks/creatorRequests/useSendDraftListingRequestFinalDelivery';
 import { useSubmitListingRequestMilestone } from '../../hooks/creatorRequests/useSubmitListingRequestMilestone';
 import { useMyProfile } from '../../hooks/profile/useMyProfile';
@@ -72,7 +73,7 @@ import ListingRequestMilestoneSubmissionForm from '../../components/listingReque
 import ListingRequestMilestoneSummary from '../../components/listingRequests/milestones/ListingRequestMilestoneSummary';
 import { canSubmitListingRequestMilestone, getActiveListingRequestMilestone } from '../../domain/listings/listingRequestMilestones';
 import { canStartWorkForAcceptedRequest } from '../../domain/listings/listingRequestAgreements';
-import { canCreateListingRequestChangeOrder, getDraftListingRequestChangeOrder } from '../../domain/listings/listingRequestChangeOrders';
+import { canCreateListingRequestChangeOrder, getLatestListingRequestChangeOrder, getPendingListingRequestChangeOrder } from '../../domain/listings/listingRequestChangeOrders';
 import { useListingRequestPayments } from '../../hooks/payments/useListingRequestPayments';
 import { useCancelListingRequestBeforePayment } from '../../hooks/creatorRequests/useCancelListingRequestBeforePayment';
 import { useListingRequestCancellationProposal } from '../../hooks/creatorRequests/useListingRequestCancellationProposal';
@@ -169,6 +170,8 @@ const CreatorRequestDetails = () => {
     useSendDraftListingRequestChangeOrder();
   const createChangeOrderMutation =
     useCreateListingRequestChangeOrder();
+  const withdrawChangeOrderMutation =
+    useWithdrawListingRequestChangeOrder();
   const createFinalDeliveryMutation =
     useCreateListingRequestFinalDelivery();
   const sendDraftFinalDeliveryMutation =
@@ -420,8 +423,17 @@ const CreatorRequestDetails = () => {
     !changeOrdersQuery.isLoading &&
     !changeOrdersQuery.error;
 
-  const draftChangeOrder =
-    getDraftListingRequestChangeOrder(changeOrders);
+  const pendingChangeOrder =
+    getPendingListingRequestChangeOrder(changeOrders);
+
+  // Withdrawing and proposing again is how a change order is edited, so the
+  // builder starts from the newest change order when that one was withdrawn.
+  const newestChangeOrder =
+    getLatestListingRequestChangeOrder(changeOrders);
+  const withdrawnChangeOrder =
+    newestChangeOrder?.status === "cancelled"
+      ? newestChangeOrder
+      : null;
 
   const finalDeliveries =
     finalDeliveriesQuery.data ?? [];
@@ -850,11 +862,18 @@ const CreatorRequestDetails = () => {
       content: (
         <>
           <ListingRequestChangeOrderCreatorActions
-            changeOrder={draftChangeOrder}
+            changeOrder={pendingChangeOrder}
             isPending={sendDraftChangeOrderMutation.isPending}
             error={sendDraftChangeOrderMutation.error}
             onSendChangeOrder={(changeOrderId) =>
               sendDraftChangeOrderMutation.mutateAsync({ changeOrderId })
+            }
+            isWithdrawing={withdrawChangeOrderMutation.isPending}
+            withdrawError={withdrawChangeOrderMutation.error}
+            onWithdrawChangeOrder={(changeOrderId) =>
+              withdrawChangeOrderMutation.mutateAsync({ changeOrderId }).catch(() => {
+                // Shown through withdrawError.
+              })
             }
           />
 
@@ -868,6 +887,7 @@ const CreatorRequestDetails = () => {
                 <ListingRequestChangeOrderBuilder
                   requestStatus={request.status}
                   agreement={agreement}
+                  startFrom={withdrawnChangeOrder}
                   isPending={createChangeOrderMutation.isPending}
                   error={createChangeOrderMutation.error}
                   onCreateChangeOrder={thenClose(createChangeOrderMutation.mutateAsync, close)}

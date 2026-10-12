@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import {
   getListingRequestFinalDeliveryStatusLabel,
   getListingRequestFinalDeliveryStatusSummary,
@@ -61,7 +62,7 @@ const classes = {
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "Final deliveries could not be loaded.";
 

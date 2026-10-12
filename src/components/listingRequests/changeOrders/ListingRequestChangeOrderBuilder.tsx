@@ -1,3 +1,4 @@
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
 import {
   useState,
@@ -10,6 +11,7 @@ import {
 } from "../../../domain/listings/listingRequestChangeOrders";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import type { CreateListingRequestChangeOrderInput } from "../../../hooks/creatorRequests/useCreateListingRequestChangeOrder";
+import type { ListingRequestChangeOrderRow } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
 
 type ChangeOrderAgreement = Pick<
   ListingRequestAgreementRow,
@@ -23,12 +25,29 @@ type ChangeOrderAgreement = Pick<
 type ListingRequestChangeOrderBuilderProps = {
   requestStatus: string;
   agreement: ChangeOrderAgreement | null;
+  // A change order the creator just withdrew. The form starts from its
+  // details, so withdrawing and proposing again works as an edit.
+  startFrom?: ChangeOrderStartingPoint | null;
   isPending?: boolean;
   error?: unknown;
   onCreateChangeOrder: (
     input: CreateListingRequestChangeOrderInput
   ) => Promise<unknown> | unknown;
 };
+
+type ChangeOrderStartingPoint = Pick<
+  ListingRequestChangeOrderRow,
+  | "title"
+  | "summary"
+  | "changes_scope"
+  | "changes_price"
+  | "changes_timeline"
+  | "changes_deliverables"
+  | "changes_payment_schedule"
+  | "changes_milestones"
+  | "revised_total_amount"
+  | "revised_completion_at"
+>;
 
 type BuilderFormState = {
   title: string;
@@ -110,8 +129,47 @@ const getDateInputIso = (value: string): string =>
 const getDateOnly = (value: string): string =>
   value.slice(0, 10);
 
+// The earliest date the form accepts: tomorrow, by the creator's own
+// calendar. The database refuses any date that has already passed.
+const getEarliestCompletionDate = (): string => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return [
+    tomorrow.getFullYear(),
+    String(tomorrow.getMonth() + 1).padStart(2, "0"),
+    String(tomorrow.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+
+const getStartingFormState = (
+  startFrom?: ChangeOrderStartingPoint | null
+): BuilderFormState =>
+  startFrom
+    ? {
+        title: startFrom.title,
+        summary: startFrom.summary,
+        changesScope: startFrom.changes_scope,
+        changesPrice: startFrom.changes_price,
+        changesTimeline: startFrom.changes_timeline,
+        changesDeliverables: startFrom.changes_deliverables,
+        changesPaymentSchedule:
+          startFrom.changes_payment_schedule,
+        changesMilestones: startFrom.changes_milestones,
+        revisedTotalAmount:
+          startFrom.revised_total_amount === null
+            ? ""
+            : String(startFrom.revised_total_amount),
+        revisedCompletionDate:
+          startFrom.revised_completion_at
+            ? getDateOnly(startFrom.revised_completion_at)
+            : "",
+        sendNow: true,
+      }
+    : defaultFormState;
+
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
+  hasErrorMessage(error)
     ? error.message
     : "The project change order could not be created.";
 
@@ -186,6 +244,12 @@ const validateForm = (
     ) {
       errors.revisedCompletionDate =
         "The revised completion date must differ from the current date.";
+    } else if (
+      form.revisedCompletionDate <
+      getEarliestCompletionDate()
+    ) {
+      errors.revisedCompletionDate =
+        "The revised completion date must be in the future.";
     }
   }
 
@@ -195,12 +259,15 @@ const validateForm = (
 const ListingRequestChangeOrderBuilder = ({
   requestStatus,
   agreement,
+  startFrom,
   isPending = false,
   error,
   onCreateChangeOrder,
 }: ListingRequestChangeOrderBuilderProps) => {
   const [form, setForm] =
-    useState<BuilderFormState>(defaultFormState);
+    useState<BuilderFormState>(() =>
+      getStartingFormState(startFrom)
+    );
 
   const [validationErrors, setValidationErrors] =
     useState<BuilderValidationErrors>({});
@@ -312,8 +379,16 @@ const ListingRequestChangeOrderBuilder = ({
           </p>
         </div>
 
+        {startFrom && (
+          <div className={classes.currentValue}>
+            This starts from the change order you withdrew
+            (“{startFrom.title}”). Change what you need,
+            then send it.
+          </div>
+        )}
+
         {createErrorMessage && (
-          <div className={classes.errorBox}>
+          <div className={classes.errorBox} role="alert">
             {createErrorMessage}
           </div>
         )}
@@ -577,6 +652,7 @@ const ListingRequestChangeOrderBuilder = ({
               <input
                 className={classes.input}
                 id="change-order-completion"
+                min={getEarliestCompletionDate()}
                 type="date"
                 value={form.revisedCompletionDate}
                 onChange={(event) =>

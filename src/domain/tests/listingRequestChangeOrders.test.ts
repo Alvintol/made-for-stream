@@ -4,6 +4,7 @@ import {
   canBuyerRespondToListingRequestChangeOrder,
   canCreateListingRequestChangeOrder,
   canSendListingRequestChangeOrder,
+  canWithdrawListingRequestChangeOrder,
   getDraftListingRequestChangeOrder,
   getHasPendingListingRequestChangeOrder,
   getLatestListingRequestChangeOrder,
@@ -11,6 +12,7 @@ import {
   getListingRequestChangeOrderStatusLabel,
   getListingRequestChangeOrderStatusSummary,
   getListingRequestChangeOrderStatusTone,
+  getPendingListingRequestChangeOrder,
   getSentListingRequestChangeOrder,
   hasListingRequestChangeOrderImpact,
   isListingRequestChangeOrderBuyerVisible,
@@ -385,5 +387,35 @@ describe("listing commission change orders", () => {
         "buyer_declined"
       )
     ).toBe(false);
+  });
+
+  it("lets a change order be withdrawn only until the buyer answers", () => {
+    expect(canWithdrawListingRequestChangeOrder("draft")).toBe(true);
+    expect(canWithdrawListingRequestChangeOrder("sent")).toBe(true);
+    expect(canWithdrawListingRequestChangeOrder("buyer_accepted")).toBe(false);
+    expect(canWithdrawListingRequestChangeOrder("buyer_declined")).toBe(false);
+    expect(canWithdrawListingRequestChangeOrder("cancelled")).toBe(false);
+  });
+
+  it("finds the one change order still waiting, draft or sent", () => {
+    const row = (id: string, status: string, created_at: string) => ({
+      id,
+      status,
+      created_at,
+    });
+
+    expect(
+      getPendingListingRequestChangeOrder([
+        row("a", "cancelled", "2026-10-01T00:00:00Z"),
+        row("b", "sent", "2026-10-02T00:00:00Z"),
+      ])?.id
+    ).toBe("b");
+
+    expect(
+      getPendingListingRequestChangeOrder([
+        row("a", "cancelled", "2026-10-01T00:00:00Z"),
+        row("b", "buyer_accepted", "2026-10-02T00:00:00Z"),
+      ])
+    ).toBeNull();
   });
 });

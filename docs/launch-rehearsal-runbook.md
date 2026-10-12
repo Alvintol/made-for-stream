@@ -30,6 +30,25 @@ the ids you used, so "has this been rehearsed" has an answer.
   reloaded. Approving did not refresh the payments list. The same was true
   of accepting an agreement, accepting a change order and approving a final
   delivery; all four now refresh it.
+- **Milestone 1 payment, paid for real on 2026-10-12 20:22 UTC (confirmed in
+  the database).** The first real payment through the Stripe webhook. Base
+  60.00, buyer fee 3.00, creator fee 3.00, tip 3.00, contribution 1.00, total
+  67.00 CAD; application fee 7.00 (the two fees plus the contribution);
+  recovery instalment 0; both minimums 0; `not_collected`; the charge id is
+  stored. Tax evidence: billing country CA from `account_details`, CA from
+  the checkout, card issuer US (the test card). Refund Policy and Fee
+  Schedule acceptances recorded at checkout, the early-start box not asked
+  again. Milestone 1 and its schedule line are `paid`. `payment_received`
+  email to meowington `sent`.
+- **Change order, 2026-10-12.** A +5.00 change order was refused by the
+  database, but the screen gave no reason. A change order with a completion
+  date 23 days in the past (`f436a9d4-…`) was accepted and sent, and could
+  not be changed or cancelled by the creator; it is still `sent` and holds
+  up milestone 2. **Fixed on `feat/change-order-withdraw`** (migration
+  `20261012_155`): screens show the database's reason, a past date is
+  refused, and the creator can withdraw a change order until the buyer
+  answers. **Next step, after that ships: meowington withdraws
+  `f436a9d4-…`, then sends +15.00.**
 - **Milestone 2 is `pending`;** there is no cancellation warning.
 - **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
   steps are still to do): submitting milestone 2 first is refused
@@ -314,8 +333,16 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       it, then stops (`MIL-005`).
 - [ ] Milestone 1: creator submits, buyer approves, milestone payment paid.
 - [ ] **Change order:** first try +5.00, which the creator's send must refuse
-      (`AGR-005`, via the change-order trigger). Then +15.00: send, buyer accepts,
-      payment paid.
+      (`AGR-005`, via the change-order trigger), **with the reason shown on the
+      form** ("Each payment in a project must be at least 10.00 …"). Then
+      +15.00: send, buyer accepts, payment paid.
+- [ ] *(Needs migration `20261012_155` before the website is merged.)*
+      **Withdrawing a change order.** The date box will not take a date
+      before tomorrow (`CHG-005`). The creator sends a change order, then
+      presses "Withdraw change order": it shows as "Cancelled" on both
+      sides, the chat says it was withdrawn, and "Propose change" opens a
+      form already filled in from it. After the buyer accepts a change order
+      there is no Withdraw button (`CHG-006`).
 - [ ] Milestone 2, then final delivery, final balance paid, project completed.
 - [ ] Receipt emails arrived for each payment (transactional email, Sprint 6).
 
