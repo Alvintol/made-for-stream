@@ -10,7 +10,10 @@ surfaces:
   - storage bucket milestone-previews (private)
   - supabase/migrations/20261012_159_add_commission_image_retention.sql
   - public.commission_image_retention
-  - api/server.js   # deleteExpiredCommissionImages, in the hourly ops run
+  - api/server.js   # deleteExpiredImages, in the hourly ops run
+  - supabase/migrations/20261012_160_add_listing_image_retention_and_dispute_hold.sql
+  - public.admin_set_commission_dispute_hold
+  - src/components/listingRequests/core/AdminDisputeHoldPanel.tsx
   - public.submit_listing_request_milestone
   - src/lib/listings/milestonePreviewImage.ts
   - src/components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm.tsx
@@ -303,6 +306,12 @@ signals:
   - source: db
     match: "/IMG-001: commission .+ still has [0-9]+ stored image\\(s\\), so it was not marked as deleted\\./"
     where: "public.mark_commission_images_deleted (20261012_159), errcode P0001"
+  - source: db
+    match: "Only an administrator can change a dispute hold."
+    where: "public.admin_set_commission_dispute_hold (20261012_160), errcode 42501"
+  - source: db
+    match: "Say why this commission is in dispute, in 5 to 500 characters."
+    where: "public.admin_set_commission_dispute_hold, errcode 22023"
 auto_fix: none
 reason_not_automatable: "deletion is deliberate and cannot be undone; a hold is a human decision"
 escalate_if:
@@ -331,18 +340,15 @@ each submission an empty `preview_image_paths` and
 `preview_images_deleted_at`. The milestone's written summary and links stay.
 Both sides then see the line quoted above in place of the images.
 
-**Keeping images for a dispute.** Before the date passes, an admin puts the
-commission on hold (a reason is required):
-
-```sql
-update public.commission_image_retention
-   set on_hold = true, hold_reason = 'Chargeback opened 2027-01-10'
- where listing_request_id = '<request>';
-```
-
-A commission on hold is skipped until `on_hold` is set back to `false`.
-Nothing applies a hold automatically when a dispute is opened; that is a
-gap, below.
+**Keeping images for a dispute (since `20261012_160`).** On the admin
+commission page, the **Dispute hold** card has **Mark as in dispute** (a
+reason is required) and, once on, **End dispute**. It works on an open
+commission as well as a closed one, so it can be set the day a chargeback
+arrives. While a commission is in dispute its images are never deleted.
+Ending the dispute keeps them at least 30 more days, so nothing disappears
+the hour a dispute is settled. Only an administrator can do either; the
+database checks. Nothing sets the hold automatically when a dispute is
+opened; that is a gap, below.
 
 **Cause, by signal.**
 - The UI line is the rule working. Deleted images cannot be brought back;
@@ -362,13 +368,12 @@ that is what the hold is for.
 ## Known gaps
 
 - **A hold is not applied automatically when a payment dispute opens.** An
-  admin has to set it (`MIL-006`). Until that is automated, check
-  `commission_image_retention` whenever a dispute arrives on a closed
-  commission.
-- **Only milestone preview images are covered**, because they are the only
-  commission images that exist. Reference images, when built, must be added
-  to `public.list_commission_image_paths()`. Listing images are not
-  covered: a listing can be made active again and needs its image.
+  admin has to press **Mark as in dispute** (`MIL-006`). Until that is
+  automated, do it whenever a dispute arrives.
+- **Only milestone preview images are covered here**, because they are the
+  only commission images that exist. Reference images, when built, must be
+  added to `public.list_commission_image_paths()`. Listing images have
+  their own rule: [`LST-006`](../listings/listings.md).
 - **Milestone preview images are watermarked in the creator's browser.** That
   protects the creator's original from the buyer, which is the point. It does
   not stop a creator who bypasses the page from uploading an unmarked image

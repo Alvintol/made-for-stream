@@ -52,6 +52,7 @@ import CreatorTerms from "./pages/legal/CreatorTerms";
 import FeeSchedule from "./pages/legal/FeeSchedule";
 import Legal from "./pages/legal/Legal";
 import Privacy from "./pages/legal/Privacy";
+import SiteUpdates from "./pages/SiteUpdates";
 import RefundPolicy from "./pages/legal/RefundPolicy";
 import Terms from "./pages/legal/Terms";
 import MessageDetails from "./pages/messages/MessageDetails";
@@ -83,6 +84,7 @@ const App = () => {
           <Route path="/legal" element={<Legal />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/updates" element={<SiteUpdates />} />
           <Route
             path="/terms/creator"
             element={<CreatorTerms />}

@@ -19,6 +19,12 @@ export const reportFailure = (
   error: unknown,
   label?: unknown,
 ): void => {
+  // A developer's own machine has no local API, so every page there "fails"
+  // to load something. Those are not the site's failures.
+  if (import.meta.env.MODE === "development") {
+    return;
+  }
+
   try {
     const code = (error as { code?: unknown } | null)?.code;
 

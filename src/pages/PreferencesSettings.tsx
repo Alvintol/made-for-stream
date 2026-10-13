@@ -1,5 +1,9 @@
 import DisplayCurrencySettings from "../components/settings/DisplayCurrencySettings";
 import { useMarketingEmails, useSaveMarketingEmails } from "../hooks/settings/useAccountDetails";
+import {
+  useSaveSiteUpdatePreference,
+  useSiteUpdatePreference,
+} from "../hooks/settings/useSiteUpdatePreference";
 
 const classes = {
   page: "space-y-4",
@@ -18,6 +22,8 @@ const classes = {
 const PreferencesSettings = () => {
   const marketingQuery = useMarketingEmails();
   const saveMarketing = useSaveMarketingEmails();
+  const siteUpdatesQuery = useSiteUpdatePreference();
+  const saveSiteUpdates = useSaveSiteUpdatePreference();
 
   return (
     <div className={classes.page}>
@@ -56,6 +62,47 @@ const PreferencesSettings = () => {
         )}
 
         {saveMarketing.error && (
+          <div className={classes.error} role="alert">
+            Your choice could not be saved. Please try again.
+          </div>
+        )}
+      </section>
+
+      <section className={classes.card}>
+        <h2 className={classes.title}>Site updates</h2>
+
+        {/* Never ticked for anyone: the person turns it on themselves. */}
+        <label className={classes.checkboxRow}>
+          <input
+            type="checkbox"
+            className={classes.checkbox}
+            checked={siteUpdatesQuery.data?.showSiteUpdates ?? false}
+            disabled={siteUpdatesQuery.isLoading || saveSiteUpdates.isPending}
+            onChange={(event) => saveSiteUpdates.mutate(event.currentTarget.checked)}
+          />
+          <span>
+            <span className={classes.checkboxLabel}>
+              Show me what&rsquo;s new after the site is updated
+            </span>
+            <span className={`block ${classes.hint}`}>
+              Optional. Once per update, the next time you sign in, a small window lists the
+              latest changes; you can close it straight away. Site updates are never sent by
+              email. The full list is always on the{" "}
+              <a className="underline underline-offset-2" href="/updates">
+                What&rsquo;s new
+              </a>{" "}
+              page.
+            </span>
+          </span>
+        </label>
+
+        {saveSiteUpdates.isSuccess && !saveSiteUpdates.isPending && (
+          <div className={classes.status} role="status">
+            Saved.
+          </div>
+        )}
+
+        {saveSiteUpdates.error && (
           <div className={classes.error} role="alert">
             Your choice could not be saved. Please try again.
           </div>

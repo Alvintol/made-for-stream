@@ -4339,58 +4339,73 @@ app.post("/api/internal/ops/connect-resync", async (req, res) => {
   }
 });
 
-// Deletes the stored images of commissions whose retention period has run
-// out (20261012_159; playbook MIL-006). The database knows which ones are
+// Deletes stored images whose retention period has run out: those of closed
+// commissions (20261012_159) and of listings no longer offered
+// (20261012_160). Playbooks: MIL-006 and LST-006. The database knows what is
 // due and keeps the record; only the Storage API can remove a file. A
-// commission is marked as done only after its files are gone, so anything
-// that fails here is simply tried again on the next hourly run.
-const deleteExpiredCommissionImages = async () => {
-  const { data: due, error } = await supabaseAdmin.rpc(
-    "list_commission_images_due_for_deletion",
-    { p_limit: 20 },
-  );
+// subject is marked as done only after every one of its files is gone, so
+// anything that fails here is simply tried again on the next hourly run.
+const deleteExpiredImages = async ({ listRpc, markRpc, idColumn, idParam, label }) => {
+  const { data: due, error } = await supabaseAdmin.rpc(listRpc, { p_limit: 20 });
 
   if (error) {
-    console.error(`IMG-001: expired commission images could not be listed: ${error.message}`);
+    console.error(`IMG-001: expired ${label} images could not be listed: ${error.message}`);
     return 0;
   }
 
-  let commissions = 0;
+  // A listing can have files in two buckets, so rows are grouped first.
+  const subjects = new Map();
 
-  for (const item of due || []) {
-    const paths = item.paths || [];
+  for (const row of due || []) {
+    const files = subjects.get(row[idColumn]) || [];
+    files.push({ bucket: row.bucket, paths: row.paths || [] });
+    subjects.set(row[idColumn], files);
+  }
 
-    if (paths.length > 0) {
-      const { error: removeError } = await supabaseAdmin.storage
-        .from(item.bucket)
-        .remove(paths);
+  let done = 0;
 
-      if (removeError) {
-        console.error(
-          `IMG-001: images of commission ${item.listing_request_id} were not deleted: ${removeError.message}`,
-        );
+  for (const [id, files] of subjects) {
+    let fileCount = 0;
+    let failed = false;
+
+    for (const { bucket, paths } of files) {
+      if (!bucket || paths.length === 0) {
         continue;
       }
+
+      const { error: removeError } = await supabaseAdmin.storage.from(bucket).remove(paths);
+
+      if (removeError) {
+        console.error(`IMG-001: images of ${label} ${id} were not deleted: ${removeError.message}`);
+        failed = true;
+        break;
+      }
+
+      fileCount += paths.length;
     }
 
-    const { error: markError } = await supabaseAdmin.rpc(
-      "mark_commission_images_deleted",
-      { p_listing_request_id: item.listing_request_id, p_file_count: paths.length },
-    );
+    if (failed) {
+      continue;
+    }
+
+    const { error: markError } = await supabaseAdmin.rpc(markRpc, {
+      [idParam]: id,
+      p_file_count: fileCount,
+    });
 
     if (markError) {
       console.error(markError.message);
       continue;
     }
 
-    commissions += 1;
+    done += 1;
   }
 
-  if (commissions > 0) {
-    console.log(`Deleted the stored images of ${commissions} closed commission(s).`);
+  if (done > 0) {
+    console.log(`Deleted the stored images of ${done} ${label}(s) past their retention period.`);
   }
 
-  return commissions;
+  return done;
 };
 
 // Runs list_ops_alerts() and emails OPS_ALERT_EMAIL when something is new,
@@ -4455,8 +4470,21 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       }
     }
 
-    // Commission images past their retention period (MIL-006).
-    await deleteExpiredCommissionImages();
+    // Images past their retention period (MIL-006, LST-006).
+    await deleteExpiredImages({
+      listRpc: "list_commission_images_due_for_deletion",
+      markRpc: "mark_commission_images_deleted",
+      idColumn: "listing_request_id",
+      idParam: "p_listing_request_id",
+      label: "commission",
+    });
+    await deleteExpiredImages({
+      listRpc: "list_listing_images_due_for_deletion",
+      markRpc: "mark_listing_images_deleted",
+      idColumn: "listing_id",
+      idParam: "p_listing_id",
+      label: "listing",
+    });
 
     const notifications = await drainListingRequestNotifications({ limit: 100 });
 

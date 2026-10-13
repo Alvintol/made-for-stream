@@ -42,6 +42,15 @@ with its billing country until a tax professional has advised on:
 - whether the platform can be the deemed supplier while the charge is a
   direct charge on the creator's account.
 
+**Rehearsal settings (owner's decision, 2026-10-12; test mode only).** So
+that the tax path is exercised before launch, the dev environment collects
+in every country the site serves, taxes the project amount and the buyer
+service fee, and does **not** tax the tip or the contribution
+(`STRIPE_TAX_CODE_TIP` and `STRIPE_TAX_CODE_SUPPORT` set to Stripe's
+non-taxable code). This answers the second question for the rehearsal only.
+It is not the adviser's answer, and production stays empty until that
+arrives. The exact values are in `docs/launch-rehearsal-runbook.md`.
+
 This is the advice gate in the Sprint 7 checklist. Until it clears, most
 of the issues below cannot happen in production. They exist so the
 feature is supportable the day a country is switched on.

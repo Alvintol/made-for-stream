@@ -4,6 +4,7 @@ import Footer from './Footer';
 import { PageTransition } from '../../lib/motion';
 import CookieConsent from '../legal/CookieConsent';
 import PolicyAcceptanceGate from '../legal/PolicyAcceptanceGate';
+import SiteUpdatesNotice from '../app/SiteUpdatesNotice';
 
 const classes = {
   shell: 'appShell',
@@ -24,6 +25,7 @@ const Layout = () => {
         </PolicyAcceptanceGate>
       </main>
       <Footer />
+      <SiteUpdatesNotice />
       <CookieConsent />
     </div>
   );

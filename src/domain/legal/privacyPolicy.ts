@@ -1,4 +1,17 @@
-export const privacyVersion = "2026-10-12";
+export const privacyVersion = "2026-10-12-2";
+
+// What changed in this version, in plain words. Shown on the card that asks
+// someone who accepted an earlier version to accept this one
+// (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
+// test fails if the two versions differ.
+export const privacyChanges = {
+  version: "2026-10-12-2",
+  items: [
+    "The preview image and animated preview of a listing that is no longer offered are deleted 180 days after it stops being offered. The listing returns to a draft and needs a new image before it can be offered again.",
+    "If you ask to be shown what is new on the site after an update, we record that choice and the last update you were shown. Site updates are never sent by email.",
+    "Earlier the same day (version 2026-10-12): images uploaded to a commission are kept while it is open and for 180 days after it closes; and we record failed actions and page-load errors, for up to 90 days, to fix faults and notice misuse.",
+  ],
+} as const;
 
 export const privacySections = [
   {
@@ -19,7 +32,7 @@ export const privacySections = [
       "Information: Payments; Examples and sources: Transaction and connected-account IDs, amounts, currency, fee, contribution and tax breakdowns, payment status, refund and dispute records, and limited payment-method information made available by Stripe",
       "Information: Tax location evidence; Examples and sources: The country, region and postal code in your private account details, which are your billing location, and, where available, the country associated with your IP address and the country of the card used, recorded to work out where tax applies. From the IP address and the card only the country is kept, never the IP address or card details",
       "Information: Technical and security; Examples and sources: IP address, device and browser information, access and error logs, security events and relevant session identifiers. When something you try on the site does not go through, or a page cannot load what it needs, the site makes a record of it: your account ID if you are signed in, the page you were on with any record number removed, the error code, and the message you were shown",
-      "Information: Choices and acceptance records; Examples and sources: Terms version and time of acceptance, a request to start work before a cancellation period ends, privacy preferences, cookie choices, and whether you have opted in to promotional email and when you last changed that choice",
+      "Information: Choices and acceptance records; Examples and sources: Terms version and time of acceptance, a request to start work before a cancellation period ends, privacy preferences, cookie choices, whether you have opted in to promotional email and when you last changed that choice, and whether you have asked to be shown what is new on the site after an update, with the last update you were shown",
       "Information: Copyright reports; Examples and sources: Contact information, work locations, declarations, notices, counter-notices and related decisions",
       "Do not send full payment-card numbers, account passwords or unnecessary government identification through project messages. Payment-card entry and required Stripe identity verification occur through Stripe's interfaces. Made for Stream receives operational account and payment information; we do not require full card details in our ordinary application database. Any additional access to verification data is limited to authorised needs and actual integration permissions."
     ]
@@ -75,6 +88,7 @@ export const privacySections = [
       "Record: Private account details; Ordinary retention: While the account is active. After closure they are kept only so far as they form part of the financial, tax and dispute records described below, for the period stated there, and are otherwise deleted with the account",
       "Record: Private project messages and delivered files; Ordinary retention: Up to 24 months after project closure; preserve only necessary excerpts longer for financial or dispute evidence",
       "Record: Images uploaded to a commission, such as reference images and milestone previews; Ordinary retention: While the commission is open. After it is completed, cancelled, declined or archived they are kept for 180 days, which covers the period in which a card payment can ordinarily be disputed, and are then deleted by an automatic daily check. They are kept longer only while an open payment dispute or a documented legal hold needs them. Deletion removes the stored image; the written record of the milestone remains under the categories below",
+      "Record: The preview image and animated preview of a listing; Ordinary retention: While the listing is offered. After it stops being offered they are kept for 180 days and are then deleted by the same automatic daily check; the listing returns to a draft and needs a new image before it can be offered again",
       "Record: Financial records, tax location evidence, accepted project terms and payment-dispute evidence; Ordinary retention: Seven years after the relevant transaction or final dispute resolution, whichever is later",
       "Record: Unsuccessful or withdrawn creator application samples; Ordinary retention: Up to 12 months after the final decision; retain a minimal decision record only as needed under another applicable category",
       "Record: Ordinary support and moderation records; Ordinary retention: Up to 24 months after closure; longer only for a documented continuing safety or legal need",

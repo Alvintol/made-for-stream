@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   getMissingPolicyTypes,
+  getPolicyChangeSummaries,
   signupPolicyTypes,
   toCurrentPolicyAcceptances,
 } from "../../domain/legal/policyAcceptance";
@@ -33,6 +34,9 @@ const classes = {
   button: "btnPrimary",
   secondary: "btnOutline",
   error: "notice noticeError",
+  changes: "space-y-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-4",
+  changesTitle: "text-sm font-bold text-zinc-900",
+  changesList: "list-disc space-y-1 pl-5 text-sm leading-6 text-zinc-700",
   loading: "py-16 text-center text-sm text-zinc-500",
 } as const;
 
@@ -175,6 +179,13 @@ const PolicyAcceptanceGate = (props: PolicyAcceptanceGateProps) => {
 
   if (missingPolicyTypes.length === 0) return <>{children}</>;
 
+  // What is different since this person last accepted, so they do not have
+  // to open each document and hunt for it.
+  const changeSummaries = getPolicyChangeSummaries(
+    missingPolicyTypes,
+    statusQuery.data,
+  );
+
   const onAccept = async () => {
     setErrMsg(null);
 
@@ -197,6 +208,33 @@ const PolicyAcceptanceGate = (props: PolicyAcceptanceGateProps) => {
         To keep using Made for Stream, please review and accept the current Terms of
         Service and Privacy Policy.
       </p>
+
+      {changeSummaries.map((summary) => (
+        <div className={classes.changes} key={summary.policyType}>
+          <h2 className={classes.changesTitle}>
+            What changed in the {summary.title} ({summary.version})
+          </h2>
+
+          {summary.items.length > 0 ? (
+            <ul className={classes.changesList}>
+              {summary.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className={classes.text}>
+              This document was updated. Open it below to read the current text.
+            </p>
+          )}
+        </div>
+      ))}
+
+      {changeSummaries.length > 0 && (
+        <p className={classes.text}>
+          This is a summary to save you looking for the changes. What you are accepting
+          is the full text of each document, linked below.
+        </p>
+      )}
 
       <PolicyAcceptanceCheckbox
         id="policy-gate-acceptance"
