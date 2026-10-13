@@ -51,7 +51,7 @@ const SiteUpdatesNotice = () => {
         <div className={classes.header}>
           <div>
             <h2 className={classes.title}>What&rsquo;s new: {latest.title}</h2>
-            <p className={classes.version}>Version {latest.version}</p>
+            <p className={classes.version}>{latest.version}</p>
           </div>
 
           <button className={classes.btn} type="button" onClick={close}>

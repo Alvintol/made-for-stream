@@ -40,6 +40,11 @@ const classes = {
   loading: "py-16 text-center text-sm text-zinc-500",
 } as const;
 
+// Signing in can mount this gate several times before the first write
+// returns (seen with Twitch: three identical rows within 30 ms). Every mount
+// waits on the same write, so the acceptance is recorded once.
+let pendingFlush: Promise<void> | null = null;
+
 // Pages a signed-in user can still reach before accepting: the documents
 // they are being asked to accept, and sign-in (to sign out).
 const isExemptPath = (pathname: string): boolean =>
@@ -96,8 +101,12 @@ const PolicyAcceptanceGate = (props: PolicyAcceptanceGateProps) => {
 
       try {
         // Records the versions the user saw when they ticked the box.
-        await mutateAsync({ policies: pending.policies });
-        clearPendingPolicyAcceptance();
+        pendingFlush ??= mutateAsync({ policies: pending.policies })
+          .then(clearPendingPolicyAcceptance)
+          .finally(() => {
+            pendingFlush = null;
+          });
+        await pendingFlush;
       } catch (error) {
         // Kept for a later attempt; the gate below asks in the meantime.
         logPolicyAcceptanceFailure("signup acceptance", error);

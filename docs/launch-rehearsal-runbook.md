@@ -107,8 +107,20 @@ the ids you used, so "has this been rehearsed" has an answer.
 **Open, found during this run and not fixed:**
 
 - The buyer and meowington each have their `2026-10-08` Terms and Privacy
-  acceptance recorded three times in `policy_acceptances`. Harmless, cause
-  not looked into.
+  acceptance recorded three times in `policy_acceptances`. Harmless.
+  **Cause found 2026-10-13, fixed on `feat/version-history`:** it happened
+  again (the buyer's sign-in at 23:13 UTC wrote three identical pairs within
+  30 ms). The page that records the box ticked at sign-in could start more
+  than once before the first write returned; every start now waits on the
+  same write. The old extra rows stay (the table is append-only). No
+  playbook covers this sign-in step yet.
+- **Privacy Policy `2026-10-12-2`, 2026-10-13:** accepted by the buyer
+  (22:48 UTC, from the "what changed" card) and by meowington (23:14 UTC,
+  by ticking the box on the sign-in page, so the card was not involved).
+  PizzaButt and TrashMailman are still on `2026-10-08`. **Someone who signs
+  in afresh accepts the current policies with the sign-in box and never
+  sees the list of changes;** only a person already signed in gets the
+  card. Not decided whether that is acceptable.
 - Buyer-side on-screen checks for the CAD steps above were done by the
   operator and are not individually ticked below; only what the database
   shows is.
@@ -393,13 +405,16 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       accept Privacy Policy `2026-10-12-2` and is shown its changes under
       "What changed in the Privacy Policy (2026-10-12-2)" before it accepts.
 - [ ] *(Needs migration `20261012_161` before the website is merged.)*
-      **Site updates.** The footer shows "Version 2026.10.12 · What's new",
-      and `/updates` lists the changes, signed in or not. In Settings →
+      **Site updates.** The footer shows "V0.2.00 · What's new" (version
+      numbers since 2026-10-13; it read "Version 2026.10.12" before), and
+      `/updates` lists the versions with their dates, signed in or not: the
+      current one is open, and choosing another shows its changes instead.
+      With ten or fewer versions there are no arrow buttons. In Settings →
       Preferences tick "Show me what's new after the site is updated":
       nothing happens straight away. Sign out and in again: a small window
       lists the latest changes, with "See all updates" and "Close". After
       closing it does not come back on the next sign-in
-      (`last_seen_version` is `2026.10.12`). No email is sent at any point
+      (`last_seen_version` is the footer's version). No email is sent at any point
       (`SITE-001`).
 - [ ] *(Needs migration `20261012_159`, then an API deploy, then the
       website.)* **Image retention.** A closed commission that has images

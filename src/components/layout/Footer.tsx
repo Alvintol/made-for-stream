@@ -83,7 +83,7 @@ const Footer = () => {
         <div>© {year} Made for Stream • Marketplace for creator assets & services</div>
 
         <div className={classes.credit}>
-          Version {siteVersion} •{" "}
+          {siteVersion} •{" "}
           <Link className={classes.creditLink} to="/updates">
             What&rsquo;s new
           </Link>

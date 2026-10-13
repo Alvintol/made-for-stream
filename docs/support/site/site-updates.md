@@ -5,7 +5,7 @@ surfaces:
   - src/domain/site/siteUpdates.ts                       # the version and the list
   - src/pages/SiteUpdates.tsx                            # /updates
   - src/components/app/SiteUpdatesNotice.tsx             # the closable window
-  - src/components/layout/Footer.tsx                     # "Version ... · What's new"
+  - src/components/layout/Footer.tsx                     # "V0.2.00 · What's new"
   - src/pages/PreferencesSettings.tsx                    # the checkbox
   - src/hooks/settings/useSiteUpdatePreference.ts
   - public.user_site_update_preferences
@@ -28,12 +28,33 @@ top and set `siteVersion` to its version. A test fails if the two disagree.
 The database only remembers, per person, whether they asked and the last
 version they were shown.
 
+**Version numbers (2026-10-13).** Versions read `V<major>.<minor>.<patch>`,
+the patch always two digits, for example `V0.2.00`. Major is 0 during the
+private beta and becomes 1 at public launch; minor goes up for something new
+that people can see or do; patch goes up for fixes and small changes. The
+entry first published as `2026.10.12` is now `V0.1.00`.
+
+**The page.** `/updates` shows a list of version numbers with their dates,
+ten at a time, newest first. Choosing a version opens what changed in it;
+the current version is open on arrival. When there are more than ten, arrow
+buttons under the list move to older and newer versions (they do not appear
+with ten or fewer). The whole list is part of the page, so the arrows load
+nothing from the server and cannot fail.
+
+**What may be written there.** The list is public, signed in or not. A
+security fix is described as "Security improvements" and no more, and
+entries never name internal systems, provider settings or database details.
+A test (`src/domain/tests/siteUpdates.test.ts`) refuses the most obvious of
+those words; the judgement stays with whoever writes the entry.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |
 | --- | --- |
 | "I ticked the box and nothing appeared" / "The window keeps coming back" | [`SITE-001`](#site-001--the-whats-new-window-does-not-appear-or-comes-back) |
 | "The footer shows an old version" | [`SITE-001`](#site-001--the-whats-new-window-does-not-appear-or-comes-back) |
+| "I can't find an older update" / "The page only shows ten" | Expected: the arrows under the list move to older versions. |
+| "The version used to be a date" | Expected: `2026.10.12` was renumbered `V0.1.00` on 2026-10-13. |
 
 ---
 
@@ -81,6 +102,11 @@ escalate_with:
 - **Nothing checks that an update was written up.** A release that changes
   what people see but adds no entry leaves the version, and this page,
   unchanged.
+- **Only a word list checks that an entry is safe to publish.** It catches
+  an entry that names an internal system; it cannot tell whether a sentence
+  gives away how a fault worked.
+- **In a browser that does not support named `<details>` groups, more than
+  one version can be open at once.** Nothing is hidden or lost.
 - **The window is not shown to someone who is signed out**, and the choice
   cannot be made without an account. The page and the footer link are open
   to everyone.

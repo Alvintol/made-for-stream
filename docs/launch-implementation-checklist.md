@@ -887,6 +887,41 @@ any jurisdiction they cover**
       alternative is destination charges, which means reworking the payout hold,
       refund ledger and recovery balances.
 
+**For the tax adviser (2026-10-13)**
+
+The brief to send is [`tax-adviser-questions.md`](tax-adviser-questions.md):
+how the site handles money and tax, what is missing, and thirty questions.
+[`tax-answers-to-work.md`](tax-answers-to-work.md) says what each likely
+answer would change in the site and how big that is. The owner fills in the
+blanks at the top of the brief (legal form, business number, GST status)
+before sending. Six known gaps, each waiting on an answer:
+
+- [ ] **The creator fee has no tax line.** Only the project amount, buyer fee,
+      tip and contribution can carry tax (questions 11 and 29).
+- [ ] **Every listing uses one tax code.** Each listing records its kind
+      (commission, service or digital item), so a code per kind needs no new
+      tagging. The category is free text typed by the creator and can't be
+      used as it stands (questions 5 to 8).
+- [ ] **Business buyers.** No tax number is collected at purchase or checked,
+      and there is no reverse charge (question 9).
+- [ ] **Seller reporting.** The site holds legal name, date of birth, address,
+      individual or business, and optional business and tax numbers, none of
+      them checked by the site. No W-9 or W-8BEN, no DAC7 or Canadian platform
+      report, nothing filed (questions 24 to 27).
+- [ ] **Receipts do not say who the seller is.** The receipt email gives the
+      amount and the project title only (question 4).
+- [ ] **Nothing limits which countries a buyer may pay from** (questions 18
+      and 19).
+
+Found while writing the brief, 2026-10-13:
+
+- [ ] A paid buy-now download does not exist yet. A listing can be marked
+      "instant", but its page says "coming soon" and every payment belongs to
+      a request. The brief says so.
+- [ ] Nothing in the chargeback handling adjusts the tax records (found by a
+      text search of `api/server.js`, not traced line by line). Refunds made
+      outside the site were already known (`payments/tax.md`, Known gaps).
+
 **Product work**
 
 - [x] Migration: `tax_cents` and jurisdiction on `listing_request_payments`, included
