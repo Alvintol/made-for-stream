@@ -358,6 +358,49 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `select public from storage.buckets where id = 'milestone-previews';`
       is `false`. An image's address works for one hour for anyone who has
       it, then stops (`MIL-005`).
+- [ ] **Tax in the rehearsal (test mode only; settings, not code).** In
+      Stripe test mode add tax registrations for Canada, the EU (the One
+      Stop Shop union scheme, or Ireland) and Washington State. On Cloud Run
+      set `STRIPE_TAX_COLLECTION_COUNTRIES` to CA, US, GB and the 27 EU
+      countries, `STRIPE_TAX_CODE_BASE` and `STRIPE_TAX_CODE_BUYER_FEE` to
+      the general services code, and `STRIPE_TAX_CODE_TIP` and
+      `STRIPE_TAX_CODE_SUPPORT` to the non-taxable code. Then, with a tip
+      and a contribution on every payment:
+
+      | Buyer (billing) | Seller | Test card |
+      | --- | --- | --- |
+      | ImAllBeans (CA, AB) | meowington (CAD) | `4000 0012 4000 0000` |
+      | ImAllBeans (CA, AB) | TrashMailman (EUR) | `4000 0012 4000 0000` |
+      | PizzaButt (US, WA) | meowington (CAD) | `4242 4242 4242 4242` |
+      | PizzaButt (US, WA) | TrashMailman (EUR) | `4242 4242 4242 4242` |
+      | TrashMailman (IE) | meowington (CAD) | `4000 0037 2000 0005` |
+
+      For each: the checkout shows a tax line; `tax_cents` is greater than 0
+      and `tax_treatment` is no longer `not_collected`; the tax is on the
+      project amount and the buyer fee only, with nothing on the tip or the
+      contribution; `total_checkout_cents` includes it; a Stripe Tax
+      transaction id is stored; the evidence rows agree with the buyer's
+      country (`TAX-002` stays quiet). An EU buyer buying from the EU seller
+      needs a fifth account and is not covered.
+- [ ] *(Needs migration `20261012_160`, then an API deploy, then the
+      website.)* **Dispute hold and listing images.** On the admin page of a
+      commission, "Mark as in dispute" needs a reason, then shows "In
+      dispute"; "End dispute" clears it. A creator deactivates a listing:
+      `select * from public.listing_image_retention;` has its row, 180 days
+      on; reactivating removes it. A draft with no image cannot be published
+      ("Add a preview image before making this listing live.", `LST-006`).
+- [ ] **What changed, on the acceptance card.** Every account is asked to
+      accept Privacy Policy `2026-10-12-2` and is shown its changes under
+      "What changed in the Privacy Policy (2026-10-12-2)" before it accepts.
+- [ ] *(Needs migration `20261012_161` before the website is merged.)*
+      **Site updates.** The footer shows "Version 2026.10.12 · What's new",
+      and `/updates` lists the changes, signed in or not. In Settings →
+      Preferences tick "Show me what's new after the site is updated":
+      nothing happens straight away. Sign out and in again: a small window
+      lists the latest changes, with "See all updates" and "Close". After
+      closing it does not come back on the next sign-in
+      (`last_seen_version` is `2026.10.12`). No email is sent at any point
+      (`SITE-001`).
 - [ ] *(Needs migration `20261012_159`, then an API deploy, then the
       website.)* **Image retention.** A closed commission that has images
       gets one row: `select listing_request_id, closed_at, delete_after,

@@ -19,6 +19,10 @@ const mocks = vi.hoisted(() => ({
   useListingRequestCancellationProposal: vi.fn(),
 }));
 
+vi.mock("../../components/listingRequests/core/AdminDisputeHoldPanel", () => ({
+  default: () => null,
+}));
+
 vi.mock("../../hooks/admin/useAdminRequest", () => ({
   useAdminRequest: mocks.useAdminRequest,
 }));

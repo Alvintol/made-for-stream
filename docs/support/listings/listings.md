@@ -3,6 +3,8 @@ feature: listings
 status: active
 surfaces:
   - public.listings
+  - public.listing_image_retention
+  - supabase/migrations/20261012_160_add_listing_image_retention_and_dispute_hold.sql
   - supabase/migrations/20260921_116_exempt_free_listings_from_payout_readiness.sql
   - src/hooks/listings/listingPaymentAccountGuards.ts
   - src/hooks/listings/
@@ -304,7 +306,65 @@ not offered.
 
 ---
 
+## `LST-006` — Listing image deleted after the listing stopped being offered
+
+```yaml
+id: LST-006
+tier: 2
+signals:
+  - source: db
+    match: "Add a preview image before making this listing live."
+    where: "public.enforce_listing_preview_before_live (20261012_160), errcode check_violation"
+  - source: db
+    match: "/IMG-001: listing .+ still has [0-9]+ stored image\\(s\\), so it was not marked as deleted\\./"
+    where: "public.mark_listing_images_deleted (20261012_160), errcode P0001"
+  - source: api
+    match: "/IMG-001: images of listing .+ were not deleted: /"
+    where: "api/server.js deleteExpiredImages"
+  - source: user_report
+    match: "my old listing is a draft again and its picture is gone"
+auto_fix: none
+reason_not_automatable: "deletion is deliberate and cannot be undone; the creator uploads a new image"
+escalate_with:
+  - "select * from public.listing_image_retention where listing_id = '<listing>'"
+  - "the listing's status, is_active, preview_url and animated_preview_url"
+```
+
+**The rule.** When a listing stops being offered (it was published and
+active, and then is not), one row is written to `listing_image_retention`.
+After 180 days its preview image and animated preview are deleted from
+storage, and the listing is put back to **draft with no image**. Making it
+active again before then removes the row and nothing is deleted. The 180
+days is the same number as for commission images
+(`public.commission_image_retention_days()`).
+
+**Why the creator cannot simply reactivate it.** A listing cannot be made
+live without a preview image (`20261012_160`). After the deletion the
+creator opens the draft, uploads a new image and publishes. The refusal is
+checked only at the moment a listing goes live, so listings that were
+already live are not affected.
+
+**Cause, by signal.**
+- "Add a preview image…": the listing has no image, usually because this
+  rule deleted it. Upload one.
+- The user report is the rule working. The image cannot be brought back; the
+  creator has the original, which never left their device.
+- `IMG-001`: the hourly job could not remove the file, or asked to mark the
+  listing as done while a file was still stored. Nothing was changed, and
+  the next run tries again.
+
+A listing whose picture was only ever a pasted link (from before uploads
+existed) has no stored file; it is put back to draft with the link cleared,
+on the same schedule. A draft that was never published is never tracked.
+
+**Money impact.** None directly. A listing that is not live cannot sell.
+
+---
+
 ## Known gaps
+
+- **A listing's revision history still names the deleted image.** Old
+  revisions keep the address of a file that no longer exists (`LST-006`).
 
 - **Video previews have no length limit**, only the 8 MB size cap, and video
   playback was tested with a stand-in, not a real file in a real browser.
@@ -321,7 +381,8 @@ not offered.
   a paid add-on, the browser alone must not be what decides who gets it.
 - **Replaced and abandoned images stay in storage.** Choosing a new image, or
   failing to save after the upload, leaves the old file behind. Nothing
-  cleans them up yet.
+  cleans them up yet: `LST-006` removes only the image the listing is
+  using when it expires.
 - **Uploaded images are not scanned.** A published listing's image is public
   at once; the admin "hide listing" action is the only control.
 

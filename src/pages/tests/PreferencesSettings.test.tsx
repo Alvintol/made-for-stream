@@ -16,6 +16,24 @@ vi.mock("../../hooks/settings/useAccountDetails", () => ({
   }),
 }));
 
+const siteUpdateMocks = vi.hoisted(() => ({
+  show: false,
+  save: vi.fn(),
+}));
+
+vi.mock("../../hooks/settings/useSiteUpdatePreference", () => ({
+  useSiteUpdatePreference: () => ({
+    data: { showSiteUpdates: siteUpdateMocks.show, lastSeenVersion: null },
+    isLoading: false,
+  }),
+  useSaveSiteUpdatePreference: () => ({
+    mutate: siteUpdateMocks.save,
+    isPending: false,
+    isSuccess: false,
+    error: null,
+  }),
+}));
+
 vi.mock("../../components/settings/DisplayCurrencySettings", () => ({
   default: () => <div>Currency form</div>,
 }));
@@ -52,5 +70,22 @@ describe("<PreferencesSettings />", () => {
     fireEvent.click(optIn());
 
     expect(mocks.save).toHaveBeenCalledWith(false);
+  });
+
+  it("leaves the what's-new window off until the person asks for it, and says it is never emailed", () => {
+    siteUpdateMocks.show = false;
+    siteUpdateMocks.save.mockReset();
+
+    render(<PreferencesSettings />);
+
+    const box = screen.getByRole("checkbox", {
+      name: /what.s new after the site is updated/,
+    });
+
+    expect(box).not.toBeChecked();
+    expect(screen.getByText(/never sent by\s+email/)).toBeInTheDocument();
+
+    fireEvent.click(box);
+    expect(siteUpdateMocks.save).toHaveBeenCalledWith(true);
   });
 });

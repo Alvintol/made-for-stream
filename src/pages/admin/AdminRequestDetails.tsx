@@ -33,6 +33,7 @@ import ListingRequestAgreementAdminPaymentActions from '../../components/listing
 import ListingRequestPaymentAdminRefundPanel from '../../components/listingRequests/payments/ListingRequestPaymentAdminRefundPanel';
 import CreatorRecoveryBalanceAdminPanel from '../../components/listingRequests/payments/CreatorRecoveryBalanceAdminPanel';
 import AdminNoticeClosurePanel from '../../components/listingRequests/core/AdminNoticeClosurePanel';
+import AdminDisputeHoldPanel from '../../components/listingRequests/core/AdminDisputeHoldPanel';
 import ListingRequestChangeOrderPaymentAdminActions from '../../components/listingRequests/payments/ListingRequestChangeOrderPaymentAdminActions';
 import ListingRequestFinalBalancePaymentAdminActions from '../../components/listingRequests/payments/ListingRequestFinalBalancePaymentAdminActions';
 import ListingRequestProgressUpdateScheduleCard from '../../components/listingRequests/progressUpdates/ListingRequestProgressUpdateScheduleCard';
@@ -270,6 +271,9 @@ const AdminRequestDetails = () => {
 
           <ListingRequestPaymentAdminRefundPanel listingRequestId={request.id} />
           <CreatorRecoveryBalanceAdminPanel creatorUserId={request.creator_user_id} />
+
+          {/* Shown whatever the commission's status: a dispute usually arrives after it closes. */}
+          <AdminDisputeHoldPanel requestId={request.id} />
 
           {request.status === "accepted" && (
             <AdminNoticeClosurePanel

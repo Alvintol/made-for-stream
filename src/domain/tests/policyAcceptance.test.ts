@@ -1,3 +1,5 @@
+import { getPolicyChangeSummaries } from "../legal/policyAcceptance";
+import { privacyChanges } from "../legal/privacyPolicy";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -109,5 +111,43 @@ describe("Stripe agreement links", () => {
 
     expect(text).toContain(stripeConnectedAccountAgreementUrl);
     expect(text).toContain(stripeServicesAgreementUrl);
+  });
+
+  describe("what changed, for the re-acceptance card", () => {
+    it("has a summary written for the Privacy Policy's current version", () => {
+      // Fails when privacyVersion is bumped and the summary is not rewritten.
+      expect(privacyChanges.version).toBe(privacyVersion);
+      expect(privacyChanges.items.length).toBeGreaterThan(0);
+    });
+
+    it("lists the changes for a document the person accepted before", () => {
+      const summaries = getPolicyChangeSummaries(
+        ["privacy"],
+        [{ policy_type: "privacy" }],
+      );
+
+      expect(summaries).toEqual([
+        {
+          policyType: "privacy",
+          title: "Privacy Policy",
+          version: privacyVersion,
+          items: privacyChanges.items,
+        },
+      ]);
+    });
+
+    it("gives no list to someone accepting for the first time", () => {
+      expect(getPolicyChangeSummaries(["terms", "privacy"], [])).toEqual([]);
+    });
+
+    it("says a document changed even when no summary was written for it", () => {
+      const [summary] = getPolicyChangeSummaries(
+        ["terms"],
+        [{ policy_type: "terms" }],
+      );
+
+      expect(summary.title).toBe("Terms of Service");
+      expect(summary.items).toEqual([]);
+    });
   });
 });

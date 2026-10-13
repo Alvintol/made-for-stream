@@ -1395,6 +1395,55 @@ in [`environments.md`](environments.md).
       Ran after the change: `npx vitest run` 1127 passing, `npx tsc --noEmit`
       clean, `npx vite build` clean. **Tick when the 27 are fixed or the
       rules are deliberately relaxed.**
+- [ ] **Site updates page and "what's new" window; Privacy Policy
+      `2026-10-12-2` (2026-10-12).** The site has a version and a public
+      list of changes at `/updates`, linked from the footer
+      (`src/domain/site/siteUpdates.ts`; add an entry and move
+      `siteVersion` with each release). Settings → Preferences has "Show me
+      what's new after the site is updated", off by default; migration
+      `20261012_161` stores the choice and the last version shown. A person
+      who ticked it sees a closable window once per update on their next
+      sign-in. Never emailed. Playbook `SITE-001`. The Privacy Policy now
+      covers listing images (180 days after a listing stops being offered)
+      and the site-updates choice; every account re-accepts. Failures on a
+      developer's own machine are no longer written to the failure log.
+      **Dry-run of the migration on the live database, rolled back:** a
+      person can write and read only their own row; a signed-out visitor
+      cannot read the table. **Seen in a local browser:** the `/updates`
+      page and the footer link, signed out, dark theme. Ran after the
+      change: `npx vitest run` 1311 passing, `npx tsc --noEmit` clean, `npx
+      vite build` clean, eslint not grown. **Not tested:** the checkbox and
+      the window in a browser (they need a sign-in).
+- [ ] **Dispute hold button, listing image clean-up, what-changed on the
+      acceptance card, and tax settings for the rehearsal (2026-10-12).**
+      Migration `20261012_160`. (1) Admins get a **Dispute hold** card on a
+      commission: "Mark as in dispute" (reason required) stops the 180-day
+      deletion, on an open or closed commission; "End dispute" keeps the
+      images at least 30 more days (`MIL-006`). (2) A listing that stops
+      being offered is tracked; 180 days later its images are deleted and it
+      returns to draft with no image, and a listing cannot be made live
+      without a preview image (`LST-006`). The hourly ops job deletes both
+      kinds, so **the API must be redeployed**. (3) The card that asks for
+      re-acceptance of the Terms or Privacy Policy now lists what changed,
+      for people who accepted an earlier version; the summary is written
+      beside the policy text and a test fails if the version is bumped
+      without rewriting it. (4) Tax: the owner decided tips and
+      contributions are not taxed and that the rehearsal collects in every
+      country served; this is configuration in test mode
+      (`docs/support/payments/tax.md`, runbook). **Dry-run on the live
+      database in rolled-back transactions, 2026-10-12:** a creator cannot
+      set a hold and an admin can; a hold needs a reason, survives closing,
+      blocks deletion, and gives 30 days when ended; a deactivated listing
+      is tracked for 180 days and untracked when reactivated; an expired
+      listing's stored file is listed, cannot be marked deleted while it
+      still exists, and afterwards the listing is a draft with no image; a
+      listing with only a pasted link is handled; going live without an
+      image is refused; live listings can still be edited. Ran after the
+      change: `npx vitest run` 1304 passing, `npx tsc --noEmit` clean, `npx
+      vite build` clean, eslint not grown. **Not tested:** anything in a
+      browser; a real Storage deletion; any taxed payment. **For counsel
+      and the tax adviser:** the Privacy Policy does not yet mention listing
+      images; the tax settings are a rehearsal stand-in, not advice.
 - [ ] **Commission images are deleted 180 days after a commission closes,
       and the Privacy Policy says so (2026-10-12).** Migration
       `20261012_159`: one row in `commission_image_retention` per closed

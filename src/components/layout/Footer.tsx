@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { siteVersion } from "../../domain/site/siteUpdates";
 import { useCookiePreferences } from "../../providers/CookiePreferencesProvider";
 
 const classes = {
@@ -80,6 +81,13 @@ const Footer = () => {
 
       <div className={classes.bottom}>
         <div>© {year} Made for Stream • Marketplace for creator assets & services</div>
+
+        <div className={classes.credit}>
+          Version {siteVersion} •{" "}
+          <Link className={classes.creditLink} to="/updates">
+            What&rsquo;s new
+          </Link>
+        </div>
 
         <div className={classes.credit}>
           Built by Alvin (Beans) •{" "}

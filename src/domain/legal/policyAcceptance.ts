@@ -3,7 +3,7 @@ import { cookiePolicyVersion } from "./cookiePolicy";
 import { copyrightPolicyVersion } from "./copyrightPolicy";
 import { creatorTermsVersion } from "./creatorTerms";
 import { paymentTermsVersion } from "./paymentTerms";
-import { privacyVersion } from "./privacyPolicy";
+import { privacyChanges, privacyVersion } from "./privacyPolicy";
 import { refundPolicyVersion } from "./refundPolicy";
 import { termsVersion } from "./termsOfService";
 
@@ -62,6 +62,51 @@ export const earlyServiceRequestLabel =
   "I expressly request that the creator begin work now, before any 14-day cancellation period I may have has ended. I understand that if I cancel during that period, I may have to pay for work already supplied, and that I will lose my right to cancel once the work has been fully completed.";
 
 export const signupPolicyTypes: PolicyType[] = ["terms", "privacy"];
+
+const policyTitles: Partial<Record<PolicyType, string>> = {
+  terms: "Terms of Service",
+  privacy: "Privacy Policy",
+};
+
+// Plain-language summaries of what changed in a document's current version.
+// A document with no entry here simply has no summary yet.
+const policyChanges: Partial<
+  Record<PolicyType, { version: string; items: readonly string[] }>
+> = {
+  privacy: privacyChanges,
+};
+
+export type PolicyChangeSummary = {
+  policyType: PolicyType;
+  title: string;
+  version: string;
+  // Empty when the document changed but no summary was written for it.
+  items: readonly string[];
+};
+
+// For the card that asks for acceptance again: the documents this person
+// accepted before, in an older version, and what is different now. Someone
+// accepting for the first time has nothing to compare, so gets no list. A
+// summary written for another version is never shown.
+export const getPolicyChangeSummaries = (
+  missingPolicyTypes: PolicyType[],
+  acceptances: Pick<PolicyAcceptanceRecord, "policy_type">[],
+): PolicyChangeSummary[] =>
+  missingPolicyTypes
+    .filter((policyType) =>
+      acceptances.some((acceptance) => acceptance.policy_type === policyType),
+    )
+    .map((policyType) => {
+      const version = currentPolicyVersions[policyType];
+      const changes = policyChanges[policyType];
+
+      return {
+        policyType,
+        title: policyTitles[policyType] ?? policyType,
+        version,
+        items: changes?.version === version ? changes.items : [],
+      };
+    });
 
 export const creatorActivationPolicyTypes: PolicyType[] = ["creator_terms"];
 
