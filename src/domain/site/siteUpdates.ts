@@ -7,9 +7,12 @@
 //   minor  something new that people can see or do (patch returns to 00);
 //   patch  fixes and small changes to what is already there.
 //
-// To publish an update: add an entry at the TOP and set siteVersion to its
-// version. Write for the people using the site, not for developers: what is
-// different for them, in plain words. A test fails if siteVersion and the
+// EVERY change to the site moves the version, whether or not people can see
+// it: add an entry at the TOP and set siteVersion to its version. One branch,
+// one version; several changes on a branch share its entry. Write for the
+// people using the site, not for developers: what is different for them, in
+// plain words. Work they cannot see gets one plain line ("Fixes and
+// behind-the-scenes improvements"). A test fails if siteVersion and the
 // first entry disagree, or if the numbers do not go down the list.
 //
 // This list is PUBLIC, signed in or not. Never describe a security fix in a
@@ -40,6 +43,7 @@ export const siteUpdates: readonly SiteUpdate[] = [
       "The site now has version numbers, starting from V0.1.00. The footer shows the current one.",
       "The What's new page lists each version with its date. Choose a version to read what changed in it; the latest is open when you arrive.",
       "The page shows the ten most recent versions, with arrows to move to older ones.",
+      "Fixes and behind-the-scenes improvements.",
     ],
   },
   {
