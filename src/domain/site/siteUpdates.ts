@@ -2,10 +2,21 @@
 // what people see at /updates, in the footer, and in the "what's new" window
 // (for those who asked for it in Settings -> Preferences).
 //
+// Versions read V<major>.<minor>.<patch>, the patch always two digits:
+//   major  0 while the site is in private beta, 1 at public launch;
+//   minor  something new that people can see or do (patch returns to 00);
+//   patch  fixes and small changes to what is already there.
+//
 // To publish an update: add an entry at the TOP and set siteVersion to its
 // version. Write for the people using the site, not for developers: what is
 // different for them, in plain words. A test fails if siteVersion and the
-// first entry disagree. Site updates are never sent by email.
+// first entry disagree, or if the numbers do not go down the list.
+//
+// This list is PUBLIC, signed in or not. Never describe a security fix in a
+// way that tells someone how the fault worked ("Security improvements" is
+// enough), and never name internal systems, providers' settings or database
+// details. A test refuses the most obvious of those words.
+// Site updates are never sent by email.
 
 export type SiteUpdate = {
   version: string;
@@ -15,11 +26,24 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "2026.10.12";
+export const siteVersion = "V0.2.00";
+
+// How many versions /updates lists at a time.
+export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
   {
-    version: "2026.10.12",
+    version: "V0.2.00",
+    date: "2026-10-13",
+    title: "Version numbers and a version history",
+    changes: [
+      "The site now has version numbers, starting from V0.1.00. The footer shows the current one.",
+      "The What's new page lists each version with its date. Choose a version to read what changed in it; the latest is open when you arrive.",
+      "The page shows the ten most recent versions, with arrows to move to older ones.",
+    ],
+  },
+  {
+    version: "V0.1.00",
     date: "2026-10-12",
     title: "Commissions: images, change orders and clearer messages",
     changes: [

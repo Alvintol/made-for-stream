@@ -154,6 +154,16 @@ describe("PolicyAcceptanceGate", () => {
     expect(readPendingPolicyAcceptance()).toBeNull();
   });
 
+  it("records the parked acceptance once when the gate mounts twice at sign-in", async () => {
+    savePendingPolicyAcceptance(toCurrentPolicyAcceptances(signupPolicyTypes));
+
+    renderGate();
+    renderGate();
+
+    await waitFor(() => expect(screen.getAllByText("Page content")).toHaveLength(2));
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps blocking, and keeps the parked intent, when the write fails", async () => {
     mocks.insertError = { code: "42501", message: "new row violates row-level security policy" };
     savePendingPolicyAcceptance(toCurrentPolicyAcceptances(signupPolicyTypes));

@@ -51,6 +51,11 @@ non-taxable code). This answers the second question for the rehearsal only.
 It is not the adviser's answer, and production stays empty until that
 arrives. The exact values are in `docs/launch-rehearsal-runbook.md`.
 
+The questions for the adviser are in
+[`../../tax-adviser-questions.md`](../../tax-adviser-questions.md), and what
+each answer would change is in
+[`../../tax-answers-to-work.md`](../../tax-answers-to-work.md).
+
 This is the advice gate in the Sprint 7 checklist. Until it clears, most
 of the issues below cannot happen in production. They exist so the
 feature is supportable the day a country is switched on.
