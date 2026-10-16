@@ -20,6 +20,10 @@ export type ListingRequestFinalDeliveryRow = {
   title: string;
   summary: string;
   delivery_links: string[];
+  // The creator's statement that the work was also sent outside the site
+  // (20261013_162).
+  off_site_delivery_methods?: string[];
+  off_site_delivery_other?: string | null;
   agreement_snapshot: ListingRequestFinalDeliverySnapshot;
   revision_request_reason: string | null;
   submitted_at: string | null;
@@ -65,6 +69,8 @@ export const useListingRequestFinalDeliveries = (
             title,
             summary,
             delivery_links,
+            off_site_delivery_methods,
+            off_site_delivery_other,
             agreement_snapshot,
             revision_request_reason,
             submitted_at,

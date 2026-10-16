@@ -7,6 +7,9 @@ surfaces:
   - supabase/migrations/20260619_107_enforce_final_delivery_approval_readiness.sql
   - supabase/migrations/20260619_108_enforce_final_delivery_creation_readiness.sql
   - supabase/migrations/20260611_093_complete_request_after_final_delivery_approval.sql
+  - supabase/migrations/20261013_162_add_off_site_delivery_record.sql
+  - public.create_listing_request_final_delivery_off_site
+  - src/components/listingRequests/finalDeliveries/ListingRequestFinalDeliveryBuilder.tsx
 unmatched_tier: 2
 ---
 
@@ -34,6 +37,7 @@ for, and there is no refund or reversal path to undo it.
 | "I can't submit a new delivery" | [`FIN-002`](#fin-002--previous-delivery-not-resolved) |
 | "Approved but the project isn't complete" | [`FIN-004`](#fin-004--approved-delivery-did-not-complete-the-request) |
 | "My delivery was rejected on content" | [`FIN-003`](#fin-003--delivery-content-rejected) |
+| "I ticked Provided off site and it would not submit" / "They say they sent it by email and I never got it" | [`MIL-007`](milestones.md#mil-007--work-sent-outside-the-site-provided-off-site) (the same record is used for milestones and final deliveries) |
 
 ---
 
@@ -201,6 +205,9 @@ complete.
   administrative closure. See [`request-lifecycle.md`](request-lifecycle.md)
   `REQ-003`. Not automatic: an admin has to act, and closure cancels the
   unfinished delivery rather than treating it as approved.
+- **There is no file upload for finished work.** Delivery is by links to
+  wherever the creator keeps the files, plus the optional record of work
+  sent off site (`MIL-007`). The site never holds the finished files.
 - **Delivery links are not verified.** Nothing checks that a link resolves, so a
   dead or revoked link is indistinguishable from a good one at approval time.
 - **No alerting for `FIN-004`.**

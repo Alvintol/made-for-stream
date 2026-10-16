@@ -4,8 +4,15 @@ import {
   type SubmitEventHandler,
 } from "react";
 
+import {
+  emptyOffSiteDelivery,
+  toOffSiteDeliveryInput,
+  validateOffSiteDelivery,
+  type OffSiteDeliveryFormState,
+} from "../../../domain/listings/offSiteDelivery";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import type { CreateListingRequestFinalDeliveryInput } from "../../../hooks/creatorRequests/useCreateListingRequestFinalDelivery";
+import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 
 type FinalDeliveryAgreement = Pick<
   ListingRequestAgreementRow,
@@ -33,6 +40,7 @@ type BuilderValidationErrors = {
   title?: string;
   summary?: string;
   deliveryLinksText?: string;
+  offSite?: string;
 };
 
 const classes = {
@@ -83,7 +91,8 @@ const splitDeliveryLinks = (value: string): string[] =>
     .filter(Boolean);
 
 const validateForm = (
-  form: BuilderFormState
+  form: BuilderFormState,
+  offSite: OffSiteDeliveryFormState
 ): BuilderValidationErrors => {
   const errors: BuilderValidationErrors = {};
   const cleanTitle = form.title.trim();
@@ -120,6 +129,12 @@ const validateForm = (
       "Each final delivery link must be 2000 characters or fewer.";
   }
 
+  const offSiteError = validateOffSiteDelivery(offSite);
+
+  if (offSiteError) {
+    errors.offSite = offSiteError;
+  }
+
   return errors;
 };
 
@@ -135,6 +150,11 @@ const ListingRequestFinalDeliveryBuilder = ({
 
   const [validationErrors, setValidationErrors] =
     useState<BuilderValidationErrors>({});
+
+  const [offSite, setOffSite] =
+    useState<OffSiteDeliveryFormState>(
+      emptyOffSiteDelivery
+    );
 
   const agreementCanDeliver =
     agreement?.status === "buyer_accepted" &&
@@ -174,12 +194,15 @@ const ListingRequestFinalDeliveryBuilder = ({
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form);
+    const nextErrors = validateForm(form, offSite);
     setValidationErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
     }
+
+    const offSiteDelivery =
+      toOffSiteDeliveryInput(offSite);
 
     const input: CreateListingRequestFinalDeliveryInput = {
       agreementId: agreement.id,
@@ -191,6 +214,9 @@ const ListingRequestFinalDeliveryBuilder = ({
       deliveryLinks: splitDeliveryLinks(
         form.deliveryLinksText
       ),
+      ...(offSiteDelivery
+        ? { offSiteDelivery }
+        : {}),
     };
 
     try {
@@ -329,6 +355,20 @@ const ListingRequestFinalDeliveryBuilder = ({
             </p>
           )}
         </div>
+
+        <OffSiteDeliveryFields
+          disabled={isPending}
+          error={validationErrors.offSite}
+          idPrefix="final-delivery"
+          value={offSite}
+          onChange={(nextOffSite) => {
+            setOffSite(nextOffSite);
+            setValidationErrors((currentErrors) => ({
+              ...currentErrors,
+              offSite: undefined,
+            }));
+          }}
+        />
 
         <label className={classes.submitRow}>
           <input

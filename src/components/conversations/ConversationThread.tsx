@@ -4,7 +4,9 @@ import {
   conversationCloseReasonOptions,
   getBuyerImageUploadStatusLabel,
   getConversationCloseReasonLabel,
+  getConversationMessageSide,
   isConversationReadOnly,
+  startsNewConversationDay,
   type ConversationCloseReasonCode,
 } from "../../domain/conversations/conversations";
 import {
@@ -95,6 +97,10 @@ const classes = {
   messageRowOwn: "items-end",
   messageRowOther: "items-start",
   messageRowSystem: "items-center",
+  // One per day, above that day's first line. Stretches across the thread
+  // whichever side the line itself sits on.
+  daySeparator:
+    "mb-4 flex items-center gap-3 self-stretch text-[11px] font-semibold uppercase tracking-wider text-zinc-500 before:h-px before:flex-1 before:bg-zinc-200 after:h-px after:flex-1 after:bg-zinc-200",
   messageMeta: "mb-1 flex flex-wrap items-center gap-1.5 px-1 text-xs text-zinc-500",
   messageMetaOwn: "justify-end",
   messageName: "font-semibold text-zinc-800",
@@ -108,7 +114,7 @@ const classes = {
     "rounded-bl-md border border-zinc-200 bg-white text-zinc-800 shadow-sm",
   systemMessage:
     "max-w-[min(100%,32rem)] rounded-full border border-zinc-200 bg-white px-3.5 py-1 text-center text-xs text-zinc-600",
-  systemMeta: "mb-1 text-[11px] text-zinc-500",
+  systemMeta: "mb-1 px-1 text-[11px] text-zinc-500",
   readReceipt: "mt-1 px-1 text-[11px] font-medium text-zinc-500",
   messageActions: "mt-1 px-1",
   messageActionsHidden:
@@ -165,6 +171,32 @@ const dateText = (value: string) => {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
+    });
+};
+
+// Inside the thread a line shows only its time; the day is shown once, above
+// the first line of that day.
+const timeText = (value: string) => {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+};
+
+const dayText = (value: string) => {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
 };
 
@@ -842,15 +874,44 @@ const ConversationThread = ({
           <div className={classes.errorNotice}>Messages could not be loaded right now.</div>
         ) : messages.length > 0 ? (
           <div ref={threadRef} className={classes.thread}>
-            {messages.map((message) => {
+            {messages.map((message, index) => {
+              const daySeparator = startsNewConversationDay(
+                messages[index - 1]?.created_at ?? null,
+                message.created_at
+              ) && (
+                <div className={classes.daySeparator}>
+                  {dayText(message.created_at)}
+                </div>
+              );
+
               if (message.message_type === "system") {
+                // An automatic line sits on the side of whoever caused it,
+                // like their own messages; one nobody in the conversation
+                // caused stays in the middle.
+                const side = getConversationMessageSide({
+                  senderUserId: message.sender_user_id,
+                  viewerUserId: currentUserId,
+                  buyerUserId: conversation.buyer_user_id,
+                  creatorUserId: conversation.creator_user_id,
+                });
+
+                const sideClass =
+                  side === "own"
+                    ? classes.messageRowOwn
+                    : side === "other"
+                      ? classes.messageRowOther
+                      : classes.messageRowSystem;
+
                 return (
                   <div
                     key={message.id}
-                    className={`${classes.messageRow} ${classes.messageRowSystem}`}
+                    className={`${classes.messageRow} ${sideClass}`}
+                    data-side={side}
                   >
+                    {daySeparator}
+
                     <div className={classes.systemMeta}>
-                      System · {dateText(message.created_at)}
+                      System · {timeText(message.created_at)}
                     </div>
                     <div className={classes.systemMessage}>{message.body}</div>
                   </div>
@@ -866,6 +927,8 @@ const ConversationThread = ({
                   key={message.id}
                   className={`${classes.messageRow} ${isOwnMessage ? classes.messageRowOwn : classes.messageRowOther}`}
                 >
+                  {daySeparator}
+
                   <div
                     className={`${classes.messageMeta} ${isOwnMessage ? classes.messageMetaOwn : ""}`}
                   >
@@ -879,7 +942,7 @@ const ConversationThread = ({
 
                     <span aria-hidden="true">·</span>
 
-                    <span>{dateText(message.created_at)}</span>
+                    <span>{timeText(message.created_at)}</span>
                   </div>
 
                   <div

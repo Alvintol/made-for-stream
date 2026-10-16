@@ -18,6 +18,12 @@ surfaces:
   - src/lib/listings/milestonePreviewImage.ts
   - src/components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm.tsx
   - src/components/listingRequests/milestones/ListingRequestMilestoneSummary.tsx
+  - supabase/migrations/20261013_162_add_off_site_delivery_record.sql
+  - public.submit_listing_request_milestone_off_site
+  - public.create_listing_request_final_delivery_off_site
+  - public.log_off_site_delivery_message   # writes the chat line
+  - src/domain/listings/offSiteDelivery.ts
+  - src/components/listingRequests/OffSiteDeliveryFields.tsx
 unmatched_tier: 2
 ---
 
@@ -365,6 +371,70 @@ that is what the hold is for.
 
 ---
 
+## `MIL-007` — Work sent outside the site ("Provided off site")
+
+```yaml
+id: MIL-007
+tier: 2
+signals:
+  - source: db
+    match: "Choose at least one way the work was sent off site."
+    where: "public.clean_off_site_delivery_methods"
+  - source: db
+    match: "Choose how the work was sent off site from the list."
+    where: "public.clean_off_site_delivery_methods"
+  - source: db
+    match: "Say how the work was sent off site, in 2 to 80 characters."
+    where: "public.clean_off_site_delivery_methods"
+  - source: user_report
+    match: "the creator says they sent the work by email or Discord and the buyer says nothing arrived, or the reverse"
+auto_fix: none
+reason_not_automatable: "the three refusals are input corrections; a disagreement about whether work arrived is a dispute, and the site holds no copy of what was sent"
+escalate_with:
+  - "select id, status, off_site_delivery_methods, off_site_delivery_other, submitted_at from public.listing_request_milestone_submissions where listing_request_id = '<request>'"
+  - "select id, status, off_site_delivery_methods, off_site_delivery_other, submitted_at from public.listing_request_final_deliveries where listing_request_id = '<request>'"
+  - "the automatic chat lines containing 'outside Made for Stream' for the commission"
+```
+
+**What it is (migration `20261013_162`).** The milestone form and the final
+delivery form have a **Provided off site** box. A creator who also sent the
+work by email, Discord, text message or another way ticks it and chooses
+how. That is saved on the submission (`off_site_delivery_methods`,
+`off_site_delivery_other`) and written into the commission's chat as an
+automatic line: "The creator reports that the work for … was also sent
+outside Made for Stream, by: …". Both people see it in the chat and on the
+commission page. For a final delivery saved as a draft, the line is written
+when the draft is sent.
+
+**It is the creator's statement, not proof.** The site holds no copy of
+what was sent, cannot watermark it, and cannot tell whether it arrived.
+Confirming that the buyer received it is the creator's job. The form says
+so before the box is ticked.
+
+**Cause of the refusals.** The website checks the same three things first,
+so a refusal from the database means the page was bypassed or is out of
+date: no way chosen, a way that is not on the list, or "another way" with no
+description (2 to 80 characters).
+
+**What the user sees.** The reason, under the box. Nothing is submitted:
+the submission and the record are saved together or not at all.
+
+**Fix.** For a refusal, correct the form. The record cannot be changed
+after it is submitted (nobody can write to those columns directly); a
+creator who chose the wrong way says so in the chat. For a disagreement
+about whether the work arrived, treat it as any other delivery dispute
+([`refunds-and-disputes.md`](../payments/refunds-and-disputes.md)): the
+record shows what the creator said and when, nothing more.
+
+**If the box is ticked and the submission fails with "function … does not
+exist":** migration `20261013_162` was not applied. Submissions without
+the box are unaffected, but the commission page reads the two columns, so
+the migration must be applied before the website is merged.
+
+**Money impact.** None directly. Evidence for a dispute.
+
+---
+
 ## Known gaps
 
 - **A hold is not applied automatically when a payment dispute opens.** An
@@ -374,6 +444,11 @@ that is what the hold is for.
   only commission images that exist. Reference images, when built, must be
   added to `public.list_commission_image_paths()`. Listing images have
   their own rule: [`LST-006`](../listings/listings.md).
+- **Work sent off site is recorded only if the creator says so.** Nothing
+  detects a creator who sends work another way and leaves the box alone,
+  and nothing asks the buyer to confirm that it arrived (`MIL-007`).
+- **A record of off-site delivery cannot be corrected or withdrawn** once
+  submitted, even if the creator ticked the wrong way.
 - **Milestone preview images are watermarked in the creator's browser.** That
   protects the creator's original from the buyer, which is the point. It does
   not stop a creator who bypasses the page from uploading an unmarked image

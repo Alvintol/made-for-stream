@@ -6,6 +6,7 @@ import {
 import type {
   ListingRequestFinalDeliveryStatus,
 } from "../../domain/listings/listingRequestFinalDeliveries";
+import type { OffSiteDeliveryInput } from "../../domain/listings/offSiteDelivery";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -21,6 +22,8 @@ export type CreateListingRequestFinalDeliveryInput = {
   title: string;
   summary: string;
   deliveryLinks: string[];
+  // Set when the creator ticked "Provided off site".
+  offSiteDelivery?: OffSiteDeliveryInput | null;
 };
 
 export type CreatedListingRequestFinalDeliveryRow = {
@@ -54,8 +57,14 @@ export const useCreateListingRequestFinalDelivery =
           );
         }
 
+        const offSite = input.offSiteDelivery;
+
+        // Saved with the delivery in one step, by a function that only
+        // exists after migration 20261013_162.
         const { data, error } = await supabase.rpc(
-          "create_listing_request_final_delivery",
+          offSite
+            ? "create_listing_request_final_delivery_off_site"
+            : "create_listing_request_final_delivery",
           {
             p_agreement_id: input.agreementId,
             p_status: input.status,
@@ -64,6 +73,12 @@ export const useCreateListingRequestFinalDelivery =
             p_delivery_links: normalizeDeliveryLinks(
               input.deliveryLinks
             ),
+            ...(offSite
+              ? {
+                  p_off_site_methods: offSite.methods,
+                  p_off_site_other: offSite.other,
+                }
+              : {}),
           }
         );
 

@@ -5,6 +5,7 @@ import {
   getListingRequestFinalDeliveryStatusTone,
   isListingRequestFinalDeliveryBuyerVisible,
 } from "../../../domain/listings/listingRequestFinalDeliveries";
+import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
 
 type ListingRequestFinalDeliveryViewer =
@@ -289,6 +290,21 @@ const ListingRequestFinalDeliverySummary = ({
                         provided.
                       </div>
                     )}
+
+                    {finalDelivery.off_site_delivery_methods &&
+                      finalDelivery.off_site_delivery_methods
+                        .length > 0 && (
+                        <div className={classes.noLinks}>
+                          Also sent off site, as reported by
+                          the creator:{" "}
+                          {describeOffSiteDelivery(
+                            finalDelivery.off_site_delivery_methods,
+                            finalDelivery.off_site_delivery_other
+                          )}
+                          . Made for Stream has no copy of that
+                          work and cannot confirm it arrived.
+                        </div>
+                      )}
 
                     {finalDelivery.revision_request_reason && (
                       <div className={classes.revision}>

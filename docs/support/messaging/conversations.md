@@ -245,6 +245,28 @@ returns at most 500 matching messages. If the database query fails, the inbox
 still filters on titles, people and the latest message and shows no error.
 The conversation must also be in the folder being viewed: search in **All**.
 
+## How a thread is laid out (2026-10-13)
+
+Display only; nothing is stored differently and no failure path was added.
+
+- **Days.** The day appears once, as a line across the thread above that
+  day's first line, in the reader's own time zone. Messages and automatic
+  lines show only their time. Two people in different time zones can see a
+  late-night message under different days; the stored time is the same.
+- **Sides.** A person's own messages are on the right and the other
+  person's on the left. Automatic lines ("The creator sent a project change
+  order…", "The buyer approved milestone 1…") follow the same rule, by
+  whoever caused them: the `sender_user_id` on the row. "Stripe confirmed
+  payment…" lines sit on the buyer's side, because the buyer paid.
+- **An automatic line in the middle** was caused by neither the buyer nor
+  the creator (an admin, or no sender).
+- **Admins** see every line on the left, as they do messages.
+
+If someone reports that a line is "on the wrong side", check its
+`sender_user_id`: the page only reflects it.
+
+---
+
 ## Known gaps
 
 - **No documented export of a conversation** for dispute evidence. `REF-003`
