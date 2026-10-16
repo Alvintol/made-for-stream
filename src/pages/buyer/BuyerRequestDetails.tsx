@@ -770,6 +770,14 @@ const BuyerRequestDetails = () => {
         <RequestConversationThread
           requestId={request.id}
           buyerLabel="You"
+          buyerName={
+            myProfile
+              ? creatorText(
+                { ...myProfile, user_id: request.buyer_user_id },
+                request.buyer_user_id
+              )
+              : undefined
+          }
           creatorLabel={creatorLabel}
           viewer="buyer"
           requestReadOnly={requestReadOnly}

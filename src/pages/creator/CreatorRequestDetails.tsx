@@ -1031,6 +1031,14 @@ const CreatorRequestDetails = () => {
           requestId={request.id}
           buyerLabel={buyerLabel}
           creatorLabel="You"
+          creatorName={
+            myProfile
+              ? buyerText(
+                { ...myProfile, user_id: request.creator_user_id },
+                request.creator_user_id
+              )
+              : undefined
+          }
           viewer="creator"
           requestReadOnly={requestReadOnly}
           requestReadOnlyMessage={requestReadOnlyMessage}

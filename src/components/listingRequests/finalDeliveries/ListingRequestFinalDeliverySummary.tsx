@@ -6,6 +6,7 @@ import {
   isListingRequestFinalDeliveryBuyerVisible,
 } from "../../../domain/listings/listingRequestFinalDeliveries";
 import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
+import DeliveryFileDownloads from "./DeliveryFileDownloads";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
 
 type ListingRequestFinalDeliveryViewer =
@@ -288,6 +289,24 @@ const ListingRequestFinalDeliverySummary = ({
                       <div className={classes.noLinks}>
                         No external delivery links were
                         provided.
+                      </div>
+                    )}
+
+                    {finalDelivery.delivery_file_paths &&
+                      finalDelivery.delivery_file_paths.length >
+                        0 && (
+                        <DeliveryFileDownloads
+                          paths={
+                            finalDelivery.delivery_file_paths
+                          }
+                        />
+                      )}
+
+                    {finalDelivery.delivery_files_deleted_at && (
+                      <div className={classes.noLinks}>
+                        The uploaded files were deleted 180
+                        days after the commission closed, as
+                        our Privacy Policy describes.
                       </div>
                     )}
 

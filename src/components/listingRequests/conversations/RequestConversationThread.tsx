@@ -5,6 +5,9 @@ type RequestConversationThreadProps = {
   requestId: string;
   buyerLabel: string;
   creatorLabel: string;
+  // For automatic lines, when a label above is "You".
+  buyerName?: string;
+  creatorName?: string;
   viewer: "buyer" | "creator" | "admin";
   requestReadOnly?: boolean;
   requestReadOnlyMessage?: string;
@@ -22,6 +25,8 @@ const RequestConversationThread = ({
   requestId,
   buyerLabel,
   creatorLabel,
+  buyerName,
+  creatorName,
   viewer,
   requestReadOnly = false,
   requestReadOnlyMessage = "This commission is read-only.",
@@ -57,6 +62,8 @@ const RequestConversationThread = ({
       viewer={viewer}
       buyerLabel={buyerLabel}
       creatorLabel={creatorLabel}
+      buyerName={buyerName}
+      creatorName={creatorName}
       readOnlyNotice={requestReadOnly ? requestReadOnlyMessage : null}
       emptyText="No follow-up messages yet."
       composerPlaceholder="Write a follow-up message…"

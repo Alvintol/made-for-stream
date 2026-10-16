@@ -117,8 +117,9 @@ describe("<ConversationThread />", () => {
   });
 
   it("puts an automatic line on the side of whoever caused it", () => {
-    const sent = "The creator sent a project change order for buyer review: discount";
-    const declined = "The buyer declined the project change order: discount";
+    // Shown with the people named, not as stored.
+    const sent = "meowington sent a project change order for ImAllBeans to review: discount";
+    const declined = "ImAllBeans declined the project change order: discount";
 
     const { unmount } = renderThread("buyer");
 

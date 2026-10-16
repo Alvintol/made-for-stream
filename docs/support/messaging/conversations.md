@@ -261,6 +261,13 @@ Display only; nothing is stored differently and no failure path was added.
 - **An automatic line in the middle** was caused by neither the buyer nor
   the creator (an admin, or no sender).
 - **Admins** see every line on the left, as they do messages.
+- **Names (2026-10-16).** Automatic lines are stored as "The creator …",
+  "… by the buyer", "… for buyer review". On screen the wording before the
+  first ": " names the people instead ("@meowington sent a project change
+  order for @ImAllBeans to review: discount"); what follows the colon is a
+  title or reason someone typed and is shown as written. The names are
+  handles, or display names for someone without a handle. The inbox
+  preview still shows the stored wording.
 
 If someone reports that a line is "on the wrong side", check its
 `sender_user_id`: the page only reflects it.

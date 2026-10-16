@@ -1,15 +1,14 @@
-export const privacyVersion = "2026-10-12-2";
+export const privacyVersion = "2026-10-16";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-10-12-2",
+  version: "2026-10-16",
   items: [
-    "The preview image and animated preview of a listing that is no longer offered are deleted 180 days after it stops being offered. The listing returns to a draft and needs a new image before it can be offered again.",
-    "If you ask to be shown what is new on the site after an update, we record that choice and the last update you were shown. Site updates are never sent by email.",
-    "Earlier the same day (version 2026-10-12): images uploaded to a commission are kept while it is open and for 180 days after it closes; and we record failed actions and page-load errors, for up to 90 days, to fix faults and notice misuse.",
+    "Files a creator uploads with a final delivery are stored privately. Only the creator, the buyer (once nothing is owed for the final release) and Made for Stream's administrators can open them. They are kept while the commission is open and for 180 days after it closes, then deleted, in the same way as commission images.",
+    "Earlier in October (versions 2026-10-12 and 2026-10-12-2): images uploaded to a commission, and the images of a listing that is no longer offered, are deleted 180 days after the commission closes or the listing stops being offered; we record failed actions and page-load errors for up to 90 days to fix faults and notice misuse; and if you ask to be shown what is new on the site, we record that choice.",
   ],
 } as const;
 
@@ -28,7 +27,7 @@ export const privacySections = [
       "Information: Private account details; Examples and sources: Your legal first and last name, date of birth, street address, city, region, postal code and country, whether the account belongs to an individual or to a business or other legal entity and, if you choose to give them, the legal name, registration number and tax number of that business. You enter these yourself in your settings before you can create a listing, request a commission, send a project agreement or pay. They are shown only to you, in your settings, and are never displayed on your profile, on a listing or to another user",
       "Information: Profile and linked accounts; Examples and sources: Handle, display name, biography, images, country, time zone, website and authorised Twitch or YouTube connection details",
       "Information: Creator applications; Examples and sources: Samples or sample links, application answers, eligibility acknowledgements, review status and relevant moderation history",
-      "Information: Projects and communications; Examples and sources: Listings, requests, agreement versions, messages, change orders, progress, deliveries, images that you or the other party upload to a commission, such as reference images and milestone previews, complaints and support evidence",
+      "Information: Projects and communications; Examples and sources: Listings, requests, agreement versions, messages, change orders, progress, deliveries, images and files that you or the other party upload to a commission, such as reference images, milestone previews and the files of a final delivery, complaints and support evidence",
       "Information: Payments; Examples and sources: Transaction and connected-account IDs, amounts, currency, fee, contribution and tax breakdowns, payment status, refund and dispute records, and limited payment-method information made available by Stripe",
       "Information: Tax location evidence; Examples and sources: The country, region and postal code in your private account details, which are your billing location, and, where available, the country associated with your IP address and the country of the card used, recorded to work out where tax applies. From the IP address and the card only the country is kept, never the IP address or card details",
       "Information: Technical and security; Examples and sources: IP address, device and browser information, access and error logs, security events and relevant session identifiers. When something you try on the site does not go through, or a page cannot load what it needs, the site makes a record of it: your account ID if you are signed in, the page you were on with any record number removed, the error code, and the message you were shown",
@@ -87,7 +86,7 @@ export const privacySections = [
       "Record: Active account and profile; Ordinary retention: While the account is active; remove from active systems within 30 days after a verified closure request unless an identified exception applies",
       "Record: Private account details; Ordinary retention: While the account is active. After closure they are kept only so far as they form part of the financial, tax and dispute records described below, for the period stated there, and are otherwise deleted with the account",
       "Record: Private project messages and delivered files; Ordinary retention: Up to 24 months after project closure; preserve only necessary excerpts longer for financial or dispute evidence",
-      "Record: Images uploaded to a commission, such as reference images and milestone previews; Ordinary retention: While the commission is open. After it is completed, cancelled, declined or archived they are kept for 180 days, which covers the period in which a card payment can ordinarily be disputed, and are then deleted by an automatic daily check. They are kept longer only while an open payment dispute or a documented legal hold needs them. Deletion removes the stored image; the written record of the milestone remains under the categories below",
+      "Record: Images and files uploaded to a commission, such as reference images, milestone previews and the files of a final delivery; Ordinary retention: While the commission is open. After it is completed, cancelled, declined or archived they are kept for 180 days, which covers the period in which a card payment can ordinarily be disputed, and are then deleted by an automatic daily check. They are kept longer only while an open payment dispute or a documented legal hold needs them. Deletion removes the stored image or file; the written record of the milestone or delivery remains under the categories below",
       "Record: The preview image and animated preview of a listing; Ordinary retention: While the listing is offered. After it stops being offered they are kept for 180 days and are then deleted by the same automatic daily check; the listing returns to a draft and needs a new image before it can be offered again",
       "Record: Financial records, tax location evidence, accepted project terms and payment-dispute evidence; Ordinary retention: Seven years after the relevant transaction or final dispute resolution, whichever is later",
       "Record: Unsuccessful or withdrawn creator application samples; Ordinary retention: Up to 12 months after the final decision; retain a minimal decision record only as needed under another applicable category",

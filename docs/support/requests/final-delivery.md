@@ -8,6 +8,15 @@ surfaces:
   - supabase/migrations/20260619_108_enforce_final_delivery_creation_readiness.sql
   - supabase/migrations/20260611_093_complete_request_after_final_delivery_approval.sql
   - supabase/migrations/20261013_162_add_off_site_delivery_record.sql
+  - supabase/migrations/20261016_163_add_final_delivery_files.sql
+  - storage bucket delivery-files (private)
+  - public.create_listing_request_final_delivery_v2
+  - public.can_download_delivery_file
+  - public.list_commission_delivery_file_paths
+  - src/lib/zip.ts
+  - src/lib/listings/deliveryFiles.ts
+  - src/components/listingRequests/finalDeliveries/DeliveryFilesField.tsx
+  - src/components/listingRequests/finalDeliveries/DeliveryFileDownloads.tsx
   - public.create_listing_request_final_delivery_off_site
   - src/components/listingRequests/finalDeliveries/ListingRequestFinalDeliveryBuilder.tsx
 unmatched_tier: 2
@@ -37,6 +46,7 @@ for, and there is no refund or reversal path to undo it.
 | "I can't submit a new delivery" | [`FIN-002`](#fin-002--previous-delivery-not-resolved) |
 | "Approved but the project isn't complete" | [`FIN-004`](#fin-004--approved-delivery-did-not-complete-the-request) |
 | "My delivery was rejected on content" | [`FIN-003`](#fin-003--delivery-content-rejected) |
+| "My files won't upload" / "I can't download the files" | [`FIN-005`](#fin-005--delivery-files-upload-or-download-problems) |
 | "I ticked Provided off site and it would not submit" / "They say they sent it by email and I never got it" | [`MIL-007`](milestones.md#mil-007--work-sent-outside-the-site-provided-off-site) (the same record is used for milestones and final deliveries) |
 
 ---
@@ -194,6 +204,89 @@ complete.
 
 ---
 
+## `FIN-005` — Delivery files: upload or download problems
+
+```yaml
+id: FIN-005
+tier: 2
+signals:
+  - source: db
+    match: "A final delivery can contain no more than 20 files."
+    where: "public.create_listing_request_final_delivery_v2"
+  - source: db
+    match: "A delivery file was not uploaded for this commission. Choose the file again."
+    where: "public.create_listing_request_final_delivery_v2"
+  - source: db
+    match: "The files in one final delivery can add up to 5 GB at most."
+    where: "public.create_listing_request_final_delivery_v2"
+  - source: storage
+    match: "new row violates row-level security policy"
+    where: "upload to the delivery-files bucket (policy \"delivery files creator upload\")"
+  - source: storage
+    match: "The object exceeded the maximum allowed size"
+    where: "upload to the delivery-files bucket; Supabase Storage's own message (not seen in a real run yet)"
+  - source: ui
+    match: "This file cannot be downloaded yet. The buyer can download the files once nothing is owed for the final release."
+    where: "DeliveryFileDownloads, when the download link is refused"
+  - source: ui
+    match: "Those files could not be zipped here. Zip them on your computer and add the .zip."
+    where: "DeliveryFilesField, when zipping in the browser fails"
+auto_fix: none
+reason_not_automatable: "input corrections, a dashboard setting, or a payment the buyer still has to make"
+escalate_with:
+  - "select id, status, delivery_file_paths, delivery_files_deleted_at from public.listing_request_final_deliveries where listing_request_id = '<request>'"
+  - "select item.title, item.payment_timing, item.status, item.amount from public.listing_request_payment_schedule_items item join public.listing_request_agreements a on a.id = item.agreement_id where a.listing_request_id = '<request>'"
+  - "select name, metadata->>'size' as bytes, created_at from storage.objects where bucket_id = 'delivery-files' and name like '<agreement>/%'"
+```
+
+**What it is (migration `20261016_163`).** The final delivery form has a
+**Files** section. A creator can add files, or choose a folder, which the
+page zips in the browser before uploading (one .zip is recommended on the
+form). Files go to the private `delivery-files` bucket, in a folder named
+after the agreement, and are listed on the delivery
+(`delivery_file_paths`). Up to 20 files, 1 GB each, 5 GB in all.
+
+**Who can download:** the creator, an administrator, and the buyer once the
+delivery is submitted and no payment due before the final release is still
+`pending` or `payment_required` (`public.can_download_delivery_file`).
+Paying the balance unlocks the files. Downloads are one-hour links that
+always save the file rather than open it in the browser.
+
+**Cause, by signal.**
+
+- *No more than 20 files / 5 GB:* too many or too large. Zip them, or send
+  the largest as a link.
+- *"was not uploaded for this commission":* the page was bypassed or out of
+  date, or an upload went to another agreement's folder.
+- *Row-level security on upload:* the person is not the creator, the
+  agreement is not `buyer_accepted`, or the commission is no longer
+  `accepted` (completed, cancelled).
+- *"exceeded the maximum allowed size":* the file is over 1 GB, **or the
+  project-wide upload limit in the Supabase dashboard (Storage → Settings)
+  is lower than the bucket's 1 GB**. The second is a setting to raise, not
+  a user error.
+- *"cannot be downloaded yet":* for the buyer, a final balance is still
+  owed; it unlocks when the payment is confirmed. For anyone else, the
+  file is not on a delivery they can see.
+- *Zipping failed:* the browser ran out of memory or does not support
+  CompressionStream. Zipping on the computer works.
+
+**Abandoned uploads.** Files are uploaded one by one before the delivery is
+saved. If the save then fails, the uploaded files stay in the agreement's
+folder, visible only to the creator, and are deleted with everything else
+180 days after the commission closes.
+
+**Retention.** The files follow the commission-image rule
+([`MIL-006`](milestones.md#mil-006--commission-images-deleted-after-the-retention-period)):
+kept while the commission is open and for 180 days after it closes, kept
+longer under a dispute hold, then deleted by the hourly ops job, which
+empties `delivery_file_paths` and sets `delivery_files_deleted_at`.
+
+**Money impact.** None directly; a locked download is the balance working
+as intended.
+
+---
+
 ## Known gaps
 
 - **No reversal after approval.** Approval completes the request and there is no
@@ -205,9 +298,16 @@ complete.
   administrative closure. See [`request-lifecycle.md`](request-lifecycle.md)
   `REQ-003`. Not automatic: an admin has to act, and closure cancels the
   unfinished delivery rather than treating it as approved.
-- **There is no file upload for finished work.** Delivery is by links to
-  wherever the creator keeps the files, plus the optional record of work
-  sent off site (`MIL-007`). The site never holds the finished files.
+- **Delivery files are not scanned for viruses**, and any file type is
+  accepted. They are always downloaded, never opened in the browser.
+- **Uploads are not resumable.** A very large file on a poor connection may
+  fail and has to be chosen again (`FIN-005`).
+- **Zipping in the browser holds the whole folder in memory**; very large
+  folders are better zipped on the computer.
+- **The rehearsal buyer is also an administrator**, so on the dev site that
+  account can always download; the lock was checked in a database dry run
+  with the admin role removed.
+- **Milestones have no file upload**, only watermarked preview images.
 - **Delivery links are not verified.** Nothing checks that a link resolves, so a
   dead or revoked link is indistinguishable from a good one at approval time.
 - **No alerting for `FIN-004`.**

@@ -24,6 +24,9 @@ export type ListingRequestFinalDeliveryRow = {
   // (20261013_162).
   off_site_delivery_methods?: string[];
   off_site_delivery_other?: string | null;
+  // Uploaded files and when they were deleted (20261016_163).
+  delivery_file_paths?: string[];
+  delivery_files_deleted_at?: string | null;
   agreement_snapshot: ListingRequestFinalDeliverySnapshot;
   revision_request_reason: string | null;
   submitted_at: string | null;
@@ -71,6 +74,8 @@ export const useListingRequestFinalDeliveries = (
             delivery_links,
             off_site_delivery_methods,
             off_site_delivery_other,
+            delivery_file_paths,
+            delivery_files_deleted_at,
             agreement_snapshot,
             revision_request_reason,
             submitted_at,

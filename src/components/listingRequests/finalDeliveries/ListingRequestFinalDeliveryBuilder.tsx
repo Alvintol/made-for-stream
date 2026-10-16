@@ -13,6 +13,7 @@ import {
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import type { CreateListingRequestFinalDeliveryInput } from "../../../hooks/creatorRequests/useCreateListingRequestFinalDelivery";
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
+import DeliveryFilesField from "./DeliveryFilesField";
 
 type FinalDeliveryAgreement = Pick<
   ListingRequestAgreementRow,
@@ -156,6 +157,12 @@ const ListingRequestFinalDeliveryBuilder = ({
       emptyOffSiteDelivery
     );
 
+  const [deliveryFiles, setDeliveryFiles] =
+    useState<File[]>([]);
+
+  const [uploadStatus, setUploadStatus] =
+    useState<string | null>(null);
+
   const agreementCanDeliver =
     agreement?.status === "buyer_accepted" &&
     (
@@ -217,12 +224,20 @@ const ListingRequestFinalDeliveryBuilder = ({
       ...(offSiteDelivery
         ? { offSiteDelivery }
         : {}),
+      ...(deliveryFiles.length > 0
+        ? {
+            deliveryFiles,
+            onUploadProgress: setUploadStatus,
+          }
+        : {}),
     };
 
     try {
       await onCreateFinalDelivery(input);
     } catch {
       // Mutation errors are surfaced through the error prop.
+    } finally {
+      setUploadStatus(null);
     }
   };
 
@@ -356,6 +371,12 @@ const ListingRequestFinalDeliveryBuilder = ({
           )}
         </div>
 
+        <DeliveryFilesField
+          disabled={isPending}
+          files={deliveryFiles}
+          onChange={setDeliveryFiles}
+        />
+
         <OffSiteDeliveryFields
           disabled={isPending}
           error={validationErrors.offSite}
@@ -396,7 +417,7 @@ const ListingRequestFinalDeliveryBuilder = ({
             type="submit"
           >
             {isPending
-              ? "Saving final delivery…"
+              ? uploadStatus ?? "Saving final delivery…"
               : form.submitNow
                 ? "Create and submit final delivery"
                 : "Save final delivery draft"}
