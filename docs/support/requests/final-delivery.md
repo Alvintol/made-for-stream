@@ -11,6 +11,10 @@ surfaces:
   - supabase/migrations/20261016_163_add_final_delivery_files.sql
   - supabase/migrations/20261016_164_raise_and_watch_storage_limits.sql
   - public.record_delivery_file_download
+  - supabase/migrations/20261016_165_restrict_delivery_file_types.sql
+  - public.delivery_file_extensions
+  - public.is_allowed_delivery_file_name
+  - src/domain/listings/deliveryFileTypes.ts
   - storage bucket delivery-files (private)
   - public.create_listing_request_final_delivery_v2
   - public.can_download_delivery_file
@@ -231,6 +235,15 @@ signals:
     match: "This file cannot be downloaded yet. The buyer can download the files once nothing is owed for the final release."
     where: "public.record_delivery_file_download, shown by DeliveryFileDownloads"
   - source: ui
+    match: "/^For safety, only these file types can be uploaded: .+ Not allowed: .+\\.$/"
+    where: "DeliveryFilesField, for a file, a file in a chosen folder, or a file inside a zip that is not on the list"
+  - source: ui
+    match: "/For safety, we look inside every zip before it is uploaded, and .+ could not be opened\\./"
+    where: "DeliveryFilesField, for a password-protected, damaged or zip64 archive"
+  - source: db
+    match: "violates check constraint \"listing_request_final_deliveries_file_types_check\""
+    where: "a delivery listing a file whose type is not allowed (only if the page was bypassed)"
+  - source: ui
     match: "Those files could not be zipped here. Zip them on your computer and add the .zip."
     where: "DeliveryFilesField, when zipping in the browser fails"
 auto_fix: none
@@ -276,6 +289,19 @@ admin Storage page can count them.
   file is not on a delivery they can see.
 - *Zipping failed:* the browser ran out of memory or does not support
   CompressionStream. Zipping on the computer works.
+- *"For safety, only these file types can be uploaded":* the file, or
+  something inside the folder or zip, is not on the list (migration
+  `20261016_165`): images, artwork source files (PSD, CLIP, Procreate and
+  the like), video, audio, 3D and Live2D models, fonts, PDF, text and zip.
+  Program and script files are refused on purpose until uploads are
+  scanned for viruses. The message names what was refused. Files the
+  operating system adds (`.DS_Store`, `__MACOSX`, `Thumbs.db`) are left out
+  of a folder and ignored inside a zip. The list is
+  `public.delivery_file_extensions()` and
+  `src/domain/listings/deliveryFileTypes.ts`; change both together (a test
+  compares them), in a new migration.
+- *"could not be opened" for a zip:* it has a password, is damaged, or is a
+  zip64 archive. Zipping it again without a password fixes it.
 
 **Abandoned uploads.** Files are uploaded one by one before the delivery is
 saved. If the save then fails, the uploaded files stay in the agreement's
@@ -304,8 +330,14 @@ as intended.
   administrative closure. See [`request-lifecycle.md`](request-lifecycle.md)
   `REQ-003`. Not automatic: an admin has to act, and closure cancels the
   unfinished delivery rather than treating it as approved.
-- **Delivery files are not scanned for viruses**, and any file type is
-  accepted. They are always downloaded, never opened in the browser.
+- **Delivery files are not scanned for viruses.** Only listed file types
+  are accepted, judged by their names: a program renamed to `.png` gets
+  through, and the database sees only a zip's own name (the website checks
+  inside). Scanning is planned, as a paid service. Files are always
+  downloaded, never opened in the browser.
+- **Unity packages (`.unitypackage`) are refused**, though VRChat avatars
+  often ship that way, because they can carry scripts. Revisit with
+  scanning.
 - **Uploads are not resumable.** A very large file on a poor connection may
   fail and has to be chosen again (`FIN-005`).
 - **Zipping in the browser holds the whole folder in memory**; very large

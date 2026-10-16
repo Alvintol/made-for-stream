@@ -1,6 +1,14 @@
 import { useState } from "react";
 
 import UsageMeter from "../../ui/UsageMeter";
+import {
+  deliveryFileExtensions,
+  deliveryFileTypeGroups,
+  deliveryFileTypesMessage,
+  isAllowedDeliveryFileName,
+  isSystemJunkFile,
+} from "../../../domain/listings/deliveryFileTypes";
+import { listZipEntryNames } from "../../../lib/zip";
 import type { CommissionStorageUsage } from "../../../hooks/creatorRequests/useCommissionStorageUsage";
 import {
   DELIVERY_FILES_MAX_COUNT,
@@ -55,6 +63,55 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
     const problem = validateDeliveryFiles(next, remainingBytes);
     setError(problem);
     if (!problem) onChange(next);
+  };
+
+  // Loose files are checked by name; a zip by the names inside it. Anything
+  // not on the list stops the whole choice, and the message names it.
+  const addFiles = async (chosen: File[]) => {
+    const refused = chosen
+      .filter((file) => !isAllowedDeliveryFileName(file.name))
+      .map((file) => file.name);
+
+    for (const zip of chosen.filter((file) => isZipFile(file))) {
+      const listing = await listZipEntryNames(zip).catch(() => null);
+
+      if (!listing || listing.encrypted) {
+        setError(
+          `For safety, we look inside every zip before it is uploaded, and ${zip.name} could not be opened. Zip it again without a password and add it again.`
+        );
+        return;
+      }
+
+      refused.push(
+        ...listing.names
+          .filter((name) => !name.endsWith("/") && !isSystemJunkFile(name))
+          .filter((name) => !isAllowedDeliveryFileName(name))
+          .map((name) => `${zip.name}: ${name}`)
+      );
+    }
+
+    if (refused.length > 0) {
+      setError(deliveryFileTypesMessage(refused));
+      return;
+    }
+
+    apply([...files, ...chosen]);
+  };
+
+  const zipFolder = (chosen: File[]) => {
+    const kept = chosen.filter(
+      (file) => !isSystemJunkFile(file.webkitRelativePath || file.name)
+    );
+    const refused = kept
+      .filter((file) => !isAllowedDeliveryFileName(file.name))
+      .map((file) => file.webkitRelativePath || file.name);
+
+    if (refused.length > 0) {
+      setError(deliveryFileTypesMessage(refused));
+      return;
+    }
+
+    if (kept.length > 0) void zipInto(kept, folderZipName(chosen), files);
   };
 
   const zipInto = async (chosen: File[], zipName: string, keep: File[]) => {
@@ -113,7 +170,7 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
             onChange={(event) => {
               const chosen = Array.from(event.currentTarget.files ?? []);
               event.currentTarget.value = "";
-              if (chosen.length > 0) void zipInto(chosen, folderZipName(chosen), files);
+              if (chosen.length > 0) zipFolder(chosen);
             }}
           />
         </label>
@@ -121,6 +178,7 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
         <label className={classes.inputLabel}>
           <span>Add files</span>
           <input
+            accept={deliveryFileExtensions.map((extension) => `.${extension}`).join(",")}
             className={classes.input}
             disabled={busy}
             multiple
@@ -128,7 +186,7 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
             onChange={(event) => {
               const chosen = Array.from(event.currentTarget.files ?? []);
               event.currentTarget.value = "";
-              if (chosen.length > 0) apply([...files, ...chosen]);
+              if (chosen.length > 0) void addFiles(chosen);
             }}
           />
         </label>
@@ -137,7 +195,10 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
       <p className={classes.help}>
         Optional. Up to {DELIVERY_FILES_MAX_COUNT} files, 2 GB each and 10 GB in all, within
         the commission&rsquo;s storage; anything bigger can go in a link. A folder over 2 GB
-        is best zipped on your computer. Files are private: the buyer can download them once nothing
+        is best zipped on your computer. For safety, only these file types can be uploaded,
+        inside a zip too:{" "}
+        {deliveryFileTypeGroups.map((group) => group.label).join(", ")}. Program and
+        script files cannot. Files are private: the buyer can download them once nothing
         is owed for the final release. They are deleted 180 days after the commission
         closes, so the buyer should keep their own copy.
       </p>

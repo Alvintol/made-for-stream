@@ -516,6 +516,13 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `/admin/storage` shows stored and downloaded against the included
       amounts, the buckets, the largest commissions and the plans (`STO-001`,
       `STO-002`, `OPS-008`).
+- [ ] *(Needs migration `20261016_165` before the website is merged.)*
+      **Safe file types.** On the final delivery form, add a `.exe` or a
+      `.bat`: refused with "For safety, only these file types can be
+      uploaded: … Not allowed: setup.exe." A zip holding one is refused
+      naming the file inside; a password-protected zip is refused as "could
+      not be opened". A folder with a `.DS_Store` zips without it. The file
+      picker offers only the allowed types (`FIN-005`).
 - [ ] **Names in the chat (website only).** Automatic lines read
       "@meowington sent a project change order for @ImAllBeans to review:
       …" for both sides, not "The creator …".
