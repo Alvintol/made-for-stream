@@ -46,6 +46,10 @@ vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({
 }));
 
 // The creator's handle goes into the watermark on milestone preview images.
+vi.mock("../../hooks/creatorRequests/useCommissionStorageUsage", () => ({
+  useCommissionStorageUsage: () => ({ data: null }),
+}));
+
 vi.mock("../../hooks/profile/useMyProfile", () => ({
   useMyProfile: () => ({ data: { handle: "meowington" } }),
 }));

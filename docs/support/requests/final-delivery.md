@@ -9,6 +9,8 @@ surfaces:
   - supabase/migrations/20260611_093_complete_request_after_final_delivery_approval.sql
   - supabase/migrations/20261013_162_add_off_site_delivery_record.sql
   - supabase/migrations/20261016_163_add_final_delivery_files.sql
+  - supabase/migrations/20261016_164_raise_and_watch_storage_limits.sql
+  - public.record_delivery_file_download
   - storage bucket delivery-files (private)
   - public.create_listing_request_final_delivery_v2
   - public.can_download_delivery_file
@@ -211,13 +213,13 @@ id: FIN-005
 tier: 2
 signals:
   - source: db
-    match: "A final delivery can contain no more than 20 files."
+    match: "A final delivery can contain no more than 50 files."
     where: "public.create_listing_request_final_delivery_v2"
   - source: db
     match: "A delivery file was not uploaded for this commission. Choose the file again."
     where: "public.create_listing_request_final_delivery_v2"
   - source: db
-    match: "The files in one final delivery can add up to 5 GB at most."
+    match: "The files in one final delivery can add up to 10 GB at most."
     where: "public.create_listing_request_final_delivery_v2"
   - source: storage
     match: "new row violates row-level security policy"
@@ -227,7 +229,7 @@ signals:
     where: "upload to the delivery-files bucket; Supabase Storage's own message (not seen in a real run yet)"
   - source: ui
     match: "This file cannot be downloaded yet. The buyer can download the files once nothing is owed for the final release."
-    where: "DeliveryFileDownloads, when the download link is refused"
+    where: "public.record_delivery_file_download, shown by DeliveryFileDownloads"
   - source: ui
     match: "Those files could not be zipped here. Zip them on your computer and add the .zip."
     where: "DeliveryFilesField, when zipping in the browser fails"
@@ -244,26 +246,30 @@ escalate_with:
 page zips in the browser before uploading (one .zip is recommended on the
 form). Files go to the private `delivery-files` bucket, in a folder named
 after the agreement, and are listed on the delivery
-(`delivery_file_paths`). Up to 20 files, 1 GB each, 5 GB in all.
+(`delivery_file_paths`). Up to 50 files, 2 GB each, 10 GB in all, within
+the commission's storage allowance (20 GB by default; [`STO-001`](../operations/storage.md#sto-001--commission-storage-full)).
+A folder over 2 GB is not zipped in the browser.
 
 **Who can download:** the creator, an administrator, and the buyer once the
 delivery is submitted and no payment due before the final release is still
 `pending` or `payment_required` (`public.can_download_delivery_file`).
 Paying the balance unlocks the files. Downloads are one-hour links that
-always save the file rather than open it in the browser.
+always save the file rather than open it in the browser. Each download is
+recorded first (`delivery_file_downloads`), with the same rule, so the
+admin Storage page can count them.
 
 **Cause, by signal.**
 
-- *No more than 20 files / 5 GB:* too many or too large. Zip them, or send
-  the largest as a link.
+- *No more than 50 files / 10 GB:* too many or too large. Zip them, or send
+  the largest as a link. A full commission is `STO-001`.
 - *"was not uploaded for this commission":* the page was bypassed or out of
   date, or an upload went to another agreement's folder.
 - *Row-level security on upload:* the person is not the creator, the
   agreement is not `buyer_accepted`, or the commission is no longer
   `accepted` (completed, cancelled).
-- *"exceeded the maximum allowed size":* the file is over 1 GB, **or the
+- *"exceeded the maximum allowed size":* the file is over 2 GB, **or the
   project-wide upload limit in the Supabase dashboard (Storage → Settings)
-  is lower than the bucket's 1 GB**. The second is a setting to raise, not
+  is lower than the bucket's 2 GB**. The second is a setting to raise, not
   a user error.
 - *"cannot be downloaded yet":* for the buyer, a final balance is still
   owed; it unlocks when the payment is confirmed. For anyone else, the

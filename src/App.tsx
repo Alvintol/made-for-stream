@@ -29,6 +29,7 @@ import AdminModerationReports from "./pages/admin/AdminModerationReports";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
 import AdminRequestDetails from "./pages/admin/AdminRequestDetails";
 import AdminRequests from "./pages/admin/AdminRequests";
+import AdminStorage from "./pages/admin/AdminStorage";
 import BuyerRequestDetails from "./pages/buyer/BuyerRequestDetails";
 import BuyerRequests from "./pages/buyer/BuyerRequests";
 import ApplyCreator from "./pages/creator/ApplyCreator";
@@ -209,6 +210,10 @@ const App = () => {
             <Route
               path="/admin/payment-issues"
               element={<AdminPaymentIssues />}
+            />
+            <Route
+              path="/admin/storage"
+              element={<AdminStorage />}
             />
           </Route>
 

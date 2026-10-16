@@ -505,6 +505,17 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       saves the file under its own name. Signed in as the rehearsal buyer
       (an admin) the download always works; the lock while a balance is
       owed was checked by a dry run (`FIN-005`).
+- [ ] *(Needs migration `20261016_164`, an API deploy, then the website;
+      and the project-wide upload limit in Supabase at 2 GB.)* **Storage
+      limits and the bar.** The final delivery form shows "Commission
+      storage … of 20.0 GB" with the files being added as a lighter part of
+      the bar. Limits: 2 GB a file, 50 files and 10 GB a delivery, a folder
+      over 2 GB is refused for zipping with the steps to zip it on the
+      computer. After a delivery, downloading a file adds a row to
+      `delivery_file_downloads`. The admin dashboard has a **Storage** card;
+      `/admin/storage` shows stored and downloaded against the included
+      amounts, the buckets, the largest commissions and the plans (`STO-001`,
+      `STO-002`, `OPS-008`).
 - [ ] **Names in the chat (website only).** Automatic lines read
       "@meowington sent a project change order for @ImAllBeans to review:
       …" for both sides, not "The creator …".

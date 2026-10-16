@@ -19,9 +19,9 @@ const migration = readRepoFile(
   "supabase/migrations/20260924_139_add_connect_account_state_and_ops_alerts.sql",
 );
 
-// list_ops_alerts() was last redefined here (two failure-log branches added).
+// list_ops_alerts() was last redefined here (the storage mark added).
 const latestListOpsAlerts = readRepoFile(
-  "supabase/migrations/20261012_157_add_app_failure_log_and_ops_summary.sql",
+  "supabase/migrations/20261016_164_raise_and_watch_storage_limits.sql",
 );
 
 const listOpsAlertsBody = latestListOpsAlerts.slice(
@@ -308,6 +308,7 @@ describe("renderOpsAlertDigest", () => {
       payment_account_mirror_stale: { stripe_account_id: "acct_2" },
       app_failure_summary: { day: "2026-10-11", source: "action", route: "/creator/requests/:id", code: "P0001", message: "Each payment in a project must be at least 10.00 CAD, and this one is 5.00 CAD.", occurrences: 7, accounts: 2, signed_out: 0 },
       app_failure_burst: { user_id: "user-9", occurrences: 40, distinct_failures: 12, most_common: "This change order is not available for your response." },
+      storage_usage_high: { kind: "stored", threshold_bytes: 85899345920, used_bytes: 90194313216, included_bytes: 107374182400 },
     };
 
     const rows = Object.entries(OPS_ALERTS).map(([alertId, alert]) => ({
@@ -321,7 +322,8 @@ describe("renderOpsAlertDigest", () => {
 
     const { subject, text, html } = render(rows);
 
-    expect(subject).toBe("[Made for Stream ops] 11 open alerts");
+    expect(subject).toBe("[Made for Stream ops] 12 open alerts");
+    expect(text).toContain("Stored files reached 84.0 GB (mark 80.0 GB; the plan includes 100.0 GB)");
     expect(text).toContain(
       "7 times, 2 accounts: \"Each payment in a project must be at least 10.00 CAD, and this one is 5.00 CAD.\" (an action on /creator/requests/:id, code P0001)",
     );

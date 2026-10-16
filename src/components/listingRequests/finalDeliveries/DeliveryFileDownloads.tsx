@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { hasErrorMessage } from "../../../lib/errorMessage";
 import {
   deliveryFileName,
   getDeliveryFileDownloadUrl,
@@ -32,9 +33,11 @@ const DeliveryFileDownloads = ({ paths }: DeliveryFileDownloadsProps) => {
 
     try {
       window.location.assign(await getDeliveryFileDownloadUrl(path));
-    } catch {
+    } catch (downloadError) {
       setError(
-        "This file cannot be downloaded yet. The buyer can download the files once nothing is owed for the final release.",
+        hasErrorMessage(downloadError)
+          ? downloadError.message
+          : "This file could not be downloaded. Reload the page and try again.",
       );
     } finally {
       setPending(null);

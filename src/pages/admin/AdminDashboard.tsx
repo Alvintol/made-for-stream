@@ -179,6 +179,22 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        <div className={classes.toolCard}>
+          <h2 className={classes.toolTitle}>Storage</h2>
+
+          <p className={classes.toolText}>
+            Files stored and delivery files downloaded, against what the
+            Supabase plan includes; the largest commissions; and the storage
+            plans creators are on.
+          </p>
+
+          <div className={classes.row}>
+            <Link className={classes.btnPrimary} to="/admin/storage">
+              View storage
+            </Link>
+          </div>
+        </div>
+
       </div>
     </div>
   );
