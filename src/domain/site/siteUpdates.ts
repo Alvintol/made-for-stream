@@ -29,12 +29,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.4.00";
+export const siteVersion = "V0.5.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.5.00",
+    date: "2026-10-16",
+    title: "More room for delivery files",
+    changes: [
+      "Delivery files can now be up to 2 GB each, with up to 50 files and 10 GB in one final delivery.",
+      "Each commission has 20 GB of storage for its delivery files. A bar on the final delivery form shows how much is used and how much the files you are adding will take.",
+      "A folder larger than 2 GB is best zipped on your computer; the form explains how.",
+    ],
+  },
   {
     version: "V0.4.00",
     date: "2026-10-16",

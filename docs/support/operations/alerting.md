@@ -37,6 +37,7 @@ all is well. Check the jobs' last run status.
 | `payment_account_mirror_stale` | [`CON-006`](../payments/connect-onboarding.md#con-006--payment-account-mirror-is-not-being-refreshed) | a mirror row not refreshed in 48 h |
 | `app_failure_summary` | [`OPS-006`](#ops-006--yesterdays-failures-on-the-site) | every distinct failure the website reported yesterday (UTC), with its count (**sent once, the day after**) |
 | `app_failure_burst` | [`OPS-007`](#ops-007--one-account-is-failing-over-and-over) | one account with 25 or more failures within an hour (**sent once per burst**) |
+| `storage_usage_high` | [`OPS-008`](#ops-008--storage-or-downloads-passed-a-mark) | stored files pass 80 GB, 500 GB or 2 TB, or this month's delivery downloads pass 200 GB or 1 TB (**sent once per mark**) |
 
 **Frequency.** An alert is emailed the first time a subject (a payment, a
 request, a creator) appears, then again every 24 hours while it stays open.
@@ -358,6 +359,50 @@ burst there is usually sign-in trouble, not one person.
 itself an hour after the failures stop.
 
 **Money impact.** None by itself.
+
+---
+
+## `OPS-008` — Storage or downloads passed a mark
+
+```yaml
+id: OPS-008
+tier: 2
+signals:
+  - source: db
+    where: storage.objects, public.delivery_file_downloads
+    match: "total stored bytes >= 80 GB, 500 GB or 2 TB; or this month's (UTC) delivery download bytes >= 200 GB or 1 TB"
+  - source: email
+    match: "ops digest section \"Storage or downloads passed a mark\""
+auto_fix: none
+reason_not_automatable: "what to do about growth is a cost and product decision"
+escalate_with:
+  - "the admin Storage page (/admin/storage)"
+  - "Supabase dashboard: Organization -> Usage, and Billing -> spend cap"
+```
+
+**What it watches (migration `20261016_164`).** The included amounts are
+the Supabase Pro plan's: 100 GB of stored files and 250 GB of downloads a
+month (written into `list_ops_alerts()` and `admin_get_storage_overview()`;
+change both if the plan changes). The marks are 80% of those, then larger
+steps. Stored bytes are every file in every bucket. Downloads are only the
+delivery files the site records (`record_delivery_file_download`), counted
+at the file's size when the link was requested, so the real egress, which
+also includes images and the API, is higher: Supabase's usage page has it.
+
+**Cause.** Growth, or one commission storing far more than the rest (the
+Storage page lists the largest).
+
+**Fix.** None automated. Check the Supabase spend cap (if it is on, usage
+may be blocked at the included amount instead of billed). Then decide:
+keep going and pay the overage, lower the limits
+(`commission_storage_plans`, the bucket, `create_listing_request_final_delivery_v2`),
+or move delivery files to cheaper storage such as Cloudflare R2 (a paid
+resource: ask first). Each mark is sent once; the download marks reset
+each month.
+
+**Money impact.** Supabase bills about $0.021 per GB a month stored and
+$0.09 per GB downloaded past the included amounts (third-party figures,
+2026; check Supabase's pricing page).
 
 ---
 

@@ -178,6 +178,13 @@ export const useCreateListingRequestFinalDelivery =
           queryClient.invalidateQueries({
             queryKey: ["messagesInbox"],
           }),
+
+          queryClient.invalidateQueries({
+            queryKey: [
+              "commissionStorageUsage",
+              finalDelivery.listing_request_id,
+            ],
+          }),
         ]);
       },
     });

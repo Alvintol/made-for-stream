@@ -14,6 +14,7 @@ import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/
 import type { CreateListingRequestFinalDeliveryInput } from "../../../hooks/creatorRequests/useCreateListingRequestFinalDelivery";
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 import DeliveryFilesField from "./DeliveryFilesField";
+import type { CommissionStorageUsage } from "../../../hooks/creatorRequests/useCommissionStorageUsage";
 
 type FinalDeliveryAgreement = Pick<
   ListingRequestAgreementRow,
@@ -21,6 +22,8 @@ type FinalDeliveryAgreement = Pick<
 >;
 
 type ListingRequestFinalDeliveryBuilderProps = {
+  // For the commission storage bar; without it the bar is not shown.
+  storageUsage?: CommissionStorageUsage | null;
   requestStatus: string;
   agreement: FinalDeliveryAgreement | null;
   isPending?: boolean;
@@ -140,6 +143,7 @@ const validateForm = (
 };
 
 const ListingRequestFinalDeliveryBuilder = ({
+  storageUsage = null,
   requestStatus,
   agreement,
   isPending = false,
@@ -162,6 +166,7 @@ const ListingRequestFinalDeliveryBuilder = ({
 
   const [uploadStatus, setUploadStatus] =
     useState<string | null>(null);
+
 
   const agreementCanDeliver =
     agreement?.status === "buyer_accepted" &&
@@ -374,6 +379,7 @@ const ListingRequestFinalDeliveryBuilder = ({
         <DeliveryFilesField
           disabled={isPending}
           files={deliveryFiles}
+          usage={storageUsage}
           onChange={setDeliveryFiles}
         />
 

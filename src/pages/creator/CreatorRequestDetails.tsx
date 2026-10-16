@@ -67,6 +67,7 @@ import { useWithdrawListingRequestChangeOrder } from '../../hooks/creatorRequest
 import { useSendDraftListingRequestFinalDelivery } from '../../hooks/creatorRequests/useSendDraftListingRequestFinalDelivery';
 import { useSubmitListingRequestMilestone } from '../../hooks/creatorRequests/useSubmitListingRequestMilestone';
 import { useMyProfile } from '../../hooks/profile/useMyProfile';
+import { useCommissionStorageUsage } from '../../hooks/creatorRequests/useCommissionStorageUsage';
 import { useListingRequestMilestoneSubmissions } from '../../hooks/creatorRequests/useListingRequestMilestoneSubmissions';
 import { useListingRequestMilestones } from '../../hooks/creatorRequests/useListingRequestMilestones';
 import ListingRequestMilestoneSubmissionForm from '../../components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm';
@@ -179,6 +180,7 @@ const CreatorRequestDetails = () => {
   const submitMilestoneMutation =
     useSubmitListingRequestMilestone();
   const { data: myProfile } = useMyProfile();
+  const { data: storageUsage } = useCommissionStorageUsage(id);
 
 
   const [showDeclineForm, setShowDeclineForm] = useState(false);
@@ -834,6 +836,7 @@ const CreatorRequestDetails = () => {
             >
               {(close) => (
                 <ListingRequestFinalDeliveryBuilder
+                  storageUsage={storageUsage ?? null}
                   requestStatus={request.status}
                   agreement={agreement}
                   isPending={createFinalDeliveryMutation.isPending}

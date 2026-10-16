@@ -134,6 +134,20 @@ export const OPS_ALERTS = {
       `${d.user_id ? `Account ${d.user_id}` : "Signed-out visitors"}: ${plural(d.occurrences, "failure")} in the last hour, ${plural(d.distinct_failures, "different kind")}; most often "${d.most_common}"`,
     link: () => null,
   },
+  // A mark of stored files, or of this month's delivery downloads, against
+  // what the Supabase plan includes. Each mark is sent once (the download
+  // marks once a month).
+  storage_usage_high: {
+    playbookIssue: "OPS-008",
+    playbook: "docs/support/operations/alerting.md",
+    title: "Storage or downloads passed a mark",
+    meaning: "The files the site stores, or the delivery files downloaded this month, passed a mark set against what the Supabase plan includes. Past the included amount, Supabase bills the extra.",
+    todo: "Open the admin Storage page to see what grew, check Supabase's usage page and spend cap, and decide whether to keep going, adjust limits, or move large files to cheaper storage.",
+    remind: false,
+    describe: (d) =>
+      `${d.kind === "downloads" ? "Delivery downloads this month" : "Stored files"} reached ${formatBytes(d.used_bytes)} (mark ${formatBytes(d.threshold_bytes)}; the plan includes ${formatBytes(d.included_bytes)})`,
+    link: () => "/admin/storage",
+  },
 };
 
 export const OPS_ALERT_REMINDER_MS = 24 * 60 * 60 * 1000;
@@ -243,6 +257,14 @@ function formatMoney(cents, currency) {
 
 function formatAmount(value) {
   return (Number(value) || 0).toFixed(2);
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes) || 0;
+
+  return value >= 1024 ** 4
+    ? `${(value / 1024 ** 4).toFixed(1)} TB`
+    : `${(value / 1024 ** 3).toFixed(1)} GB`;
 }
 
 function plural(count, noun) {
