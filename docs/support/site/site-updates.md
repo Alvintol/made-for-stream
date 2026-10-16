@@ -99,9 +99,11 @@ escalate_with:
 
 ## Known gaps
 
-- **Nothing checks that an update was written up.** A release that changes
-  what people see but adds no entry leaves the version, and this page,
-  unchanged.
+- **Nothing checks that an update was written up.** The rule since
+  2026-10-13 is that every change moves the version, seen or not: minor for
+  something new people can see or do, patch for everything else, one version
+  per branch. A change merged without an entry leaves the version, and this
+  page, unchanged, and no test notices.
 - **Only a word list checks that an entry is safe to publish.** It catches
   an entry that names an internal system; it cannot tell whether a sentence
   gives away how a fault worked.

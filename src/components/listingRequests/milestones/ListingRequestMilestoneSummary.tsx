@@ -2,6 +2,7 @@ import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
 import { getMilestonePreviewImageUrls } from "../../../lib/listings/milestonePreviewImage";
 import {
   getActiveListingRequestMilestone,
@@ -253,6 +254,19 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
                 ))}
               </div>
             )}
+
+            {submission.off_site_delivery_methods &&
+              submission.off_site_delivery_methods.length > 0 && (
+                <p className={classes.noSubmission}>
+                  Also sent off site, as reported by the creator:{" "}
+                  {describeOffSiteDelivery(
+                    submission.off_site_delivery_methods,
+                    submission.off_site_delivery_other,
+                  )}
+                  . Made for Stream has no copy of that work and cannot confirm it
+                  arrived.
+                </p>
+              )}
 
             {submission.revision_request_reason && (
               <div className={classes.revision}>

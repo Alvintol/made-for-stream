@@ -123,3 +123,34 @@ export const canSendConversationMessage = (
 export const isConversationReadOnly = (
   status: ConversationStatus
 ): boolean => status !== "open";
+
+// Which side of the thread a line sits on, for the person looking at it:
+// their own side, the other person's, or the middle for a line that neither
+// the buyer nor the creator caused. Used for automatic lines, so the thread
+// shows who did what.
+export type ConversationMessageSide = "own" | "other" | "neutral";
+
+export const getConversationMessageSide = (input: {
+  senderUserId: string | null;
+  viewerUserId: string | null;
+  buyerUserId: string;
+  creatorUserId: string;
+}): ConversationMessageSide => {
+  const { senderUserId, viewerUserId, buyerUserId, creatorUserId } = input;
+
+  if (senderUserId !== buyerUserId && senderUserId !== creatorUserId) {
+    return "neutral";
+  }
+
+  return senderUserId === viewerUserId ? "own" : "other";
+};
+
+// True for the first line of the thread and the first line of each day, in
+// the reader's own time zone. The thread shows the day once, above it.
+export const startsNewConversationDay = (
+  previousCreatedAt: string | null,
+  createdAt: string
+): boolean =>
+  previousCreatedAt === null ||
+  new Date(previousCreatedAt).toDateString() !==
+    new Date(createdAt).toDateString();

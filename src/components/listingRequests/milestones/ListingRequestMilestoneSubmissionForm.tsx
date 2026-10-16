@@ -8,6 +8,12 @@ import {
 import {
   canSubmitListingRequestMilestone,
 } from "../../../domain/listings/listingRequestMilestones";
+import {
+  emptyOffSiteDelivery,
+  toOffSiteDeliveryInput,
+  validateOffSiteDelivery,
+  type OffSiteDeliveryFormState,
+} from "../../../domain/listings/offSiteDelivery";
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
 import {
   getListingPreviewWatermarkText,
@@ -17,6 +23,7 @@ import {
 } from "../../../lib/listings/listingPreviewImage";
 import { MILESTONE_PREVIEW_MAX_IMAGES } from "../../../lib/listings/milestonePreviewImage";
 import type { SubmitListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useSubmitListingRequestMilestone";
+import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 
 type SubmittableMilestone = Pick<
   ListingRequestMilestoneRow,
@@ -49,6 +56,7 @@ type PreparedPreviewImage = {
 type MilestoneSubmissionValidationErrors = {
   summary?: string;
   deliveryLinksText?: string;
+  offSite?: string;
 };
 
 const classes = {
@@ -114,7 +122,8 @@ const splitDeliveryLinks = (
     .filter(Boolean);
 
 const validateForm = (
-  form: MilestoneSubmissionFormState
+  form: MilestoneSubmissionFormState,
+  offSite: OffSiteDeliveryFormState
 ): MilestoneSubmissionValidationErrors => {
   const errors: MilestoneSubmissionValidationErrors =
     {};
@@ -146,6 +155,12 @@ const validateForm = (
       "Each milestone delivery link must be 2000 characters or fewer.";
   }
 
+  const offSiteError = validateOffSiteDelivery(offSite);
+
+  if (offSiteError) {
+    errors.offSite = offSiteError;
+  }
+
   return errors;
 };
 
@@ -169,6 +184,11 @@ const ListingRequestMilestoneSubmissionForm = ({
       {}
     );
 
+  const [offSite, setOffSite] =
+    useState<OffSiteDeliveryFormState>(
+      emptyOffSiteDelivery
+    );
+
   const [previewImages, setPreviewImages] =
     useState<PreparedPreviewImage[]>([]);
 
@@ -181,6 +201,7 @@ const ListingRequestMilestoneSubmissionForm = ({
   useEffect(() => {
     setForm(defaultFormState);
     setValidationErrors({});
+    setOffSite(emptyOffSiteDelivery);
     setPreviewImages([]);
   }, [milestone?.id]);
 
@@ -291,7 +312,7 @@ const ListingRequestMilestoneSubmissionForm = ({
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form);
+    const nextErrors = validateForm(form, offSite);
 
     setValidationErrors(nextErrors);
 
@@ -300,6 +321,9 @@ const ListingRequestMilestoneSubmissionForm = ({
     ) {
       return;
     }
+
+    const offSiteDelivery =
+      toOffSiteDeliveryInput(offSite);
 
     try {
       await onSubmitMilestone({
@@ -311,6 +335,9 @@ const ListingRequestMilestoneSubmissionForm = ({
         previewImages: previewImages.map(
           (image) => image.blob
         ),
+        ...(offSiteDelivery
+          ? { offSiteDelivery }
+          : {}),
       });
 
       previewImages.forEach((image) =>
@@ -319,6 +346,7 @@ const ListingRequestMilestoneSubmissionForm = ({
 
       setForm(defaultFormState);
       setValidationErrors({});
+      setOffSite(emptyOffSiteDelivery);
       setPreviewImages([]);
     } catch {
       // Mutation errors are rendered through the error prop.
@@ -542,6 +570,22 @@ const ListingRequestMilestoneSubmissionForm = ({
             </ul>
           )}
         </div>
+
+        <OffSiteDeliveryFields
+          disabled={isPending}
+          error={validationErrors.offSite}
+          idPrefix="milestone"
+          value={offSite}
+          onChange={(nextOffSite) => {
+            setOffSite(nextOffSite);
+            setValidationErrors(
+              (currentErrors) => ({
+                ...currentErrors,
+                offSite: undefined,
+              })
+            );
+          }}
+        />
 
         <div className={classes.actions}>
           <button

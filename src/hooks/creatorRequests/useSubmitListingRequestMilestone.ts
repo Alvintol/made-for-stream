@@ -3,6 +3,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import type { OffSiteDeliveryInput } from "../../domain/listings/offSiteDelivery";
 import { uploadMilestonePreviewImage } from "../../lib/listings/milestonePreviewImage";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -14,6 +15,8 @@ export type SubmitListingRequestMilestoneInput = {
   // Prepared, watermarked copies (the form makes them). Uploaded here,
   // just before the submission is saved.
   previewImages?: Blob[];
+  // Set when the creator ticked "Provided off site".
+  offSiteDelivery?: OffSiteDeliveryInput | null;
 };
 
 export type SubmittedListingRequestMilestoneRow = {
@@ -59,8 +62,15 @@ export const useSubmitListingRequestMilestone =
           );
         }
 
+        const offSite = input.offSiteDelivery;
+
+        // The statement is saved with the submission in one step, by a
+        // function that only exists after migration 20261013_162. A
+        // submission without it uses the function it always has.
         const { data, error } = await supabase.rpc(
-          "submit_listing_request_milestone",
+          offSite
+            ? "submit_listing_request_milestone_off_site"
+            : "submit_listing_request_milestone",
           {
             p_milestone_id: input.milestoneId,
             p_summary: input.summary.trim(),
@@ -70,8 +80,14 @@ export const useSubmitListingRequestMilestone =
               ),
             // Only named when there are images, so a submission without
             // any does not depend on migration 20261011_154.
-            ...(previewImagePaths.length > 0
+            ...(previewImagePaths.length > 0 || offSite
               ? { p_preview_image_paths: previewImagePaths }
+              : {}),
+            ...(offSite
+              ? {
+                  p_off_site_methods: offSite.methods,
+                  p_off_site_other: offSite.other,
+                }
               : {}),
           }
         );

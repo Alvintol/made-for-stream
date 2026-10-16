@@ -76,7 +76,26 @@ the ids you used, so "has this been rehearsed" has an answer.
 - **Also on that branch:** a reload notice after any failed action instead
   of an automatic refresh; every failure logged
   (`20261012_157`, `OPS-006`, `OPS-007`) and listed daily in the ops email.
-- **Milestone 2 is `pending`;** there is no cancellation warning.
+- **Milestone 2, done for real on 2026-10-13 (confirmed in the database).**
+  meowington submitted "coloured" with one preview image at 23:31 UTC, the
+  buyer approved at 23:33 and paid at 23:36: base 15.00, buyer fee 0.75,
+  creator fee 0.75, no tip or contribution, total 15.75 CAD, application
+  fee 1.50, recovery 0, minimums 0. Milestone and schedule line `paid`; the
+  whole 90.00 is now paid. Emails `sent`: `milestone_submitted` and
+  `payment_required` to the buyer, `milestone_approved` and
+  `payment_received` to meowington. No new acceptance rows (the Refund
+  Policy and Fee Schedule are asked once per commission).
+- **Tax was switched on for this payment, and returned zero.** It is the
+  first payment with `tax_treatment = 'calculated'` (CA, AB) and it has a
+  Stripe Tax calculation and transaction id, but `tax_cents` is 0 where
+  Alberta's 5% would be 0.79. The playbook's first cause is a missing
+  Canada registration on the platform account in Stripe test mode
+  (`tax.md`, "How a country gets switched on"); not confirmed. Its location
+  evidence is `insufficient` (billing CA, card issuer US, because the
+  `4242` test card is American), so `TAX-002` will email ops within the
+  hour: expected for that card, and the first real run of that alert. Use
+  `4000 0012 4000 0000` for this buyer from now on.
+- **Next: final delivery and completion.** There is no cancellation warning.
 - **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
   steps are still to do): submitting milestone 2 first is refused
   (`MIL-001`); milestone 1 submit and approve creates one payment, 60.00 CAD,
@@ -455,6 +474,26 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       sides, the chat says it was withdrawn, and "Propose change" opens a
       form already filled in from it. After the buyer accepts a change order
       there is no Withdraw button (`CHG-006`).
+- [ ] *(Needs migration `20261013_162` before the website is merged.)*
+      **Provided off site.** On the milestone form and the final delivery
+      form the warning about work sent outside the site shows before
+      anything is ticked. Tick "Provided off site": the ways appear (Email,
+      Discord, Text message, Another way). Submitting with none chosen is
+      refused under the box. Choose Discord and "Another way" with a short
+      description and submit: the chat gains the line "The creator reports
+      that the work for … was also sent outside Made for Stream, by:
+      Discord, another way (…)", both sides see "Also sent off site" on the
+      commission page, the buyer gets the usual "submitted" email and **no**
+      "new message" email. For a final delivery saved as a draft the line
+      appears only when the draft is sent (`MIL-007`).
+- [ ] **Conversation layout (2026-10-13, website only).** In a commission's
+      chat each day appears once, as a line across the thread, and every
+      message and automatic line under it shows only its time. An automatic
+      line sits on the side of whoever caused it: signed in as the creator,
+      "The creator sent a project change order…" is on the right with your
+      own messages and "The buyer declined…" is on the left; signed in as
+      the buyer it is the other way round. "Stripe confirmed payment…" sits
+      on the buyer's side. The pill styling is unchanged.
 - [ ] Milestone 2, then final delivery, final balance paid, project completed.
 - [ ] Receipt emails arrived for each payment (transactional email, Sprint 6).
 

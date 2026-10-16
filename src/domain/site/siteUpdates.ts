@@ -7,9 +7,12 @@
 //   minor  something new that people can see or do (patch returns to 00);
 //   patch  fixes and small changes to what is already there.
 //
-// To publish an update: add an entry at the TOP and set siteVersion to its
-// version. Write for the people using the site, not for developers: what is
-// different for them, in plain words. A test fails if siteVersion and the
+// EVERY change to the site moves the version, whether or not people can see
+// it: add an entry at the TOP and set siteVersion to its version. One branch,
+// one version; several changes on a branch share its entry. Write for the
+// people using the site, not for developers: what is different for them, in
+// plain words. Work they cannot see gets one plain line ("Fixes and
+// behind-the-scenes improvements"). A test fails if siteVersion and the
 // first entry disagree, or if the numbers do not go down the list.
 //
 // This list is PUBLIC, signed in or not. Never describe a security fix in a
@@ -26,12 +29,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.2.00";
+export const siteVersion = "V0.3.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.3.00",
+    date: "2026-10-13",
+    title: "A record of work sent outside the site, and tidier conversations",
+    changes: [
+      "Creators submitting a milestone or a final delivery can tick \"Provided off site\" and say how the work was also sent: email, Discord, text message or another way.",
+      "The commission's chat and the delivery then show where the creator says the work went, so both people have a record. It is the creator's statement: Made for Stream holds no copy of work sent that way and cannot confirm that it arrived.",
+      "The same forms now warn that work sent outside Made for Stream carries no watermark and is not protected by Made for Stream.",
+      "Conversations are easier to read: messages are grouped under the day they were sent and show only the time, and automatic lines such as \"The creator sent a change order\" now sit on the side of the person who did it.",
+    ],
+  },
   {
     version: "V0.2.00",
     date: "2026-10-13",
@@ -40,6 +54,7 @@ export const siteUpdates: readonly SiteUpdate[] = [
       "The site now has version numbers, starting from V0.1.00. The footer shows the current one.",
       "The What's new page lists each version with its date. Choose a version to read what changed in it; the latest is open when you arrive.",
       "The page shows the ten most recent versions, with arrows to move to older ones.",
+      "Fixes and behind-the-scenes improvements.",
     ],
   },
   {

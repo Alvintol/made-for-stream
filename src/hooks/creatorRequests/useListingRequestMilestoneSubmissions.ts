@@ -23,6 +23,10 @@ export type ListingRequestMilestoneSubmissionRow = {
   preview_image_paths: string[];
   // Set when the images were deleted under the retention rule (20261012_159).
   preview_images_deleted_at?: string | null;
+  // The creator's statement that the work was also sent outside the site
+  // (20261013_162).
+  off_site_delivery_methods?: string[];
+  off_site_delivery_other?: string | null;
   revision_request_reason: string | null;
   submitted_at: string;
   revision_requested_at: string | null;
@@ -70,6 +74,8 @@ export const useListingRequestMilestoneSubmissions = (
             delivery_links,
             preview_image_paths,
             preview_images_deleted_at,
+            off_site_delivery_methods,
+            off_site_delivery_other,
             revision_request_reason,
             submitted_at,
             revision_requested_at,
