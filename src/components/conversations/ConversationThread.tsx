@@ -6,6 +6,7 @@ import {
   getConversationCloseReasonLabel,
   getConversationMessageSide,
   isConversationReadOnly,
+  nameSystemMessagePeople,
   startsNewConversationDay,
   type ConversationCloseReasonCode,
 } from "../../domain/conversations/conversations";
@@ -55,6 +56,10 @@ type ConversationThreadProps = {
   viewer: ConversationViewer;
   buyerLabel: string;
   creatorLabel: string;
+  // Names used in automatic lines ("@meowington sent a change order"). The
+  // labels above can be "You"; these never are. Default to the labels.
+  buyerName?: string;
+  creatorName?: string;
   header: ReactNode;
   // A set notice makes the thread read-only (e.g. the parent request is closed) even while the conversation is open.
   readOnlyNotice?: string | null;
@@ -245,6 +250,8 @@ const ConversationThread = ({
   viewer,
   buyerLabel,
   creatorLabel,
+  buyerName = buyerLabel,
+  creatorName = creatorLabel,
   header,
   readOnlyNotice = null,
   emptyText = "No messages yet.",
@@ -913,7 +920,12 @@ const ConversationThread = ({
                     <div className={classes.systemMeta}>
                       System · {timeText(message.created_at)}
                     </div>
-                    <div className={classes.systemMessage}>{message.body}</div>
+                    <div className={classes.systemMessage}>
+                      {nameSystemMessagePeople(message.body ?? "", {
+                        buyerName,
+                        creatorName,
+                      })}
+                    </div>
                   </div>
                 );
               }

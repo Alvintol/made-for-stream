@@ -310,7 +310,7 @@ signals:
     match: "/IMG-001: images of commission .+ were not deleted: /"
     where: "api/server.js deleteExpiredCommissionImages, when Storage refuses the removal"
   - source: db
-    match: "/IMG-001: commission .+ still has [0-9]+ stored image\\(s\\), so it was not marked as deleted\\./"
+    match: "/IMG-001: commission .+ still has [0-9]+ stored file\\(s\\), so it was not marked as deleted\\./"
     where: "public.mark_commission_images_deleted (20261012_159), errcode P0001"
   - source: db
     match: "Only an administrator can change a dispute hold."

@@ -154,3 +154,23 @@ export const startsNewConversationDay = (
   previousCreatedAt === null ||
   new Date(previousCreatedAt).toDateString() !==
     new Date(createdAt).toDateString();
+
+// Automatic chat lines are stored as "The creator sent …", "… accepted by
+// the buyer", "… for buyer review". On screen they name the people instead.
+// Only the fixed wording before the first ": " is changed: what follows is
+// a title or reason someone typed, and is shown as written.
+export const nameSystemMessagePeople = (
+  body: string,
+  names: { buyerName: string; creatorName: string }
+): string => {
+  const split = body.indexOf(": ");
+  const head = split === -1 ? body : body.slice(0, split);
+  const tail = split === -1 ? "" : body.slice(split);
+
+  const named = head
+    .replace(/\bfor buyer review\b/g, `for ${names.buyerName} to review`)
+    .replace(/\b[Tt]he buyer\b/g, names.buyerName)
+    .replace(/\b[Tt]he creator\b/g, names.creatorName);
+
+  return named + tail;
+};

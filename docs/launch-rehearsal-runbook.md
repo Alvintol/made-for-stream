@@ -494,6 +494,20 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       own messages and "The buyer declined…" is on the left; signed in as
       the buyer it is the other way round. "Stripe confirmed payment…" sits
       on the buyer's side. The pill styling is unchanged.
+- [ ] *(Needs migration `20261016_163` before the website is merged, and
+      the project-wide upload limit in Supabase raised to at least 1 GB.)*
+      **Delivery files.** On the final delivery form the "Files" section
+      recommends one .zip. Choose a folder: it becomes one .zip named after
+      the folder, listed with its size. Add two loose files: "Zip these 2
+      files into one" appears and works. A file over 1 GB is refused under
+      the section. Submit: the button shows "Uploading file 1 of …". On the
+      delivery card both sides see "Files" with a Download button that
+      saves the file under its own name. Signed in as the rehearsal buyer
+      (an admin) the download always works; the lock while a balance is
+      owed was checked by a dry run (`FIN-005`).
+- [ ] **Names in the chat (website only).** Automatic lines read
+      "@meowington sent a project change order for @ImAllBeans to review:
+      …" for both sides, not "The creator …".
 - [ ] Milestone 2, then final delivery, final balance paid, project completed.
 - [ ] Receipt emails arrived for each payment (transactional email, Sprint 6).
 

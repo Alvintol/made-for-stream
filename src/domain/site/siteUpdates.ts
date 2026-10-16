@@ -29,12 +29,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.3.00";
+export const siteVersion = "V0.4.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.4.00",
+    date: "2026-10-16",
+    title: "Upload finished files, and names in the chat",
+    changes: [
+      "Creators can upload the finished files with the final delivery: single files, or a whole folder, which is zipped in the browser before it is uploaded. One .zip is recommended.",
+      "The buyer downloads the files from the commission page once nothing is owed for the final release. Files are kept for 180 days after the commission closes, then deleted, so keep your own copy.",
+      "Automatic lines in the chat now name the people, for example \"@meowington sent a project change order\", instead of saying \"The creator\".",
+      "The Privacy Policy now covers delivered files. You will be asked to accept the new version.",
+    ],
+  },
   {
     version: "V0.3.00",
     date: "2026-10-13",

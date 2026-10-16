@@ -7,6 +7,7 @@ import type {
   ListingRequestFinalDeliveryStatus,
 } from "../../domain/listings/listingRequestFinalDeliveries";
 import type { OffSiteDeliveryInput } from "../../domain/listings/offSiteDelivery";
+import { uploadDeliveryFile } from "../../lib/listings/deliveryFiles";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -24,6 +25,9 @@ export type CreateListingRequestFinalDeliveryInput = {
   deliveryLinks: string[];
   // Set when the creator ticked "Provided off site".
   offSiteDelivery?: OffSiteDeliveryInput | null;
+  // Uploaded here, one after another, just before the delivery is saved.
+  deliveryFiles?: File[];
+  onUploadProgress?: (message: string) => void;
 };
 
 export type CreatedListingRequestFinalDeliveryRow = {
@@ -58,13 +62,35 @@ export const useCreateListingRequestFinalDelivery =
         }
 
         const offSite = input.offSiteDelivery;
+        const files = input.deliveryFiles ?? [];
+        const filePaths: string[] = [];
 
-        // Saved with the delivery in one step, by a function that only
-        // exists after migration 20261013_162.
+        for (const [index, file] of files.entries()) {
+          input.onUploadProgress?.(
+            `Uploading file ${index + 1} of ${files.length}: ${file.name}…`
+          );
+
+          filePaths.push(
+            await uploadDeliveryFile({
+              agreementId: input.agreementId,
+              file,
+            })
+          );
+        }
+
+        if (files.length > 0) {
+          input.onUploadProgress?.("Saving final delivery…");
+        }
+
+        // Files and the off-site record are saved with the delivery in one
+        // step, by functions that exist only after migrations 20261016_163
+        // and 20261013_162.
         const { data, error } = await supabase.rpc(
-          offSite
-            ? "create_listing_request_final_delivery_off_site"
-            : "create_listing_request_final_delivery",
+          files.length > 0
+            ? "create_listing_request_final_delivery_v2"
+            : offSite
+              ? "create_listing_request_final_delivery_off_site"
+              : "create_listing_request_final_delivery",
           {
             p_agreement_id: input.agreementId,
             p_status: input.status,
@@ -73,6 +99,9 @@ export const useCreateListingRequestFinalDelivery =
             p_delivery_links: normalizeDeliveryLinks(
               input.deliveryLinks
             ),
+            ...(files.length > 0
+              ? { p_file_paths: filePaths }
+              : {}),
             ...(offSite
               ? {
                   p_off_site_methods: offSite.methods,
