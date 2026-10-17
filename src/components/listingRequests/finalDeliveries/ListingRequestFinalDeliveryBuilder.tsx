@@ -24,6 +24,8 @@ type FinalDeliveryAgreement = Pick<
 type ListingRequestFinalDeliveryBuilderProps = {
   // For the commission storage bar; without it the bar is not shown.
   storageUsage?: CommissionStorageUsage | null;
+  // The name of a zip made on the form, without ".zip".
+  zipBaseName?: string;
   requestStatus: string;
   agreement: FinalDeliveryAgreement | null;
   isPending?: boolean;
@@ -144,6 +146,7 @@ const validateForm = (
 
 const ListingRequestFinalDeliveryBuilder = ({
   storageUsage = null,
+  zipBaseName,
   requestStatus,
   agreement,
   isPending = false,
@@ -380,6 +383,7 @@ const ListingRequestFinalDeliveryBuilder = ({
           disabled={isPending}
           files={deliveryFiles}
           usage={storageUsage}
+          zipBaseName={zipBaseName}
           onChange={setDeliveryFiles}
         />
 

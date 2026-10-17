@@ -34,3 +34,25 @@ describe("automatic chat lines name the people", () => {
     ).toBe("@ImAllBeans requested revisions to the final project delivery: the buyer wants blue");
   });
 });
+
+describe("fixed wording after what someone typed", () => {
+  it("names the people in a sentence that follows the typed title", () => {
+    expect(
+      nameSystemMessagePeople(
+        "Stripe confirmed payment for milestone 2: coloured. The creator can continue with the next milestone.",
+        names,
+      ),
+    ).toBe("Stripe confirmed payment for milestone 2: coloured. @meowington can continue with the next milestone.");
+  });
+
+  it("names a buyer's off-site confirmation", () => {
+    expect(
+      nameSystemMessagePeople(
+        "The buyer confirmed receiving the work for the final delivery (delivery title) that was sent outside Made for Stream.",
+        names,
+      ),
+    ).toBe(
+      "@ImAllBeans confirmed receiving the work for the final delivery (delivery title) that was sent outside Made for Stream.",
+    );
+  });
+});

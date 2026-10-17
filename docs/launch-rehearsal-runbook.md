@@ -523,6 +523,24 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       naming the file inside; a password-protected zip is refused as "could
       not be opened". A folder with a `.DS_Store` zips without it. The file
       picker offers only the allowed types (`FIN-005`).
+- [ ] *(Needs migration `20261016_166`, an API deploy, then the website.)*
+      **Confirming work sent off site.** The CAD final delivery
+      (`7ea7b9ae-…`, marked "Provided off site") has a receipt from the
+      migration, and the buyer gets an "Action needed: confirm you received
+      the work" email. Above the chat the buyer sees "Did the work arrive?"
+      with **I received it** and **It hasn't arrived**. Approving the final
+      delivery first is refused with "Confirm in the chat that you received
+      the work…". Press **It hasn't arrived**: a chat line on the buyer's
+      side, an email to meowington, and the creator's panel says so. Then
+      **I received it**: a second chat line, an email to meowington, the
+      panel disappears, and approval completes the commission. The 3- and
+      7-day reminders and the 10-day ops alert were checked by dry run only.
+      An admin can **Record as received** with a note (`MIL-008`).
+- [ ] **Zip name and chat boxes.** A folder zipped on the final delivery
+      form is listed as "meowington_222222222_updated_deliverables.zip" and
+      stored and downloaded as that name with a 12-character code before
+      ".zip". Automatic lines that wrap have even
+      padding.
 - [ ] **Names in the chat (website only).** Automatic lines read
       "@meowington sent a project change order for @ImAllBeans to review:
       …" for both sides, not "The creator …".

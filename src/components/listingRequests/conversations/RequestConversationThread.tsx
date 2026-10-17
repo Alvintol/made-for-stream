@@ -1,4 +1,5 @@
 import ConversationThread from "../../conversations/ConversationThread";
+import OffSiteReceiptPanel from "./OffSiteReceiptPanel";
 import { useRequestConversation } from "../../../hooks/conversations/useRequestConversation";
 
 type RequestConversationThreadProps = {
@@ -57,6 +58,14 @@ const RequestConversationThread = ({
   }
 
   return (
+    <>
+    <OffSiteReceiptPanel
+      buyerName={buyerName ?? buyerLabel}
+      creatorName={creatorName ?? creatorLabel}
+      requestId={requestId}
+      viewer={viewer}
+    />
+
     <ConversationThread
       conversation={conversation}
       viewer={viewer}
@@ -74,6 +83,7 @@ const RequestConversationThread = ({
         </>
       }
     />
+    </>
   );
 };
 

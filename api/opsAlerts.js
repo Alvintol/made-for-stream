@@ -148,6 +148,17 @@ export const OPS_ALERTS = {
       `${d.kind === "downloads" ? "Delivery downloads this month" : "Stored files"} reached ${formatBytes(d.used_bytes)} (mark ${formatBytes(d.threshold_bytes)}; the plan includes ${formatBytes(d.included_bytes)})`,
     link: () => "/admin/storage",
   },
+  off_site_receipt_overdue: {
+    playbookIssue: "MIL-008",
+    playbook: "docs/support/requests/milestones.md",
+    title: "Work sent off site still not confirmed",
+    meaning: "A creator sent work outside Made for Stream over 10 days ago and the buyer has not confirmed it arrived. The commission cannot be completed until they do.",
+    todo: "Open the commission and read the chat. Ask both sides; if the buyer confirms to support, record it as received with a note.",
+    remind: true,
+    describe: (d) =>
+      `The work for ${d.subject || "the commission"}: ${d.status === "not_received" ? "the buyer says it has not arrived" : "no answer from the buyer"}, ${plural(d.waiting_days, "day")} since it was sent`,
+    link: (d) => requestLink(d.listing_request_id),
+  },
 };
 
 export const OPS_ALERT_REMINDER_MS = 24 * 60 * 60 * 1000;

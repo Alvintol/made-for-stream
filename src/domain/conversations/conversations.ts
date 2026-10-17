@@ -157,8 +157,9 @@ export const startsNewConversationDay = (
 
 // Automatic chat lines are stored as "The creator sent …", "… accepted by
 // the buyer", "… for buyer review". On screen they name the people instead.
-// Only the fixed wording before the first ": " is changed: what follows is
-// a title or reason someone typed, and is shown as written.
+// What follows the first ": " is a title or reason someone typed, shown as
+// written up to the first ". "; fixed wording after that ("… sketches. The
+// creator can continue …") is named too.
 export const nameSystemMessagePeople = (
   body: string,
   names: { buyerName: string; creatorName: string }
@@ -167,10 +168,15 @@ export const nameSystemMessagePeople = (
   const head = split === -1 ? body : body.slice(0, split);
   const tail = split === -1 ? "" : body.slice(split);
 
-  const named = head
-    .replace(/\bfor buyer review\b/g, `for ${names.buyerName} to review`)
-    .replace(/\b[Tt]he buyer\b/g, names.buyerName)
-    .replace(/\b[Tt]he creator\b/g, names.creatorName);
+  const name = (text: string) =>
+    text
+      .replace(/\bfor buyer review\b/g, `for ${names.buyerName} to review`)
+      .replace(/\b[Tt]he buyer\b/g, names.buyerName)
+      .replace(/\b[Tt]he creator\b/g, names.creatorName);
 
-  return named + tail;
+  const sentenceEnd = tail.indexOf(". ");
+  const typed = sentenceEnd === -1 ? tail : tail.slice(0, sentenceEnd + 2);
+  const after = sentenceEnd === -1 ? "" : tail.slice(sentenceEnd + 2);
+
+  return name(head) + typed + name(after);
 };

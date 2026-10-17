@@ -4440,6 +4440,16 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
       console.error(`NOTIF-001: unread messages could not be queued: ${unreadError.message}`);
     }
 
+    // Work sent off site and still not confirmed by the buyer: reminders
+    // at 3 and 7 days (20261016_166, MIL-008).
+    const { error: offSiteReceiptError } = await supabaseAdmin.rpc(
+      "enqueue_off_site_receipt_reminders",
+    );
+
+    if (offSiteReceiptError) {
+      console.error(`NOTIF-001: off-site receipt reminders could not be queued: ${offSiteReceiptError.message}`);
+    }
+
     // Cancellation warnings that ran out with no reply (20261007_149). The
     // database cancels the commission and fixes any refund; this pays it.
     const { data: autoCancelled, error: warningsError } = await supabaseAdmin.rpc(

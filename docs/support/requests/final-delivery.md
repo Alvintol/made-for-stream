@@ -302,6 +302,18 @@ admin Storage page can count them.
   compares them), in a new migration.
 - *"could not be opened" for a zip:* it has a password, is damaged, or is a
   zip64 archive. Zipping it again without a password fixes it.
+- *A zip made on the form* is named "<creator's handle>_<listing title>_
+  deliverables.zip" (2026-10-17). Every stored name keeps only letters,
+  digits, `.`, `-` and `_` (spaces become underscores, accents and other
+  symbols are removed), and gets a 12-character unique id before the
+  extension, stored directly in the agreement's folder:
+  `<agreement>/<name>_<id>.<ext>`. The download keeps that name. Files
+  uploaded before 2026-10-17 sit one folder deeper
+  (`<agreement>/<uuid>/<name>`) and still work.
+- *"Confirm in the chat that you received the work sent outside Made for
+  Stream…"* when approving: the delivery (or a milestone) was marked
+  "Provided off site" and the buyer has not confirmed it arrived
+  ([`MIL-008`](milestones.md#mil-008--the-buyer-has-not-confirmed-work-sent-off-site)).
 
 **Abandoned uploads.** Files are uploaded one by one before the delivery is
 saved. If the save then fails, the uploaded files stay in the agreement's
