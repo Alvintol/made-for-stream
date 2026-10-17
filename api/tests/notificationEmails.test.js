@@ -12,8 +12,11 @@ import {
 const migration = [
   "supabase/migrations/20261007_148_add_listing_request_notifications.sql",
   "supabase/migrations/20261007_149_add_presence_message_emails_and_cancellation_warnings.sql",
+  "supabase/migrations/20261016_166_confirm_off_site_receipt.sql",
 ]
   .map((file) => readFileSync(file, "utf8"))
+  // An ops alert id such as off_site_receipt_overdue is not an email kind.
+  .map((sql) => sql.split("create or replace function public.list_ops_alerts()")[0])
   .join("\n");
 
 // Every kind the database can queue: the third argument of each enqueue

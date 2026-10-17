@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import DeliveryFilesField from "../listingRequests/finalDeliveries/DeliveryFilesField";
 import {
   toStorageFileName,
+  toUniqueStorageFileName,
   validateDeliveryFiles,
 } from "../../lib/listings/deliveryFiles";
 
@@ -89,6 +90,20 @@ describe("delivery file rules", () => {
   it("keeps file names readable and safe to store", () => {
     expect(toStorageFileName("Emote Pack (final) v2.zip")).toBe("Emote_Pack_final_v2.zip");
     expect(toStorageFileName("Café ☕.psd")).toBe("Cafe_.psd");
+    expect(toStorageFileName("meowington 222222222 updated deliverables.zip")).toBe(
+      "meowington_222222222_updated_deliverables.zip",
+    );
     expect(toStorageFileName("???")).toBe("file");
+  });
+
+  it("gives every stored file a unique id before its extension", () => {
+    expect(toUniqueStorageFileName("my pack.zip", "3f9a1c2b7d4e")).toBe("my_pack_3f9a1c2b7d4e.zip");
+    expect(toUniqueStorageFileName("Hiyori.model3.json", "000000000001")).toBe("Hiyori.model3_000000000001.json");
+    expect(toUniqueStorageFileName("README", "000000000002")).toBe("README_000000000002");
+
+    const first = toUniqueStorageFileName("same.png");
+    const second = toUniqueStorageFileName("same.png");
+    expect(first).toMatch(/^same_[0-9a-f]{12}\.png$/);
+    expect(first).not.toBe(second);
   });
 });

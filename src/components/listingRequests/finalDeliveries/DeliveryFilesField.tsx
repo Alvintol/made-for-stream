@@ -16,6 +16,7 @@ import {
   folderZipName,
   formatFileSize,
   isZipFile,
+  toStorageFileName,
   validateDeliveryFiles,
   zipFiles,
 } from "../../../lib/listings/deliveryFiles";
@@ -24,6 +25,10 @@ type DeliveryFilesFieldProps = {
   files: File[];
   // This commission's storage, when known (it is loaded separately).
   usage?: CommissionStorageUsage | null;
+  // What a zip made here is called, without ".zip": the creator's handle
+  // and the commission's title. Spaces become underscores
+  // ("meowington_222222222_updated_deliverables.zip").
+  zipBaseName?: string;
   disabled?: boolean;
   onChange: (files: File[]) => void;
 };
@@ -49,7 +54,13 @@ const classes = {
 // The "Files" part of the final delivery form. A folder is always zipped in
 // the browser first; loose files can be zipped into one with a button. One
 // .zip is what the form recommends.
-const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }: DeliveryFilesFieldProps) => {
+const DeliveryFilesField = ({
+  files,
+  usage = null,
+  zipBaseName,
+  disabled = false,
+  onChange,
+}: DeliveryFilesFieldProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
 
@@ -111,7 +122,9 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
       return;
     }
 
-    if (kept.length > 0) void zipInto(kept, folderZipName(chosen), files);
+    if (kept.length > 0) {
+      void zipInto(kept, toStorageFileName(zipBaseName ? `${zipBaseName}.zip` : folderZipName(chosen)), files);
+    }
   };
 
   const zipInto = async (chosen: File[], zipName: string, keep: File[]) => {
@@ -235,7 +248,7 @@ const DeliveryFilesField = ({ files, usage = null, disabled = false, onChange }:
             onClick={() =>
               void zipInto(
                 looseFiles,
-                "delivery.zip",
+                toStorageFileName(zipBaseName ? `${zipBaseName}.zip` : "delivery.zip"),
                 files.filter((file) => isZipFile(file)),
               )
             }

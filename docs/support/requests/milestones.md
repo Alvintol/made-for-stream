@@ -24,6 +24,12 @@ surfaces:
   - public.log_off_site_delivery_message   # writes the chat line
   - src/domain/listings/offSiteDelivery.ts
   - src/components/listingRequests/OffSiteDeliveryFields.tsx
+  - supabase/migrations/20261016_166_confirm_off_site_receipt.sql
+  - public.off_site_delivery_receipts
+  - public.respond_off_site_delivery_receipt
+  - public.admin_record_off_site_receipt
+  - public.enqueue_off_site_receipt_reminders
+  - src/components/listingRequests/conversations/OffSiteReceiptPanel.tsx
 unmatched_tier: 2
 ---
 
@@ -435,6 +441,67 @@ the migration must be applied before the website is merged.
 
 ---
 
+## `MIL-008` — The buyer has not confirmed work sent off site
+
+```yaml
+id: MIL-008
+tier: 2
+signals:
+  - source: db
+    match: "Confirm in the chat that you received the work sent outside Made for Stream before approving the final delivery."
+    where: "public.require_off_site_receipts_before_approval (trigger on listing_request_final_deliveries)"
+  - source: db
+    match: "Only the buyer of this commission can confirm whether the work arrived."
+    where: "public.respond_off_site_delivery_receipt"
+  - source: db
+    match: "You have already said this work has not arrived. Confirm here once it does."
+    where: "public.respond_off_site_delivery_receipt"
+  - source: db
+    match: "Say how the receipt was confirmed, in 10 to 500 characters."
+    where: "public.admin_record_off_site_receipt"
+  - source: email
+    match: "ops digest section \"Work sent off site still not confirmed\""
+auto_fix: none
+reason_not_automatable: "whether work arrived is between the two people; only the buyer, or an administrator with evidence, can say so"
+escalate_with:
+  - "select id, subject, methods, other, status, sent_at, answered_at, admin_note from public.off_site_delivery_receipts where listing_request_id = '<request>' order by sent_at"
+  - "the commission's chat lines containing 'outside Made for Stream'"
+```
+
+**What it is (migration `20261016_166`).** When a creator marks a
+milestone or final delivery "Provided off site" (`MIL-007`), a receipt
+opens in `off_site_delivery_receipts` and the buyer is emailed
+(`off_site_receipt_requested`). Above the commission's chat the buyer sees
+**I received it** and **It hasn't arrived**; either answer is written into
+the chat. "Hasn't arrived" emails the creator at once
+(`off_site_receipt_missing`) and can later be changed to "received";
+"received" is final and emails the creator (`off_site_receipt_confirmed`).
+The buyer is reminded 3 and 7 days after the work was sent
+(`off_site_receipt_reminder`, queued by the hourly ops run).
+
+**The final delivery cannot be approved, so the commission cannot be
+completed, while any receipt on it is unanswered or "not received".**
+Receipts of an earlier final delivery that was replaced do not count.
+Milestone approvals and cancellations are not blocked.
+
+**Escalation.** Ten days after the work was sent, an unconfirmed receipt on
+an active commission appears in the ops email (`off_site_receipt_overdue`)
+daily until it is resolved.
+
+**Fix.** Read the chat and ask both people. If the buyer confirms in the
+chat, nothing more is needed. If they confirm some other way (to support,
+by email), an administrator records it on the commission's admin page:
+**Record as received**, with a note of 10 to 500 characters saying how it
+was confirmed. That is written into the chat as "Made for Stream recorded
+the work for … as received. Note: …" and unblocks the approval. If the work
+really never arrived, the creator sends it again; if the buyer stops
+responding altogether, use the non-response process
+([`REQ-003`](request-lifecycle.md)).
+
+**Money impact.** The final payment and completion wait on the answer.
+
+---
+
 ## Known gaps
 
 - **A hold is not applied automatically when a payment dispute opens.** An
@@ -445,8 +512,8 @@ the migration must be applied before the website is merged.
   added to `public.list_commission_image_paths()`. Listing images have
   their own rule: [`LST-006`](../listings/listings.md).
 - **Work sent off site is recorded only if the creator says so.** Nothing
-  detects a creator who sends work another way and leaves the box alone,
-  and nothing asks the buyer to confirm that it arrived (`MIL-007`).
+  detects a creator who sends work another way and leaves the box alone.
+  When the box is ticked, the buyer must confirm receipt (`MIL-008`).
 - **A record of off-site delivery cannot be corrected or withdrawn** once
   submitted, even if the creator ticked the wrong way.
 - **Milestone preview images are watermarked in the creator's browser.** That

@@ -261,6 +261,13 @@ Display only; nothing is stored differently and no failure path was added.
 - **An automatic line in the middle** was caused by neither the buyer nor
   the creator (an admin, or no sender).
 - **Admins** see every line on the left, as they do messages.
+- **Automatic lines** are rounded boxes rather than pills (2026-10-17), so
+  a line that wraps keeps its padding; on a person's side the text is
+  left-aligned, in the middle it is centred. Wording after a title ("…:
+  sketches. The creator can continue …") is named too.
+- **Work sent off site** is confirmed above the chat, not in it
+  ([`MIL-008`](../requests/milestones.md#mil-008--the-buyer-has-not-confirmed-work-sent-off-site));
+  the answers appear in the chat as automatic lines on the buyer's side.
 - **Names (2026-10-16).** Automatic lines are stored as "The creator …",
   "… by the buyer", "… for buyer review". On screen the wording before the
   first ": " names the people instead ("@meowington sent a project change

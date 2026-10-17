@@ -53,7 +53,10 @@ export const validateDeliveryFiles = (
   return null;
 };
 
-// Storage keys take a limited set of characters; the name is kept readable.
+// Storage keys take a limited set of characters, so a name keeps only
+// letters, digits, ".", "-" and "_", with spaces turned into underscores:
+// "meowington 222222222 updated deliverables.zip" becomes
+// "meowington_222222222_updated_deliverables.zip".
 export const toStorageFileName = (name: string): string => {
   const clean = name
     .normalize("NFKD")
@@ -62,6 +65,21 @@ export const toStorageFileName = (name: string): string => {
     .replace(/\s+/g, "_");
 
   return clean.length > 0 ? clean.slice(-120) : "file";
+};
+
+// The stored name: the clean name with a unique id before the extension
+// ("pack_3f9a1c2b7d4e.zip"), so two files with the same name never meet in
+// storage.
+export const toUniqueStorageFileName = (
+  name: string,
+  id: string = crypto.randomUUID().replace(/-/g, "").slice(0, 12),
+): string => {
+  const clean = toStorageFileName(name);
+  const dot = clean.lastIndexOf(".");
+  const base = dot > 0 ? clean.slice(0, dot) : clean;
+  const extension = dot > 0 ? clean.slice(dot) : "";
+
+  return `${base.slice(0, 100)}_${id}${extension}`;
 };
 
 // The name the person sees: the last part of the stored path.
@@ -91,7 +109,7 @@ export const uploadDeliveryFile = async (input: {
   agreementId: string;
   file: File;
 }): Promise<string> => {
-  const path = `${input.agreementId}/${crypto.randomUUID()}/${toStorageFileName(input.file.name)}`;
+  const path = `${input.agreementId}/${toUniqueStorageFileName(input.file.name)}`;
 
   const { error } = await supabase.storage
     .from(DELIVERY_FILES_BUCKET)

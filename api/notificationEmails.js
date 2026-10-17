@@ -382,6 +382,45 @@ export const NOTIFICATION_EMAILS = {
     note: p.reason,
     cta: "View commission",
   }),
+  // Work sent outside Made for Stream (20261016_166). `p.subject` is
+  // "the final delivery (Final files)" or "milestone 2 (coloured)".
+  off_site_receipt_requested: (t, p, n) => ({
+    subject: `Action needed: confirm you received the work for "${t}"`,
+    title: "Did the work arrive?",
+    lines: [
+      `${n.Creator} says they sent the work for ${p.subject || "your commission"} on "${t}" outside Made for Stream${p.methods ? `, by ${p.methods}` : ""}.`,
+      "Please open the commission and confirm in the chat whether it arrived. The commission cannot be completed until you do.",
+    ],
+    cta: "Confirm receipt",
+  }),
+  off_site_receipt_reminder: (t, p, n) => ({
+    subject: `Reminder: confirm you received the work for "${t}"`,
+    title: "Please confirm the work arrived",
+    lines: [
+      `${n.Creator} sent the work for ${p.subject || "your commission"} on "${t}" outside Made for Stream, and the confirmation has been waiting ${waited(p)}.`,
+      "Open the commission and say in the chat whether it arrived. If it has not, say so and the creator will be told.",
+    ],
+    cta: "Confirm receipt",
+  }),
+  off_site_receipt_confirmed: (t, p, n) => ({
+    subject: `Received: your work for "${t}"`,
+    title: "The work arrived",
+    lines: [
+      p.recorded_by_admin
+        ? `Made for Stream recorded the work for ${p.subject || "the commission"} on "${t}" as received. The note is in the chat.`
+        : `${n.Buyer} confirmed receiving the work for ${p.subject || "the commission"} on "${t}" that you sent outside Made for Stream.`,
+    ],
+    cta: "View commission",
+  }),
+  off_site_receipt_missing: (t, p, n) => ({
+    subject: `Action needed: the work for "${t}" has not arrived`,
+    title: "The work has not arrived",
+    lines: [
+      `${n.Buyer} says the work for ${p.subject || "the commission"} on "${t}", sent outside Made for Stream, has not arrived.`,
+      "Send it again, or deliver it through the commission page, and say so in the chat. The commission cannot be completed until they confirm it arrived.",
+    ],
+    cta: "Open commission",
+  }),
   request_completed: (t) => ({
     subject: `Completed: "${t}"`,
     title: "This commission is complete",

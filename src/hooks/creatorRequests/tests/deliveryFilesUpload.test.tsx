@@ -65,7 +65,7 @@ describe("a final delivery with uploaded files", () => {
     expect(mocks.upload).toHaveBeenCalledTimes(2);
 
     const [firstPath, , firstOptions] = mocks.upload.mock.calls[0];
-    expect(firstPath).toMatch(/^agreement-1\/[0-9a-f-]{36}\/Emote_Pack_final.zip$/);
+    expect(firstPath).toMatch(/^agreement-1\/Emote_Pack_final_[0-9a-f]{12}\.zip$/);
     expect(firstOptions).toEqual({ contentType: "application/zip", upsert: false });
     expect(mocks.upload.mock.calls[1][2]).toEqual({
       contentType: "application/octet-stream",

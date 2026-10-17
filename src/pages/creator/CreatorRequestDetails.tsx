@@ -837,6 +837,13 @@ const CreatorRequestDetails = () => {
               {(close) => (
                 <ListingRequestFinalDeliveryBuilder
                   storageUsage={storageUsage ?? null}
+                  zipBaseName={[
+                    myProfile?.handle ?? myProfile?.display_name,
+                    snapshot?.title,
+                    "deliverables",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   requestStatus={request.status}
                   agreement={agreement}
                   isPending={createFinalDeliveryMutation.isPending}

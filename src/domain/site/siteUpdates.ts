@@ -30,12 +30,27 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.5.01";
+export const siteVersion = "V0.6.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.6.00",
+    date: "2026-10-17",
+    title: "Confirming work sent off site",
+    changes: [
+      "When a creator says work was also sent outside Made for Stream, the buyer is asked, above the commission's chat, whether it arrived.",
+      "The buyer's answer is written into the chat, and the creator is emailed either way.",
+      "A commission cannot be completed until the buyer confirms that work sent off site arrived.",
+      "Buyers are reminded by email 3 and 7 days after the work was sent, if they have not answered.",
+      "A zip made on the final delivery form is named after the creator and the commission, for example \"meowington_Emote_Pack_deliverables.zip\".",
+      "Uploaded file names use underscores instead of spaces, and each one gets a short unique code so two files with the same name never clash.",
+      "Automatic lines in the chat have more room when they run over several lines.",
+      "Automatic lines now name the people throughout, including after a title.",
+    ],
+  },
   {
     version: "V0.5.01",
     date: "2026-10-16",
