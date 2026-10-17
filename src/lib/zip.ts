@@ -139,3 +139,58 @@ export const createZip = async (entries: ZipEntry[]): Promise<Blob> => {
     type: "application/zip",
   });
 };
+
+export type ZipListing = {
+  names: string[];
+  // A password-protected entry: its name is readable, its contents are not.
+  encrypted: boolean;
+};
+
+// The paths inside a zip, read from its central directory at the end of
+// the file, without unpacking anything. Null when the file is not a zip
+// this can read (damaged, or a zip64 archive).
+export const listZipEntryNames = async (blob: Blob): Promise<ZipListing | null> => {
+  const tailStart = Math.max(0, blob.size - (22 + 0xffff));
+  const tail = new Uint8Array(await blob.slice(tailStart).arrayBuffer());
+  const tailView = new DataView(tail.buffer);
+
+  let end = -1;
+  for (let i = tail.length - 22; i >= 0; i -= 1) {
+    if (tailView.getUint32(i, true) === 0x06054b50) {
+      end = i;
+      break;
+    }
+  }
+
+  if (end < 0) return null;
+
+  const count = tailView.getUint16(end + 10, true);
+  const size = tailView.getUint32(end + 12, true);
+  const offset = tailView.getUint32(end + 16, true);
+
+  if (count === 0xffff || size === 0xffffffff || offset === 0xffffffff || offset + size > blob.size) {
+    return null;
+  }
+
+  const directory = new Uint8Array(await blob.slice(offset, offset + size).arrayBuffer());
+  const view = new DataView(directory.buffer);
+  const decoder = new TextDecoder();
+  const names: string[] = [];
+  let encrypted = false;
+  let at = 0;
+
+  for (let i = 0; i < count; i += 1) {
+    if (at + 46 > directory.length || view.getUint32(at, true) !== 0x02014b50) return null;
+
+    const flags = view.getUint16(at + 8, true);
+    const nameLength = view.getUint16(at + 28, true);
+    const extraLength = view.getUint16(at + 30, true);
+    const commentLength = view.getUint16(at + 32, true);
+
+    encrypted ||= (flags & 1) === 1;
+    names.push(decoder.decode(directory.slice(at + 46, at + 46 + nameLength)));
+    at += 46 + nameLength + extraLength + commentLength;
+  }
+
+  return { names, encrypted };
+};

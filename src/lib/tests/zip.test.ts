@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { crc32, createZip } from "../zip";
+import { crc32, createZip, listZipEntryNames } from "../zip";
 
 const text = (value: string) => new TextEncoder().encode(value);
 
@@ -74,5 +74,23 @@ describe("zip", () => {
     expect(entries[1].method).toBe(0);
     expect(new TextDecoder().decode(entries[1].data)).toBe("png bytes");
     expect(zip.size).toBeLessThan(source.length);
+  });
+});
+
+describe("reading the names inside a zip", () => {
+  it("lists every path without unpacking", async () => {
+    const zip = await createZip([
+      { name: "Pack/emote.png", data: new Blob([text("a")]) },
+      { name: "Pack/tools/setup.exe", data: new Blob([text("b")]) },
+    ]);
+
+    expect(await listZipEntryNames(zip)).toEqual({
+      names: ["Pack/emote.png", "Pack/tools/setup.exe"],
+      encrypted: false,
+    });
+  });
+
+  it("gives up on something that is not a zip", async () => {
+    expect(await listZipEntryNames(new Blob([text("not a zip at all")]))).toBeNull();
   });
 });

@@ -6,9 +6,14 @@ export const privacyVersion = "2026-10-16";
 // test fails if the two versions differ.
 export const privacyChanges = {
   version: "2026-10-16",
+  // One change per line: never join separate changes into one sentence.
   items: [
-    "Files a creator uploads with a final delivery are stored privately. Only the creator, the buyer (once nothing is owed for the final release) and Made for Stream's administrators can open them. They are kept while the commission is open and for 180 days after it closes, then deleted, in the same way as commission images.",
-    "Earlier in October (versions 2026-10-12 and 2026-10-12-2): images uploaded to a commission, and the images of a listing that is no longer offered, are deleted 180 days after the commission closes or the listing stops being offered; we record failed actions and page-load errors for up to 90 days to fix faults and notice misuse; and if you ask to be shown what is new on the site, we record that choice.",
+    "Files a creator uploads with a final delivery are stored privately. Only the creator, the buyer (once nothing is owed for the final release) and Made for Stream's administrators can open them.",
+    "Delivered files are kept while the commission is open and for 180 days after it closes, then deleted, in the same way as commission images.",
+    "Earlier change (version 2026-10-12): images uploaded to a commission are kept while it is open and for 180 days after it closes, then deleted.",
+    "Earlier change (version 2026-10-12): we record failed actions and page-load errors, for up to 90 days, to fix faults and notice misuse.",
+    "Earlier change (version 2026-10-12-2): the preview images of a listing that is no longer offered are deleted 180 days after it stops being offered, and the listing returns to a draft.",
+    "Earlier change (version 2026-10-12-2): if you ask to be shown what is new on the site after an update, we record that choice and the last update you were shown.",
   ],
 } as const;
 

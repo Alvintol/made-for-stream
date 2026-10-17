@@ -151,4 +151,5 @@ plans first needs the Fee Schedule change described above.
   a download that is abandoned still counts, and other traffic (images, the
   API) is not counted at all.
 - **Uploads are not resumable**, so the 2 GB per file stays until they are.
-- **Delivery files are not scanned for viruses.**
+- **Delivery files are not scanned for viruses.** Only listed file types
+  can be uploaded (`FIN-005`); scanning is planned as a paid service.
