@@ -5,6 +5,8 @@ import { supabase } from "../../lib/supabaseClient";
 export type OffSiteReceiptRow = {
   id: string;
   listing_request_id: string;
+  // Set for a final delivery's receipt; empty for a milestone's.
+  final_delivery_id: string | null;
   subject: string;
   methods: string[];
   other: string | null;
@@ -22,10 +24,11 @@ const receiptsKey = (listingRequestId: string) => ["offSiteReceipts", listingReq
 export const useOffSiteReceipts = (listingRequestId: string) =>
   useQuery({
     queryKey: receiptsKey(listingRequestId),
+    enabled: Boolean(listingRequestId),
     queryFn: async (): Promise<OffSiteReceiptRow[]> => {
       const { data, error } = await supabase
         .from("off_site_delivery_receipts")
-        .select("id, listing_request_id, subject, methods, other, status, sent_at, answered_at, admin_note")
+        .select("id, listing_request_id, final_delivery_id, subject, methods, other, status, sent_at, answered_at, admin_note")
         .eq("listing_request_id", listingRequestId)
         .order("sent_at", { ascending: true });
 

@@ -8,6 +8,7 @@ import {
   type OffSiteReceiptRow,
 } from "../../../hooks/conversations/useOffSiteReceipts";
 import { hasErrorMessage } from "../../../lib/errorMessage";
+import { OFF_SITE_RECEIPTS_TARGET } from "../workspace/focusMessages";
 
 type OffSiteReceiptPanelProps = {
   requestId: string;
@@ -18,6 +19,8 @@ type OffSiteReceiptPanelProps = {
 
 const classes = {
   wrap: "space-y-3",
+  // Clears the sticky header and tabs when the approval button jumps here.
+  anchor: "space-y-3 scroll-mt-40 outline-none",
   card: "card space-y-3 border-amber-200 p-5",
   title: "font-display text-sm font-extrabold tracking-tight text-zinc-900",
   text: "text-sm leading-6 text-zinc-700",
@@ -50,7 +53,7 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
     `${creatorName} says the work for ${receipt.subject} was sent outside Made for Stream, by: ${describeOffSiteDelivery(receipt.methods, receipt.other) ?? "another way"}.`;
 
   return (
-    <div className={classes.wrap}>
+    <div className={classes.anchor} id={OFF_SITE_RECEIPTS_TARGET} tabIndex={-1}>
       {open.map((receipt) => (
         <section className={classes.card} key={receipt.id} aria-label="Work sent outside Made for Stream">
           <h3 className={classes.title}>
@@ -92,8 +95,8 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
               </div>
 
               <p className={classes.hint}>
-                Your answer is written into the chat. The commission cannot be completed until
-                you confirm the work arrived.
+                Confirm in the chat that you received the work sent outside Made for Stream before
+                approving the final delivery. Your answer is written into the chat.
               </p>
             </>
           )}

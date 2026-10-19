@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { RequestWorkspaceSectionId } from "../../../domain/listings/requestWorkspace";
+import { prefersReducedMotion } from "../../../lib/motion";
+import { FOCUS_MESSAGES_EVENT } from "./focusMessages";
 
 export type WorkspaceMobileTab = "messages" | "project";
 
@@ -21,6 +23,30 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const focusSection = useCallback((id: RequestWorkspaceSectionId) => {
     setMobileTab("project");
     setFocusRequest((current) => ({ id, nonce: (current?.nonce ?? 0) + 1 }));
+  }, []);
+
+  // focusWorkspaceMessages(): show the Messages tab, then bring the element
+  // into view once it is visible.
+  useEffect(() => {
+    const onFocusMessages = (event: Event) => {
+      const targetId = (event as CustomEvent<string>).detail;
+
+      setMobileTab("messages");
+
+      requestAnimationFrame(() => {
+        const target = document.getElementById(targetId);
+
+        target?.scrollIntoView?.({
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+          block: "center",
+        });
+        target?.focus({ preventScroll: true });
+      });
+    };
+
+    window.addEventListener(FOCUS_MESSAGES_EVENT, onFocusMessages);
+
+    return () => window.removeEventListener(FOCUS_MESSAGES_EVENT, onFocusMessages);
   }, []);
 
   const value = useMemo(

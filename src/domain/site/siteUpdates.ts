@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.6.00";
+export const siteVersion = "V0.6.01";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.6.01",
+    date: "2026-10-17",
+    title: "Easier final approval",
+    changes: [
+      "If work sent off site still needs confirming, approving the final delivery takes you to the confirmation above the chat instead of showing an error.",
+      "The confirmation box repeats why it is needed: work sent outside Made for Stream must be confirmed before the final delivery is approved.",
+      "Once a project is complete, the final delivery is listed first in the project details.",
+    ],
+  },
   {
     version: "V0.6.00",
     date: "2026-10-17",
