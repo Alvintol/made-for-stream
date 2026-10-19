@@ -48,6 +48,10 @@ vi.mock(
 );
 
 // The buyer's own profile names them beside the agreement's checklist lines.
+vi.mock("../../hooks/conversations/useOffSiteReceipts", () => ({
+  useOffSiteReceipts: () => ({ data: [] }),
+}));
+
 vi.mock("../../hooks/profile/useMyProfile", () => ({
   useMyProfile: () => ({ data: { handle: "pastelfox", display_name: "Pastel Fox" } }),
 }));

@@ -11,6 +11,7 @@ import { useState } from 'react';
 
 import { getAgreementPersonName } from '../../domain/listings/listingRequestAgreements';
 import { useMyProfile } from '../../hooks/profile/useMyProfile';
+import { useOffSiteReceipts } from '../../hooks/conversations/useOffSiteReceipts';
 import ListingRequestAgreementBuyerActions from '../../components/listingRequests/agreements/ListingRequestAgreementBuyerActions';
 import ListingRequestAgreementSummary from '../../components/listingRequests/agreements/ListingRequestAgreementSummary';
 import ListingRequestAgreementWorkReadinessCard from '../../components/listingRequests/agreements/ListingRequestAgreementWorkReadinessCard';
@@ -111,6 +112,7 @@ const BuyerRequestDetails = () => {
   const respondAgreementMutation = useRespondListingRequestAgreement();
   // The buyer's own name, for the lines of an agreement that are theirs to do.
   const { data: myProfile } = useMyProfile();
+  const { data: offSiteReceipts = [] } = useOffSiteReceipts(id ?? "");
   const buyerName = getAgreementPersonName(myProfile, "The buyer");
   const respondChangeOrderMutation =
     useRespondListingRequestChangeOrder();
@@ -218,6 +220,15 @@ const BuyerRequestDetails = () => {
     getListingRequestFinalDeliveryApprovalBlockedReason(
       buyerVisibleAgreement
     );
+
+  // The same rule as require_off_site_receipts_before_approval: receipts of
+  // a replaced final delivery do not hold up this one.
+  const offSiteReceiptPending = offSiteReceipts.some(
+    (receipt) =>
+      receipt.status !== "received" &&
+      (!receipt.final_delivery_id ||
+        receipt.final_delivery_id === activeSubmittedFinalDelivery?.id)
+  );
 
   const canApproveFinalDelivery =
     activeSubmittedFinalDelivery
@@ -559,6 +570,7 @@ const BuyerRequestDetails = () => {
             finalDelivery={activeSubmittedFinalDelivery}
             canApprove={canApproveFinalDelivery}
             approvalBlockedReason={finalDeliveryApprovalBlockedReason}
+            offSiteReceiptPending={offSiteReceiptPending}
             isPending={respondFinalDeliveryMutation.isPending}
             error={respondFinalDeliveryMutation.error}
             onApprove={(finalDeliveryId) =>

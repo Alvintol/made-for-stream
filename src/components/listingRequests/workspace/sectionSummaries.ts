@@ -142,7 +142,9 @@ export const orderSections = (
 export const getSectionOrder = (requestStatus: string): RequestWorkspaceSectionId[] =>
   requestStatus === "submitted"
     ? ["request", "snapshot", "agreement", "payments", "milestones", "delivery", "changeOrders", "progress"]
-    : ["milestones", "delivery", "payments", "changeOrders", "progress", "agreement", "request", "snapshot"];
+    : requestStatus === "completed"
+      ? ["delivery", "milestones", "payments", "changeOrders", "progress", "agreement", "request", "snapshot"]
+      : ["milestones", "delivery", "payments", "changeOrders", "progress", "agreement", "request", "snapshot"];
 
 export const workspaceDate = (value: string): string => {
   const date = new Date(value);

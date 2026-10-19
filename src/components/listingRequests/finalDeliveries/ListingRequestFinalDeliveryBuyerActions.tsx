@@ -2,6 +2,10 @@ import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { canBuyerRespondToListingRequestFinalDelivery } from "../../../domain/listings/listingRequestFinalDeliveries";
+import {
+  focusWorkspaceMessages,
+  OFF_SITE_RECEIPTS_TARGET,
+} from "../workspace/focusMessages";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
 
 type BuyerFinalDelivery = Pick<
@@ -18,6 +22,9 @@ type ListingRequestFinalDeliveryBuyerActionsProps = {
   finalDelivery: BuyerFinalDelivery | null;
   canApprove: boolean;
   approvalBlockedReason?: string | null;
+  // Work was sent off site and the buyer has not confirmed it arrived
+  // (MIL-008): approving takes them to the confirmation instead.
+  offSiteReceiptPending?: boolean;
   isPending?: boolean;
   error?: unknown;
   onApprove: (
@@ -59,6 +66,10 @@ const classes = {
     "btnDangerOutline",
 } as const;
 
+// The database's own refusal (require_off_site_receipts_before_approval).
+const OFF_SITE_RECEIPT_MESSAGE =
+  "Confirm in the chat that you received the work sent outside Made for Stream before approving the final delivery.";
+
 const getErrorMessage = (error: unknown): string =>
   hasErrorMessage(error)
     ? error.message
@@ -68,6 +79,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
   finalDelivery,
   canApprove,
   approvalBlockedReason,
+  offSiteReceiptPending = false,
   isPending = false,
   error,
   onApprove,
@@ -98,8 +110,23 @@ const ListingRequestFinalDeliveryBuyerActions = ({
     ? getErrorMessage(error)
     : null;
 
+  // The database refuses approval for the same reason; either way the
+  // buyer is sent to the confirmation above the chat.
+  const needsOffSiteConfirmation =
+    offSiteReceiptPending || errorMessage === OFF_SITE_RECEIPT_MESSAGE;
+
+  const goToOffSiteConfirmation = () => {
+    setResponseMode("idle");
+    focusWorkspaceMessages(OFF_SITE_RECEIPTS_TARGET);
+  };
+
   const handleStartApproval = () => {
     if (!canApprove) {
+      return;
+    }
+
+    if (needsOffSiteConfirmation) {
+      goToOffSiteConfirmation();
       return;
     }
 
@@ -108,6 +135,11 @@ const ListingRequestFinalDeliveryBuyerActions = ({
   };
 
   const handleApprove = async () => {
+    if (needsOffSiteConfirmation) {
+      goToOffSiteConfirmation();
+      return;
+    }
+
     try {
       await onApprove(finalDelivery.id);
     } catch {
@@ -171,7 +203,20 @@ const ListingRequestFinalDeliveryBuyerActions = ({
           </div>
         )}
 
-        {errorMessage && (
+        {needsOffSiteConfirmation && (
+          <div className={classes.warning}>
+            <p>{OFF_SITE_RECEIPT_MESSAGE}</p>
+            <button
+              className={`${classes.btnOutline} mt-3`}
+              type="button"
+              onClick={goToOffSiteConfirmation}
+            >
+              Go to the confirmation
+            </button>
+          </div>
+        )}
+
+        {errorMessage && errorMessage !== OFF_SITE_RECEIPT_MESSAGE && (
           <div className={classes.error}>
             {errorMessage}
           </div>

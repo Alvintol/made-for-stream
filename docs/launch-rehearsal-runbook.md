@@ -95,7 +95,22 @@ the ids you used, so "has this been rehearsed" has an answer.
   `4242` test card is American), so `TAX-002` will email ops within the
   hour: expected for that card, and the first real run of that alert. Use
   `4000 0012 4000 0000` for this buyer from now on.
-- **Next: final delivery and completion.** There is no cancellation warning.
+- **Final delivery and completion, done for real on 2026-10-16/17
+  (confirmed in the database).** meowington submitted the final delivery at
+  23:57 UTC with a 6.8 MB `delivery.zip` and "Provided off site" (another
+  way). After migration `20261016_166` the buyer was emailed to confirm
+  (00:14, `sent`). Approving first was refused three times (logged in
+  `app_failure_events`, as designed). The buyer confirmed receipt at 07:56,
+  downloaded the zip (logged, 6,831,759 bytes) and approved; the commission
+  is `completed`, the chat closed, `off_site_receipt_confirmed` and both
+  `request_completed` emails `sent`, and `commission_image_retention` has
+  its row, deleting 2 preview images and the zip on 2027-04-15. **The CAD
+  run is complete.** Not tried in the browser: "It hasn't arrived".
+- **Found on that step, fixed on `feat/receipt-jump-and-completed-order`:**
+  the approval refusal only showed an error; it now takes the buyer to the
+  confirmation box on the Messages tab. A completed project lists the final
+  delivery first.
+- There is no cancellation warning.
 - **Rehearsed as roll-back dry runs on 2026-10-09, nothing kept** (the real
   steps are still to do): submitting milestone 2 first is refused
   (`MIL-001`); milestone 1 submit and approve creates one payment, 60.00 CAD,

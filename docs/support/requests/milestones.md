@@ -484,6 +484,14 @@ completed, while any receipt on it is unanswered or "not received".**
 Receipts of an earlier final delivery that was replaced do not count.
 Milestone approvals and cancellations are not blocked.
 
+**On screen (2026-10-17).** While a receipt is waiting, the buyer's final
+delivery panel shows the refusal sentence with **Go to the confirmation**,
+and **Approve final delivery** does the same instead of approving: the page
+switches to the Messages tab and brings the box into view
+(`focusWorkspaceMessages`, `src/components/listingRequests/workspace/focusMessages.ts`).
+If the page was out of date and the database refused the approval, the
+same happens.
+
 **Escalation.** Ten days after the work was sent, an unconfirmed receipt on
 an active commission appears in the ops email (`off_site_receipt_overdue`)
 daily until it is resolved.
