@@ -24,6 +24,7 @@ import {
 import { MILESTONE_PREVIEW_MAX_IMAGES } from "../../../lib/listings/milestonePreviewImage";
 import type { SubmitListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useSubmitListingRequestMilestone";
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type SubmittableMilestone = Pick<
   ListingRequestMilestoneRow,
@@ -456,6 +457,7 @@ const ListingRequestMilestoneSubmissionForm = ({
             Milestone delivery links
           </label>
 
+          <KeptPlaceholder>
           <textarea
             className={classes.linksTextarea}
             disabled={isPending}
@@ -471,6 +473,7 @@ const ListingRequestMilestoneSubmissionForm = ({
               "https://example.com/review-files\nhttps://example.com/source-files"
             }
           />
+          </KeptPlaceholder>
 
           <p className={classes.help}>
             Optional. Add one link per line, up to

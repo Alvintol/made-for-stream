@@ -5,6 +5,7 @@ import {
   useSetCommissionDisputeHold,
 } from "../../../hooks/admin/useCommissionDisputeHold";
 import { hasErrorMessage } from "../../../lib/errorMessage";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type AdminDisputeHoldPanelProps = {
   requestId: string;
@@ -88,6 +89,7 @@ const AdminDisputeHoldPanel = ({ requestId }: AdminDisputeHoldPanelProps) => {
                 Why is this commission in dispute?
               </label>
 
+              <KeptPlaceholder>
               <input
                 className={classes.input}
                 id="dispute-hold-reason"
@@ -97,6 +99,7 @@ const AdminDisputeHoldPanel = ({ requestId }: AdminDisputeHoldPanelProps) => {
                 value={reason}
                 onChange={(event) => setReason(event.currentTarget.value)}
               />
+              </KeptPlaceholder>
             </div>
 
             <div className={classes.actions}>

@@ -22,6 +22,7 @@ import {
 import CollapsibleSection from "../components/ui/CollapsibleSection";
 import CreatorPayoutSettings from "../components/settings/CreatorPayoutSettings";
 import { FadeIn } from "../lib/motion";
+import KeptPlaceholder from "../components/ui/KeptPlaceholder";
 
 const classes = {
   page: "space-y-4",
@@ -519,6 +520,7 @@ const ProfileSettings = () => {
             <div className={classes.grid}>
               <label className={classes.field}>
                 <span className={classes.label}>Handle</span>
+                <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={handle}
@@ -526,11 +528,13 @@ const ProfileSettings = () => {
                   placeholder="your-handle"
                   autoComplete="off"
                 />
+                </KeptPlaceholder>
                 <span className={classes.fieldHelp}>3–25 characters: letters, numbers, _ or -</span>
               </label>
 
               <label className={classes.field}>
                 <span className={classes.label}>Display name</span>
+                <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={displayName}
@@ -538,11 +542,13 @@ const ProfileSettings = () => {
                   placeholder="Your name"
                   autoComplete="name"
                 />
+                </KeptPlaceholder>
                 <span className={classes.fieldHelp}>Required. Shown publicly, 2–50 characters.</span>
               </label>
 
               <label className={classes.fieldWide}>
                 <span className={classes.label}>Bio</span>
+                <KeptPlaceholder>
                 <textarea
                   className={classes.textarea}
                   rows={3}
@@ -550,6 +556,7 @@ const ProfileSettings = () => {
                   onChange={(event) => setBio(event.currentTarget.value)}
                   placeholder="What do you make, what do you stream, and what are you looking for on Made for Stream?"
                 />
+                </KeptPlaceholder>
               </label>
             </div>
 

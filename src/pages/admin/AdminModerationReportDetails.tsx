@@ -19,6 +19,7 @@ import { useAdminModerationReport } from "../../hooks/admin/useAdminModerationRe
 import { useUpdateModerationReportStatus } from "../../hooks/admin/useUpdateModerationReportStatus";
 import { useAdminHideListing, useAdminRestoreListing } from '../../hooks/admin/useAdminListingModerationActions';
 import { useAdminClearProfileReviewFlag, useAdminMarkProfileUnderReview } from '../../hooks/admin/useAdminProfileModerationActions';
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
   page: "space-y-6",
@@ -493,6 +494,7 @@ const AdminModerationReportDetails = () => {
         Internal moderation action note
       </label>
 
+      <KeptPlaceholder>
       <textarea
         id="moderationActionNote"
         className={classes.actionTextarea}
@@ -501,6 +503,7 @@ const AdminModerationReportDetails = () => {
         placeholder="Optional. This note is stored with the moderation action history."
         maxLength={1000}
       />
+      </KeptPlaceholder>
 
       <div className={classes.hint}>
         {moderationActionNoteTrimmed.length}/1000 characters.
@@ -1240,6 +1243,7 @@ const AdminModerationReportDetails = () => {
                   New reporter-visible update
                 </label>
 
+                <KeptPlaceholder>
                 <textarea
                   id="reporterStatusMessage"
                   className={classes.textarea}
@@ -1250,6 +1254,7 @@ const AdminModerationReportDetails = () => {
                   placeholder="Optional. This message is visible to the user who submitted the report."
                   maxLength={1000}
                 />
+                </KeptPlaceholder>
 
                 <div className={classes.hint}>
                   This message is visible to the reporter in My Reports. Do not include internal
@@ -1266,6 +1271,7 @@ const AdminModerationReportDetails = () => {
                   New internal admin note
                 </label>
 
+                <KeptPlaceholder>
                 <textarea
                   id="adminNotes"
                   className={classes.textarea}
@@ -1274,6 +1280,7 @@ const AdminModerationReportDetails = () => {
                   placeholder="Optional. This note is logged in the admin update history."
                   maxLength={2000}
                 />
+                </KeptPlaceholder>
 
                 <div className={classes.hint}>
                   Internal notes are admin-only and are not shown to the reporter.

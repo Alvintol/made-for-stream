@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { canBuyerRespondToListingRequestChangeOrder } from "../../../domain/listings/listingRequestChangeOrders";
 import type { ListingRequestChangeOrderRow } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type BuyerChangeOrder = Pick<
   ListingRequestChangeOrderRow,
@@ -143,6 +144,7 @@ const ListingRequestChangeOrderBuyerActions = ({
               Decline reason
             </label>
 
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="change-order-decline-reason"
@@ -155,6 +157,7 @@ const ListingRequestChangeOrderBuyerActions = ({
               }
               placeholder="Optionally explain why you are declining these changes."
             />
+            </KeptPlaceholder>
 
             <p className={classes.help}>
               {declineReason.length}/2000 characters.

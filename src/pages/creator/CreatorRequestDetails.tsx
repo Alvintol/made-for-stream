@@ -85,6 +85,7 @@ import ListingRequestCancelBeforePaymentAction from '../../components/listingReq
 import ListingRequestCancellationProposalPanel from '../../components/listingRequests/core/ListingRequestCancellationProposalPanel';
 import NoticeAndClosurePanel from '../../components/listingRequests/core/NoticeAndClosurePanel';
 import CancellationWarningPanel from '../../components/listingRequests/core/CancellationWarningPanel';
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
   page: "space-y-6",
@@ -659,6 +660,7 @@ const CreatorRequestDetails = () => {
                     Decline reason
                   </label>
 
+                  <KeptPlaceholder>
                   <textarea
                     id="declineReason"
                     className={classes.textarea}
@@ -670,6 +672,7 @@ const CreatorRequestDetails = () => {
                     placeholder="Explain why this commission request is being declined for audit and client clarity."
                     maxLength={1000}
                   />
+                  </KeptPlaceholder>
 
                   <div className={classes.hint}>
                     {trimmedDeclineReason.length}/1000 characters. Minimum 10 characters required.

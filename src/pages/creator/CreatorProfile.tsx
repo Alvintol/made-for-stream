@@ -10,6 +10,7 @@ import { useCreateCreatorInquiryConversation } from '../../hooks/conversations/u
 import { useAuth } from '../../providers/AuthProvider';
 import { useSubmitProfileModerationReport } from '../../hooks/moderation/useSubmitProfileModerationReport';
 import { ModerationReportReasonCode, moderationReportReasonOptions } from '../../domain/moderation/moderationReports';
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
   container: "space-y-8",
@@ -392,6 +393,7 @@ const CreatorProfile = () => {
                       Message
                     </label>
 
+                    <KeptPlaceholder>
                     <textarea
                       id="creatorInquiryMessage"
                       className={classes.textarea}
@@ -401,6 +403,7 @@ const CreatorProfile = () => {
                       maxLength={2000}
                       disabled={createInquiryMutation.isPending}
                     />
+                    </KeptPlaceholder>
 
                     <div className={classes.hint}>
                       {inquiryMessageTrimmed.length}/2000 characters. Minimum 10.
@@ -579,6 +582,7 @@ const CreatorProfile = () => {
                     Details
                   </label>
 
+                  <KeptPlaceholder>
                   <textarea
                     id="profileReportDetails"
                     className={classes.textarea}
@@ -588,6 +592,7 @@ const CreatorProfile = () => {
                     maxLength={2000}
                     disabled={submitProfileReport.isPending}
                   />
+                  </KeptPlaceholder>
 
                   <div className={classes.hint}>
                     {profileReportDetailsTrimmed.length}/2000 characters.

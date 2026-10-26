@@ -19,6 +19,7 @@ import type { CreateListingRequestAgreementInput } from '../../../hooks/creatorR
 import { getInstalmentFloorMessage } from '../../../domain/payments/supportedCurrencies';
 
 import ListingRequestMilestonePlanEditor from '../milestones/ListingRequestMilestonePlanEditor';
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 type ListingRequestAgreementBuilderProps = {
   request: Pick<ListingRequestRow, "id" | "status"> | null;
   // The buyer's handle or display name, for the two "what … needs to" boxes.
@@ -519,6 +520,7 @@ const ListingRequestAgreementBuilder = ({
           <label className={classes.label} htmlFor="agreement-scope-summary">
             Scope summary
           </label>
+          <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-scope-summary"
@@ -528,6 +530,7 @@ const ListingRequestAgreementBuilder = ({
               updateField("scopeSummary", event.currentTarget.value)
             }
           />
+          </KeptPlaceholder>
           {validationErrors.scopeSummary && (
             <p className={classes.errorText}>
               {validationErrors.scopeSummary}
@@ -543,6 +546,7 @@ const ListingRequestAgreementBuilder = ({
             >
               Included deliverables
             </label>
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-included-deliverables"
@@ -555,6 +559,7 @@ const ListingRequestAgreementBuilder = ({
                 )
               }
             />
+            </KeptPlaceholder>
             <p className={classes.help}>Add one deliverable per line.</p>
             {validationErrors.includedDeliverablesText && (
               <p className={classes.errorText}>
@@ -567,6 +572,7 @@ const ListingRequestAgreementBuilder = ({
             <label className={classes.label} htmlFor="agreement-checklist">
               Required checklist items
             </label>
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-checklist"
@@ -576,6 +582,7 @@ const ListingRequestAgreementBuilder = ({
                 updateField("checklistText", event.currentTarget.value)
               }
             />
+            </KeptPlaceholder>
             <p className={classes.help}>
               Add one required scope item per line. The agreement shows these as
               &ldquo;Included&rdquo;.
@@ -591,6 +598,7 @@ const ListingRequestAgreementBuilder = ({
             <label className={classes.label} htmlFor="agreement-buyer-provides">
               What {buyerName} needs to provide
             </label>
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-buyer-provides"
@@ -600,6 +608,7 @@ const ListingRequestAgreementBuilder = ({
                 updateField("buyerProvidesText", event.currentTarget.value)
               }
             />
+            </KeptPlaceholder>
             <p className={classes.help}>
               Optional, one per line. Shown as &ldquo;{buyerName} provides&rdquo;.
             </p>
@@ -609,6 +618,7 @@ const ListingRequestAgreementBuilder = ({
             <label className={classes.label} htmlFor="agreement-buyer-approves">
               What {buyerName} needs to approve
             </label>
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-buyer-approves"
@@ -618,6 +628,7 @@ const ListingRequestAgreementBuilder = ({
                 updateField("buyerApprovesText", event.currentTarget.value)
               }
             />
+            </KeptPlaceholder>
             <p className={classes.help}>
               Optional, one per line. Shown as &ldquo;{buyerName} approves&rdquo;.
             </p>
@@ -629,6 +640,7 @@ const ListingRequestAgreementBuilder = ({
             <label className={classes.label} htmlFor="agreement-total-amount">
               Total amount
             </label>
+            <KeptPlaceholder>
             <input
               className={classes.input}
               id="agreement-total-amount"
@@ -641,6 +653,7 @@ const ListingRequestAgreementBuilder = ({
                 updateField("totalAmount", event.currentTarget.value)
               }
             />
+            </KeptPlaceholder>
             {validationErrors.totalAmount && (
               <p className={classes.errorText}>
                 {validationErrors.totalAmount}
@@ -699,6 +712,7 @@ const ListingRequestAgreementBuilder = ({
               >
                 Deposit amount
               </label>
+              <KeptPlaceholder>
               <input
                 className={classes.input}
                 id="agreement-deposit-amount"
@@ -711,6 +725,7 @@ const ListingRequestAgreementBuilder = ({
                   updateField("depositAmount", event.currentTarget.value)
                 }
               />
+              </KeptPlaceholder>
               {validationErrors.depositAmount && (
                 <p className={classes.errorText}>
                   {validationErrors.depositAmount}
@@ -794,6 +809,7 @@ const ListingRequestAgreementBuilder = ({
           <label className={classes.label} htmlFor="agreement-additional-cost">
             Additional cost policy
           </label>
+          <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-additional-cost"
@@ -803,6 +819,7 @@ const ListingRequestAgreementBuilder = ({
               updateField("additionalCostPolicy", event.currentTarget.value)
             }
           />
+          </KeptPlaceholder>
           {validationErrors.additionalCostPolicy && (
             <p className={classes.errorText}>
               {validationErrors.additionalCostPolicy}
@@ -814,6 +831,7 @@ const ListingRequestAgreementBuilder = ({
           <label className={classes.label} htmlFor="agreement-revision-policy">
             Revision policy
           </label>
+          <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-revision-policy"
@@ -823,6 +841,7 @@ const ListingRequestAgreementBuilder = ({
               updateField("revisionPolicy", event.currentTarget.value)
             }
           />
+          </KeptPlaceholder>
           {validationErrors.revisionPolicy && (
             <p className={classes.errorText}>
               {validationErrors.revisionPolicy}

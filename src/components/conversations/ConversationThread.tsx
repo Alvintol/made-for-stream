@@ -33,6 +33,7 @@ import {
 import { useSubmitModerationReport } from "../../hooks/moderation/useSubmitModerationReport";
 import { Collapse, FadeIn, prefersReducedMotion, useStaggerIn } from "../../lib/motion";
 import ActionMenu, { actionMenuItemClasses } from "../ui/ActionMenu";
+import KeptPlaceholder from "../ui/KeptPlaceholder";
 
 export type ConversationThreadConversation = Pick<
   RequestConversationRow,
@@ -727,6 +728,7 @@ const ConversationThread = ({
                   Additional details{isOtherCloseReason ? " *" : ""}
                 </label>
 
+                <KeptPlaceholder>
                 <textarea
                   id="closeDetails"
                   className={classes.textarea}
@@ -739,6 +741,7 @@ const ConversationThread = ({
                   }
                   maxLength={1000}
                 />
+                </KeptPlaceholder>
 
                 <div className={classes.hint}>
                   {closeReasonDetailsTrimmed.length}/1000 characters.
@@ -809,6 +812,7 @@ const ConversationThread = ({
                   Additional details{isOtherReportReason ? " *" : ""}
                 </label>
 
+                <KeptPlaceholder>
                 <textarea
                   id="reportDetails"
                   className={classes.textarea}
@@ -821,6 +825,7 @@ const ConversationThread = ({
                   }
                   maxLength={1000}
                 />
+                </KeptPlaceholder>
 
                 <div className={classes.hint}>
                   {reportReasonDetailsTrimmed.length}/1000 characters.
@@ -1034,6 +1039,7 @@ const ConversationThread = ({
                     Why do you need to send images?
                   </label>
 
+                  <KeptPlaceholder>
                   <textarea
                     id="imageRequestNote"
                     className={classes.textarea}
@@ -1042,6 +1048,7 @@ const ConversationThread = ({
                     placeholder="Optional. Explain what kind of reference images you want to send."
                     maxLength={1000}
                   />
+                  </KeptPlaceholder>
 
                   <div className={classes.hint}>
                     {imageRequestNoteTrimmed.length}/1000 characters.

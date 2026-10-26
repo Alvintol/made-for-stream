@@ -9,6 +9,7 @@ import {
   useListingRequestPayments,
   type ListingRequestPaymentRow,
 } from "../../../hooks/payments/useListingRequestPayments";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 const classes = {
   wrap: "space-y-3",
@@ -109,6 +110,7 @@ const RefundForm = ({ payment }: { payment: ListingRequestPaymentRow }) => {
 
       <label className={classes.field}>
         <span className={classes.label}>Reason</span>
+        <KeptPlaceholder>
         <input
           className={classes.input}
           type="text"
@@ -116,6 +118,7 @@ const RefundForm = ({ payment }: { payment: ListingRequestPaymentRow }) => {
           onChange={(event) => setReason(event.target.value)}
           placeholder="Buyer requested cancellation before work started."
         />
+        </KeptPlaceholder>
       </label>
 
       {payment.creator_tip_cents > 0 && (

@@ -23,6 +23,7 @@ import {
   useSaveDisplayName,
   useSaveMarketingEmails,
 } from "../hooks/settings/useAccountDetails";
+import KeptPlaceholder from "../components/ui/KeptPlaceholder";
 
 const classes = {
   card: "card space-y-4 p-5 hover:shadow-[var(--shadow-md)]",
@@ -330,6 +331,7 @@ const AccountDetailsSettings = () => {
                 <label className={classes.label} htmlFor="account-display-name">
                   Display name
                 </label>
+                <KeptPlaceholder>
                 <input
                   id="account-display-name"
                   className={classes.input}
@@ -344,6 +346,7 @@ const AccountDetailsSettings = () => {
                     setDisplayNameError(null);
                   }}
                 />
+                </KeptPlaceholder>
                 {displayNameError ? (
                   <span id="account-display-name-error" className={classes.fieldError}>
                     {displayNameError}
