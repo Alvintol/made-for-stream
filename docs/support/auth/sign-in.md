@@ -33,6 +33,7 @@ severe here than in a password-based product.
 | "Nothing happens when I click the link" | [`AUTH-003`](#auth-003--link-opened-in-a-different-browser) |
 | "Signing in with Twitch/Google fails" | [`AUTH-005`](#auth-005--oauth-provider-sign-in-failed) |
 | "It says too many requests" | [`AUTH-006`](#auth-006--rate-limited) |
+| "The buttons don't do anything" / "A red box shakes" | [`AUTH-007`](#auth-007--terms-box-not-ticked) |
 
 ---
 
@@ -201,6 +202,34 @@ console, Supabase auth settings, and `APP_ORIGIN`. A domain change breaks all
 three at once.
 
 **Money impact.** None directly.
+
+---
+
+## `AUTH-007` — Terms box not ticked
+
+```yaml
+id: AUTH-007
+tier: 2
+signals:
+  - source: ui
+    match: "Please accept the Terms of Service and Privacy Policy to continue."
+    where: "src/pages/SignIn.tsx, under the agreement box"
+auto_fix: none
+reason_not_automatable: "the person has to tick the box; nothing is wrong"
+```
+
+**What it is (2026-10-26).** The sign-in card lists Twitch and Google,
+then the email link, then the agreement box ("I agree to the Terms of
+Service and the Privacy Policy"). The buttons are never greyed out:
+pressing one without the box ticked sends nothing, and instead the box
+shakes, gets a red ring, takes the focus and shows the sentence above.
+Ticking it clears the ring. Someone with reduced motion turned on gets the
+ring without the shake.
+
+**Fix.** Tell them to tick the box under the email field, then choose a way
+to sign in again. Nothing is recorded until they do.
+
+**Money impact.** None.
 
 ---
 
