@@ -547,3 +547,24 @@
     padding: 0;
   }
 }
+
+/* A control someone tried to skip: a short shake, and a red ring that stays
+   until it is dealt with. The shake is left out for reduced motion. */
+@keyframes attentionShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.needsAttention {
+  animation: attentionShake 0.4s ease-in-out;
+  box-shadow: 0 0 0 2px rgb(220 38 38), 0 0 0 6px rgb(220 38 38 / 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .needsAttention {
+    animation: none;
+  }
+}

@@ -64,26 +64,36 @@ describe("SignIn policy acceptance", () => {
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
   });
 
-  it("disables every sign-in method until the box is checked", () => {
+  it("starts nothing without the box, and makes the box ask for attention instead", () => {
     renderSignIn();
 
     const twitch = screen.getByRole("button", { name: /Sign in with Twitch/i });
+
+    expect(twitch).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.click(twitch);
+
+    expect(mocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Please accept the Terms of Service and Privacy Policy to continue.",
+    );
+    expect(getPolicyCheckbox().closest(".needsAttention")).not.toBeNull();
+
+    fireEvent.click(getPolicyCheckbox());
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(document.querySelector(".needsAttention")).toBeNull();
+  });
+
+  it("puts the agreement box after the ways to sign in", () => {
+    renderSignIn();
+
     const google = screen.getByRole("button", { name: /Sign in with Google/i });
     const email = screen.getByRole("button", { name: /Send sign-in link/i });
 
-    expect(twitch).toBeDisabled();
-    expect(google).toBeDisabled();
-    expect(email).toBeDisabled();
-
-    fireEvent.click(getPolicyCheckbox());
-
-    expect(twitch).toBeEnabled();
-    expect(google).toBeEnabled();
-    expect(email).toBeEnabled();
-
-    fireEvent.click(getPolicyCheckbox());
-
-    expect(twitch).toBeDisabled();
+    expect(google.compareDocumentPosition(getPolicyCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(email.compareDocumentPosition(getPolicyCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("does not start a magic link when the form is submitted without acceptance", async () => {

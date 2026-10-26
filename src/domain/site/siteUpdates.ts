@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.6.01";
+export const siteVersion = "V0.6.02";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.6.02",
+    date: "2026-10-26",
+    title: "A simpler sign-in page",
+    changes: [
+      "The sign-in page shows Twitch and Google as two matching buttons, with the email link below them.",
+      "The box to agree to the Terms of Service and Privacy Policy is now at the bottom of the sign-in card instead of the top.",
+      "Choosing a way to sign in without ticking that box now makes it shake and turn red, with a note saying why.",
+    ],
+  },
   {
     version: "V0.6.01",
     date: "2026-10-17",
