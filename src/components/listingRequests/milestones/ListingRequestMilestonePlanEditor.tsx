@@ -7,6 +7,7 @@ import {
   getListingRequestMilestonePlanTotal,
   type ListingRequestMilestonePlanItem,
 } from '../../../domain/listings/listingRequestMilestones';
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type ListingRequestMilestonePlanEditorProps = {
   milestones: ListingRequestMilestonePlanItem[];
@@ -278,6 +279,7 @@ const ListingRequestMilestonePlanEditor = ({
                   Milestone {index + 1} title
                 </label>
 
+                <KeptPlaceholder>
                 <input
                   className={classes.input}
                   disabled={disabled}
@@ -292,6 +294,7 @@ const ListingRequestMilestonePlanEditor = ({
                     })
                   }
                 />
+                </KeptPlaceholder>
               </div>
 
               <div className={classes.field}>
@@ -302,6 +305,7 @@ const ListingRequestMilestonePlanEditor = ({
                   Milestone {index + 1} amount
                 </label>
 
+                <KeptPlaceholder>
                 <input
                   className={classes.input}
                   disabled={disabled}
@@ -327,6 +331,7 @@ const ListingRequestMilestonePlanEditor = ({
                     });
                   }}
                 />
+                </KeptPlaceholder>
               </div>
 
               <div className={classes.fullField}>
@@ -337,6 +342,7 @@ const ListingRequestMilestonePlanEditor = ({
                   Milestone {index + 1} description
                 </label>
 
+                <KeptPlaceholder>
                 <textarea
                   className={classes.textarea}
                   disabled={disabled}
@@ -353,6 +359,7 @@ const ListingRequestMilestonePlanEditor = ({
                     })
                   }
                 />
+                </KeptPlaceholder>
               </div>
             </div>
           </div>

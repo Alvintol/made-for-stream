@@ -13,6 +13,7 @@ import {
   assessExternalLink,
   getExternalLinkConfirmMessage,
 } from "../../domain/links/externalLinks";
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
   page: "space-y-6",
@@ -441,6 +442,7 @@ const AdminCreatorApplications = () => {
             <div className={classes.field}>
               <div className={classes.label}>Notes</div>
 
+              <KeptPlaceholder>
               <textarea
                 className={classes.textarea}
                 rows={5}
@@ -449,11 +451,13 @@ const AdminCreatorApplications = () => {
                 placeholder="Internal notes for why this application should be approved, changed, rejected, or suspended."
                 disabled={!selectedApplication || reviewMutation.isPending}
               />
+              </KeptPlaceholder>
             </div>
 
             <div className={classes.field}>
               <div className={classes.label}>Rejection reason</div>
 
+              <KeptPlaceholder>
               <textarea
                 className={classes.textarea}
                 rows={4}
@@ -462,6 +466,7 @@ const AdminCreatorApplications = () => {
                 placeholder="Optional for changes requests, required when rejecting."
                 disabled={!selectedApplication || reviewMutation.isPending}
               />
+              </KeptPlaceholder>
 
               <div className={classes.fieldHelp}>
                 Rejection reason is shown back to the applicant when relevant.

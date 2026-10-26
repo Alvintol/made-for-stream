@@ -26,6 +26,7 @@ import {
 } from "../../domain/listings/listingRequestForm";
 import { useActiveListingRequestForListing } from "../../hooks/listings/useActiveListingRequestForListing";
 import { useCreatorHasOutstandingRecoveryBalance } from "../../hooks/listings/useCreatorHasOutstandingRecoveryBalance";
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const TITLE_MAX = 120;
 const DETAILS_MAX = 2000;
@@ -424,6 +425,7 @@ const RequestListing = () => {
                 </label>
                 <Counter value={requestTitle} max={TITLE_MAX} />
               </div>
+              <KeptPlaceholder>
               <input
                 id="request-title"
                 className={classes.input}
@@ -433,6 +435,7 @@ const RequestListing = () => {
                 maxLength={TITLE_MAX}
                 {...fieldProps("requestTitle", "request-title-error")}
               />
+              </KeptPlaceholder>
               {formErrors.requestTitle && (
                 <div id="request-title-error" className={classes.error}>
                   {formErrors.requestTitle}
@@ -447,6 +450,7 @@ const RequestListing = () => {
                 </label>
                 <Counter value={requestDetails} max={DETAILS_MAX} />
               </div>
+              <KeptPlaceholder>
               <textarea
                 id="request-details"
                 className={classes.textarea}
@@ -456,6 +460,7 @@ const RequestListing = () => {
                 maxLength={DETAILS_MAX}
                 {...fieldProps("requestDetails", "request-details-error")}
               />
+              </KeptPlaceholder>
               {formErrors.requestDetails ? (
                 <div id="request-details-error" className={classes.error}>
                   {formErrors.requestDetails}
@@ -477,6 +482,7 @@ const RequestListing = () => {
                 <label className={classes.label} htmlFor="requested-timeline">
                   Deadline / timeline <span className={classes.optional}>optional</span>
                 </label>
+                <KeptPlaceholder>
                 <input
                   id="requested-timeline"
                   className={classes.input}
@@ -486,6 +492,7 @@ const RequestListing = () => {
                   maxLength={TIMELINE_MAX}
                   {...fieldProps("requestedTimeline", "requested-timeline-error")}
                 />
+                </KeptPlaceholder>
                 {formErrors.requestedTimeline && (
                   <div id="requested-timeline-error" className={classes.error}>
                     {formErrors.requestedTimeline}
@@ -550,6 +557,7 @@ const RequestListing = () => {
                   {referenceCount}/{REFERENCES_MAX} links
                 </span>
               </div>
+              <KeptPlaceholder>
               <textarea
                 id="reference-links"
                 className={classes.smallTextarea}
@@ -558,6 +566,7 @@ const RequestListing = () => {
                 placeholder={"One link per line, e.g.\nhttps://example.com/moodboard"}
                 {...fieldProps("referenceLinks", "reference-links-error")}
               />
+              </KeptPlaceholder>
               {formErrors.referenceLinks && (
                 <div id="reference-links-error" className={classes.error}>
                   {formErrors.referenceLinks}

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
 import type { RespondListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useRespondListingRequestMilestone";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type ListingRequestMilestoneBuyerActionsProps = {
   milestone: ListingRequestMilestoneRow | null;
@@ -275,6 +276,7 @@ const ListingRequestMilestoneBuyerActions = ({
         <div className={classes.form}>
           <label className={classes.label}>
             Revision notes
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               disabled={isPending}
@@ -286,6 +288,7 @@ const ListingRequestMilestoneBuyerActions = ({
                 )
               }
             />
+            </KeptPlaceholder>
           </label>
 
           <p className={classes.help}>

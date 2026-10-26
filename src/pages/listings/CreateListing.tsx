@@ -26,6 +26,7 @@ import ListingAnimatedPreviewField, {
   type ListingAnimationChoice,
 } from "../../components/listings/ListingAnimatedPreviewField";
 import { uploadListingAnimation } from "../../lib/listings/listingAnimatedPreview";
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
@@ -577,6 +578,7 @@ const CreateListing = () => {
                 Title
               </label>
 
+              <KeptPlaceholder>
               <input
                 id="title"
                 className={classes.input}
@@ -586,6 +588,7 @@ const CreateListing = () => {
                 placeholder="Cozy Emote Pack (12)"
                 maxLength={80}
               />
+              </KeptPlaceholder>
 
               <div className={classes.hint}>3 to 80 characters.</div>
 
@@ -597,6 +600,7 @@ const CreateListing = () => {
                 Short description
               </label>
 
+              <KeptPlaceholder>
               <textarea
                 id="short"
                 className={classes.textarea}
@@ -605,6 +609,7 @@ const CreateListing = () => {
                 placeholder="12 emotes + variants. Includes PNG + licence notes."
                 maxLength={280}
               />
+              </KeptPlaceholder>
 
               <div className={classes.hint}>10 to 280 characters.</div>
 
@@ -674,6 +679,7 @@ const CreateListing = () => {
                 Category
               </label>
 
+              <KeptPlaceholder>
               <input
                 id="category"
                 className={classes.input}
@@ -682,6 +688,7 @@ const CreateListing = () => {
                 onChange={(event) => setField("category", event.target.value)}
                 placeholder="emotes"
               />
+              </KeptPlaceholder>
 
               <div className={classes.hint}>
                 Keep this aligned with your existing marketplace category values.
@@ -808,6 +815,7 @@ const CreateListing = () => {
                     Link
                   </label>
 
+                  <KeptPlaceholder>
                   <input
                     id="freeExternalUrl"
                     className={classes.input}
@@ -818,6 +826,7 @@ const CreateListing = () => {
                     }
                     placeholder="https://itch.io/my-game"
                   />
+                  </KeptPlaceholder>
 
                   <div className={classes.hint}>
                     Buyers are sent here directly — itch.io, Steam, GitHub, a
@@ -869,6 +878,7 @@ const CreateListing = () => {
                 {isRangePrice ? "Price min" : "Price"}
               </label>
 
+              <KeptPlaceholder>
               <input
                 id="priceMin"
                 className={classes.input}
@@ -881,6 +891,7 @@ const CreateListing = () => {
                 }
                 placeholder={form.priceType === "starting_at" ? "5" : "18"}
               />
+              </KeptPlaceholder>
 
               {errors.priceMin && (
                 <div className={classes.error}>{errors.priceMin}</div>
@@ -893,6 +904,7 @@ const CreateListing = () => {
                   Price max
                 </label>
 
+                <KeptPlaceholder>
                 <input
                   id="priceMax"
                   className={classes.input}
@@ -905,6 +917,7 @@ const CreateListing = () => {
                   }
                   placeholder="30"
                 />
+                </KeptPlaceholder>
 
                 <div className={classes.hint}>
                   Required only when price type is set to range.
@@ -933,6 +946,7 @@ const CreateListing = () => {
                 Deliverables
               </label>
 
+              <KeptPlaceholder>
               <textarea
                 id="deliverablesText"
                 className={classes.textarea}
@@ -942,6 +956,7 @@ const CreateListing = () => {
                 }
                 placeholder={"png\npsd\nsource files"}
               />
+              </KeptPlaceholder>
 
               <div className={classes.hint}>Enter one deliverable per line.</div>
             </div>
@@ -951,6 +966,7 @@ const CreateListing = () => {
                 Tags
               </label>
 
+              <KeptPlaceholder>
               <textarea
                 id="tagsText"
                 className={classes.textarea}
@@ -958,6 +974,7 @@ const CreateListing = () => {
                 onChange={(event) => setField("tagsText", event.target.value)}
                 placeholder="emotes, png, cozy"
               />
+              </KeptPlaceholder>
 
               <div className={classes.hint}>Separate tags with commas.</div>
             </div>

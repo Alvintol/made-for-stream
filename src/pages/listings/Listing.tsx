@@ -34,6 +34,7 @@ import { ModerationReportReasonCode, moderationReportReasonOptions } from '../..
 import { useSubmitListingModerationReport } from '../../hooks/moderation/useSubmitListingModerationReport';
 import { useAuth } from '../../providers/AuthProvider';
 import { useActiveListingRequestForListing } from '../../hooks/listings/useActiveListingRequestForListing';
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
   notFoundWrap: "space-y-4",
@@ -449,6 +450,7 @@ const ListingPage = () => {
                         Details
                       </label>
 
+                      <KeptPlaceholder>
                       <textarea
                         id="listingReportDetails"
                         className={classes.textarea}
@@ -457,6 +459,7 @@ const ListingPage = () => {
                         placeholder="Optional. Add context that will help admins review this report."
                         maxLength={2000}
                       />
+                      </KeptPlaceholder>
 
                       <div className={classes.hint}>
                         {reportDetailsTrimmed.length}/2000 characters.

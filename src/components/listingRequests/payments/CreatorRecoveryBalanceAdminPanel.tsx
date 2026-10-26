@@ -3,6 +3,7 @@ import { useState } from "react";
 import { formatPaymentCents } from "../../../domain/payments/listingRequestPaymentDisplay";
 import { useAdminWriteOffCreatorRecoveryBalance } from "../../../hooks/admin/useAdminWriteOffCreatorRecoveryBalance";
 import { useCreatorRecoveryBalance } from "../../../hooks/payments/useCreatorRecoveryBalance";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 const classes = {
   wrap: "space-y-2",
@@ -74,6 +75,7 @@ const CreatorRecoveryBalanceAdminPanel = ({
       <div className={classes.form}>
         <label className={classes.field}>
           <span className={classes.label}>Write-off reason</span>
+          <KeptPlaceholder>
           <input
             className={classes.input}
             type="text"
@@ -81,6 +83,7 @@ const CreatorRecoveryBalanceAdminPanel = ({
             onChange={(event) => setReason(event.target.value)}
             placeholder="Creator's account is closed and the debt cannot be collected."
           />
+          </KeptPlaceholder>
         </label>
 
         <button

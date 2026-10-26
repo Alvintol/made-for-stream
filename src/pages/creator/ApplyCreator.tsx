@@ -26,6 +26,7 @@ import {
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
 import StatusHeader, { type StatusHeaderStage } from "../../components/ui/StatusHeader";
 import { FadeIn } from "../../lib/motion";
+import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 type SectionKey = "basics" | "recent" | "samples" | "agreements";
 
@@ -683,6 +684,7 @@ const ApplyCreator = () => {
             <div className={classes.inline}>
               <label className={classes.field}>
                 <span className="sr-only">Most recent upload link</span>
+                <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={recentUploadUrl}
@@ -691,6 +693,7 @@ const ApplyCreator = () => {
                   placeholder="twitch.tv/videos/… or youtube.com/watch?v=…"
                   disabled={!canEdit}
                 />
+                </KeptPlaceholder>
                 {recentUrlError ? (
                   <span className={classes.fieldError}>{recentUrlError}</span>
                 ) : (
@@ -729,15 +732,18 @@ const ApplyCreator = () => {
                 <div className={classes.grid}>
                   <label className={classes.field}>
                     <span className={classes.label}>Title</span>
+                    <KeptPlaceholder>
                     <input
                       className={classes.input}
                       value={title}
                       onChange={(event) => setTitle(event.currentTarget.value)}
                       placeholder="Emote portfolio, VOD edit reel…"
                     />
+                    </KeptPlaceholder>
                   </label>
                   <label className={classes.field}>
                     <span className={classes.label}>Link</span>
+                    <KeptPlaceholder>
                     <input
                       className={classes.input}
                       value={url}
@@ -745,10 +751,12 @@ const ApplyCreator = () => {
                       onBlur={() => setUrl((value) => normaliseUrlInput(value))}
                       placeholder="Portfolio, drive folder or showcase"
                     />
+                    </KeptPlaceholder>
                     {sampleUrlError && <span className={classes.fieldError}>{sampleUrlError}</span>}
                   </label>
                   <label className={classes.fieldWide}>
                     <span className={classes.label}>What it shows (optional)</span>
+                    <KeptPlaceholder>
                     <textarea
                       className={classes.textarea}
                       rows={2}
@@ -756,6 +764,7 @@ const ApplyCreator = () => {
                       onChange={(event) => setDescription(event.currentTarget.value)}
                       placeholder="Your role and any useful context."
                     />
+                    </KeptPlaceholder>
                   </label>
                 </div>
                 <div className={classes.addFooter}>

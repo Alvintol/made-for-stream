@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.6.02";
+export const siteVersion = "V0.6.03";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.6.03",
+    date: "2026-10-26",
+    title: "Examples stay in view while you type",
+    changes: [
+      "The grey example inside a form field no longer disappears when you start typing: it moves underneath the field in smaller grey text.",
+      "The example can be selected and copied while you fill in the field.",
+    ],
+  },
   {
     version: "V0.6.02",
     date: "2026-10-26",

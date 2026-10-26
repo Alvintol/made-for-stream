@@ -7,6 +7,7 @@ import {
   OFF_SITE_RECEIPTS_TARGET,
 } from "../workspace/focusMessages";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type BuyerFinalDelivery = Pick<
   ListingRequestFinalDeliveryRow,
@@ -239,6 +240,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
               Required revisions
             </label>
 
+            <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="final-delivery-revision-reason"
@@ -253,6 +255,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
               }}
               placeholder="Describe the specific revisions required before you can approve the delivery."
             />
+            </KeptPlaceholder>
 
             <p className={classes.help}>
               {revisionReason.length}/2000 characters.

@@ -15,6 +15,7 @@ import type { CreateListingRequestFinalDeliveryInput } from "../../../hooks/crea
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 import DeliveryFilesField from "./DeliveryFilesField";
 import type { CommissionStorageUsage } from "../../../hooks/creatorRequests/useCommissionStorageUsage";
+import KeptPlaceholder from "../../ui/KeptPlaceholder";
 
 type FinalDeliveryAgreement = Pick<
   ListingRequestAgreementRow,
@@ -352,6 +353,7 @@ const ListingRequestFinalDeliveryBuilder = ({
             Delivery links
           </label>
 
+          <KeptPlaceholder>
           <textarea
             className={classes.linksTextarea}
             id="final-delivery-links"
@@ -366,6 +368,7 @@ const ListingRequestFinalDeliveryBuilder = ({
               "https://example.com/final-files\nhttps://example.com/source-files"
             }
           />
+          </KeptPlaceholder>
 
           <p className={classes.help}>
             Add one link per line. Up to 20 links may be
