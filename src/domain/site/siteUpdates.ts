@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.6.03";
+export const siteVersion = "V0.6.04";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.6.04",
+    date: "2026-10-27",
+    title: "Clearer confirmations and rounding",
+    changes: [
+      "The buyer's confirmations on an agreement now say what each line is: something the buyer provides, something the buyer approves, or a milestone.",
+      "The two Round up buttons at payment now work independently: when the total is already a whole number, pressing one takes it up to the next.",
+    ],
+  },
   {
     version: "V0.6.03",
     date: "2026-10-26",

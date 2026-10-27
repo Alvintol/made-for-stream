@@ -205,6 +205,7 @@ export type ListingRequestAgreementAcknowledgementInput = {
   listing_request_agreement_items: Array<{
     id: string;
     title: string;
+    item_type?: string;
     is_required: boolean;
     is_selected: boolean;
     sort_order: number;
@@ -235,7 +236,16 @@ export const getRequiredListingRequestAgreementAcknowledgements = (
     )
   ).map((item) => ({
     key: `scope_item:${item.id}`,
-    label: `I understand this scope item: ${item.title}`,
+    // Same words as respond_listing_request_agreement (20261027_167).
+    label: `${
+      item.item_type === "buyer_provides"
+        ? "I understand I need to provide:"
+        : item.item_type === "buyer_approves"
+          ? "I understand I need to approve:"
+          : item.item_type === "milestone"
+            ? "I understand this milestone:"
+            : "I understand this scope item:"
+    } ${item.title}`,
   }));
 
   const requiredPaymentItems = sortBySortOrder(

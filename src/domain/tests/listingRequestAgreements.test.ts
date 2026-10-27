@@ -295,6 +295,25 @@ describe("listing commission agreement acknowledgement helpers", () => {
     ]);
   });
 
+  it("names what the buyer provides, approves and each milestone", () => {
+    const labels = getRequiredListingRequestAgreementAcknowledgements({
+      ...agreement,
+      listing_request_agreement_items: [
+        { id: "a", title: "Reference images", item_type: "buyer_provides", is_required: true, is_selected: true, sort_order: 0 },
+        { id: "b", title: "Sketch", item_type: "buyer_approves", is_required: true, is_selected: true, sort_order: 1 },
+        { id: "c", title: "Rigged model", item_type: "milestone", is_required: true, is_selected: true, sort_order: 2 },
+      ],
+    })
+      .filter((item) => item.key.startsWith("scope_item:"))
+      .map((item) => item.label);
+
+    expect(labels).toEqual([
+      "I understand I need to provide: Reference images",
+      "I understand I need to approve: Sketch",
+      "I understand this milestone: Rigged model",
+    ]);
+  });
+
   it("confirms when every required acknowledgement is checked", () => {
     const requiredAcknowledgements =
       getRequiredListingRequestAgreementAcknowledgements(agreement);
