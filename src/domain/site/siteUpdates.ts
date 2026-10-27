@@ -30,12 +30,25 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.6.04";
+export const siteVersion = "V0.7.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.00",
+    date: "2026-10-27",
+    title: "Video previews on milestones",
+    changes: [
+      "Creators can add videos and animated GIFs to a milestone's previews, to show work that moves.",
+      "Each video is re-recorded in the creator's browser with the Made for Stream watermark on every frame, and only that copy is uploaded.",
+      "A preview video keeps the first 30 seconds, without sound.",
+      "The buyer plays preview videos on the commission page, where they repeat until stopped.",
+      "At payment, the summary now shows the tip, the contribution and the total as you type them.",
+      "Round up brings the total to a whole number once, and rests until the total changes again.",
+    ],
+  },
   {
     version: "V0.6.04",
     date: "2026-10-27",

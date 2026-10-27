@@ -47,8 +47,9 @@ export const getListingPreviewWatermarkText = (handle?: string | null): string =
 
 // Repeats the text diagonally across the whole image, so it cannot be
 // cropped away, in a faint grey with a faint dark edge so it reads on both
-// light and dark artwork.
-const drawWatermark = (
+// light and dark artwork. Also drawn on every frame of a milestone preview
+// video (milestonePreviewVideo.ts).
+export const drawWatermark = (
   context: CanvasRenderingContext2D,
   width: number,
   height: number,

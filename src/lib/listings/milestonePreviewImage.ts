@@ -13,6 +13,17 @@ export const MILESTONE_PREVIEW_MAX_IMAGES = 6;
 
 const SIGNED_URL_SECONDS = 60 * 60;
 
+// The file ending records the kind, which is how the page knows whether to
+// show an image or play a video (milestonePreviewVideo.ts).
+const EXTENSIONS: Record<string, string> = {
+  "image/webp": "webp",
+  "video/webm": "webm",
+  "video/mp4": "mp4",
+};
+
+export const isMilestonePreviewVideoUrl = (url: string): boolean =>
+  /\.(webm|mp4)$/i.test(url.split(/[?#]/)[0]);
+
 // Uploads one prepared copy into the milestone's folder and returns its
 // path, which is what the submission stores.
 export const uploadMilestonePreviewImage = async ({
@@ -22,7 +33,7 @@ export const uploadMilestonePreviewImage = async ({
   milestoneId: string;
   blob: Blob;
 }): Promise<string> => {
-  const extension = blob.type === "image/webp" ? "webp" : "jpg";
+  const extension = EXTENSIONS[blob.type] ?? "jpg";
   const path = `${milestoneId}/${crypto.randomUUID()}.${extension}`;
 
   const { error } = await supabase.storage
