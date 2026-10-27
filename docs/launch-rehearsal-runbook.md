@@ -388,19 +388,19 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `sent`.
 - [x] *(CAD 2026-10-09: accepted 00:26 UTC, 15 confirmations, early-start row at `2026-10-07`; `agreement_accepted` email `sent`. USD 2026-10-26: accepted 23:19 UTC, 17 confirmations, early-start row at `2026-10-07`, fees locked at 5% and 5%, `agreement_accepted` email to the creator `sent`. EUR to do.)* Accept. `policy_acceptances` has an `early_service_request` row for the
       request at the current Refund Policy version (`2026-10-07`).
-- [ ] *(USD 2026-10-27, milestone 1 payment `6fcd87fd-…`: Fee Schedule and Refund Policy accepted 00:09, no early-start box; tip 12.50 and contribution 3.00. Found: Round up worked only once, because the second button was disabled once the total was whole; fixed in V0.6.04, to be re-checked on EUR.)* Starting payment checkout: the policy step shows the Fee Schedule / Refund
+- [ ] *(USD 2026-10-27, milestone 1 payment `6fcd87fd-…`: Fee Schedule and Refund Policy accepted 00:09, no early-start box; tip 12.50 and contribution 3.00. Found: the second Round up was greyed once the first made the total whole. V0.6.04 made each press add up to 1.00 instead; on review that was worse (1.10 → 2.00 → 3.00 …), so V0.7.00 restores "whole once, then rests" and the summary now shows the tip, contribution and total live. Re-check on the 300.00 payment.)* Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
       contribution** on this payment. The billing country shows the
       country from the buyer's private account details and cannot be changed
       on the page (2026-10-08); the tax row reads as not collected. Leave the page and
       come back: the tip and contribution boxes show what was entered and
       can be changed. The percentage buttons fill in a share of the project
-      payment, **Round up** brings the total up to the next whole number (both buttons, each time they are pressed), and the
+      payment, **Round up** brings the total to a whole number and then rests until the total changes (the summary above shows the tip, contribution and total as they are typed), and the
       contribution explains what it is for. Both boxes start empty. Pay with `4242 4242 4242 4242`.
 - [x] *(USD 2026-10-27: paid 00:10 UTC; 250.00 + fee 12.50 + tip 12.50 + contribution 3.00 = 278.00; application fee 28.00 = both 12.50 fees + 3.00; milestone and schedule item `paid`; `payment_received` email `sent`. Tax `calculated`, 0.00, region CA-AB, with a Stripe Tax transaction id. Evidence: billing CA (account details and checkout), card US, so `TAX-002` is expected to flag it. EUR to do.)* Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).
-- [ ] *(USD 2026-10-26: three images stored on submission 1, bucket private. The thumbnails, the not-an-image refusal and the one-hour links still to be confirmed.)*
+- [x] *(USD 2026-10-26/27: three images stored on submission 1, bucket private; the watermark showed on the thumbnails and a file that is not an image was refused. The one-hour expiry not tried.)*
       **Milestone preview images.** When submitting milestone 1 the creator
       adds one or two images in "Preview images". Each thumbnail on the form
       already carries "Made for Stream · @<creator handle>" across it. After
@@ -412,6 +412,17 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `select public from storage.buckets where id = 'milestone-previews';`
       is `false`. An image's address works for one hour for anyone who has
       it, then stops (`MIL-005`).
+- [ ] *(Needs migration `20261027_168` before the website is merged.)*
+      **Milestone preview videos.** On milestone 2 the creator adds a short
+      MP4 (or WebM/MOV) and an animated GIF under "Preview images and
+      videos". Each shows as a playable thumbnail with "Made for Stream ·
+      @<creator handle>" across every frame; a clip takes about as long as
+      it lasts to prepare. After submitting, the buyer plays both on the
+      commission page (silent, looping). In the database the submission's
+      `preview_image_paths` has `.webm` (or `.mp4` from Safari) files.
+      Also try a still GIF (refused: "That GIF does not move…") and, in
+      Safari, a GIF (may be refused with "This browser cannot prepare
+      GIFs…").
 - [ ] **Tax in the rehearsal (test mode only; settings, not code).** In
       Stripe test mode add tax registrations for Canada, the EU (the One
       Stop Shop union scheme, or Ireland) and Washington State. On Cloud Run

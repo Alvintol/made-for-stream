@@ -16,6 +16,8 @@ surfaces:
   - src/components/listingRequests/core/AdminDisputeHoldPanel.tsx
   - public.submit_listing_request_milestone
   - src/lib/listings/milestonePreviewImage.ts
+  - src/lib/listings/milestonePreviewVideo.ts
+  - supabase/migrations/20261027_168_allow_milestone_preview_videos.sql
   - src/components/listingRequests/milestones/ListingRequestMilestoneSubmissionForm.tsx
   - src/components/listingRequests/milestones/ListingRequestMilestoneSummary.tsx
   - supabase/migrations/20261013_162_add_off_site_delivery_record.sql
@@ -220,8 +222,23 @@ id: MIL-005
 tier: 2
 signals:
   - source: ui
-    match: "Choose a JPEG, PNG or WebP image."
-    where: "validateListingPreviewSource (src/lib/listings/listingPreviewImage.ts), shown under the Preview images box"
+    match: "Choose a JPEG, PNG or WebP image, an MP4, WebM or MOV video, or an animated GIF."
+    where: "ListingRequestMilestoneSubmissionForm (validatePreviewSource), shown under the Preview images and videos box"
+  - source: ui
+    match: "That video is over 500 MB. Trim it to the part you want to show."
+    where: "validateMilestonePreviewVideoSource (src/lib/listings/milestonePreviewVideo.ts)"
+  - source: ui
+    match: "That video could not be read. Try an MP4 or WebM file."
+    where: "milestonePreviewVideo.ts or the form, when the browser cannot play the file"
+  - source: ui
+    match: "This browser cannot prepare videos. Try the latest Chrome, Edge, Firefox or Safari."
+    where: "milestonePreviewVideo.ts, when the browser has no video recorder"
+  - source: ui
+    match: "This browser cannot prepare GIFs. Save the animation as an MP4 or WebM video, or try Chrome or Edge."
+    where: "milestonePreviewVideo.ts, when the browser has no image decoder (ImageDecoder)"
+  - source: ui
+    match: "That GIF does not move. Add it as an image instead, or choose an animated one."
+    where: "milestonePreviewVideo.ts (getGifPlayOnceMs found one frame)"
   - source: ui
     match: "That image is over 20 MB. Choose a smaller one."
     where: "validateListingPreviewSource"
@@ -233,7 +250,7 @@ signals:
     where: "ListingRequestMilestoneSummary, when the temporary addresses cannot be made"
   - source: db
     match: "A milestone submission can contain no more than 6 preview images."
-    where: "public.submit_listing_request_milestone (20261011_154), errcode 22023; the form shows the same words first"
+    where: "public.submit_listing_request_milestone (20261011_154), errcode 22023; the form says it first, as \"no more than 6 preview images and videos.\""
   - source: db
     match: "A milestone preview image was not uploaded for this milestone. Choose the image again."
     where: "public.submit_listing_request_milestone (20261011_154), errcode 22023"
@@ -262,6 +279,18 @@ to `milestone-previews/<milestone id>/`; the originals never reach us. The
 submission's `preview_image_paths` then names them. The bucket is **private**:
 the page shows each image through an address that works for one hour.
 
+**Videos and GIFs (since `20261027_168`).** A preview can also be an MP4,
+WebM or MOV video or an animated GIF. The page plays it into a canvas,
+draws the same watermark on every frame and records a new clip with the
+browser's own recorder (`milestonePreviewVideo.ts`): at most 1200 pixels,
+the first 30 seconds, no sound, WebM (MP4 from Safari). It runs in real
+time, so a 30-second clip takes 30 seconds, and a hidden tab slows it; the
+form asks the creator to keep the tab open. GIFs need the browser's image
+decoder, which Safari may lack; the creator is then asked for a video. The
+recording is uploaded like an image, ending `.webm` or `.mp4`, which is how
+the page knows to play it. The bucket accepts `video/webm` and `video/mp4`
+up to 20 MB each.
+
 **Who can do what** (storage policies in `20261011_154`):
 - Upload: only the milestone's creator, into that milestone's folder, and
   only while the milestone is `pending` or `revision_requested`.
@@ -272,9 +301,12 @@ the page shows each image through an address that works for one hour.
 
 **Cause, by signal.**
 - The first three UI messages are about the file: wrong type, too large, or
-  one the browser cannot open. Only JPEG, PNG and WebP still images can be
-  watermarked; a PSD, PDF, GIF, video or archive goes in the delivery links
-  box instead.
+  one the browser cannot open. Only JPEG, PNG and WebP images, MP4, WebM and
+  MOV videos and animated GIFs can be watermarked; a PSD, PDF or archive goes
+  in the delivery links box instead. The video messages name what to do; a
+  stalled recording stops by itself 5 seconds past its length. "mime type
+  video/... is not supported" or "exceeded the maximum allowed size" on a
+  video means `20261027_168` has not been applied here.
 - "Not uploaded for this milestone" means the submission named a file that is
   not in this milestone's folder or was not uploaded by this creator. The
   page cannot do this by itself; it means a hand-made request, or the upload

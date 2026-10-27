@@ -222,14 +222,17 @@ describe("ListingRequestPaymentCheckout", () => {
     );
     expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(0.85);
 
-    // The total is whole now: the other Round up still works, taking it to
-    // the next whole number (26.00) without touching the tip.
-    fireEvent.click(
+    // The total is whole now, so both buttons rest until it is not.
+    expect(
+      screen.getByRole("button", { name: "Round your total up to a whole number with a tip" }),
+    ).toBeDisabled();
+    expect(
       screen.getByRole("button", { name: "Round your total up to a whole number with a contribution" }),
-    );
-    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(1);
-    expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(0.85);
-    fireEvent.change(screen.getByLabelText(/^Support Made for Stream/), { target: { value: "" } });
+    ).toBeDisabled();
+
+    // The summary already shows the tip and the total being paid.
+    expect(screen.getByText("Creator tip").nextElementSibling).toHaveTextContent("0.85");
+    expect(screen.getByText("Total").nextElementSibling).toHaveTextContent("25.00");
 
     // Rounding adds to what is already there instead of replacing it.
     fireEvent.change(screen.getByLabelText(/^Tip for the creator/), { target: { value: "" } });

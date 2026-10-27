@@ -14,6 +14,12 @@ import {
 
 const mocks = vi.hoisted(() => ({
   render: vi.fn(),
+  renderVideo: vi.fn(),
+}));
+
+vi.mock("../../lib/listings/milestonePreviewVideo", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/listings/milestonePreviewVideo")>()),
+  renderMilestonePreviewVideo: mocks.renderVideo,
 }));
 
 vi.mock("../../lib/listings/listingPreviewImage", async (importOriginal) => ({
@@ -31,7 +37,7 @@ const png = (name = "sketch.png") =>
   new File(["x"], name, { type: "image/png" });
 
 const choosePreviewFiles = (files: File[]) =>
-  fireEvent.change(screen.getByLabelText("Preview images"), {
+  fireEvent.change(screen.getByLabelText("Preview images and videos"), {
     target: { files },
   });
 
@@ -73,6 +79,7 @@ describe(
   () => {
     beforeEach(() => {
       mocks.render.mockReset().mockResolvedValue(prepared);
+      mocks.renderVideo.mockReset();
       URL.createObjectURL = vi.fn(() => "blob:prepared");
       URL.revokeObjectURL = vi.fn();
     });
@@ -240,6 +247,66 @@ describe(
       });
     });
 
+    it("records a watermarked copy of a preview video and submits the recording", async () => {
+      const recorded = new Blob(["recorded"], { type: "video/webm" });
+      const onSubmitMilestone = vi.fn();
+
+      mocks.renderVideo.mockResolvedValue(recorded);
+
+      render(
+        <ListingRequestMilestoneSubmissionForm
+          milestone={pendingMilestone}
+          watermarkHandle="meowington"
+          onSubmitMilestone={onSubmitMilestone}
+        />
+      );
+
+      fillValidSubmission();
+      choosePreviewFiles([new File(["x"], "turnaround.mp4", { type: "video/mp4" })]);
+
+      expect(
+        await screen.findByLabelText("Preview video 1 as the buyer will see it")
+      ).toHaveAttribute("src", "blob:prepared");
+      expect(mocks.renderVideo).toHaveBeenCalledWith(expect.any(File), {
+        watermarkText: "Made for Stream · @meowington",
+      });
+      expect(mocks.render).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Remove video 1" })).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Submit milestone for review",
+        })
+      );
+
+      await waitFor(() => {
+        expect(onSubmitMilestone).toHaveBeenCalledWith(
+          expect.objectContaining({ previewImages: [recorded] })
+        );
+      });
+    });
+
+    it("shows what to do when a video cannot be prepared", async () => {
+      const { MilestonePreviewVideoError } = await import("../../lib/listings/milestonePreviewVideo");
+
+      mocks.renderVideo.mockRejectedValue(
+        new MilestonePreviewVideoError("This browser cannot prepare GIFs. Save the animation as an MP4 or WebM video, or try Chrome or Edge.")
+      );
+
+      render(
+        <ListingRequestMilestoneSubmissionForm
+          milestone={pendingMilestone}
+          onSubmitMilestone={vi.fn()}
+        />
+      );
+
+      choosePreviewFiles([new File(["x"], "wave.gif", { type: "image/gif" })]);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "This browser cannot prepare GIFs."
+      );
+    });
+
     it("leaves out a preview image that was removed", async () => {
       const onSubmitMilestone = vi.fn();
 
@@ -287,7 +354,7 @@ describe(
       ]);
 
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Choose a JPEG, PNG or WebP image."
+        "Choose a JPEG, PNG or WebP image, an MP4, WebM or MOV video, or an animated GIF."
       );
       expect(mocks.render).not.toHaveBeenCalled();
     });
@@ -307,7 +374,7 @@ describe(
       );
 
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "A milestone submission can contain no more than 6 preview images."
+        "A milestone submission can contain no more than 6 preview images and videos."
       );
       expect(mocks.render).not.toHaveBeenCalled();
     });

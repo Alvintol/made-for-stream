@@ -22,6 +22,14 @@ import {
   validateListingPreviewSource,
 } from "../../../lib/listings/listingPreviewImage";
 import { MILESTONE_PREVIEW_MAX_IMAGES } from "../../../lib/listings/milestonePreviewImage";
+import {
+  isMilestonePreviewVideoSource,
+  MILESTONE_PREVIEW_VIDEO_ACCEPT,
+  MILESTONE_PREVIEW_VIDEO_MAX_SECONDS,
+  MilestonePreviewVideoError,
+  renderMilestonePreviewVideo,
+  validateMilestonePreviewVideoSource,
+} from "../../../lib/listings/milestonePreviewVideo";
 import type { SubmitListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useSubmitListingRequestMilestone";
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
@@ -52,7 +60,19 @@ type MilestoneSubmissionFormState = {
 type PreparedPreviewImage = {
   blob: Blob;
   url: string;
+  isVideo: boolean;
 };
+
+const PREVIEW_ACCEPT = `${LISTING_PREVIEW_ACCEPT},${MILESTONE_PREVIEW_VIDEO_ACCEPT}`;
+
+// Images and videos are checked by their own rules; anything else gets one
+// message naming both.
+const validatePreviewSource = (file: File): string | null =>
+  isMilestonePreviewVideoSource(file)
+    ? validateMilestonePreviewVideoSource(file)
+    : LISTING_PREVIEW_ACCEPT.split(",").includes(file.type)
+      ? validateListingPreviewSource(file)
+      : "Choose a JPEG, PNG or WebP image, an MP4, WebM or MOV video, or an animated GIF.";
 
 type MilestoneSubmissionValidationErrors = {
   summary?: string;
@@ -250,7 +270,7 @@ const ListingRequestMilestoneSubmissionForm = ({
     }
 
     const sourceError = files
-      .map(validateListingPreviewSource)
+      .map(validatePreviewSource)
       .find(Boolean);
 
     if (sourceError) {
@@ -263,7 +283,7 @@ const ListingRequestMilestoneSubmissionForm = ({
       MILESTONE_PREVIEW_MAX_IMAGES
     ) {
       setPreviewImageError(
-        `A milestone submission can contain no more than ${MILESTONE_PREVIEW_MAX_IMAGES} preview images.`
+        `A milestone submission can contain no more than ${MILESTONE_PREVIEW_MAX_IMAGES} preview images and videos.`
       );
       return;
     }
@@ -271,25 +291,38 @@ const ListingRequestMilestoneSubmissionForm = ({
     setIsPreparingImages(true);
     setPreviewImageError(null);
 
-    try {
-      const blobs = await Promise.all(
-        files.map((file) =>
-          renderListingPreviewImage(file, {
-            watermarkText,
-          })
-        )
-      );
+    // One at a time: a video is recorded in real time, and each one is
+    // shown as soon as it is ready.
+    let isVideo = false;
 
-      setPreviewImages((currentImages) => [
-        ...currentImages,
-        ...blobs.map((blob) => ({
-          blob,
-          url: URL.createObjectURL(blob),
-        })),
-      ]);
-    } catch {
+    try {
+      for (const file of files) {
+        isVideo =
+          isMilestonePreviewVideoSource(file);
+        const blob = isVideo
+          ? await renderMilestonePreviewVideo(file, {
+              watermarkText,
+            })
+          : await renderListingPreviewImage(file, {
+              watermarkText,
+            });
+
+        setPreviewImages((currentImages) => [
+          ...currentImages,
+          {
+            blob,
+            url: URL.createObjectURL(blob),
+            isVideo,
+          },
+        ]);
+      }
+    } catch (renderError) {
       setPreviewImageError(
-        "That image could not be read. Try a different file."
+        renderError instanceof MilestonePreviewVideoError
+          ? renderError.message
+          : isVideo
+            ? "That video could not be read. Try an MP4 or WebM file."
+            : "That image could not be read. Try a different file."
       );
     } finally {
       setIsPreparingImages(false);
@@ -494,11 +527,11 @@ const ListingRequestMilestoneSubmissionForm = ({
             className={classes.label}
             htmlFor="milestone-preview-images"
           >
-            Preview images
+            Preview images and videos
           </label>
 
           <input
-            accept={LISTING_PREVIEW_ACCEPT}
+            accept={PREVIEW_ACCEPT}
             className={classes.fileInput}
             disabled={isPending || isPreparingImages}
             id="milestone-preview-images"
@@ -520,7 +553,8 @@ const ListingRequestMilestoneSubmissionForm = ({
           <p className={classes.help}>
             Optional. Up to{" "}
             {MILESTONE_PREVIEW_MAX_IMAGES} JPEG, PNG
-            or WebP images. We upload a smaller copy
+            or WebP images, MP4, WebM or MOV videos,
+            or animated GIFs. We upload a smaller copy
             of each, at most 1200 pixels on its
             longest side, with “{watermarkText}”
             repeated across it. Your originals stay
@@ -528,6 +562,15 @@ const ListingRequestMilestoneSubmissionForm = ({
             buyer can see the copies. A watermark
             discourages copying; it cannot fully
             prevent it.
+          </p>
+
+          <p className={classes.help}>
+            Videos and GIFs show movement: we record
+            the first{" "}
+            {MILESTONE_PREVIEW_VIDEO_MAX_SECONDS}{" "}
+            seconds, without sound, as it plays, so a
+            clip takes about as long as it lasts to
+            prepare. Keep this tab open meanwhile.
           </p>
 
           {previewImageError && (
@@ -541,7 +584,7 @@ const ListingRequestMilestoneSubmissionForm = ({
 
           {isPreparingImages && (
             <p className={classes.help}>
-              Preparing your images…
+              Preparing your previews…
             </p>
           )}
 
@@ -552,21 +595,34 @@ const ListingRequestMilestoneSubmissionForm = ({
                   className={classes.imageItem}
                   key={image.url}
                 >
-                  <img
-                    alt={`Preview image ${index + 1} as the buyer will see it`}
-                    className={classes.image}
-                    src={image.url}
-                  />
+                  {image.isVideo ? (
+                    <video
+                      aria-label={`Preview video ${index + 1} as the buyer will see it`}
+                      className={classes.image}
+                      controls
+                      loop
+                      muted
+                      playsInline
+                      src={image.url}
+                    />
+                  ) : (
+                    <img
+                      alt={`Preview image ${index + 1} as the buyer will see it`}
+                      className={classes.image}
+                      src={image.url}
+                    />
+                  )}
 
                   <button
                     className={classes.btnRemove}
-                    disabled={isPending}
+                    disabled={isPending || isPreparingImages}
                     type="button"
                     onClick={() =>
                       removePreviewImage(image)
                     }
                   >
-                    Remove image {index + 1}
+                    Remove {image.isVideo ? "video" : "image"}{" "}
+                    {index + 1}
                   </button>
                 </li>
               ))}

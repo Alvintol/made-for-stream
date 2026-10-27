@@ -3,7 +3,10 @@ import { formatMoney } from "../../../lib/formatMoney";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
-import { getMilestonePreviewImageUrls } from "../../../lib/listings/milestonePreviewImage";
+import {
+  getMilestonePreviewImageUrls,
+  isMilestonePreviewVideoUrl,
+} from "../../../lib/listings/milestonePreviewImage";
 import {
   getActiveListingRequestMilestone,
   getListingRequestMilestonesAreComplete,
@@ -135,7 +138,20 @@ const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
     <p className={classes.noSubmission}>The preview images could not be loaded.</p>
   ) : (
     <div className={classes.images}>
-      {urls.map((url, index) => (
+      {urls.map((url, index) =>
+        isMilestonePreviewVideoUrl(url) ? (
+          <video
+            aria-label={`Milestone preview video ${index + 1}`}
+            className={classes.image}
+            controls
+            key={paths[index] ?? url}
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            src={url}
+          />
+        ) : (
         <a href={url} key={paths[index] ?? url} rel="noreferrer" target="_blank">
           <img
             alt={`Milestone preview image ${index + 1}`}
@@ -144,7 +160,8 @@ const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
             src={url}
           />
         </a>
-      ))}
+        ),
+      )}
     </div>
   );
 };

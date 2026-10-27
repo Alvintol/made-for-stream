@@ -18,7 +18,8 @@ const mocks = vi.hoisted(() => ({
   getUrls: vi.fn(),
 }));
 
-vi.mock("../../lib/listings/milestonePreviewImage", () => ({
+vi.mock("../../lib/listings/milestonePreviewImage", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/listings/milestonePreviewImage")>()),
   getMilestonePreviewImageUrls: mocks.getUrls,
 }));
 
@@ -238,6 +239,7 @@ describe("ListingRequestMilestoneSummary", () => {
   it("shows the latest submission's preview images through temporary addresses", async () => {
     mocks.getUrls.mockResolvedValue([
       "https://example.com/signed/sketch",
+      "https://example.com/signed/turnaround.webm?token=abc",
     ]);
 
     render(
@@ -250,6 +252,7 @@ describe("ListingRequestMilestoneSummary", () => {
             createSubmission({
               preview_image_paths: [
                 "milestone-1/sketch.webp",
+                "milestone-1/turnaround.webm",
               ],
             }),
           ]}
@@ -257,6 +260,11 @@ describe("ListingRequestMilestoneSummary", () => {
         />
       </QueryClientProvider>
     );
+
+    // A recorded preview plays as a video, on a loop, without sound.
+    const video = await screen.findByLabelText("Milestone preview video 2");
+    expect(video.tagName).toBe("VIDEO");
+    expect(video).toHaveAttribute("src", "https://example.com/signed/turnaround.webm?token=abc");
 
     expect(
       await screen.findByAltText(
@@ -269,6 +277,7 @@ describe("ListingRequestMilestoneSummary", () => {
 
     expect(mocks.getUrls).toHaveBeenCalledWith([
       "milestone-1/sketch.webp",
+      "milestone-1/turnaround.webm",
     ]);
   });
 

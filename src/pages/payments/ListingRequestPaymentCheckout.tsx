@@ -170,11 +170,11 @@ const ListingRequestPaymentCheckout = () => {
     return Math.round(parsed * 100);
   };
 
-  // "Round up" adds what brings the total the buyer pays up to the next whole
-  // number, to whichever of the two they press it on. The two buttons work
-  // independently: when the total is already whole, pressing one adds a full
-  // 1.00 to that box. Tax, where it is collected, is worked out after this
-  // step and can move the total again.
+  // "Round up" adds the cents that bring what the buyer pays to a whole
+  // number, to whichever of the two they press it on, and is greyed out
+  // while the total is already whole (decided 2026-10-27, after trying a
+  // version that added 1.00 on every press). Tax, where it is collected, is
+  // worked out after this step and can move the total again.
   const centsOrZero = (value: string): number => {
     try {
       return parseAmountToCents(value);
@@ -187,7 +187,7 @@ const ListingRequestPaymentCheckout = () => {
   const totalCentsNow = payment
     ? payment.base_amount_cents + payment.buyer_service_fee_cents + tipCentsNow + supportCentsNow
     : 0;
-  const roundUpCents = 100 - (totalCentsNow % 100);
+  const roundUpCents = (100 - (totalCentsNow % 100)) % 100;
   const centsText = (cents: number): string => (cents / 100).toFixed(2);
 
   const onConfirmExtras = useCallback(async () => {
@@ -271,6 +271,19 @@ const ListingRequestPaymentCheckout = () => {
 
   const taxLine = payment ? describePaymentTaxLine(payment) : null;
 
+  // Until the tip and contribution are confirmed, the summary follows what
+  // is in the boxes, so the buyer sees the total they are about to pay. Tax
+  // is on the project payment and the fee only, so a known tax still holds.
+  const shownTipCents = extrasConfirmed ? (payment?.creator_tip_cents ?? 0) : tipCentsNow;
+  const shownSupportCents = extrasConfirmed
+    ? (payment?.platform_support_cents ?? 0)
+    : supportCentsNow;
+  const shownTotalCents = !payment
+    ? 0
+    : extrasConfirmed
+      ? payment.total_checkout_cents
+      : totalCentsNow + (taxLine && !taxLine.pending ? payment.tax_cents : 0);
+
   const checkoutOptions = useMemo(
     () => (clientSecret ? { clientSecret } : undefined),
     [clientSecret],
@@ -312,16 +325,16 @@ const ListingRequestPaymentCheckout = () => {
               <dt>Buyer service fee</dt>
               <dd>{formatPaymentCents(payment.buyer_service_fee_cents, payment.currency)}</dd>
             </div>
-            {payment.creator_tip_cents > 0 && (
+            {shownTipCents > 0 && (
               <div className={classes.amountRow}>
                 <dt>Creator tip</dt>
-                <dd>{formatPaymentCents(payment.creator_tip_cents, payment.currency)}</dd>
+                <dd>{formatPaymentCents(shownTipCents, payment.currency)}</dd>
               </div>
             )}
-            {payment.platform_support_cents > 0 && (
+            {shownSupportCents > 0 && (
               <div className={classes.amountRow}>
                 <dt>Made for Stream support</dt>
-                <dd>{formatPaymentCents(payment.platform_support_cents, payment.currency)}</dd>
+                <dd>{formatPaymentCents(shownSupportCents, payment.currency)}</dd>
               </div>
             )}
             {taxLine && (
@@ -336,7 +349,7 @@ const ListingRequestPaymentCheckout = () => {
             )}
             <div className={classes.totalRow}>
               <dt>Total</dt>
-              <dd>{formatPaymentCents(payment.total_checkout_cents, payment.currency)}</dd>
+              <dd>{formatPaymentCents(shownTotalCents, payment.currency)}</dd>
             </div>
           </dl>
 
@@ -363,7 +376,7 @@ const ListingRequestPaymentCheckout = () => {
             to the creator in full. A contribution supports Made for Stream and
             is added to the total you pay. Press a percentage of the project
             payment, type an exact amount, or press Round up to bring your
-            total up to the next whole number.
+            total to a whole number.
           </p>
 
           <div className={classes.extras}>
@@ -391,6 +404,7 @@ const ListingRequestPaymentCheckout = () => {
                 type="button"
                 className={classes.quickAmount}
                 aria-label="Round your total up to a whole number with a tip"
+                disabled={roundUpCents === 0}
                 onClick={() => setTipEdit(centsText(tipCentsNow + roundUpCents))}
               >
                 Round up
@@ -429,6 +443,7 @@ const ListingRequestPaymentCheckout = () => {
                 type="button"
                 className={classes.quickAmount}
                 aria-label="Round your total up to a whole number with a contribution"
+                disabled={roundUpCents === 0}
                 onClick={() => setSupportEdit(centsText(supportCentsNow + roundUpCents))}
               >
                 Round up
