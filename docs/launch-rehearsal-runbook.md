@@ -357,15 +357,18 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       on "deposit and balance", which sections 2 and 3 can use),
       every payment ≥ 10.00. **The amounts show the creator's currency.** **Summary shows the fee line as a maximum**, with the
       right figure (5% of each item, rounded up, summed).
-- [ ] *(Needs migration `20261008_153` before the website is merged.)* On the
+- [ ] *(USD 2026-10-26: sent with one "provides" line and one "approves"
+      line, stored as `buyer_provides` and `buyer_approves`. The labels on
+      both sides' pages still to be looked at.)* On the
       agreement form, fill "What <buyer> needs to provide" and "What <buyer>
       needs to approve" as well as the required checklist. After sending, the
       scope checklist shows "Included", "<buyer's handle> provides" and
       "<buyer's handle> approves" beside the lines, on both sides' pages.
 - [ ] Negative checks before sending (each must refuse with `AGR-005`'s message and
       send nothing):
-  - [ ] a 9.99 milestone, in the builder;
-  - [ ] the same through a direct RPC call (`create_listing_request_agreement`
+  - [x] *(Refused in the builder on earlier runs; not tried again on USD.)* a 9.99 milestone, in the builder;
+  - [x] *(USD 2026-10-26, rolled back: 9.99 refused with `AGR-005`'s
+        message, 10.00 accepted, nothing kept.)* the same through a direct RPC call (`create_listing_request_agreement`
         with a 9.99 schedule item), which proves the database refuses it, not just
         the form.
 - [ ] Send. Buyer opens it: each section of the agreement ends with its own
@@ -374,25 +377,30 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       **early-start box is separate** from them, and Accept stays disabled
       until every box and the early-start box are ticked. After accepting,
       "Buyer confirmations" on the agreement lists every item individually.
-- [ ] Negative check: call `respond_listing_request_agreement` directly with
+- [x] *(USD 2026-10-26, agreement `ec81ed28-…`, rolled back: with all 17
+      keys, no version and the version "yes" were both refused with
+      `AGR-007`'s message and the agreement stayed `sent`; the same call with
+      `2026-10-07` was accepted, proving the keys were complete. Nothing kept:
+      0 confirmations, 0 early-start rows. EUR to do.)* Negative check: call
+      `respond_listing_request_agreement` directly with
       `buyer_accepted`, every acknowledgement key and **no**
       `p_early_service_request_version`. Refused with `AGR-007`; the agreement stays
       `sent`.
-- [x] *(CAD 2026-10-09: accepted 00:26 UTC, 15 confirmations, early-start row at `2026-10-07`; `agreement_accepted` email `sent`. USD and EUR to do.)* Accept. `policy_acceptances` has an `early_service_request` row for the
+- [x] *(CAD 2026-10-09: accepted 00:26 UTC, 15 confirmations, early-start row at `2026-10-07`; `agreement_accepted` email `sent`. USD 2026-10-26: accepted 23:19 UTC, 17 confirmations, early-start row at `2026-10-07`, fees locked at 5% and 5%, `agreement_accepted` email to the creator `sent`. EUR to do.)* Accept. `policy_acceptances` has an `early_service_request` row for the
       request at the current Refund Policy version (`2026-10-07`).
-- [ ] Starting payment checkout: the policy step shows the Fee Schedule / Refund
+- [ ] *(USD 2026-10-27, milestone 1 payment `6fcd87fd-…`: Fee Schedule and Refund Policy accepted 00:09, no early-start box; tip 12.50 and contribution 3.00. Found: Round up worked only once, because the second button was disabled once the total was whole; fixed in V0.6.04, to be re-checked on EUR.)* Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
       contribution** on this payment. The billing country shows the
       country from the buyer's private account details and cannot be changed
       on the page (2026-10-08); the tax row reads as not collected. Leave the page and
       come back: the tip and contribution boxes show what was entered and
       can be changed. The percentage buttons fill in a share of the project
-      payment, **Round up** brings the total to a whole number, and the
+      payment, **Round up** brings the total up to the next whole number (both buttons, each time they are pressed), and the
       contribution explains what it is for. Both boxes start empty. Pay with `4242 4242 4242 4242`.
-- [ ] Webhook marks it paid, and the workflow advances. The fee arithmetic above
+- [x] *(USD 2026-10-27: paid 00:10 UTC; 250.00 + fee 12.50 + tip 12.50 + contribution 3.00 = 278.00; application fee 28.00 = both 12.50 fees + 3.00; milestone and schedule item `paid`; `payment_received` email `sent`. Tax `calculated`, 0.00, region CA-AB, with a Stripe Tax transaction id. Evidence: billing CA (account details and checkout), card US, so `TAX-002` is expected to flag it. EUR to do.)* Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).
-- [ ] *(Needs migration `20261011_154` before the website is merged.)*
+- [ ] *(USD 2026-10-26: three images stored on submission 1, bucket private. The thumbnails, the not-an-image refusal and the one-hour links still to be confirmed.)*
       **Milestone preview images.** When submitting milestone 1 the creator
       adds one or two images in "Preview images". Each thumbnail on the form
       already carries "Made for Stream · @<creator handle>" across it. After

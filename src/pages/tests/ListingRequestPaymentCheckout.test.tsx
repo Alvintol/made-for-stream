@@ -222,10 +222,14 @@ describe("ListingRequestPaymentCheckout", () => {
     );
     expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(0.85);
 
-    // The total is whole now, so there is nothing left to round.
-    expect(
+    // The total is whole now: the other Round up still works, taking it to
+    // the next whole number (26.00) without touching the tip.
+    fireEvent.click(
       screen.getByRole("button", { name: "Round your total up to a whole number with a contribution" }),
-    ).toBeDisabled();
+    );
+    expect(screen.getByLabelText(/^Support Made for Stream/)).toHaveValue(1);
+    expect(screen.getByLabelText(/^Tip for the creator/)).toHaveValue(0.85);
+    fireEvent.change(screen.getByLabelText(/^Support Made for Stream/), { target: { value: "" } });
 
     // Rounding adds to what is already there instead of replacing it.
     fireEvent.change(screen.getByLabelText(/^Tip for the creator/), { target: { value: "" } });
