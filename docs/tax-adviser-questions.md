@@ -1,9 +1,10 @@
 # Made for Stream: questions for a tax adviser
 
 Prepared 2026-10-13. This is a brief to send to a tax adviser. It describes
-how the site handles money and tax today, lists what is missing, and asks
-thirty questions. It is written by the site's builders, who are not tax
-advisers. Nothing here is a tax position; where we describe a rule, it is our
+how the site handles money and tax today, lists what is missing, proposes
+a model with ten questions about it, then asks thirty detailed questions.
+It is written by the site's builders, who are not tax advisers. Revised 2026-10-28: section 7 now proposes one model to test
+first. Nothing here is a tax position; where we describe a rule, it is our
 understanding and may be wrong.
 
 **No tax is collected on the live site today, and none will be until these
@@ -179,9 +180,117 @@ Two smaller points the adviser may want to know:
 - The buyer's declared country comes from their account and cannot be changed
   for a single purchase.
 
-## 7. The questions
+## 7. Our proposal: please answer this first
 
-Revised 2026-10-13. The numbers are unchanged from the first version.
+Added 2026-10-28. Rather than ask you to design our tax position from the
+thirty questions in section 8, we would like you to test one specific model.
+If it is sound, most of section 8 becomes narrower or falls away.
+
+**The model.**
+
+1. **Custom commissions and services** (work made or done by a person for
+   one buyer). The creator is the seller. The creator decides whether they
+   must charge tax and, if so, adds their own rate to the agreement (for
+   example "GST 5%"). It shows as its own line, is charged on the creator's
+   Stripe account and goes to the creator, not to us. The creator files it.
+   The buyer's receipt names the creator as the seller and shows their tax
+   number and any invoice note they add. Made for Stream does not
+   calculate, collect or file this tax.
+2. **Instant-buy downloads** (a ready-made product the buyer pays for and
+   receives with no step by the creator; not built yet). Made for Stream
+   treats itself as the seller for tax wherever the law makes a platform
+   the seller, and calculates, collects and files the tax using the system
+   described in section 5.
+3. **Our own fees** (the buyer service fee, the creator fee and the
+   contribution). These are Made for Stream's own sales. We tax them
+   wherever we are registered.
+4. **Unchanged:** the buyer is charged on the creator's own Stripe account;
+   one creator per checkout, with no shopping cart; Made for Stream takes its
+   fees out of each payment as it is made.
+
+**Why we think it may work.** Our understanding is that the rules making a
+platform the seller in the EU and the UK cover services that are
+essentially automated, and that work made to order by a person and sent
+digitally is not automated. Our understanding is also that the Stripe
+arrangement does not decide this on its own, because we set the terms, run
+the checkout and approve the charge. A second set of general answers we were
+given (2026-10-28) said the opposite: that charging on the creator's account
+removes platform liability in the US, Canada, Australia and Asia. It named
+no rules, and it contradicted itself, so we do not rely on it.
+
+**The questions.** A short answer per market is ideal: Canada, the United
+States, the United Kingdom, the EU and Australia.
+
+P1. Is the model sound in each of those markets? If not, which part fails,
+    and under which rule?
+
+P2. **Commissions and the EU and UK platform rules.** Is a custom
+    commission, made by a person and delivered as files through the site,
+    outside the rules that make a platform the seller of electronically
+    supplied services? Does the answer change if the creator uses
+    software or AI tools to make the work?
+
+P3. **Creators in another country.** Canada's rules for distribution
+    platform operators and Australia's rules for electronic distribution
+    platforms appear to catch sales made through a platform by sellers
+    outside the buyer's country, and may include services.
+    - Would we be liable for a commission by a US creator sold to a
+      Canadian consumer, or by a UK creator to an Australian consumer?
+    - From what level of sales? Can we stay below it at first?
+    - If we can't, is the answer to keep buyers in those countries from
+      ordering from creators abroad until we are registered?
+
+P4. **United States.** Do any states' marketplace facilitator laws reach
+    custom digital work or services sold through a platform that runs the
+    checkout? If so, which states, and from what level of sales?
+
+P5. **The creator's own tax line.** When the creator adds tax and it goes
+    to their own Stripe account:
+    - Do we have any duty to check that they are registered, or to stop an
+      unregistered creator from charging tax?
+    - Must we stop a creator charging a rate that is wrong for the buyer's
+      location, or is that the creator's responsibility alone?
+    - Does showing it as a line on our checkout make us responsible for it
+      in any market?
+
+P6. **Receipts for the creator's sale.** What must they show: legal name or
+    shop name, address, tax number, a receipt number? Many creators are
+    private individuals working from home: must their home address be shown?
+    Is an emailed receipt with a page the buyer can print enough? (This
+    replaces question 4.)
+
+P7. **Where the line falls.** A ready-made item that the creator confirms
+    after the buyer asks for it, before the buyer pays: commission side or
+    instant-buy side?
+
+P8. **Instant buys.**
+    - Confirm that we would be the seller in each market.
+    - We understand the EU needs a single registration (the non-Union One
+      Stop Shop) from the first sale to an EU consumer, and the UK its own
+      registration. Is that right, and in what order should we register?
+    - Can we launch instant buys to buyers in Canada and the US only?
+
+P9. **Our fees.** Where is each one taxed, and at what rate:
+    - the buyer service fee, charged to the buyer;
+    - the creator fee, charged to the creator, who may be a business or a
+      private individual in any of 35 countries;
+    - the contribution, which the buyer chooses to give?
+    (This narrows questions 10 to 12, 28 and 29.)
+
+P10. **Wording.** What must the Terms of Service, the Creator Terms and the
+     Fee Schedule say for the model to hold? For example, that the creator
+     is the seller of commissions and responsible for their own tax.
+     (This replaces question 30.)
+
+**Not affected by the model.** Reporting on creators' earnings (questions
+24 to 27) seems to apply whoever the seller is, so those questions stand as
+written. Evidence of the buyer's location, refunds of tax and records
+(questions 20 to 23) would apply to instant buys and our fees only.
+
+## 8. The detailed questions
+
+Revised 2026-10-13. The numbers are unchanged from the first version. If
+the model in section 7 holds, many of these narrow or fall away.
 
 **None of these is settled.** Since the first version we were given a set of
 general answers. We cannot vouch for where they came from, they named no
@@ -358,7 +467,7 @@ useful form. A table is welcome.
 30. **Open.** Does any of this change the Terms, the Fee Schedule or the
     Refund Policy?
 
-## 8. What we can change, if the answers call for it
+## 9. What we can change, if the answers call for it
 
 So the adviser knows what is practical:
 
@@ -371,6 +480,9 @@ So the adviser knows what is practical:
 - Keeping buyers in chosen countries from paying is a small change.
 - Tax on the creator fee, checking business buyers' tax numbers, naming the
   seller on receipts, and reporting on sellers each need to be built.
+- Letting a creator add their own tax line to an agreement, and showing
+  their tax number and invoice note on the receipt (the model in section 7),
+  is a moderate build.
 - Moving away from charging the buyer on the creator's Stripe account is
   possible but is a large rebuild. If the answer to question 2 requires it,
   we would like to know early.
