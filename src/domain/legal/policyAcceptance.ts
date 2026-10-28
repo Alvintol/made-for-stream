@@ -108,6 +108,25 @@ export const getPolicyChangeSummaries = (
       };
     });
 
+// The box ticked on the sign-in page, recorded once the person is signed in.
+// It does not count for a document they accepted before in an older version
+// and not yet in this one: they get the card above instead, so they see what
+// changed before accepting it (decided 2026-10-28).
+export const getSignInAcceptancesToRecord = (
+  pending: PolicyAcceptanceInput[],
+  acceptances: Pick<PolicyAcceptanceRecord, "policy_type" | "policy_version">[],
+): PolicyAcceptanceInput[] =>
+  pending.filter((policy) => {
+    const earlier = acceptances.filter(
+      (acceptance) => acceptance.policy_type === policy.policyType,
+    );
+
+    return (
+      earlier.length === 0 ||
+      earlier.some((acceptance) => acceptance.policy_version === policy.policyVersion)
+    );
+  });
+
 export const creatorActivationPolicyTypes: PolicyType[] = ["creator_terms"];
 
 export const checkoutPolicyTypes: PolicyType[] = [

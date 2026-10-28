@@ -154,6 +154,23 @@ describe("PolicyAcceptanceGate", () => {
     expect(readPendingPolicyAcceptance()).toBeNull();
   });
 
+  it("shows what changed to someone signing in after a change, instead of counting the sign-in box", async () => {
+    mocks.rows = [
+      { policy_type: "terms", policy_version: termsVersion, accepted_at: "2026-09-17T00:00:00Z" },
+      { policy_type: "privacy", policy_version: "2026-09-17-draft-1", accepted_at: "2026-09-17T00:00:00Z" },
+    ];
+    savePendingPolicyAcceptance(toCurrentPolicyAcceptances(signupPolicyTypes));
+
+    renderGate();
+
+    expect(
+      await screen.findByText(`What changed in the Privacy Policy (${privacyVersion})`),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Page content")).not.toBeInTheDocument();
+    expect(mocks.insert.mock.calls[0][0].map((row: Row) => row.policy_type)).toEqual(["terms"]);
+    expect(readPendingPolicyAcceptance()).toBeNull();
+  });
+
   it("records the parked acceptance once when the gate mounts twice at sign-in", async () => {
     savePendingPolicyAcceptance(toCurrentPolicyAcceptances(signupPolicyTypes));
 

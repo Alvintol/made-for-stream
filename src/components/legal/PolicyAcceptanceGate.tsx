@@ -3,10 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import {
   getMissingPolicyTypes,
   getPolicyChangeSummaries,
+  getSignInAcceptancesToRecord,
   signupPolicyTypes,
   toCurrentPolicyAcceptances,
 } from "../../domain/legal/policyAcceptance";
 import {
+  fetchPolicyAcceptances,
   logPolicyAcceptanceFailure,
   usePolicyAcceptances,
   useRecordPolicyAcceptances,
@@ -100,8 +102,15 @@ const PolicyAcceptanceGate = (props: PolicyAcceptanceGateProps) => {
       setFlushState("running");
 
       try {
-        // Records the versions the user saw when they ticked the box.
-        pendingFlush ??= mutateAsync({ policies: pending.policies })
+        // Records the versions the user saw when they ticked the box, except
+        // for a document that changed since they last accepted it: the card
+        // below shows them what changed and asks for that one.
+        pendingFlush ??= fetchPolicyAcceptances(userId, signupPolicyTypes)
+          .then((acceptances) =>
+            mutateAsync({
+              policies: getSignInAcceptancesToRecord(pending.policies, acceptances),
+            }),
+          )
           .then(clearPendingPolicyAcceptance)
           .finally(() => {
             pendingFlush = null;

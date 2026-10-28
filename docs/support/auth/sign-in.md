@@ -6,6 +6,9 @@ surfaces:
   - src/pages/SignIn.tsx:196   # signInWithOtp (magic link)
   - src/providers/               # auth provider and session handling
   - api/server.js                # requireSupabaseUserId — bearer token validation
+  - src/components/legal/PolicyAcceptanceGate.tsx   # records the sign-in box, or asks again
+  - src/domain/legal/policyAcceptance.ts            # getSignInAcceptancesToRecord
+  - public.policy_acceptances
 unmatched_tier: 2
 ---
 
@@ -34,6 +37,7 @@ severe here than in a password-based product.
 | "Signing in with Twitch/Google fails" | [`AUTH-005`](#auth-005--oauth-provider-sign-in-failed) |
 | "It says too many requests" | [`AUTH-006`](#auth-006--rate-limited) |
 | "The buttons don't do anything" / "A red box shakes" | [`AUTH-007`](#auth-007--terms-box-not-ticked) |
+| "I ticked the box and it asked me again" | [`AUTH-007`](#auth-007--terms-box-not-ticked) |
 
 ---
 
@@ -225,6 +229,17 @@ pressing one without the box ticked sends nothing, and instead the box
 shakes, gets a red ring, takes the focus and shows the sentence above.
 Ticking it clears the ring. Someone with reduced motion turned on gets the
 ring without the shake.
+
+**Asked again straight after signing in (2026-10-28).** The ticked box is
+recorded once the person arrives, except for a document they accepted
+before in an older version: for that one they get the "What changed in
+the Privacy Policy (…)" card and accept it there, so they see the changes
+first. A new account, or someone who already accepted the current
+version, is not asked again. This is expected, not a fault. If the card
+keeps coming back after they accept, the write failed: the browser
+console shows `[policy_acceptances] signup acceptance failed (<code>)`
+or the card's own error, and their rows in `policy_acceptances` show
+which version is missing.
 
 **Fix.** Tell them to tick the box under the email field, then choose a way
 to sign in again. Nothing is recorded until they do.

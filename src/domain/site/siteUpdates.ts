@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.01";
+export const siteVersion = "V0.7.02";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.02",
+    date: "2026-10-28",
+    title: "Receipts, policy changes and Unity packages",
+    changes: [
+      "Approving a milestone now also confirms that work sent outside Made for Stream for it arrived.",
+      "The chat says when a milestone approval confirmed work sent off site.",
+      "If a policy changed since you last accepted it, signing in shows you what changed before you accept it.",
+      "When a Unity package can't be uploaded, the message explains how to send it for now, and that a safe way to accept them is coming.",
+    ],
+  },
   {
     version: "V0.7.01",
     date: "2026-10-28",

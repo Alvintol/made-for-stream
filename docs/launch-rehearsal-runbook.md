@@ -457,6 +457,11 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
 - [ ] **What changed, on the acceptance card.** Every account is asked to
       accept Privacy Policy `2026-10-12-2` and is shown its changes under
       "What changed in the Privacy Policy (2026-10-12-2)" before it accepts.
+      *(Since V0.7.02 this also holds for someone who signs in fresh after
+      the change: the sign-in box is not counted for a document they
+      accepted in an older version. PizzaButt missed the card on 2026-10-16
+      for that reason. Re-check at the next Privacy Policy change; a new
+      account still sees no card.)*
 - [ ] *(Needs migration `20261012_161` before the website is merged.)*
       **Site updates.** The footer shows "V0.2.00 · What's new" (version
       numbers since 2026-10-13; it read "Version 2026.10.12" before), and
@@ -580,6 +585,19 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       panel disappears, and approval completes the commission. The 3- and
       7-day reminders and the 10-day ops alert were checked by dry run only.
       An admin can **Record as received** with a note (`MIL-008`).
+- [ ] *(Needs migration `20261028_169` before the website is merged.)*
+      **Milestone approval confirms receipt.** On the EUR run, mark milestone
+      1 "Provided off site" and have the buyer press **It hasn't arrived**,
+      then approve the milestone. The "Did the work arrive?" panel goes away
+      without another press, the chat reads "The buyer approved milestone 1
+      (…), which confirms that the work sent outside Made for Stream
+      arrived.", and `select status, answered_by from
+      public.off_site_delivery_receipts` shows `received` by the buyer. No
+      "receipt confirmed" email is sent for it (`MIL-008`).
+- [ ] **Unity packages.** Add a file named `avatar.unitypackage` to the
+      final delivery: the refusal ends "…For now, send them outside Made for
+      Stream and tick “Provided off site” so the buyer can confirm they
+      arrived." A `.exe` alone gets no Unity sentence.
 - [ ] **Zip name and chat boxes.** A folder zipped on the final delivery
       form is listed as "meowington_222222222_updated_deliverables.zip" and
       stored and downloaded as that name with a 12-character code before
