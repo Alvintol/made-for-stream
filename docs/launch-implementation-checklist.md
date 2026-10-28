@@ -891,6 +891,9 @@ any jurisdiction they cover**
 
 The brief to send is [`tax-adviser-questions.md`](tax-adviser-questions.md):
 how the site handles money and tax, what is missing, and thirty questions.
+**2026-10-28:** section 7 now puts one model first (creators handle tax on
+commissions, Made for Stream on instant buys and its own fees) with ten
+questions, P1 to P10. Nothing is built for it until the answers arrive.
 [`tax-answers-to-work.md`](tax-answers-to-work.md) says what each likely
 answer would change in the site and how big that is. The owner fills in the
 blanks at the top of the brief (legal form, business number, GST status)
