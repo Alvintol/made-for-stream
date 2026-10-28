@@ -174,6 +174,15 @@ export const useRespondListingRequestMilestone =
           queryClient.invalidateQueries({
             queryKey: ["messagesInbox"],
           }),
+
+          // Approving closes the milestone's off-site receipt
+          // (20261028_169), so "Did the work arrive?" goes away.
+          queryClient.invalidateQueries({
+            queryKey: [
+              "offSiteReceipts",
+              responseRow.listing_request_id,
+            ],
+          }),
         ]);
       },
     });

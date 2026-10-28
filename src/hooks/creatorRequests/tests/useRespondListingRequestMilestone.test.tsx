@@ -192,6 +192,16 @@ describe(
       ).toHaveBeenCalledWith({
         queryKey: ["conversationMessages"],
       });
+
+      // Approval closes the milestone's off-site receipt.
+      expect(
+        invalidateSpy
+      ).toHaveBeenCalledWith({
+        queryKey: [
+          "offSiteReceipts",
+          "request-1",
+        ],
+      });
     });
 
     it("commissions milestone revisions with a trimmed reason", async () => {

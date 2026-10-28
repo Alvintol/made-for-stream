@@ -32,6 +32,8 @@ surfaces:
   - public.admin_record_off_site_receipt
   - public.enqueue_off_site_receipt_reminders
   - src/components/listingRequests/conversations/OffSiteReceiptPanel.tsx
+  - supabase/migrations/20261028_169_milestone_approval_confirms_receipt.sql
+  - public.confirm_off_site_receipt_on_milestone_approval   # trigger on listing_request_milestone_submissions
 unmatched_tier: 2
 ---
 
@@ -515,6 +517,16 @@ The buyer is reminded 3 and 7 days after the work was sent
 completed, while any receipt on it is unanswered or "not received".**
 Receipts of an earlier final delivery that was replaced do not count.
 Milestone approvals and cancellations are not blocked.
+
+**Approving a milestone confirms its receipt (migration `20261028_169`).**
+When the buyer approves a milestone submission, its receipt becomes
+"received", answered by the buyer, also after an earlier "It hasn't
+arrived". The chat gains "The buyer approved milestone N (…), which
+confirms that the work sent outside Made for Stream arrived." No extra
+email is sent (the creator already gets the approval email), and no
+reminders or ops alert follow. A receipt on a submission that was sent
+back for a revision stays open until the buyer answers it, and still holds
+the final delivery.
 
 **On screen (2026-10-17).** While a receipt is waiting, the buyer's final
 delivery panel shows the refusal sentence with **Go to the confirmation**,

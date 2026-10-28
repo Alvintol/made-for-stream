@@ -60,5 +60,14 @@ export const deliveryFileTypesMessage = (refused: readonly string[]): string => 
   const shown = refused.slice(0, 5).join(", ");
   const more = refused.length > 5 ? ` and ${refused.length - 5} more` : "";
 
-  return `For safety, only these file types can be uploaded: ${groups}. Not allowed: ${shown}${more}.`;
+  // Unity packages can carry scripts, so they wait for a safe way to accept
+  // them; until then they go off site (decided 2026-10-28).
+  const unity = refused.some((name) => extensionOf(name) === "unitypackage")
+    ? ` ${unityPackageNote}`
+    : "";
+
+  return `For safety, only these file types can be uploaded: ${groups}. Not allowed: ${shown}${more}.${unity}`;
 };
+
+export const unityPackageNote =
+  "We are working on a safe way to accept Unity packages (.unitypackage) in a future update. For now, send them outside Made for Stream and tick “Provided off site” so the buyer can confirm they arrived.";

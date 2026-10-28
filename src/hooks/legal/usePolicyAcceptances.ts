@@ -58,6 +58,23 @@ export const logPolicyAcceptanceFailure = (
   console.warn(`[policy_acceptances] ${context} failed (${code}): ${message}`);
 };
 
+// The user's acceptances of the given policies, whatever request they were
+// tied to.
+export const fetchPolicyAcceptances = async (
+  userId: string,
+  policyTypes: PolicyType[],
+): Promise<PolicyAcceptanceRecord[]> => {
+  const { data, error } = await supabase
+    .from("policy_acceptances")
+    .select("policy_type, policy_version, related_listing_request_id, accepted_at")
+    .eq("user_id", userId)
+    .in("policy_type", policyTypes);
+
+  if (error) throw error;
+
+  return (data as PolicyAcceptanceRecord[] | null) ?? [];
+};
+
 type UsePolicyAcceptancesOptions = {
   policyTypes: PolicyType[];
   relatedListingRequestId?: string | null;

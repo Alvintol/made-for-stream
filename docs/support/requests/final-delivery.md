@@ -296,7 +296,10 @@ admin Storage page can count them.
   Program and script files are refused on purpose until uploads are
   scanned for viruses. The message names what was refused. Files the
   operating system adds (`.DS_Store`, `__MACOSX`, `Thumbs.db`) are left out
-  of a folder and ignored inside a zip. The list is
+  of a folder and ignored inside a zip. When a Unity package
+  (`.unitypackage`) is among them, the message adds that a safe way to
+  accept them is being worked on and that, for now, they go outside the
+  site with "Provided off site" ticked (`unityPackageNote`). The list is
   `public.delivery_file_extensions()` and
   `src/domain/listings/deliveryFileTypes.ts`; change both together (a test
   compares them), in a new migration.
@@ -351,7 +354,8 @@ as intended.
   often ship that way, because they can carry scripts. Decided
   2026-10-28: they stay refused and are sent outside the site, which also
   suits their size; the creator ticks "Provided off site" so the buyer
-  confirms receipt (`MIL-007`, `MIL-008`). Revisit with scanning.
+  confirms receipt (`MIL-007`, `MIL-008`). The refusal tells the creator
+  so, and that a safe way to accept them is planned. Revisit with scanning.
 - **Uploads are not resumable.** A very large file on a poor connection may
   fail and has to be chosen again (`FIN-005`).
 - **Zipping in the browser holds the whole folder in memory**; very large

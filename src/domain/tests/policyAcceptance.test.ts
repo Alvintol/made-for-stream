@@ -7,6 +7,7 @@ import {
   currentPolicyVersions,
   getLatestAcceptedAt,
   getMissingPolicyTypes,
+  getSignInAcceptancesToRecord,
   signupPolicyTypes,
   stripeConnectedAccountAgreementUrl,
   stripeServicesAgreementUrl,
@@ -57,6 +58,32 @@ describe("getMissingPolicyTypes", () => {
         { policy_type: "privacy", policy_version: privacyVersion },
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("getSignInAcceptancesToRecord", () => {
+  const ticked = toCurrentPolicyAcceptances(signupPolicyTypes);
+
+  it("records the sign-in box for a new account", () => {
+    expect(getSignInAcceptancesToRecord(ticked, [])).toEqual(ticked);
+  });
+
+  it("leaves out a document accepted before in an older version, so its changes are shown", () => {
+    expect(
+      getSignInAcceptancesToRecord(ticked, [
+        { policy_type: "terms", policy_version: termsVersion },
+        { policy_type: "privacy", policy_version: "2020-01-01-old" },
+      ]),
+    ).toEqual([{ policyType: "terms", policyVersion: termsVersion }]);
+  });
+
+  it("still records a document already accepted in this version", () => {
+    expect(
+      getSignInAcceptancesToRecord(ticked, [
+        { policy_type: "privacy", policy_version: "2020-01-01-old" },
+        { policy_type: "privacy", policy_version: privacyVersion },
+      ]),
+    ).toEqual(ticked);
   });
 });
 

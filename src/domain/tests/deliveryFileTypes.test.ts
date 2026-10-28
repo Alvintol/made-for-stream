@@ -7,6 +7,7 @@ import {
   deliveryFileTypesMessage,
   isAllowedDeliveryFileName,
   isSystemJunkFile,
+  unityPackageNote,
 } from "../listings/deliveryFileTypes";
 
 describe("delivery file types", () => {
@@ -46,5 +47,13 @@ describe("delivery file types", () => {
     expect(message).toMatch(/^For safety, only these file types can be uploaded: images \(PNG, JPG/);
     expect(message).toContain("archives (ZIP)");
     expect(message).toMatch(/Not allowed: a\.exe, b\.bat, c\.js, d\.vbs, e\.msi and 1 more\.$/);
+  });
+
+  it("tells a creator refused a Unity package to send it off site for now, also from inside a zip", () => {
+    expect(deliveryFileTypesMessage(["avatar.unitypackage"])).toMatch(
+      /Not allowed: avatar\.unitypackage\. We are working on a safe way to accept Unity packages .+ “Provided off site” .+\.$/,
+    );
+    expect(deliveryFileTypesMessage(["pack.zip: Pack/avatar.UnityPackage"])).toContain(unityPackageNote);
+    expect(deliveryFileTypesMessage(["setup.exe"])).not.toContain("Unity");
   });
 });
