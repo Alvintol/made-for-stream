@@ -146,10 +146,12 @@ plans first needs the Fee Schedule change described above.
 - **Plans are given by hand.** There is no admin screen for grants and
   nothing sells a plan.
 - **Paying for more storage on one commission is not built.** It needs a
-  price and a Fee Schedule change first (decision pending).
+  price and a Fee Schedule change first. Held 2026-10-28 until it is
+  built.
 - **Downloads are counted when the link is requested**, at the file's size;
   a download that is abandoned still counts, and other traffic (images, the
   API) is not counted at all.
 - **Uploads are not resumable**, so the 2 GB per file stays until they are.
 - **Delivery files are not scanned for viruses.** Only listed file types
-  can be uploaded (`FIN-005`); scanning is planned as a paid service.
+  can be uploaded (`FIN-005`); scanning is a paid service and is not in the budget (held
+  2026-10-28).

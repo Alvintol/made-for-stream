@@ -345,11 +345,13 @@ as intended.
 - **Delivery files are not scanned for viruses.** Only listed file types
   are accepted, judged by their names: a program renamed to `.png` gets
   through, and the database sees only a zip's own name (the website checks
-  inside). Scanning is planned, as a paid service. Files are always
-  downloaded, never opened in the browser.
+  inside). Scanning is a paid service and is not in the budget (held
+  2026-10-28). Files are always downloaded, never opened in the browser.
 - **Unity packages (`.unitypackage`) are refused**, though VRChat avatars
-  often ship that way, because they can carry scripts. Revisit with
-  scanning.
+  often ship that way, because they can carry scripts. Decided
+  2026-10-28: they stay refused and are sent outside the site, which also
+  suits their size; the creator ticks "Provided off site" so the buyer
+  confirms receipt (`MIL-007`, `MIL-008`). Revisit with scanning.
 - **Uploads are not resumable.** A very large file on a poor connection may
   fail and has to be chosen again (`FIN-005`).
 - **Zipping in the browser holds the whole folder in memory**; very large
