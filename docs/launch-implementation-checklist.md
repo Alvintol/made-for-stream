@@ -1121,8 +1121,11 @@ deploy** (see the runbook's step 0).
       the P.O. Box line in `api/.env.example`, so receipt footers carry it.
 - [ ] **Run the rehearsal** in [`launch-rehearsal-runbook.md`](launch-rehearsal-runbook.md)
       (CAD, USD, EUR). **In progress since 2026-10-08, not finished:** the CAD
-      commission `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` has an accepted milestone
-      agreement and no payment yet; USD and EUR are not started. The runbook's
+      commission `4fb4b602-…` completed 2026-10-17 and the USD commission
+      `97653182-…` completed 2026-10-28 (two milestones, a revision, 278.00 and
+      321.00 paid, final delivery confirmed and approved). Not yet tried on any
+      run: milestone preview videos, "It hasn't arrived", the folder zip and
+      its name, a refused `.exe`, a delivery download on USD. EUR is not started. The runbook's
       "Progress" section has the exact state. It includes the Storage Register
       browser check.
 - [ ] **Confirm processor terms are in place** before relying on the register as
