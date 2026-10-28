@@ -339,7 +339,7 @@ where n.listing_request_id = '<request>' order by n.created_at;
       cancellation itself takes 7 days or more, so it was checked by a
       rolled-back dry run only (`docs/support/requests/cancellation-warnings.md`).
 
-Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `____` EUR `____`
+Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (the first attempt, `6070950f-…`, was cancelled before payment: section 3) USD `97653182-2930-417f-83f5-d7a373a5f949` EUR `____`
 
 - [ ] *(Needs migration `20261008_151` applied before the website is merged.)*
       The budget box takes an amount or a range: type `100 to 150` and the
@@ -388,7 +388,7 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `sent`.
 - [x] *(CAD 2026-10-09: accepted 00:26 UTC, 15 confirmations, early-start row at `2026-10-07`; `agreement_accepted` email `sent`. USD 2026-10-26: accepted 23:19 UTC, 17 confirmations, early-start row at `2026-10-07`, fees locked at 5% and 5%, `agreement_accepted` email to the creator `sent`. EUR to do.)* Accept. `policy_acceptances` has an `early_service_request` row for the
       request at the current Refund Policy version (`2026-10-07`).
-- [ ] *(USD 2026-10-27, milestone 1 payment `6fcd87fd-…`: Fee Schedule and Refund Policy accepted 00:09, no early-start box; tip 12.50 and contribution 3.00. Found: the second Round up was greyed once the first made the total whole. V0.6.04 made each press add up to 1.00 instead; on review that was worse (1.10 → 2.00 → 3.00 …), so V0.7.00 restores "whole once, then rests" and the summary now shows the tip, contribution and total live. Re-check on the 300.00 payment.)* Starting payment checkout: the policy step shows the Fee Schedule / Refund
+- [ ] *(USD 2026-10-27, milestone 1 payment `6fcd87fd-…`: Fee Schedule and Refund Policy accepted 00:09, no early-start box; tip 12.50 and contribution 3.00. Found: the second Round up was greyed once the first made the total whole. V0.6.04 made each press add up to 1.00 instead; on review that was worse (1.10 → 2.00 → 3.00 …), so V0.7.00 restores "whole once, then rests" and the summary now shows the tip, contribution and total live. Re-checked on milestone 2 (payment `4d9185b0-…`, 2026-10-28): tip 2.16 and contribution 3.84 brought 315.00 to a whole 321.00, and no problem was reported. EUR to do.)* Starting payment checkout: the policy step shows the Fee Schedule / Refund
       Policy box but **not** the early-start box again. Add a **tip and a
       contribution** on this payment. The billing country shows the
       country from the buyer's private account details and cannot be changed
@@ -397,7 +397,7 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       can be changed. The percentage buttons fill in a share of the project
       payment, **Round up** brings the total to a whole number and then rests until the total changes (the summary above shows the tip, contribution and total as they are typed), and the
       contribution explains what it is for. Both boxes start empty. Pay with `4242 4242 4242 4242`.
-- [x] *(USD 2026-10-27: paid 00:10 UTC; 250.00 + fee 12.50 + tip 12.50 + contribution 3.00 = 278.00; application fee 28.00 = both 12.50 fees + 3.00; milestone and schedule item `paid`; `payment_received` email `sent`. Tax `calculated`, 0.00, region CA-AB, with a Stripe Tax transaction id. Evidence: billing CA (account details and checkout), card US, so `TAX-002` is expected to flag it. EUR to do.)* Webhook marks it paid, and the workflow advances. The fee arithmetic above
+- [x] *(USD 2026-10-27: paid 00:10 UTC; 250.00 + fee 12.50 + tip 12.50 + contribution 3.00 = 278.00; application fee 28.00 = both 12.50 fees + 3.00; milestone and schedule item `paid`; `payment_received` email `sent`. Tax `calculated`, 0.00, region CA-AB, with a Stripe Tax transaction id. Evidence: billing CA (account details and checkout), card US, so `TAX-002` is expected to flag it. Milestone 2, 2026-10-28: paid 00:09 UTC; 300.00 + fee 15.00 + tip 2.16 + contribution 3.84 = 321.00; application fee 33.84 = both 15.00 fees + 3.84; `payment_received` email `sent`; tax 0.00 as before. EUR to do.)* Webhook marks it paid, and the workflow advances. The fee arithmetic above
       holds. `listing_request_payment_tax_evidence` has the billing country and the
       card country (country codes only).
 - [x] *(USD 2026-10-26/27: three images stored on submission 1, bucket private; the watermark showed on the thumbnails and a file that is not an image was refused. The one-hour expiry not tried.)*
@@ -412,7 +412,7 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       `select public from storage.buckets where id = 'milestone-previews';`
       is `false`. An image's address works for one hour for anyone who has
       it, then stops (`MIL-005`).
-- [ ] *(Needs migration `20261027_168` before the website is merged.)*
+- [ ] *(Migration `20261027_168` applied 2026-10-27. Not tried on USD: milestone 2 was submitted before the website change merged. EUR to do.)*
       **Milestone preview videos.** On milestone 2 the creator adds a short
       MP4 (or WebM/MOV) and an animated GIF under "Preview images and
       videos". Each shows as a playable thumbnail with "Made for Stream ·
@@ -470,7 +470,7 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       (`last_seen_version` is the footer's version). No email is sent at any point
       (`SITE-001`).
 - [ ] *(Needs migration `20261012_159`, then an API deploy, then the
-      website.)* **Image retention.** A closed commission that has images
+      website.)* *(CAD: row from 2026-10-17 07:56, `delete_after` 2027-04-15. USD: row from 2026-10-28 00:42, `delete_after` 2027-04-26. Both 180 days on, `on_hold` false.)* **Image retention.** A closed commission that has images
       gets one row: `select listing_request_id, closed_at, delete_after,
       on_hold, deleted_at from public.commission_image_retention;` shows the
       CAD commission after it is completed, with `delete_after` 180 days
@@ -530,6 +530,10 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       on the buyer's side. The pill styling is unchanged.
 - [ ] *(Needs migration `20261016_163` before the website is merged, and
       the project-wide upload limit in Supabase raised to at least 1 GB.)*
+      *(USD 2026-10-28, final delivery `d26fcdd1-…`: four loose PNGs, stored
+      under their own names with a 12-character code. No folder and no zip,
+      so the folder zip and "Zip these 2 files into one" were not tried on
+      USD. No download was made. EUR to do.)*
       **Delivery files.** On the final delivery form the "Files" section
       recommends one .zip. Choose a folder: it becomes one .zip named after
       the folder, listed with its size. Add two loose files: "Zip these 2
@@ -546,7 +550,9 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       the bar. Limits: 2 GB a file, 50 files and 10 GB a delivery, a folder
       over 2 GB is refused for zipping with the steps to zip it on the
       computer. After a delivery, downloading a file adds a row to
-      `delivery_file_downloads`. The admin dashboard has a **Storage** card;
+      `delivery_file_downloads` *(CAD 2026-10-18: two rows. USD: none, as
+      no file was downloaded; the row is written before the link is made, so
+      a missing row means no download, not a lost record)*. The admin dashboard has a **Storage** card;
       `/admin/storage` shows stored and downloaded against the included
       amounts, the buckets, the largest commissions and the plans (`STO-001`,
       `STO-002`, `OPS-008`).
@@ -561,7 +567,11 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
       **Confirming work sent off site.** The CAD final delivery
       (`7ea7b9ae-…`, marked "Provided off site") has a receipt from the
       migration, and the buyer gets an "Action needed: confirm you received
-      the work" email. Above the chat the buyer sees "Did the work arrive?"
+      the work" email. *(USD 2026-10-28: the final delivery was marked Discord
+      only, so "Another way" was not tried; receipt `c81187bb-…` requested at
+      00:41:31 with its email `sent`, answered **received** at 00:41:53 with an
+      email to PizzaButt `sent`; approval at 00:42:05 completed the commission.
+      **It hasn't arrived** was not pressed. EUR to do.)* Above the chat the buyer sees "Did the work arrive?"
       with **I received it** and **It hasn't arrived**. Approving the final
       delivery first is refused with "Confirm in the chat that you received
       the work…". Press **It hasn't arrived**: a chat line on the buyer's
@@ -578,7 +588,10 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
 - [ ] **Names in the chat (website only).** Automatic lines read
       "@meowington sent a project change order for @ImAllBeans to review:
       …" for both sides, not "The creator …".
-- [ ] Milestone 2, then final delivery, final balance paid, project completed.
+- [ ] *(USD 2026-10-28: milestone 2 revision then approval, paid 321.00,
+      final delivery approved 00:42 UTC, request `completed`, "completed"
+      emails to both `sent`. CAD done earlier. EUR to do.)* Milestone 2, then
+      final delivery, final balance paid, project completed.
 - [ ] Receipt emails arrived for each payment (transactional email, Sprint 6).
 
 ## 1b. Free listing and a restricted creator (Sprint 9)
