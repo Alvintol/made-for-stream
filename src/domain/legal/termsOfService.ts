@@ -1,10 +1,28 @@
-export const termsVersion = "2026-10-08";
+export const termsVersion = "2026-10-29";
+
+// What changed in this version, in plain words, for the card that asks
+// someone who accepted an earlier version to accept this one
+// (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
+// fails if the two versions differ.
+export const termsChanges = {
+  version: "2026-10-29",
+  // One change per line: never join separate changes into one sentence.
+  items: [
+    "Mature and adult content is no longer allowed anywhere on Made for Stream, with or without a warning.",
+    "Mature or adult content is removed, and the account that posted or sent it can be suspended or permanently banned.",
+    "Made for Stream is not available in Belarus, Cuba, Iran, North Korea, Russia, Syria or the occupied regions of Ukraine, or to anyone on a sanctions list.",
+    "Made for Stream is not yet available in Quebec, until the site is in French.",
+    "Section 10 explains how we find and decide on illegal or harmful content, how to report it, and how to ask for a review of a decision within six months.",
+    "safety@madeforstream.com is the contact for reports, and for authorities under the EU Digital Services Act and the UK Online Safety Act.",
+    "The Community Guidelines and the Creator Terms changed in the same ways.",
+  ],
+} as const;
 
 export const termsSections = [
   {
     "title": "1. Overview and operator",
     "body": [
-      "Made for Stream is an online marketplace and community for digital creator services and assets. It is operated by Made for Stream (business number [BUSINESS_NUMBER]), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. Help with accounts, listings or projects: support@madeforstream.com. Legal notices and enquiries: legal@madeforstream.com. Privacy enquiries: privacy@madeforstream.com.",
+      "Made for Stream is an online marketplace and community for digital creator services and assets. It is operated by Made for Stream (business number [BUSINESS_NUMBER]), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. Help with accounts, listings or projects: support@madeforstream.com. Legal notices and enquiries: legal@madeforstream.com. Privacy enquiries: privacy@madeforstream.com. Reports of illegal or harmful content, and the point of contact for users and for authorities under the EU Digital Services Act and the UK Online Safety Act: safety@madeforstream.com, in English.",
       "These Terms govern accounts, creator applications, listings, messaging, project agreements, payments and related services. Before creating an account or accepting a paid agreement, you must be shown these Terms and affirmatively accept the terms applicable to that activity. If you do not agree, do not create an account or enter a transaction."
     ]
   },
@@ -19,6 +37,7 @@ export const termsSections = [
     "title": "3. Eligibility and accounts",
     "body": [
       "Registered users must be at least 18 and meet any higher legal contracting age applicable to them. Creator applicants, sellers and payout recipients must satisfy the same requirement. You must have authority to bind any business you represent. Do not misstate your age, identity, authority or ownership of a linked account.",
+      "Because of the sanctions that apply to Made for Stream and its payment provider, Made for Stream is not available to anyone who lives in Belarus, Cuba, Iran, North Korea, Russia, Syria or the occupied regions of Ukraine, or who is named on a sanctions list kept by Canada, the United States, the European Union or the United Kingdom. Made for Stream is not yet available in Quebec, until it is offered in French. Do not use a false address, another person's account or any other means to get around these limits; we close accounts that do.",
       "Before you can create a listing, send a commission request, send a project agreement or pay, you must give us the private account details described in the Privacy Policy: your legal name, date of birth and address and, if the account belongs to a business or other legal entity, its legal name. A business registration number and a tax number are optional unless the law requires us to collect them. These details are not shown to other users. They must be true, must be your own or those of the business you are authorised to represent, and must be kept up to date. We may restrict an account whose details are false, incomplete or out of date.",
       "Keep your account information accurate and access secure. Notify support promptly of suspected compromise. You are responsible for your conduct and authorised account activity; these Terms do not make you automatically liable for every unauthorised act irrespective of applicable law or fault."
     ]
@@ -46,9 +65,9 @@ export const termsSections = [
     ]
   },
   {
-    "title": "7. Content, mature material and conduct",
+    "title": "7. Content and conduct",
     "body": [
-      "Follow the Community Guidelines on every surface, including private messages and externally linked deliveries. Some mature, non-explicit material may be permitted with accurate labels, safe previews and working visibility controls. Pornography, sexual-gratification content, sexual services, exploitative or non-consensual sexual material, sexualised minors or minor-looking characters, and other prohibited content are not permitted. A mature label does not make prohibited material acceptable.",
+      "Follow the Community Guidelines on every surface, including private messages and externally linked deliveries. Made for Stream is for general audiences: mature and adult content is not allowed, whether public or private and whether or not it carries a warning. That includes pornography, sexual or suggestive content and nudity, sexual services, gore and the other categories the Community Guidelines list. It is removed, and the account that posted or sent it can be suspended or permanently banned. Sexual content involving a minor or minor-looking character, and non-consensual intimate imagery, lead to a permanent ban and a report to the authorities.",
       "Do not infringe rights; harass, threaten, scam, spam or impersonate; disclose private information without authority; submit false applications or reviews; distribute malware; solicit unlawful conduct; evade moderation; or interfere with platform security or availability. Do not harvest user data, abuse automated access or reverse engineer systems except where authorised or protected by applicable law. Report security concerns responsibly without accessing unnecessary personal data."
     ]
   },
@@ -68,9 +87,12 @@ export const termsSections = [
     ]
   },
   {
-    "title": "10. Enforcement, suspension and account closure",
+    "title": "10. Reports, enforcement, suspension and account closure",
     "body": [
-      "We may investigate credible misuse and take proportionate action, including requesting corrections, restricting visibility, removing content, pausing listings or messaging, suspending creator access or terminating an account. Urgent safety, fraud, legal or payment risks may require immediate action. Where lawful and appropriate, we provide a reason and a route to appeal under the Community Guidelines.",
+      "We find content that is illegal or against our rules through reports from users and others, our own review of creator applications, listings and profiles, and limits built into the site, such as the file types that can be uploaded. We do not use automated systems to decide to remove content or restrict an account: a person makes those decisions, following the Community Guidelines.",
+      "Anyone can report content they believe is illegal or breaks our rules, with or without an account, as Community Guidelines section 6 explains. We act on reports promptly and with care, tell the reporter what we decided, and tell the affected user the reason for any removal or restriction and how to ask for a review, unless the law or a safety risk prevents it. You can ask for a review of a decision, or complain about how we handled a report, at appeals@madeforstream.com within six months. When we have reason to believe a crime threatens someone's life or safety, we tell the police.",
+      "We may investigate credible misuse and take proportionate action, including requesting corrections, restricting visibility, removing content, pausing listings or messaging, suspending creator access or terminating an account. Urgent safety, fraud, legal or payment risks may require immediate action.",
+      "Made for Stream is not intended for children. Accounts are for adults, and the content rules keep public pages suitable for general audiences.",
       "Restrictions or account closure do not automatically confiscate funds, release a party from a refund, erase legal records or transfer rights in unfinished work. We maintain a support route for resolving existing obligations. You may request account closure at support@madeforstream.com. Closing your account deletes or anonymises your personal information as the Privacy Policy describes, but we keep a record of the versions of these Terms, our other policies and any project agreements you accepted, together with a copy of those documents, for the periods the Privacy Policy sets out."
     ]
   },

@@ -30,12 +30,26 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.06";
+export const siteVersion = "V0.7.07";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.07",
+    date: "2026-10-29",
+    title: "Updated Terms, Privacy Policy and Community Guidelines",
+    changes: [
+      "Mature and adult content is no longer allowed anywhere on Made for Stream, with or without a warning.",
+      "Mature or adult content is removed, and the account that posted it can be suspended or permanently banned.",
+      "The Terms say where Made for Stream is not available because of sanctions, and that Quebec comes once the site is in French.",
+      "The Terms and Community Guidelines explain how reports are handled, that a person makes every removal decision, and how to ask for a review within six months.",
+      "safety@madeforstream.com is named as the contact for reports and for authorities under EU and UK online safety law.",
+      "The Privacy Policy says when a creator is told a buyer has EU or UK consumer rights, and how location is used to check availability.",
+      "You'll be asked to accept the updated Terms and Privacy Policy the next time you sign in, and creators the updated Creator Terms.",
+    ],
+  },
   {
     version: "V0.7.06",
     date: "2026-10-29",

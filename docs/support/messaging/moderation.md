@@ -27,6 +27,8 @@ continues.
 | "My report went nowhere" | [`MOD-003`](#mod-003--report-queue-not-being-worked) |
 | "Admin actions are failing" | [`MOD-002`](#mod-002--moderation-action-rejected) |
 | "Someone is scamming on the platform" | [`MOD-004`](#mod-004--active-harm-reported) |
+| A report of mature, sexual or other illegal content, or of child sexual abuse material | [`MOD-005`](#mod-005--mature-adult-or-illegal-content) |
+| "Why was my listing removed?" / "I want to appeal" | [`MOD-005`](#mod-005--mature-adult-or-illegal-content) |
 
 ---
 
@@ -188,14 +190,80 @@ Fraud in progress is money leaving real people's hands while we decide.
 
 ---
 
+## `MOD-005` — Mature, adult or illegal content
+
+```yaml
+id: MOD-005
+tier: 3
+signals:
+  - source: user_report
+    match: "report of sexual, suggestive, gory or otherwise mature content, or of illegal content"
+  - source: email
+    match: "mail to safety@madeforstream.com or appeals@madeforstream.com"
+auto_fix: none
+reason_not_automatable: "every removal and ban is a person's decision (Terms section 10), and some cases carry legal reporting duties"
+escalate_with:
+  - "the report, the content's location, and the account behind it"
+  - "for child sexual abuse material: only the location, never a copy"
+```
+
+**The rule (2026-10-29, Terms, Community Guidelines and Creator Terms
+version 2026-10-29).** Mature and adult content is not allowed anywhere, with
+or without a warning: sexual or suggestive content, nudity, fetish content,
+blood or gore (even stylised), frightening horror imagery, drug use, and
+strong profanity or slurs (Community Guidelines sections 2 and 3).
+
+**What to do.**
+
+1. **Remove it.** Hide the listing (admin listing tools), lock the
+   conversation, or mark the profile under review (`MOD-002` lists the
+   actions).
+2. **Decide the consequence.** Pornography, sexual services, non-consensual
+   intimate imagery and any sexual depiction of a minor or minor-looking
+   character: permanent ban. Other mature content: removal and a warning;
+   repeated or deliberate: suspension or ban. Ban in the Supabase dashboard
+   (Authentication → Users → the user → Ban), and unpublish their listings.
+3. **Tell the person why (statement of reasons).** Email them from
+   safety@madeforstream.com: what was removed or restricted, which rule or law
+   it broke, the facts relied on, that a person decided it, and that they can
+   ask for a review at appeals@madeforstream.com within six months. Skip this
+   only where the law or a safety risk forbids it (for example, it would warn
+   someone under police investigation).
+4. **Tell the reporter the outcome.** Resolve their report with a resolution
+   note; they see the status on their reports page. Reply by email too when
+   the report came by email.
+5. **Reviews and complaints** to appeals@madeforstream.com get an answer in
+   every case. Reverse the decision if it was wrong.
+
+**Child sexual abuse material.** Do not download, open again, forward or
+screenshot it. Remove access at once, ban the account, and report the location
+to Cybertip.ca (https://cybertip.ca). If there is reason to believe an offence
+was committed through Made for Stream, notify the police and keep the related
+records (do not delete the account's data) for at least 21 days, as Canada's
+mandatory reporting law for internet services requires.
+
+**Threat to life or safety.** If any report or content suggests someone's life
+or safety is at risk, call the police (911 in Canada) and keep the records.
+
+**Money impact.** A banned creator may still have projects in progress: their
+existing obligations follow the Refund Policy (Terms section 10). Do not keep
+or move money because of the ban.
+
+---
+
 ## Known gaps
 
 - **No queue-age alerting.** `MOD-003` must be run by hand, and it is the entry
   most likely to matter.
 - **No velocity detection** for multiple reports against one target, which is
   the main `MOD-004` signal.
-- **No documented reporter feedback loop** — reporters are not told outcomes, so
-  they cannot distinguish "reviewed and dismissed" from "ignored".
-- **No account suspension capability** documented. The containment options are
-  unpublishing listings and locking conversations; there is no way to stop a bad
-  actor from simply continuing elsewhere on the platform.
+- **Reporters are told outcomes only through the report status** on their
+  reports page (and by email when the report came by email). The policies
+  promise to tell them the decision (`MOD-005` step 4).
+- **No statement-of-reasons screen.** The reasons for a removal or ban are sent
+  by email by hand (`MOD-005` step 3).
+- **No ban button in the admin pages.** Bans are done in the Supabase
+  dashboard (`MOD-005` step 2), which signs the person out and stops them
+  signing in again.
+- **No automated detection of mature or illegal images.** Removal depends on
+  reports and our own review, as Terms section 10 says.

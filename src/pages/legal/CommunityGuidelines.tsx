@@ -8,7 +8,7 @@ const CommunityGuidelines = () => {
   return (
     <LegalPolicySections
       title="Community Guidelines"
-      subtitle="Plain-language standards for listings, messages, mature content, and moderation."
+      subtitle="Plain-language standards for listings, messages, content that is not allowed, and moderation."
       sections={communityGuidelinesSections}
       version={communityGuidelinesVersion}
     />
