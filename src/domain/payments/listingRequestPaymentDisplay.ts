@@ -13,31 +13,19 @@ export const getListingRequestPaymentTypeLabel = (
 
 export const getListingRequestPaymentStatusLabel = (
   status: ListingRequestPaymentStatus,
-): string => {
-  const labelByStatus: Record<ListingRequestPaymentStatus, string> = {
-    requires_checkout: "Payment required",
-    checkout_opened: "Checkout started",
-    processing: "Processing",
-    paid: "Paid",
-    failed: "Payment failed",
-    refunded: "Refunded",
-    partially_refunded: "Partially refunded",
-    disputed: "Disputed",
-    cancelled: "Cancelled",
-  };
-
-  return labelByStatus[status];
-};
+  t: Translate = english,
+): string => t(`paymentStatus.${status}`);
 
 export const getListingRequestPaymentActionLabel = (
   status: ListingRequestPaymentStatus,
+  t: Translate = english,
 ): string | null =>
   status === "requires_checkout"
-    ? "Pay now"
+    ? t("paymentAction.pay")
     : status === "checkout_opened"
-      ? "Continue payment"
+      ? t("paymentAction.continue")
       : status === "failed"
-        ? "Retry payment"
+        ? t("paymentAction.retry")
         : null;
 
 export const canOpenListingRequestPaymentCheckout = (

@@ -982,8 +982,12 @@ Build order (each its own branch):
       (`feat/i18n-creator-profile-request`): the creator profile page and
       the commission request form with its estimated invoice. Then
       (`feat/i18n-buyer-commissions`): the buyer's commission list and
-      checkout, with shared status, payment and fee labels. Next:
-      the remaining screens a few at a time, then the policies by a
+      checkout, with shared status, payment and fee labels. Then
+      (`feat/i18n-commission-agreement-payments`): the commission page's
+      project agreement, its accept-or-decline box, the work-readiness card
+      and the payments card. Next: the rest of the commission page
+      (milestones, deliveries, change orders, cancellation, the page
+      itself), then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

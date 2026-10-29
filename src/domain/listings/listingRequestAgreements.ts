@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export type ListingRequestAgreementStatus =
   | "draft"
   | "sent"
@@ -62,60 +64,24 @@ export type ListingRequestBuyerHoldReason =
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export const getListingRequestBuyerHoldReasonLabel = (
-  reason: ListingRequestBuyerHoldReason
-): string =>
-  reason === "agreement_acceptance_pending"
-    ? "Agreement acceptance pending"
-    : reason === "starting_payment_pending"
-      ? "Starting payment pending"
-      : reason === "milestone_approval_pending"
-        ? "Milestone approval pending"
-        : reason === "milestone_payment_pending"
-          ? "Milestone payment pending"
-          : reason === "change_order_response_pending"
-            ? "Change order response pending"
-            : reason === "change_order_payment_pending"
-              ? "Change order payment pending"
-              : "Balance payment pending";
+  reason: ListingRequestBuyerHoldReason,
+  t: Translate = english
+): string => t(`holdReason.${reason}`);
 
 export const getListingRequestAgreementStatusLabel = (
-  status: ListingRequestAgreementStatus
-): string =>
-  status === "draft"
-    ? "Draft"
-    : status === "sent"
-      ? "Awaiting buyer review"
-      : status === "buyer_accepted"
-        ? "Accepted by buyer"
-        : status === "buyer_declined"
-          ? "Declined by buyer"
-          : status === "superseded"
-            ? "Superseded"
-            : "Cancelled";
+  status: ListingRequestAgreementStatus,
+  t: Translate = english
+): string => t(`agreementStatus.${status}`);
 
 export const getListingRequestAgreementStatusSummary = (
-  status: ListingRequestAgreementStatus
-): string =>
-  status === "draft"
-    ? "The creator is preparing the project agreement."
-    : status === "sent"
-      ? "The buyer needs to review and accept the project agreement before payment or work can begin."
-      : status === "buyer_accepted"
-        ? "The buyer accepted the project agreement."
-        : status === "buyer_declined"
-          ? "The buyer declined this project agreement."
-          : status === "superseded"
-            ? "This agreement was replaced by a newer version."
-            : "This agreement was cancelled.";
+  status: ListingRequestAgreementStatus,
+  t: Translate = english
+): string => t(`agreementSummary.${status}`);
 
 export const getListingRequestPaymentStructureLabel = (
-  structure: ListingRequestPaymentStructure
-): string =>
-  structure === "full_prepayment"
-    ? "Full prepayment"
-    : structure === "deposit_balance"
-      ? "Deposit + balance"
-      : "Milestone payments";
+  structure: ListingRequestPaymentStructure,
+  t: Translate = english
+): string => t(`paymentStructure.${structure}`);
 
 // Sprint 4 (launch-scope.md section 5.4): a null included_revision_count
 // means the agreement never stated a number, and Refund Policy section 5's
@@ -130,19 +96,9 @@ export const getListingRequestIncludedRevisionCount = (
   includedRevisionCount ?? DEFAULT_LISTING_REQUEST_INCLUDED_REVISION_COUNT;
 
 export const getListingRequestPaymentTimingLabel = (
-  timing: ListingRequestPaymentTiming
-): string =>
-  timing === "due_before_work_starts"
-    ? "Due before work starts"
-    : timing === "due_at_milestone_approval"
-      ? "Due at milestone approval"
-      : timing === "due_before_final_release"
-        ? "Due before final release"
-        : timing === "due_on_change_order_acceptance"
-          ? "Due when change order is accepted"
-          : timing === "included_no_extra_charge"
-            ? "Included, no extra charge"
-            : "Optional, not selected";
+  timing: ListingRequestPaymentTiming,
+  t: Translate = english
+): string => t(`paymentTiming.${timing}`);
 
 export const getMinimumCreatorUpdateRule = (
   estimatedWorkDays: number
@@ -304,14 +260,15 @@ export type AgreementChecklistItemType = "included" | "buyer_provides" | "buyer_
 // Null for a line that is not a checklist line (a milestone, an add-on).
 export const getAgreementChecklistItemLabel = (
   itemType: string,
-  buyerName: string
+  buyerName: string,
+  t: Translate = english
 ): string | null =>
   itemType === "buyer_provides"
-    ? `${buyerName} provides`
+    ? t("checklistItem.buyerProvides", { name: buyerName })
     : itemType === "buyer_approves"
-      ? `${buyerName} approves`
+      ? t("checklistItem.buyerApproves", { name: buyerName })
       : itemType === "included"
-        ? "Included"
+        ? t("checklistItem.included")
         : null;
 
 // How a person is named on an agreement: their handle, else their display

@@ -47,6 +47,11 @@ browser. Emails are still in English.
   checkout: the payment summary, tip and contribution, billing location and
   the terms box with the early-start request. Commission statuses, payment
   types and the fee and tax lines follow the language wherever they appear.
+- 2026-10-29: on the commission page, the project agreement (with its
+  "I understand" boxes and the accept-or-decline box), the work-readiness
+  card and the payments card. Agreement statuses, payment structures and
+  timings, timeline-hold reasons and payment statuses follow the language
+  wherever they appear. The rest of the commission page is still English.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -105,10 +110,14 @@ with "Your choice could not be saved. Please try again."
   human translator.
 - **Emails are English only.**
 - **The consent wording needs the policy translator's check.** The checkout
-  agreement line and the early-start request (`consent.earlyStart*`, also
-  used when accepting an agreement) were translated here, not by a
-  translator. They are what the buyer agrees to, so check them with the
-  policies before French is marked ready.
+  agreement line, the early-start request (`consent.earlyStart*`, also
+  used when accepting an agreement) and the agreement's "I understand" boxes
+  (`agreement.understand`, `agreementReview.progress`) were translated
+  here, not by a translator. They are what the buyer agrees to, so check
+  them with the policies before French is marked ready.
+- **A buyer's recorded confirmations stay in English.** The lines under
+  "Buyer confirmations" on an agreement are the wording saved when the buyer
+  accepted, so they are shown as saved.
 - **Messages from the server** (an error from checkout, for example) are
   still in English.
 - **Numbers and money** still use English formatting: French writes "5 %" and
