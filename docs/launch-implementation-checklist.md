@@ -916,7 +916,8 @@ before sending. Six known gaps, each waiting on an answer:
 - [ ] **Receipts do not say who the seller is.** The receipt email gives the
       amount and the project title only (question 4).
 - [ ] **Nothing limits which countries a buyer may pay from** (questions 18
-      and 19).
+      and 19). **2026-10-29:** sanctioned countries and Quebec are refused
+      (`20261029_171`, ACC-006); any other limit waits on the answers.
 
 **Compliance plan for a global beta (decided 2026-10-28)**
 
@@ -935,11 +936,15 @@ Owner's decisions:
 
 Build order (each its own branch):
 
-- [ ] **Tax reporting dashboard and deadline reminders.** Built on
-      `feat/tax-reporting-dashboard`: migration 170, the TAX-008 ops email
-      line, the admin page. Owner applies the migration, deploys the API,
-      merges.
-- [ ] **Sanctions and Quebec block** at account details and checkout.
+- [x] **Tax reporting dashboard and deadline reminders.** Migration 170
+      (verified applied 2026-10-29), the TAX-008 ops email line, the admin
+      page. Merged as #185. Not yet seen: the page signed in, and a real
+      reminder email.
+- [ ] **Sanctions and Quebec block** at account details, listings, requests,
+      agreements and checkout. Built on `feat/sanctions-and-quebec-block`:
+      migration 171, the API's checkout check (internet-address country only
+      when `TAX_IP_COUNTRY_HEADER` is set), the form's message, ACC-006.
+      Owner applies the migration, deploys the API, merges.
 - [ ] **Fee-inclusive prices; EU/UK buyer tickbox at checkout; creator
       notice and tickbox when accepting an EU/UK buyer's request.**
 - [ ] **One policy release:** all mature content banned with takedown and

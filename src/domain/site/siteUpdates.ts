@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.04";
+export const siteVersion = "V0.7.05";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.05",
+    date: "2026-10-29",
+    title: "Where Made for Stream is available",
+    changes: [
+      "Made for Stream isn't available in Quebec until the site is in French.",
+      "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of sanctions.",
+    ],
+  },
   {
     version: "V0.7.04",
     date: "2026-10-28",

@@ -7,12 +7,16 @@ surfaces:
   - public.validate_user_account_details()
   - public.enforce_account_details()
   - public.sync_user_account_country()
+  - public.blocked_location_message()  # sanctioned countries and Quebec (20261029_171)
+  - public.refuse_blocked_account_location()
+  - public.refuse_checkout_from_blocked_location()
+  - public.blocked_checkout_message()
   - src/pages/AccountDetailsSettings.tsx
   - src/pages/PreferencesSettings.tsx
   - src/components/auth/ProfileSetupRedirect.tsx
   - src/hooks/settings/useAccountDetails.ts
   - src/domain/settings/accountDetails.ts
-  - api/server.js  # applyCheckoutTax reads the billing location from the details
+  - api/server.js  # applyCheckoutTax reads the billing location from the details; assertCheckoutLocationAllowed
 unmatched_tier: 2
 ---
 
@@ -82,6 +86,7 @@ section 7).
 | "It says to choose a display name" / "It won't accept my display name" | [`ACC-005`](#acc-005--display-name-missing-or-refused) |
 | "The billing country at checkout is wrong" | The person corrects their address in Settings → Personal details |
 | "I ticked the email box and it didn't stick" | [`ACC-004`](#acc-004--details-or-email-preference-cannot-be-read-or-saved) |
+| "It says Made for Stream isn't available in Quebec" / "…can't be used from Russia" (or another sanctioned country) | [`ACC-006`](#acc-006--place-made-for-stream-does-not-serve) |
 
 ---
 
@@ -285,7 +290,58 @@ playbook: see [`profiles-and-media.md`](profiles-and-media.md).
 
 ---
 
+## `ACC-006` — Place Made for Stream does not serve
+
+```yaml
+id: ACC-006
+tier: 2
+signals:
+  - source: db
+    match: "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider."
+    where: "blocked_location_message(), raised on saving account details, creating a listing, request or agreement, and opening checkout"
+  - source: db
+    match: "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way."
+    where: "the same places"
+  - source: api
+    match: "Your location could not be checked. Please try again."
+    where: "POST /api/stripe/checkout/session (assertCheckoutLocationAllowed)"
+auto_fix: none
+reason_not_automatable: "the refusal is the law (sanctions) or a decision (Quebec until French); support cannot override it"
+escalate_if:
+  - "someone outside these places is refused"        # a wrong address, or a wrong internet-address country
+```
+
+**What it is (2026-10-29, `20261029_171`).** Made for Stream does not serve
+Belarus, Cuba, Iran, North Korea, Russia or Syria (sanctions), or Quebec until
+the site is in French. The account address decides: those addresses can't be
+saved, and an address saved before the block can't create a listing, send a
+request or agreement, or open checkout. At checkout the API also refuses an
+internet address in a sanctioned country, when `TAX_IP_COUNTRY_HEADER` is set
+(it needs the API to sit behind Cloudflare, which adds `cf-ipcountry`). The
+form shows the same sentence on the country or province field before saving.
+
+**Fix.** None for someone who is there. Never suggest a different address or a
+VPN. Someone refused **at checkout** who is not in a sanctioned country is
+probably travelling or on a VPN that exits there: they pay from where they
+are. Someone who moved can update their address in Settings → Personal
+details.
+
+**Escalate** if someone outside these places is refused: check their row in
+`user_account_details` (country and region) and, for checkout, the
+`ip_address` evidence on their payment.
+
+**Money impact.** None. Nothing is charged.
+
+---
+
 ## Known gaps
+
+- **Occupied regions of Ukraine are not told apart.** The address region is
+  free text outside Canada and the US, and the internet address gives only the
+  country. Stripe screens payments and payouts against sanctions lists,
+  including those regions.
+- **People on sanctions lists are not screened by us.** Stripe screens every
+  connected account and payment.
 
 - **Display names are not unique and not screened.** Two accounts can share
   one, and nothing checks a name against a word list. Handles are unique.
