@@ -1001,6 +1001,40 @@ describe("<CreatorRequestDetails />", () => {
     expect(screen.getByText("Conversation thread loaded")).toBeInTheDocument();
   });
 
+  it("asks the creator to confirm an EU buyer's cancellation right before accepting", () => {
+    mocks.useCreatorRequest.mockReturnValue({
+      data: {
+        request: { ...request, buyer_consumer_rights_region: "eu" },
+        buyer: { user_id: "buyer-1", handle: "buyeruser", display_name: "Buyer User", avatar_url: null },
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByText("This buyer has EU consumer rights")).toBeInTheDocument();
+    expect(screen.getByText(/This buyer lives in the EU or EEA/)).toBeInTheDocument();
+
+    const accept = screen.getByRole("button", { name: "Accept commission request" });
+    expect(accept).toBeDisabled();
+
+    fireEvent.click(screen.getByLabelText(/I understand this buyer can cancel within 14 days/));
+    expect(accept).toBeEnabled();
+
+    fireEvent.click(accept);
+    expect(mocks.updateRequestStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "accepted", consumerRightsAcknowledged: true }),
+    );
+  });
+
+  it("shows no cancellation-rights box for a buyer outside the EU, EEA and UK", () => {
+    renderPage();
+
+    expect(screen.queryByText(/consumer rights/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept commission request" })).toBeEnabled();
+  });
+
   it("renders the agreement builder for an accepted commission without an agreement", () => {
     mocks.useCreatorRequest.mockReturnValue({
       data: {

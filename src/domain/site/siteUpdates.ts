@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.05";
+export const siteVersion = "V0.7.06";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.06",
+    date: "2026-10-29",
+    title: "Prices with the service fee included",
+    changes: [
+      "Listing prices now include the 5% buyer service fee, so the price you see is what you pay before any tax.",
+      "Each listing's page also shows the creator's own price.",
+      "On the request form, the estimate calls the listing's price the creator's price, with the fee as its own line.",
+      "When a buyer in the EU, EEA or UK sends a request, the creator is told about the buyer's 14-day cancellation right and confirms it before accepting.",
+    ],
+  },
   {
     version: "V0.7.05",
     date: "2026-10-29",

@@ -75,6 +75,20 @@ export const formatPaymentCents = (cents: number, currency: string): string =>
 export const formatFeeRateBps = (bps: number): string =>
   `${Number((bps / 100).toFixed(2))}%`;
 
+// The buyer service fee on one amount, rounded up to the cent as the
+// database rounds it (ensure_listing_request_payment_for_schedule_item).
+export const buyerServiceFeeCents = (baseCents: number, feeBps: number): number =>
+  Math.ceil((baseCents * feeBps) / 10000);
+
+// A price as the buyer pays it: the amount plus the buyer service fee.
+// Split over several payments, each is rounded up on its own, so the real
+// total can be a cent higher per payment.
+export const priceWithBuyerServiceFee = (amount: number, feeBps: number): number => {
+  const cents = Math.round(amount * 100);
+
+  return (cents + buyerServiceFeeCents(cents, feeBps)) / 100;
+};
+
 // Explains the buyer service fee on a payment the buyer is about to make.
 //
 // Derived from the rate and minimum recorded on the payment row, not from a

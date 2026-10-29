@@ -2,7 +2,9 @@
 feature: requests/request-lifecycle
 status: active
 surfaces:
-  - public.listing_requests
+  - public.listing_requests  # buyer_consumer_rights_region, creator_consumer_rights_acknowledged_at (20261029_172)
+  - public.apply_listing_request_consumer_rights()
+  - src/domain/listings/consumerRights.ts
   - public.listing_request_notices
   - public.listing_request_closures
   - public.listing_request_early_review_flags
@@ -57,6 +59,7 @@ database, its error messages (the `match:` strings below), the web addresses
 | "My request was declined and the chat is gone" | [`REQ-004`](#req-004--conversation-missing-for-a-declined-request) |
 | "I need to cancel this request" | [`cancellation.md`](cancellation.md) |
 | "It won't accept my budget" | [`REQ-005`](#req-005--budget-not-accepted-on-the-request-form) |
+| "I can't press Accept" / "It asks me about the buyer's consumer rights" (creator) | [`REQ-006`](#req-006--creator-must-confirm-the-buyers-cancellation-right) |
 
 ---
 
@@ -293,6 +296,47 @@ set in the agreement.
 the website was deployed before migration `20261008_151`. Apply the migration.
 
 **Money impact.** None.
+
+---
+
+## `REQ-006` — Creator must confirm the buyer's cancellation right
+
+```yaml
+id: REQ-006
+tier: 2
+signals:
+  - source: db
+    match: "Confirm that you understand this buyer's right to cancel within 14 days, then accept the request."
+    where: "apply_listing_request_consumer_rights(), on submitted to accepted"
+  - source: db
+    match: "/column \"?(listing_requests\.)?(buyer_consumer_rights_region|creator_consumer_rights_acknowledged_at)\"? does not exist/"
+    where: "the creator's request page, when migration 20261029_172 is not applied"
+auto_fix: none
+reason_not_automatable: "the confirmation is the creator's own act; nobody may give it for them"
+```
+
+**What it is (2026-10-29, `20261029_172`).** When a buyer whose account
+address is in the EU, the EEA (Iceland, Liechtenstein, Norway) or the UK sends
+a request, the database labels it `eu` or `uk`. The creator's request page
+then shows "This buyer has EU consumer rights" (or UK), a short explanation of
+the 14-day cancellation right, and a box: "I understand this buyer can cancel
+within 14 days, and that if they do, I'm paid only for the work done so far."
+**Accept commission request** stays greyed out until the box is ticked, and
+the database refuses the acceptance without it. The creator sees only the
+label, never the buyer's country.
+
+The buyer's side is unchanged: they still ask for work to start early when
+they accept the agreement (AGR-007 in [`agreements.md`](agreements.md)).
+
+**Fix.** The creator ticks the box and accepts. **Never set the time for
+them.** If the buyer moved after sending the request, the label stays as it
+was when they sent it.
+
+**If the request page fails to load** with the "does not exist" signal, the
+website was deployed before migration `20261029_172`. Apply the migration.
+
+**Money impact.** None at acceptance. The confirmation is the record that the
+creator was told how a cancellation within 14 days is paid out.
 
 ---
 

@@ -29,6 +29,17 @@ Two different things, which people will confuse:
   approximate price in the visitor's own currency, marked with "≈". Nobody is
   ever charged that figure.
 
+**Listing prices include the buyer service fee (2026-10-29).** Cards and the
+listing page show the creator's price plus the 5% buyer service fee, rounded
+up to the cent as payments are, with "Includes 5% service fee" under it. The
+listing page also gives the creator's own price. Tax is not included; it is
+added at checkout where it applies. California, Canada and the EU all require
+the first price shown to include required fees. The creator's own pages (their
+listings, the listing form) still show the price they set, and the request
+form's estimate shows "Creator's price", the fee and the total as separate
+lines. A price split over several payments can come to a cent more per
+payment, because each payment's fee is rounded up on its own.
+
 ## How it works
 
 **The listing's currency.** A trigger sets `listings.currency` on every

@@ -7,6 +7,10 @@ type UpdateCreatorListingRequestStatusInput = {
   requestId: string;
   status: ListingRequestStatus;
   reason?: string | null;
+  // The creator ticked that they understand an EU, EEA or UK buyer's right
+  // to cancel. The database stamps the time and refuses acceptance of such
+  // a request without it (20261029_172).
+  consumerRightsAcknowledged?: boolean;
 };
 
 const normaliseReason = (value?: string | null) => value?.trim() ?? "";
@@ -34,6 +38,9 @@ export const useUpdateCreatorListingRequestStatus = () => {
         .update({
           status: input.status,
           creator_status_reason: trimmedReason || null,
+          ...(input.consumerRightsAcknowledged
+            ? { creator_consumer_rights_acknowledged_at: new Date().toISOString() }
+            : {}),
         })
         .eq("id", input.requestId)
         .eq("creator_user_id", user.id)

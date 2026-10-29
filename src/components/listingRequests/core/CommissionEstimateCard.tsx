@@ -1,5 +1,8 @@
 import { STANDARD_FEE_BPS } from "../../../domain/listings/listingRequestAgreements";
-import { formatFeeRateBps } from "../../../domain/payments/listingRequestPaymentDisplay";
+import {
+  buyerServiceFeeCents,
+  formatFeeRateBps,
+} from "../../../domain/payments/listingRequestPaymentDisplay";
 import { useDisplayCurrency } from "../../../hooks/money/useDisplayCurrency";
 import type { BuyerServiceFeeRate } from "../../../hooks/payments/useBuyerServiceFeeRate";
 import { convertAmount, formatCurrencyAmountRange } from "../../../lib/money/displayCurrency";
@@ -10,7 +13,8 @@ type CommissionEstimateCardProps = {
   // The top of a budget range. Every line then shows a range.
   amountMax?: number | null;
   currency: string;
-  // What the amount is: "Your budget", "Listing price".
+  // What the amount is: "Your budget", "Creator's price" (the listing's
+  // price before the buyer service fee).
   amountLabel: string;
   // The buyer's own rate (useBuyerServiceFeeRate). A rate below the standard
   // one is shown as the standard fee with a discount under it.
@@ -39,17 +43,12 @@ const discountLabels: Record<BuyerServiceFeeRate["reason"], string> = {
   goodwill: "Fee adjustment",
 };
 
-// The same rounding the database uses for a payment: the fee is rounded up
-// to the cent (ensure_listing_request_payment_for_schedule_item).
-const feeCentsAt = (baseCents: number, feeBps: number): number =>
-  Math.ceil((baseCents * feeBps) / 10000);
-
 // What one project price comes to, in cents.
 const estimateFor = (amount: number, feeBps: number) => {
   const base = Math.round(amount * 100);
-  const standardFee = feeCentsAt(base, STANDARD_FEE_BPS);
+  const standardFee = buyerServiceFeeCents(base, STANDARD_FEE_BPS);
   // A rate can only lower the fee here, never raise it.
-  const fee = Math.min(standardFee, feeCentsAt(base, feeBps));
+  const fee = Math.min(standardFee, buyerServiceFeeCents(base, feeBps));
 
   return { base, standardFee, discount: standardFee - fee, fee, total: base + fee };
 };
