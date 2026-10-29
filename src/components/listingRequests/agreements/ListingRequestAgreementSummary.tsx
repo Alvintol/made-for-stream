@@ -13,6 +13,7 @@ import {
   getMaximumAgreementFeeAmount,
   STANDARD_FEE_BPS,
 } from "../../../domain/listings/listingRequestAgreements";
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 
 // When given, each section ends with an "I understand" box (the buyer,
@@ -60,48 +61,46 @@ const classes = {
   understandBox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300",
 } as const;
 
-// Shown to everyone, and what the buyer's "policies" and "schedule"
+// The change-order, final-files and hold rules (agreement.*Rule) are shown
+// to everyone, and are what the buyer's "policies" and "schedule"
 // confirmations refer to: they must be on the page to be understood.
-const CHANGE_ORDER_RULE =
-  "Any change to scope, price, timeline, deliverables or payments needs an accepted change order.";
-const FINAL_FILES_RULE =
-  "Final files or deliverables may be held until required payments are complete.";
-const HOLD_RULE = "Time the project spends waiting on the buyer is added to this date.";
 
-const formatMoney = (amount: number | null, currency: string): string =>
+const formatMoney = (amount: number | null, currency: string, t: Translate): string =>
   amount === null
-    ? "Not set"
+    ? t("agreement.notSet")
     : formatCurrencyAmount(amount, currency);
 
-const formatDate = (value?: string | null): string =>
+const formatDate = (value: string | null | undefined, language: string, t: Translate): string =>
   value
-    ? new Intl.DateTimeFormat("en-CA", { dateStyle: "medium" }).format(new Date(value))
-    : "Not set";
+    ? new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(new Date(value))
+    : t("agreement.notSet");
 
 const sortedBySortOrder = <T extends { sort_order: number }>(items: T[]): T[] =>
   [...items].sort((a, b) => a.sort_order - b.sort_order);
 
-const scheduleStatusLabel = (status: string): string =>
+const scheduleStatusLabel = (status: string, t: Translate): string =>
   status === "payment_required"
-    ? "Due now"
+    ? t("agreement.dueNow")
     : status === "paid"
-      ? "Paid"
+      ? t("agreement.paid")
       : status === "waived"
-        ? "Waived"
+        ? t("agreement.waived")
         : status === "cancelled"
-          ? "Cancelled"
-          : "Upcoming";
+          ? t("agreement.cancelled")
+          : t("agreement.upcoming");
 
 // Acknowledgements are usually all given in one sitting, so group them under a single date.
 const groupAcknowledgementsByDay = (
-  acknowledgements: ListingRequestAgreementRow["listing_request_agreement_acknowledgements"]
+  acknowledgements: ListingRequestAgreementRow["listing_request_agreement_acknowledgements"],
+  language: string,
+  t: Translate
 ) => {
   const groups = new Map<string, typeof acknowledgements>();
 
   [...acknowledgements]
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .forEach((acknowledgement) => {
-      const day = formatDate(acknowledgement.created_at);
+      const day = formatDate(acknowledgement.created_at, language, t);
       groups.set(day, [...(groups.get(day) ?? []), acknowledgement]);
     });
 
@@ -116,24 +115,28 @@ type GroupProps = {
   acknowledge?: AgreementAcknowledgeControls;
 };
 
-const Group = ({ title, children, keys = [], acknowledge }: GroupProps) => (
-  <section className={classes.group}>
-    <h3 className={classes.groupTitle}>{title}</h3>
-    {children}
-    {acknowledge && keys.length > 0 && (
-      <label className={classes.understand}>
-        <input
-          type="checkbox"
-          className={classes.understandBox}
-          checked={keys.every((key) => acknowledge.checkedKeys.includes(key))}
-          disabled={acknowledge.disabled}
-          onChange={(event) => acknowledge.onToggle(keys, event.currentTarget.checked)}
-        />
-        <span>I understand the {title.toLowerCase()} above.</span>
-      </label>
-    )}
-  </section>
-);
+const Group = ({ title, children, keys = [], acknowledge }: GroupProps) => {
+  const t = useT();
+
+  return (
+    <section className={classes.group}>
+      <h3 className={classes.groupTitle}>{title}</h3>
+      {children}
+      {acknowledge && keys.length > 0 && (
+        <label className={classes.understand}>
+          <input
+            type="checkbox"
+            className={classes.understandBox}
+            checked={keys.every((key) => acknowledge.checkedKeys.includes(key))}
+            disabled={acknowledge.disabled}
+            onChange={(event) => acknowledge.onToggle(keys, event.currentTarget.checked)}
+          />
+          <span>{t("agreement.understand", { section: title.toLowerCase() })}</span>
+        </label>
+      )}
+    </section>
+  );
+};
 
 const TermRow = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className={classes.row}>
@@ -151,6 +154,9 @@ const AgreementDetails = ({
   acknowledge?: AgreementAcknowledgeControls;
   buyerName: string;
 }) => {
+  const t = useT();
+  const language = useLanguage();
+  const money = (amount: number | null, currency: string) => formatMoney(amount, currency, t);
   const keys = getAgreementAcknowledgementKeysBySection(
     acknowledge ? getRequiredListingRequestAgreementAcknowledgements(agreement) : []
   );
@@ -165,7 +171,7 @@ const AgreementDetails = ({
     agreement.adjusted_estimated_completion_at !== agreement.estimated_completion_at;
   const checklist = sortedBySortOrder(agreement.listing_request_agreement_items);
   const schedule = sortedBySortOrder(agreement.listing_request_payment_schedule_items);
-  const maximumFee = formatMoney(getMaximumAgreementFeeAmount(schedule), agreement.currency);
+  const maximumFee = money(getMaximumAgreementFeeAmount(schedule), agreement.currency);
   const policies = [
     agreement.additional_cost_policy,
     agreement.revision_policy,
@@ -174,36 +180,36 @@ const AgreementDetails = ({
 
   return (
     <>
-      <Group title="Terms" keys={keys.terms} acknowledge={acknowledge}>
+      <Group title={t("agreement.terms")} keys={keys.terms} acknowledge={acknowledge}>
         <dl className={classes.rows}>
-          <TermRow label="Payment structure">
-            {getListingRequestPaymentStructureLabel(agreement.payment_structure)}
+          <TermRow label={t("agreement.paymentStructure")}>
+            {getListingRequestPaymentStructureLabel(agreement.payment_structure, t)}
           </TermRow>
-          <TermRow label="Total">{formatMoney(agreement.total_amount, agreement.currency)}</TermRow>
+          <TermRow label={t("agreement.total")}>{money(agreement.total_amount, agreement.currency)}</TermRow>
           {agreement.deposit_amount !== null && (
-            <TermRow label="Deposit">
-              {formatMoney(agreement.deposit_amount, agreement.currency)}
+            <TermRow label={t("agreement.deposit")}>
+              {money(agreement.deposit_amount, agreement.currency)}
             </TermRow>
           )}
-          <TermRow label="Included revisions">
+          <TermRow label={t("agreement.revisions")}>
             {getListingRequestIncludedRevisionCount(agreement.included_revision_count)}
             {agreement.included_revision_count === null && (
-              <span className={classes.text}> (not stated — default applied)</span>
+              <span className={classes.text}> {t("agreement.revisionsDefault")}</span>
             )}
           </TermRow>
-          <TermRow label={adjustedDiffers ? "Adjusted completion" : "Estimated completion"}>
-            {formatDate(agreement.adjusted_estimated_completion_at || agreement.estimated_completion_at)}
+          <TermRow label={t(adjustedDiffers ? "agreement.adjustedCompletion" : "agreement.estimatedCompletion")}>
+            {formatDate(agreement.adjusted_estimated_completion_at || agreement.estimated_completion_at, language, t)}
             {completedHoldDays > 0 && (
               <p className={classes.note}>
-                Includes +{completedHoldDays} day{completedHoldDays === 1 ? "" : "s"} from buyer-side holds.
+                {t("agreement.holdDaysIncluded", { count: completedHoldDays })}
               </p>
             )}
-            <p className={classes.note}>{HOLD_RULE}</p>
+            <p className={classes.note}>{t("agreement.holdRule")}</p>
           </TermRow>
         </dl>
       </Group>
 
-      <Group title="Scope" keys={keys.scope} acknowledge={acknowledge}>
+      <Group title={t("agreement.scope")} keys={keys.scope} acknowledge={acknowledge}>
         <p className={classes.text}>{agreement.scope_summary}</p>
 
         {agreement.included_deliverables.length > 0 ? (
@@ -215,12 +221,12 @@ const AgreementDetails = ({
             ))}
           </div>
         ) : (
-          <p className={classes.text}>No deliverables listed.</p>
+          <p className={classes.text}>{t("agreement.noDeliverables")}</p>
         )}
       </Group>
 
       {checklist.length > 0 && (
-        <Group title="Scope checklist" keys={keys.checklist} acknowledge={acknowledge}>
+        <Group title={t("agreement.checklist")} keys={keys.checklist} acknowledge={acknowledge}>
           <ul className={classes.rows}>
             {checklist.map((item) => (
               <li key={item.id} className={classes.row}>
@@ -232,11 +238,11 @@ const AgreementDetails = ({
                     priced line says when its payment is due, as before. */}
                 <div className={classes.rowAside}>
                   {[
-                    getAgreementChecklistItemLabel(item.item_type, buyerName) ??
-                      getListingRequestPaymentTimingLabel(item.payment_timing),
-                    item.price_amount ? formatMoney(item.price_amount, agreement.currency) : null,
+                    getAgreementChecklistItemLabel(item.item_type, buyerName, t) ??
+                      getListingRequestPaymentTimingLabel(item.payment_timing, t),
+                    item.price_amount ? money(item.price_amount, agreement.currency) : null,
                     item.timeline_impact_days
-                      ? `+${item.timeline_impact_days} day${item.timeline_impact_days === 1 ? "" : "s"}`
+                      ? t("agreement.days", { count: item.timeline_impact_days })
                       : null,
                   ]
                     .filter(Boolean)
@@ -248,7 +254,7 @@ const AgreementDetails = ({
         </Group>
       )}
 
-      <Group title="Payment schedule" keys={keys.schedule} acknowledge={acknowledge}>
+      <Group title={t("agreement.schedule")} keys={keys.schedule} acknowledge={acknowledge}>
         {schedule.length > 0 ? (
           <ul className={classes.rows}>
             {schedule.map((paymentItem) => (
@@ -256,41 +262,41 @@ const AgreementDetails = ({
                 <div className={classes.rowMain}>
                   <div className={classes.rowTitle}>{paymentItem.title}</div>
                   <div className={classes.rowSub}>
-                    {getListingRequestPaymentTimingLabel(paymentItem.payment_timing)}
+                    {getListingRequestPaymentTimingLabel(paymentItem.payment_timing, t)}
                   </div>
                 </div>
                 <div className={classes.rowAside}>
-                  {`${formatMoney(paymentItem.amount, paymentItem.currency)} · ${scheduleStatusLabel(paymentItem.status)}`}
+                  {`${money(paymentItem.amount, paymentItem.currency)} · ${scheduleStatusLabel(paymentItem.status, t)}`}
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className={classes.text}>No payment schedule items listed.</p>
+          <p className={classes.text}>{t("agreement.noSchedule")}</p>
         )}
         {schedule.length > 0 && (
           <p className={classes.text}>
-            {`Estimated Made for Stream fees: the buyer service fee is at most ${maximumFee}, and so is the creator platform fee (each ${STANDARD_FEE_BPS / 100}% of every payment, rounded up to the cent). These are maximums — a fee can be lower, never higher. Tips, contributions and any tax are separate.`}
+            {t("agreement.feeEstimate", { maximum: maximumFee, rate: STANDARD_FEE_BPS / 100 })}
           </p>
         )}
-        <p className={classes.text}>{FINAL_FILES_RULE}</p>
+        <p className={classes.text}>{t("agreement.finalFilesRule")}</p>
       </Group>
 
-      <Group title="Policies" keys={keys.policies} acknowledge={acknowledge}>
+      <Group title={t("agreement.policies")} keys={keys.policies} acknowledge={acknowledge}>
         <ul className={classes.bullets}>
           {policies.map((policy) => (
             <li key={policy}>{policy}</li>
           ))}
-          <li>{CHANGE_ORDER_RULE}</li>
+          <li>{t("agreement.changeOrderRule")}</li>
         </ul>
       </Group>
 
       {agreement.listing_request_agreement_acknowledgements.length > 0 && (
-        <Group title="Buyer confirmations">
-          {groupAcknowledgementsByDay(agreement.listing_request_agreement_acknowledgements).map(
+        <Group title={t("agreement.confirmations")}>
+          {groupAcknowledgementsByDay(agreement.listing_request_agreement_acknowledgements, language, t).map(
             ([day, acknowledgements]) => (
               <div key={day} className="space-y-1.5">
-                <p className={classes.confirmedOn}>Confirmed on {day}</p>
+                <p className={classes.confirmedOn}>{t("agreement.confirmedOn", { date: day })}</p>
                 <ul className={classes.bullets}>
                   {acknowledgements.map((acknowledgement) => (
                     <li key={acknowledgement.id}>{acknowledgement.acknowledgement_label}</li>
@@ -304,23 +310,22 @@ const AgreementDetails = ({
 
       {hasActiveHold && (
         <div className={classes.warning}>
-          This project is currently waiting on buyer action. The estimated completion date may be
-          adjusted after the hold is resolved.
+          {t("agreement.holdActive")}
         </div>
       )}
 
       {agreement.listing_request_timeline_holds.length > 0 && (
-        <Group title="Timeline holds">
+        <Group title={t("agreement.holds")}>
           <ul className={classes.rows}>
             {agreement.listing_request_timeline_holds.map((hold) => (
               <li key={hold.id} className={classes.row}>
                 <div className={classes.rowTitle}>
-                  {getListingRequestBuyerHoldReasonLabel(hold.reason)}
+                  {getListingRequestBuyerHoldReasonLabel(hold.reason, t)}
                 </div>
                 <div className={classes.rowAside}>
                   {hold.ended_at
-                    ? `Resolved with +${hold.rounded_extension_days} day${hold.rounded_extension_days === 1 ? "" : "s"} added.`
-                    : "Currently active."}
+                    ? t("agreement.holdResolved", { count: hold.rounded_extension_days })
+                    : t("agreement.holdCurrent")}
                 </div>
               </li>
             ))}
@@ -338,20 +343,25 @@ const ListingRequestAgreementSummary = ({
   acknowledge,
   buyerName = "The buyer",
 }: ListingRequestAgreementSummaryProps) => {
+  const t = useT();
+
   if (isLoading) {
-    return <p className={classes.text}>Loading project agreement…</p>;
+    return <p className={classes.text}>{t("agreement.loading")}</p>;
   }
 
   if (!agreement) {
-    return <p className={classes.text}>No project agreement has been created for this commission yet.</p>;
+    return <p className={classes.text}>{t("agreement.none")}</p>;
   }
 
   return (
     <div className={classes.body}>
       <div className={classes.statusRow}>
-        <span className={classes.badge}>{getListingRequestAgreementStatusLabel(agreement.status)}</span>
+        <span className={classes.badge}>{getListingRequestAgreementStatusLabel(agreement.status, t)}</span>
         <span>
-          Version {agreement.version_number} · {getListingRequestAgreementStatusSummary(agreement.status)}
+          {t("agreement.version", {
+            version: agreement.version_number,
+            summary: getListingRequestAgreementStatusSummary(agreement.status, t),
+          })}
         </span>
       </div>
       <AgreementDetails agreement={agreement} acknowledge={acknowledge} buyerName={buyerName} />

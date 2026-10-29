@@ -6,11 +6,7 @@ import {
   getAgreementAcknowledgementKeysBySection,
   getRequiredListingRequestAgreementAcknowledgements,
 } from "../../../domain/listings/listingRequestAgreements";
-import {
-  earlyServiceRequestExplanation,
-  earlyServiceRequestHeading,
-  earlyServiceRequestLabel,
-} from "../../../domain/legal/policyAcceptance";
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import PolicyAcceptanceCheckbox from "../../legal/PolicyAcceptanceCheckbox";
 import ListingRequestAgreementSummary from "./ListingRequestAgreementSummary";
@@ -47,10 +43,10 @@ const classes = {
     "btnOutline",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project agreement response could not be saved.";
+    : t("agreementReview.saveFailed");
 
 const ListingRequestAgreementBuyerActions = ({
   agreement,
@@ -60,6 +56,7 @@ const ListingRequestAgreementBuyerActions = ({
   onDecline,
   buyerName,
 }: ListingRequestAgreementBuyerActionsProps) => {
+  const t = useT();
   const [checkedAcknowledgementKeys, setCheckedAcknowledgementKeys] = useState<
     string[]
   >([]);
@@ -116,7 +113,7 @@ const ListingRequestAgreementBuyerActions = ({
     await onDecline();
   };
 
-  const errorMessage = error ? getErrorMessage(error) : null;
+  const errorMessage = error ? getErrorMessage(error, t) : null;
 
   return (
     <div className={classes.review}>
@@ -133,11 +130,11 @@ const ListingRequestAgreementBuyerActions = ({
       <div className={classes.card}>
       <div className={classes.section}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Accept or decline</h2>
+          <h2 className={classes.title}>{t("agreementReview.title")}</h2>
           <p className={classes.text} role="status">
             {hasCheckedAllRequiredAcknowledgements
-              ? "You have confirmed every section of the agreement above."
-              : `Read each section of the agreement above and tick "I understand" under it: ${confirmedSections} of ${sections.length} confirmed.`}
+              ? t("agreementReview.allConfirmed")
+              : t("agreementReview.progress", { confirmed: confirmedSections, total: sections.length })}
           </p>
         </div>
 
@@ -146,18 +143,18 @@ const ListingRequestAgreementBuyerActions = ({
         {/* Its own checkbox and wording, never folded into the acknowledgements
             above (Refund Policy section 1, launch-scope.md section 1.5). */}
         <div className={classes.consent}>
-          <h3 className={classes.subtitle}>{earlyServiceRequestHeading}</h3>
+          <h3 className={classes.subtitle}>{t("consent.earlyStartHeading")}</h3>
           <PolicyAcceptanceCheckbox
             id="agreement-early-service-request"
             checked={earlyServiceRequested}
             onChange={setEarlyServiceRequested}
             disabled={isPending}
           >
-            {earlyServiceRequestLabel}
+            {t("consent.earlyStartLabel")}
           </PolicyAcceptanceCheckbox>
           <details className={classes.text}>
-            <summary className={classes.why}>Why am I asked this?</summary>
-            <p className="mt-1">{earlyServiceRequestExplanation}</p>
+            <summary className={classes.why}>{t("agreementReview.why")}</summary>
+            <p className="mt-1">{t("consent.earlyStartText")}</p>
           </details>
         </div>
 
@@ -172,7 +169,7 @@ const ListingRequestAgreementBuyerActions = ({
             }
             onClick={() => void handleAccept()}
           >
-            {isPending ? "Saving response…" : "Accept project agreement"}
+            {t(isPending ? "agreementReview.saving" : "agreementReview.accept")}
           </button>
 
           <button
@@ -181,7 +178,7 @@ const ListingRequestAgreementBuyerActions = ({
             disabled={isPending}
             onClick={() => void handleDecline()}
           >
-            Decline agreement
+            {t("agreementReview.decline")}
           </button>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { paymentTermsVersion } from "./paymentTerms";
 import { privacyChanges, privacyVersion } from "./privacyPolicy";
 import { refundPolicyVersion } from "./refundPolicy";
 import { termsChanges, termsVersion } from "./termsOfService";
-import { english } from "../../lib/i18n/i18n";
+
 // Mirrors the policy_type check constraint on public.policy_acceptances.
 // "early_service_request" is the EU/UK express request to start work before
 // the statutory cancellation period ends (Refund Policy section 1). It needs
@@ -48,16 +48,10 @@ export const currentPolicyVersions: Record<PolicyType, string> = {
   early_service_request: refundPolicyVersion,
 };
 
-// Wording for the express request to start work early. Shown at agreement
-// acceptance, where the database requires it (20260923_138), and again at
-// checkout if the Refund Policy has changed since. One copy so the two can
-// never say different things.
-// The wording lives in lib/i18n (consent.earlyStart*), English being the master.
-export const earlyServiceRequestHeading = english("consent.earlyStartHeading");
-
-export const earlyServiceRequestExplanation = english("consent.earlyStartText");
-
-export const earlyServiceRequestLabel = english("consent.earlyStartLabel");
+// The express request to start work early is shown at agreement acceptance,
+// where the database requires it (20260923_138), and again at checkout if the
+// Refund Policy has changed since. Its wording is one copy in lib/i18n
+// (consent.earlyStart*), so the two can never say different things.
 
 export const signupPolicyTypes: PolicyType[] = ["terms", "privacy"];
 

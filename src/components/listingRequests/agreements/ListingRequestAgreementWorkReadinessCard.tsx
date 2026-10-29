@@ -4,7 +4,7 @@ import {
   getListingRequestPaymentStructureLabel,
 } from "../../../domain/listings/listingRequestAgreements";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
-
+import { useLanguage, useT } from "../../../lib/i18n/i18n";
 type ListingRequestAgreementWorkReadinessCardProps = {
   requestStatus: string;
   agreement: Pick<
@@ -35,19 +35,10 @@ const classes = {
   metaValue: "truncate text-xs font-semibold",
 } as const;
 
-const formatMoney = (amount: number | null, currency: string): string => {
-  if (amount === null) {
-    return "Not set";
-  }
-
-  return formatCurrencyAmount(amount, currency);
-};
-
-const formatDate = (value: string): string =>
-  new Intl.DateTimeFormat("en-CA", {
+const formatDate = (value: string, language: string): string =>
+  new Intl.DateTimeFormat(language, {
     dateStyle: "medium",
   }).format(new Date(value));
-
 const getStartingPaymentAmount = (
   agreement: Pick<
     ListingRequestAgreementRow,
@@ -59,6 +50,9 @@ const ListingRequestAgreementWorkReadinessCard = ({
   requestStatus,
   agreement,
 }: ListingRequestAgreementWorkReadinessCardProps) => {
+  const t = useT();
+  const language = useLanguage();
+
   if (!agreement || agreement.status !== "buyer_accepted") {
     return null;
   }
@@ -78,10 +72,10 @@ const ListingRequestAgreementWorkReadinessCard = ({
   const startingPaymentAmount = getStartingPaymentAmount(agreement);
 
   const workStartText = agreement.estimated_start_at
-    ? formatDate(agreement.estimated_start_at)
+    ? formatDate(agreement.estimated_start_at, language)
     : canStartWork
-      ? "Available immediately"
-      : "Pending payment";
+      ? t("readiness.immediately")
+      : t("readiness.pendingPayment");
 
   return (
     <div className={cardClass}>
@@ -90,40 +84,40 @@ const ListingRequestAgreementWorkReadinessCard = ({
           className={`${classes.dot} ${canStartWork ? classes.dotReady : classes.dotBlocked}`}
           aria-hidden="true"
         />
-        {canStartWork
-          ? "Work may begin"
-          : "Payment required before work starts"}
+        {t(canStartWork ? "readiness.canStart" : "readiness.paymentFirst")}
       </div>
 
       <p className={classes.text}>
         {canStartWork
-          ? "The buyer accepted the project agreement and the starting payment requirement is cleared."
+          ? t("readiness.canStartText")
           : requestStatus === "accepted"
-            ? "The buyer accepted the project agreement, but work should not begin until the required starting payment or deposit is marked paid."
-            : "This agreement was accepted, but the commission is no longer in an active accepted state."}
+            ? t("readiness.blockedText")
+            : t("readiness.inactiveText")}
       </p>
 
       <div className={classes.metaGrid}>
         <div className={classes.metaBlock}>
-          <div className={classes.metaLabel}>Payment structure</div>
+          <div className={classes.metaLabel}>{t("agreement.paymentStructure")}</div>
           <div className={classes.metaValue}>
-            {getListingRequestPaymentStructureLabel(agreement.payment_structure)}
+            {getListingRequestPaymentStructureLabel(agreement.payment_structure, t)}
           </div>
         </div>
 
         <div className={classes.metaBlock}>
-          <div className={classes.metaLabel}>Starting payment</div>
+          <div className={classes.metaLabel}>{t("readiness.startingPayment")}</div>
           <div className={classes.metaValue}>
             {agreement.starting_payment_status === "not_required"
-              ? "Not required"
+              ? t("readiness.notRequired")
               : agreement.starting_payment_status === "paid"
-                ? "Paid"
-                : formatMoney(startingPaymentAmount, agreement.currency)}
+                ? t("agreement.paid")
+                : startingPaymentAmount === null
+                  ? t("agreement.notSet")
+                  : formatCurrencyAmount(startingPaymentAmount, agreement.currency)}
           </div>
         </div>
 
         <div className={classes.metaBlock}>
-          <div className={classes.metaLabel}>Work start</div>
+          <div className={classes.metaLabel}>{t("readiness.workStart")}</div>
 
           <div className={classes.metaValue}>
             {workStartText}

@@ -10,7 +10,7 @@ import {
   getListingRequestPaymentTypeLabel,
 } from "../../../domain/payments/listingRequestPaymentDisplay";
 import type { ListingRequestPaymentRow } from "../../../hooks/payments/useListingRequestPayments";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestPaymentsCardProps = {
   payments: ListingRequestPaymentRow[];
   isLoading?: boolean;
@@ -47,10 +47,10 @@ const classes = {
     "notice noticeError",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "Payments could not be loaded.";
+    : t("payments.loadFailed");
 
 const ListingRequestPaymentsCard = ({
   payments,
@@ -58,10 +58,12 @@ const ListingRequestPaymentsCard = ({
   error,
   readOnly = false,
 }: ListingRequestPaymentsCardProps) => {
+  const t = useT();
+
   if (isLoading) {
     return (
       <section>
-        <div className={classes.loading}>Loading payments…</div>
+        <div className={classes.loading}>{t("payments.loading")}</div>
       </section>
     );
   }
@@ -70,7 +72,7 @@ const ListingRequestPaymentsCard = ({
     return (
       <section>
         <div className={classes.error}>
-          {getErrorMessage(error)}
+          {getErrorMessage(error, t)}
         </div>
       </section>
     );
@@ -87,7 +89,7 @@ const ListingRequestPaymentsCard = ({
         <div className={classes.list}>
           {payments.map((payment) => {
             const actionLabel =
-              getListingRequestPaymentActionLabel(payment.status);
+              getListingRequestPaymentActionLabel(payment.status, t);
 
             const canPay =
               !readOnly &&
@@ -101,12 +103,13 @@ const ListingRequestPaymentsCard = ({
                 <div className={classes.itemHeader}>
                   <div className={classes.itemHeading}>
                     <h3 className={classes.itemTitle}>
-                      {getListingRequestPaymentTitle(payment)}
+                      {getListingRequestPaymentTitle(payment, t)}
                     </h3>
 
                     <p className={classes.itemType}>
                       {getListingRequestPaymentTypeLabel(
                         payment.payment_type,
+                        t,
                       )}
                     </p>
                   </div>
@@ -114,6 +117,7 @@ const ListingRequestPaymentsCard = ({
                   <span className={classes.status}>
                     {getListingRequestPaymentStatusLabel(
                       payment.status,
+                      t,
                     )}
                   </span>
                 </div>
@@ -121,7 +125,7 @@ const ListingRequestPaymentsCard = ({
                 <div className={classes.metaGrid}>
                   <div className={classes.metaBlock}>
                     <div className={classes.metaLabel}>
-                      Project amount
+                      {t("payments.projectAmount")}
                     </div>
                     <div className={classes.metaValue}>
                       {formatPaymentCents(
@@ -133,7 +137,7 @@ const ListingRequestPaymentsCard = ({
 
                   <div className={classes.metaBlock}>
                     <div className={classes.metaLabel}>
-                      Service fee
+                      {t("payments.serviceFee")}
                     </div>
                     <div className={classes.metaValue}>
                       {formatPaymentCents(
@@ -145,7 +149,7 @@ const ListingRequestPaymentsCard = ({
 
                   <div className={classes.metaBlock}>
                     <div className={classes.metaLabel}>
-                      Total
+                      {t("checkout.total")}
                     </div>
                     <div className={classes.metaValue}>
                       {formatPaymentCents(
@@ -158,23 +162,23 @@ const ListingRequestPaymentsCard = ({
 
                 {payment.creator_tip_cents > 0 && (
                   <p className={classes.feeText}>
-                    Includes{" "}
-                    {formatPaymentCents(
-                      payment.creator_tip_cents,
-                      payment.currency,
-                    )}{" "}
-                    creator tip.
+                    {t("payments.tipIncluded", {
+                      amount: formatPaymentCents(
+                        payment.creator_tip_cents,
+                        payment.currency,
+                      ),
+                    })}
                   </p>
                 )}
 
                 {payment.platform_support_cents > 0 && (
                   <p className={classes.feeText}>
-                    Includes{" "}
-                    {formatPaymentCents(
-                      payment.platform_support_cents,
-                      payment.currency,
-                    )}{" "}
-                    optional Made for Stream support.
+                    {t("payments.supportIncluded", {
+                      amount: formatPaymentCents(
+                        payment.platform_support_cents,
+                        payment.currency,
+                      ),
+                    })}
                   </p>
                 )}
 

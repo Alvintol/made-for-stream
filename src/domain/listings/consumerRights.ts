@@ -2,8 +2,8 @@
 // days. The database labels such a request when it is sent
 // (listing_requests.buyer_consumer_rights_region, 20261029_172) and refuses
 // the creator's acceptance until they confirm the box below. The buyer's own
-// request to start early is earlyServiceRequestLabel in
-// src/domain/legal/policyAcceptance.ts.
+// request to start early is consent.earlyStartLabel in
+// src/lib/i18n/messages/en.ts.
 
 export type ConsumerRightsRegion = "eu" | "uk";
 
