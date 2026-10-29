@@ -8,7 +8,7 @@ import {
 } from "../workspace/focusMessages";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type BuyerFinalDelivery = Pick<
   ListingRequestFinalDeliveryRow,
   "id" | "status" | "title"
@@ -67,14 +67,15 @@ const classes = {
     "btnDangerOutline",
 } as const;
 
-// The database's own refusal (require_off_site_receipts_before_approval).
+// The database's own refusal (require_off_site_receipts_before_approval),
+// matched as it arrives; shown as deliveryReview.offSiteFirst.
 const OFF_SITE_RECEIPT_MESSAGE =
   "Confirm in the chat that you received the work sent outside Made for Stream before approving the final delivery.";
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The final delivery response could not be saved.";
+    : t("deliveryReview.saveFailed");
 
 const ListingRequestFinalDeliveryBuyerActions = ({
   finalDelivery,
@@ -86,6 +87,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
   onApprove,
   onRequestRevision,
 }: ListingRequestFinalDeliveryBuyerActionsProps) => {
+  const t = useT();
   const [responseMode, setResponseMode] =
     useState<ResponseMode>("idle");
 
@@ -108,7 +110,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
     revisionReason.trim();
 
   const errorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   // The database refuses approval for the same reason; either way the
@@ -155,9 +157,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
 
   const handleRequestRevision = async () => {
     if (trimmedRevisionReason.length < 10) {
-      setValidationError(
-        "Revision request details must contain at least 10 characters."
-      );
+      setValidationError(t("deliveryReview.revisionTooShort"));
 
       return;
     }
@@ -185,12 +185,11 @@ const ListingRequestFinalDeliveryBuyerActions = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Respond to final delivery
+            {t("deliveryReview.title")}
           </h2>
 
           <p className={classes.text}>
-            Review the submitted work before approving it
-            or requesting revisions.
+            {t("deliveryReview.text")}
           </p>
         </div>
 
@@ -206,13 +205,13 @@ const ListingRequestFinalDeliveryBuyerActions = ({
 
         {needsOffSiteConfirmation && (
           <div className={classes.warning}>
-            <p>{OFF_SITE_RECEIPT_MESSAGE}</p>
+            <p>{t("deliveryReview.offSiteFirst")}</p>
             <button
               className={`${classes.btnOutline} mt-3`}
               type="button"
               onClick={goToOffSiteConfirmation}
             >
-              Go to the confirmation
+              {t("deliveryReview.goToConfirmation")}
             </button>
           </div>
         )}
@@ -225,9 +224,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
 
         {responseMode === "approve" && (
           <div className={classes.confirmation}>
-            Approving confirms that the submitted final
-            delivery satisfies the accepted project
-            agreement and any accepted change orders.
+            {t("deliveryReview.approveNote")}
           </div>
         )}
 
@@ -237,7 +234,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
               className={classes.label}
               htmlFor="final-delivery-revision-reason"
             >
-              Required revisions
+              {t("deliveryReview.revisionsLabel")}
             </label>
 
             <KeptPlaceholder>
@@ -253,14 +250,12 @@ const ListingRequestFinalDeliveryBuyerActions = ({
 
                 setValidationError(null);
               }}
-              placeholder="Describe the specific revisions required before you can approve the delivery."
+              placeholder={t("deliveryReview.revisionsPlaceholder")}
             />
             </KeptPlaceholder>
 
             <p className={classes.help}>
-              {revisionReason.length}/2000 characters.
-              Include enough detail for the creator to
-              understand the required changes.
+              {t("deliveryReview.revisionsHelp", { count: revisionReason.length })}
             </p>
 
             {validationError && (
@@ -280,7 +275,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
                 type="button"
                 onClick={handleStartApproval}
               >
-                Approve final delivery
+                {t("deliveryReview.approve")}
               </button>
 
               <button
@@ -289,7 +284,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
                 type="button"
                 onClick={handleStartRevision}
               >
-                Request revisions
+                {t("revision.request")}
               </button>
             </>
           )}
@@ -302,9 +297,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
                 type="button"
                 onClick={() => void handleApprove()}
               >
-                {isPending
-                  ? "Saving response…"
-                  : "Confirm final delivery approval"}
+                {t(isPending ? "agreementReview.saving" : "deliveryReview.confirm")}
               </button>
 
               <button
@@ -328,9 +321,7 @@ const ListingRequestFinalDeliveryBuyerActions = ({
                   void handleRequestRevision()
                 }
               >
-                {isPending
-                  ? "Saving response…"
-                  : "Submit revision request"}
+                {t(isPending ? "agreementReview.saving" : "deliveryReview.submitRevision")}
               </button>
 
               <button

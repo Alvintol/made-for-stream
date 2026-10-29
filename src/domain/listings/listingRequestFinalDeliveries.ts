@@ -1,4 +1,5 @@
 import { ListingRequestFinalDeliveryRow } from '../../hooks/creatorRequests/useListingRequestFinalDeliveries';
+import { english, type Translate } from '../../lib/i18n/i18n';
 
 export type ListingRequestFinalDeliveryStatus =
   | "draft"
@@ -68,34 +69,14 @@ export const getHasAllMilestonePaymentsPaid = (
 };
 
 export const getListingRequestFinalDeliveryStatusLabel = (
-  status: ListingRequestFinalDeliveryStatus
-): string =>
-  status === "draft"
-    ? "Draft"
-    : status === "submitted"
-      ? "Awaiting buyer review"
-      : status === "revision_requested"
-        ? "Revision requested"
-        : status === "buyer_approved"
-          ? "Approved by buyer"
-          : status === "cancelled"
-            ? "Cancelled"
-            : "Superseded";
+  status: ListingRequestFinalDeliveryStatus,
+  t: Translate = english
+): string => t(`deliveryStatus.${status}`);
 
 export const getListingRequestFinalDeliveryStatusSummary = (
-  status: ListingRequestFinalDeliveryStatus
-): string =>
-  status === "draft"
-    ? "The creator is preparing the final delivery."
-    : status === "submitted"
-      ? "The final delivery is ready for buyer review."
-      : status === "revision_requested"
-        ? "The buyer requested revisions to this delivery."
-        : status === "buyer_approved"
-          ? "The buyer approved this final delivery."
-          : status === "cancelled"
-            ? "This final delivery was cancelled."
-            : "This delivery was replaced by a newer version.";
+  status: ListingRequestFinalDeliveryStatus,
+  t: Translate = english
+): string => t(`deliverySummary.${status}`);
 
 export const getListingRequestFinalDeliveryStatusTone = (
   status: ListingRequestFinalDeliveryStatus
@@ -226,7 +207,8 @@ export const isListingRequestFinalDeliveryBuyerVisible = (input: {
 
 export const getListingRequestFinalDeliveryApprovalBlockedReason =
   (
-    agreement: ListingRequestFinalDeliveryAgreement | null
+    agreement: ListingRequestFinalDeliveryAgreement | null,
+    t: Translate = english
   ): string | null => {
     if (!agreement) {
       return null;
@@ -238,7 +220,7 @@ export const getListingRequestFinalDeliveryApprovalBlockedReason =
       !getHasAllMilestonePaymentsPaid(agreement);
 
     if (hasUnconfirmedMilestonePayments) {
-      return "All milestone payments must be confirmed before you can approve the final delivery.";
+      return t("deliveryBlocked.milestones");
     }
 
     const hasOutstandingFinalBalance =
@@ -255,7 +237,7 @@ export const getListingRequestFinalDeliveryApprovalBlockedReason =
         ) ?? false;
 
     if (hasOutstandingFinalBalance) {
-      return "The final balance must be confirmed as paid before you can approve this delivery.";
+      return t("deliveryBlocked.balance");
     }
 
     const hasActiveFinalBalanceHold =
@@ -267,7 +249,7 @@ export const getListingRequestFinalDeliveryApprovalBlockedReason =
       ) ?? false;
 
     if (hasActiveFinalBalanceHold) {
-      return "The final balance payment is still awaiting confirmation.";
+      return t("deliveryBlocked.balancePending");
     }
 
     return null;

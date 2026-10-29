@@ -5,7 +5,7 @@ import type {
 import type {
   ListingRequestProgressUpdateRow,
 } from "../../../hooks/creatorRequests/useListingRequestProgressUpdates";
-
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestProgressUpdateTimelineProps = {
   updates: ListingRequestProgressUpdateRow[];
   isLoading?: boolean;
@@ -36,26 +36,23 @@ const classes = {
     "notice noticeError",
 } as const;
 
-const updateKindLabels: Record<
-  ListingRequestProgressUpdateKind,
-  string
-> = {
-  progress: "Progress update",
-  milestone: "Milestone update",
-  delay: "Schedule update",
-  final_preview: "Final preview",
-};
+const updateKindKeys = {
+  progress: "updateKind.progress",
+  milestone: "updateKind.milestone",
+  delay: "updateKind.delay",
+  final_preview: "updateKind.final_preview",
+} as const satisfies Record<ListingRequestProgressUpdateKind, string>;
 
-const formatDate = (value: string): string =>
-  new Intl.DateTimeFormat("en-CA", {
+const formatDate = (value: string, language: string): string =>
+  new Intl.DateTimeFormat(language, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "Project progress updates could not be loaded.";
+    : t("updates.loadFailed");
 
 const sortUpdatesNewestFirst = (
   updates: ListingRequestProgressUpdateRow[]
@@ -71,6 +68,8 @@ const ListingRequestProgressUpdateTimeline = ({
   isLoading = false,
   error,
 }: ListingRequestProgressUpdateTimelineProps) => {
+  const t = useT();
+  const language = useLanguage();
   const sortedUpdates = sortUpdatesNewestFirst(updates);
 
   return (
@@ -79,13 +78,13 @@ const ListingRequestProgressUpdateTimeline = ({
 
         {isLoading && (
           <div className={classes.loading}>
-            Loading project progress updates…
+            {t("updates.loading")}
           </div>
         )}
         
         {!isLoading && Boolean(error) && (
           <div className={classes.error}>
-            {getErrorMessage(error)}
+            {getErrorMessage(error, t)}
           </div>
         )}
 
@@ -93,7 +92,7 @@ const ListingRequestProgressUpdateTimeline = ({
           !error &&
           sortedUpdates.length === 0 && (
             <div className={classes.empty}>
-              No project progress updates have been posted yet.
+              {t("updates.empty")}
             </div>
           )}
 
@@ -113,18 +112,18 @@ const ListingRequestProgressUpdateTimeline = ({
                       </h3>
 
                       <div className={classes.itemDate}>
-                        {formatDate(update.created_at)}
+                        {formatDate(update.created_at, language)}
                       </div>
                     </div>
 
                     <div className={classes.badges}>
                       <span className={classes.badge}>
-                        {updateKindLabels[update.update_kind]}
+                        {t(updateKindKeys[update.update_kind])}
                       </span>
 
                       {update.progress_percent !== null && (
                         <span className={classes.progressBadge}>
-                          {update.progress_percent}% complete
+                          {t("updates.percent", { percent: update.progress_percent })}
                         </span>
                       )}
                     </div>

@@ -1,3 +1,4 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
 import { allowsMilestonePayments } from "./listingRequestAgreements";
 
 export type ListingRequestMilestoneStatus =
@@ -40,38 +41,14 @@ const roundCurrencyAmount = (
   100;
 
 export const getListingRequestMilestoneStatusLabel = (
-  status: ListingRequestMilestoneStatus
-): string =>
-  status === "pending"
-    ? "Not started"
-    : status === "submitted"
-      ? "Awaiting buyer review"
-      : status === "revision_requested"
-        ? "Revision requested"
-        : status === "buyer_approved"
-          ? "Approved by buyer"
-          : status === "payment_required"
-            ? "Payment required"
-            : status === "paid"
-              ? "Paid"
-              : "Cancelled";
+  status: ListingRequestMilestoneStatus,
+  t: Translate = english
+): string => t(`milestoneStatus.${status}`);
 
 export const getListingRequestMilestoneStatusSummary = (
-  status: ListingRequestMilestoneStatus
-): string =>
-  status === "pending"
-    ? "The creator has not submitted this milestone yet."
-    : status === "submitted"
-      ? "The milestone is ready for buyer review."
-      : status === "revision_requested"
-        ? "The buyer requested changes to this milestone."
-        : status === "buyer_approved"
-          ? "The buyer approved this milestone."
-          : status === "payment_required"
-            ? "The milestone was approved and its payment is now required."
-            : status === "paid"
-              ? "The milestone payment was confirmed."
-              : "This milestone was cancelled.";
+  status: ListingRequestMilestoneStatus,
+  t: Translate = english
+): string => t(`milestoneSummary.${status}`);
 
 export const getListingRequestMilestoneStatusTone = (
   status: ListingRequestMilestoneStatus

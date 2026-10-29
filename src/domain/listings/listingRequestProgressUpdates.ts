@@ -1,5 +1,6 @@
 import type { ListingRequestAgreementRow } from "../../hooks/creatorRequests/useListingRequestAgreement";
 import type { ListingRequestProgressUpdateRow } from "../../hooks/creatorRequests/useListingRequestProgressUpdates";
+import { english, type Translate } from "../../lib/i18n/i18n";
 
 export type ListingRequestProgressUpdateScheduleStatus =
   | "not_started"
@@ -84,20 +85,22 @@ const getScheduleStatus = (
 };
 
 const getWeeklySummary = (
-  status: ListingRequestProgressUpdateScheduleStatus
+  status: ListingRequestProgressUpdateScheduleStatus,
+  t: Translate
 ): string =>
   status === "overdue"
-    ? "The next required creator update is overdue."
+    ? t("updateSchedule.weeklyOverdue")
     : status === "due_soon"
-      ? "The next required creator update is due soon."
-      : "The next required creator update is scheduled.";
+      ? t("updateSchedule.weeklyDueSoon")
+      : t("updateSchedule.weeklyScheduled");
 
 export const getListingRequestProgressUpdateSchedule = (input: {
   agreement: ProgressUpdateScheduleAgreement;
   updates: ProgressUpdateScheduleRow[];
   now?: Date;
+  t?: Translate;
 }): ListingRequestProgressUpdateSchedule => {
-  const { agreement, updates } = input;
+  const { agreement, updates, t = english } = input;
   const now = input.now ?? new Date();
   const validUpdateDates = getValidUpdateDates(updates);
   const lastUpdateDate =
@@ -116,8 +119,7 @@ export const getListingRequestProgressUpdateSchedule = (input: {
       nextUpdateDueAt: null,
       lastUpdateAt,
       completedUpdateCount: validUpdateDates.length,
-      summary:
-        "The creator update schedule begins when the project is ready for work.",
+      summary: t("updateSchedule.notStarted"),
     };
   }
 
@@ -131,8 +133,7 @@ export const getListingRequestProgressUpdateSchedule = (input: {
         nextUpdateDueAt: null,
         lastUpdateAt,
         completedUpdateCount: validUpdateDates.length,
-        summary:
-          "The required project progress update has been posted.",
+        summary: t("updateSchedule.singleDone"),
       };
     }
 
@@ -148,10 +149,10 @@ export const getListingRequestProgressUpdateSchedule = (input: {
       completedUpdateCount: 0,
       summary:
         status === "overdue"
-          ? "The required project progress update is overdue."
+          ? t("updateSchedule.singleOverdue")
           : status === "due_soon"
-            ? "The required project progress update is due before final delivery."
-            : "At least one project progress update is required before final delivery.",
+            ? t("updateSchedule.singleDueSoon")
+            : t("updateSchedule.singleRequired"),
     };
   }
 
@@ -177,8 +178,7 @@ export const getListingRequestProgressUpdateSchedule = (input: {
       nextUpdateDueAt: null,
       lastUpdateAt,
       completedUpdateCount: validUpdateDates.length,
-      summary:
-        "The creator update schedule could not determine the next due date.",
+      summary: t("updateSchedule.unknownDate"),
     };
   }
 
@@ -192,6 +192,6 @@ export const getListingRequestProgressUpdateSchedule = (input: {
     nextUpdateDueAt,
     lastUpdateAt,
     completedUpdateCount: validUpdateDates.length,
-    summary: getWeeklySummary(status),
+    summary: getWeeklySummary(status, t),
   };
 };

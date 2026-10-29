@@ -5,7 +5,7 @@ import {
   deliveryFileName,
   getDeliveryFileDownloadUrl,
 } from "../../../lib/listings/deliveryFiles";
-
+import { useT } from "../../../lib/i18n/i18n";
 type DeliveryFileDownloadsProps = {
   paths: string[];
 };
@@ -24,6 +24,7 @@ const classes = {
 // made when the button is pressed and lasts an hour. The database refuses
 // it to a buyer while a balance is still owed for the final release.
 const DeliveryFileDownloads = ({ paths }: DeliveryFileDownloadsProps) => {
+  const t = useT();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ const DeliveryFileDownloads = ({ paths }: DeliveryFileDownloadsProps) => {
       setError(
         hasErrorMessage(downloadError)
           ? downloadError.message
-          : "This file could not be downloaded. Reload the page and try again.",
+          : t("files.downloadFailed"),
       );
     } finally {
       setPending(null);
@@ -46,7 +47,7 @@ const DeliveryFileDownloads = ({ paths }: DeliveryFileDownloadsProps) => {
 
   return (
     <div className={classes.wrap}>
-      <div className={classes.title}>Files</div>
+      <div className={classes.title}>{t("files.title")}</div>
 
       <ul className={classes.list}>
         {paths.map((path) => (
@@ -59,7 +60,9 @@ const DeliveryFileDownloads = ({ paths }: DeliveryFileDownloadsProps) => {
               type="button"
               onClick={() => void download(path)}
             >
-              {pending === path ? "Preparing…" : `Download ${deliveryFileName(path)}`}
+              {pending === path
+                ? t("files.preparing")
+                : t("files.download", { name: deliveryFileName(path) })}
             </button>
           </li>
         ))}

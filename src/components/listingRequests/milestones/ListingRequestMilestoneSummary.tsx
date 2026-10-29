@@ -19,6 +19,7 @@ import {
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
 import type { ListingRequestMilestoneSubmissionRow } from "../../../hooks/creatorRequests/useListingRequestMilestoneSubmissions";
 import { Disclosure } from "../../../lib/motion";
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 
 type ListingRequestMilestoneViewer = "buyer" | "creator" | "admin";
 
@@ -73,13 +74,13 @@ const classes = {
   revision: "notice noticeError",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
-  hasErrorMessage(error) ? error.message : "Milestones could not be loaded.";
+const getErrorMessage = (error: unknown, t: Translate): string =>
+  hasErrorMessage(error) ? error.message : t("milestones.loadFailed");
 
-const formatDate = (value?: string | null): string =>
+const formatDate = (value: string | null | undefined, language: string, t: Translate): string =>
   value
-    ? new Intl.DateTimeFormat("en-CA", { dateStyle: "medium" }).format(new Date(value))
-    : "Not submitted";
+    ? new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(new Date(value))
+    : t("milestones.notSubmitted");
 
 const getStatusClass = (milestone: ListingRequestMilestoneRow): string => {
   const tone = getListingRequestMilestoneStatusTone(milestone.status);
@@ -109,25 +110,26 @@ const getLatestSubmissionByMilestoneId = (
   return latestByMilestoneId;
 };
 
-const getEmptyMilestoneMessage = (viewer: ListingRequestMilestoneViewer): string =>
+const getEmptyMilestoneMessage = (viewer: ListingRequestMilestoneViewer, t: Translate): string =>
   viewer === "creator"
-    ? "No milestones are available yet. They will appear here once the buyer accepts a milestone-based agreement."
+    ? t("milestones.emptyCreator")
     : viewer === "buyer"
-      ? "No milestones are available yet. They will appear here once the agreement is ready for milestone work."
-      : "No milestones are available for this commission yet.";
+      ? t("milestones.emptyBuyer")
+      : t("milestones.emptyAdmin");
 
-const getCompletedMilestoneMessage = (viewer: ListingRequestMilestoneViewer): string =>
+const getCompletedMilestoneMessage = (viewer: ListingRequestMilestoneViewer, t: Translate): string =>
   viewer === "creator"
-    ? "All milestones are complete or closed. You can now prepare the final delivery when the project is ready."
+    ? t("milestones.doneCreator")
     : viewer === "buyer"
-      ? "All milestones are complete or closed. The creator can now prepare the final delivery."
-      : "All milestones are complete or closed for this commission.";
+      ? t("milestones.doneBuyer")
+      : t("milestones.doneAdmin");
 
 // The submission's watermarked preview images. They are private files, so
 // each is shown through a temporary address that lasts an hour. The
 // addresses are fetched again when the tab is returned to after 50 minutes;
 // nothing runs on a timer.
 const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
+  const t = useT();
   const { data: urls = [], isError } = useQuery({
     queryKey: ["milestonePreviewImageUrls", paths],
     queryFn: () => getMilestonePreviewImageUrls(paths),
@@ -135,13 +137,13 @@ const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
   });
 
   return isError ? (
-    <p className={classes.noSubmission}>The preview images could not be loaded.</p>
+    <p className={classes.noSubmission}>{t("milestones.previewFailed")}</p>
   ) : (
     <div className={classes.images}>
       {urls.map((url, index) =>
         isMilestonePreviewVideoUrl(url) ? (
           <video
-            aria-label={`Milestone preview video ${index + 1}`}
+            aria-label={t("milestones.previewVideo", { number: index + 1 })}
             className={classes.image}
             controls
             key={paths[index] ?? url}
@@ -154,7 +156,7 @@ const MilestonePreviewImages = ({ paths }: { paths: string[] }) => {
         ) : (
         <a href={url} key={paths[index] ?? url} rel="noreferrer" target="_blank">
           <img
-            alt={`Milestone preview image ${index + 1}`}
+            alt={t("milestones.previewImage", { number: index + 1 })}
             className={classes.image}
             loading="lazy"
             src={url}
@@ -173,6 +175,8 @@ type MilestoneRowProps = {
 };
 
 const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) => {
+  const t = useT();
+  const language = useLanguage();
   const panelId = useId();
   const isDone = isListingRequestMilestoneTerminal(milestone.status);
   const [open, setOpen] = useState(isActive || milestone.status === "revision_requested");
@@ -198,7 +202,9 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
           </span>
 
           <span className={classes.rowText}>
-            <span className={classes.rowIndex}>Milestone {milestone.sort_order + 1}</span>
+            <span className={classes.rowIndex}>
+              {t("milestones.position", { number: milestone.sort_order + 1 })}
+            </span>
             <span className={isDone ? classes.rowTitleDone : classes.rowTitle}>
               {milestone.title}
             </span>
@@ -209,7 +215,7 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
               {formatMoney(milestone.amount, milestone.currency)}
             </span>
             <span className={getStatusClass(milestone)}>
-              {getListingRequestMilestoneStatusLabel(milestone.status)}
+              {getListingRequestMilestoneStatusLabel(milestone.status, t)}
             </span>
             <svg
               viewBox="0 0 20 20"
@@ -227,17 +233,20 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
 
       <Disclosure open={open} id={panelId} className={classes.panel}>
         <p className={classes.panelSummary}>
-          {getListingRequestMilestoneStatusSummary(milestone.status)}
+          {getListingRequestMilestoneStatusSummary(milestone.status, t)}
         </p>
 
         {milestone.description && <p className={classes.body}>{milestone.description}</p>}
 
         <div className={classes.facts}>
           <span className="sm:hidden">
-            {`Amount ${formatMoney(milestone.amount, milestone.currency)}`}
+            {t("milestones.amount", { amount: formatMoney(milestone.amount, milestone.currency) })}
           </span>
           <span>
-            Submitted <span className={classes.factValue}>{formatDate(milestone.latest_submitted_at)}</span>
+            {t("milestones.submitted")}{" "}
+            <span className={classes.factValue}>
+              {formatDate(milestone.latest_submitted_at, language, t)}
+            </span>
           </span>
         </div>
 
@@ -251,8 +260,7 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
 
             {submission.preview_images_deleted_at && (
               <p className={classes.noSubmission}>
-                The preview images for this milestone were deleted 180 days after the
-                commission closed, as our Privacy Policy describes.
+                {t("milestones.previewsDeleted")}
               </p>
             )}
 
@@ -266,7 +274,7 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Milestone delivery link {index + 1}
+                    {t("milestones.link", { number: index + 1 })}
                   </a>
                 ))}
               </div>
@@ -275,25 +283,26 @@ const MilestoneRow = ({ milestone, submission, isActive }: MilestoneRowProps) =>
             {submission.off_site_delivery_methods &&
               submission.off_site_delivery_methods.length > 0 && (
                 <p className={classes.noSubmission}>
-                  Also sent off site, as reported by the creator:{" "}
-                  {describeOffSiteDelivery(
-                    submission.off_site_delivery_methods,
-                    submission.off_site_delivery_other,
-                  )}
-                  . Made for Stream has no copy of that work and cannot confirm it
-                  arrived.
+                  {t("offSite.reported", {
+                    methods:
+                      describeOffSiteDelivery(
+                        submission.off_site_delivery_methods,
+                        submission.off_site_delivery_other,
+                        t,
+                      ) ?? "",
+                  })}
                 </p>
               )}
 
             {submission.revision_request_reason && (
               <div className={classes.revision}>
-                <strong>Revision requested:</strong> {submission.revision_request_reason}
+                <strong>{t("revision.requested")}</strong> {submission.revision_request_reason}
               </div>
             )}
           </>
         ) : (
           <p className={classes.noSubmission}>
-            No submission has been made for this milestone yet.
+            {t("milestones.noSubmission")}
           </p>
         )}
       </Disclosure>
@@ -308,6 +317,7 @@ const ListingRequestMilestoneSummary = ({
   isLoading = false,
   error,
 }: ListingRequestMilestoneSummaryProps) => {
+  const t = useT();
   const hasError = Boolean(error);
   const sortedMilestones = getOrderedListingRequestMilestones(milestones);
   const latestSubmissions = getLatestSubmissionByMilestoneId(submissions);
@@ -316,21 +326,21 @@ const ListingRequestMilestoneSummary = ({
   const content = (
     <div className={classes.section}>
 
-      {isLoading && <div className={classes.loading}>Loading milestones…</div>}
+      {isLoading && <div className={classes.loading}>{t("milestones.loading")}</div>}
 
-      {!isLoading && hasError && <div className={classes.error}>{getErrorMessage(error)}</div>}
+      {!isLoading && hasError && <div className={classes.error}>{getErrorMessage(error, t)}</div>}
 
       {!isLoading && !hasError && sortedMilestones.length === 0 && (
         <div className={classes.empty}>
-          <h3 className={classes.title}>No milestones yet</h3>
-          <p className={classes.text}>{getEmptyMilestoneMessage(viewer)}</p>
+          <h3 className={classes.title}>{t("milestones.emptyTitle")}</h3>
+          <p className={classes.text}>{getEmptyMilestoneMessage(viewer, t)}</p>
         </div>
       )}
 
       {!isLoading && !hasError && sortedMilestones.length > 0 && (
         <>
           {getListingRequestMilestonesAreComplete(sortedMilestones) && (
-            <div className={classes.stateCard}>{getCompletedMilestoneMessage(viewer)}</div>
+            <div className={classes.stateCard}>{getCompletedMilestoneMessage(viewer, t)}</div>
           )}
 
           <div className={classes.list}>
