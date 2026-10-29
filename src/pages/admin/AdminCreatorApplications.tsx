@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAdminSellerApplications } from "../../hooks/admin/useAdminSellerApplications";
 import {
   useAdminSellerApplicationSamples,
@@ -185,23 +185,13 @@ const AdminCreatorApplications = () => {
     error: samplesError,
   } = useAdminSellerApplicationSamples(selectedApplication?.id ?? null);
 
-  const {
-    data: queueState,
-    isLoading: isQueueStateLoading,
-    error: queueStateError,
-  } = useCreatorApplicationQueueState();
+  const { data: queueState } = useCreatorApplicationQueueState();
 
-  const {
-    data: applicantProfile,
-    isLoading: isApplicantProfileLoading,
-    error: applicantProfileError,
-  } = useAdminApplicantProfile(selectedApplication?.profile_user_id ?? null);
+  const { data: applicantProfile } = useAdminApplicantProfile(
+    selectedApplication?.profile_user_id ?? null
+  );
 
-  const {
-    data: applicantPlatformAccounts = [],
-    isLoading: isApplicantPlatformsLoading,
-    error: applicantPlatformsError,
-  } = useAdminApplicantPlatformAccounts(
+  const { data: applicantPlatformAccounts = [] } = useAdminApplicantPlatformAccounts(
     selectedApplication?.profile_user_id ?? null
   );
 
@@ -212,16 +202,15 @@ const AdminCreatorApplications = () => {
   const [okMsg, setOkMsg] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!selectedApplicationId && applications[0]?.id) {
-      setSelectedApplicationId(applications[0].id);
-    }
-  }, [applications, selectedApplicationId]);
-
-  useEffect(() => {
+  // Another or refreshed application loads its saved notes (while
+  // rendering, not in an effect). With nothing picked, the first application
+  // is shown (selectedApplication).
+  const [notesFor, setNotesFor] = useState<typeof selectedApplication | null>(null);
+  if (selectedApplication !== notesFor) {
+    setNotesFor(selectedApplication);
     setReviewerNotes(selectedApplication?.reviewer_notes ?? "");
     setRejectionReason(selectedApplication?.rejection_reason ?? "");
-  }, [selectedApplication]);
+  }
 
   const combinedErrorText = useMemo(() => {
     const messages = [

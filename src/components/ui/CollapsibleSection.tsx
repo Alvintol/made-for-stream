@@ -64,12 +64,19 @@ const CollapsibleSection = ({
   const sectionRef = useRef<HTMLElement>(null);
   // null follows defaultOpen (which can flip once data loads); a click pins the viewer's choice.
   const [openOverride, setOpenOverride] = useState<boolean | null>(null);
+  const [openedForKey, setOpenedForKey] = useState<typeof focusKey>(null);
   const isOpen = openOverride ?? (defaultOpen || attention);
+
+  // A new focus request opens the section (while rendering, not in an
+  // effect); the effect only scrolls to it.
+  if (focusKey && focusKey !== openedForKey) {
+    setOpenedForKey(focusKey);
+    setOpenOverride(true);
+  }
 
   useEffect(() => {
     if (!focusKey) return undefined;
 
-    setOpenOverride(true);
     const frame = window.requestAnimationFrame(() => {
       sectionRef.current?.scrollIntoView?.({
         behavior: prefersReducedMotion() ? "auto" : "smooth",

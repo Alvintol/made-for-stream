@@ -1,5 +1,5 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getModerationReportReasonLabel,
@@ -229,9 +229,11 @@ const AdminModerationReportDetails = () => {
   );
   const [moderationActionNote, setModerationActionNote] = useState("");
 
-  useEffect(() => {
-    if (!report) return;
-
+  // A new or refreshed report resets the form (while rendering, not in an
+  // effect).
+  const [formReport, setFormReport] = useState<typeof report>(null);
+  if (report && report !== formReport) {
+    setFormReport(report);
     setStatus(report.status);
     setResolutionCode(report.resolution_code ?? "");
     setReporterStatusMessage("");
@@ -244,7 +246,7 @@ const AdminModerationReportDetails = () => {
     setProfileActionMessage(null);
     setProfileActionError(null);
     setModerationActionNote("");
-  }, [report]);
+  }
 
   const reporterStatusMessageTrimmed = reporterStatusMessage.trim();
   const adminNotesTrimmed = adminNotes.trim();

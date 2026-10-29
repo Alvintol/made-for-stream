@@ -127,7 +127,7 @@ const ExtraAmountRow = ({
 
 const ListingRequestPaymentCheckout = () => {
   const { paymentId = "" } = useParams<{ paymentId: string }>();
-  const createCheckout = useCreateListingRequestPaymentCheckout();
+  const { mutateAsync: createCheckout } = useCreateListingRequestPaymentCheckout();
   const setTipAndSupport = useSetListingRequestPaymentTipAndSupport();
   const paymentQuery = useListingRequestPayment(paymentId);
   const payment = paymentQuery.data ?? null;
@@ -249,7 +249,7 @@ const ListingRequestPaymentCheckout = () => {
     try {
       // The API reads the billing location from the account details itself;
       // the country is still sent so an API from before that change accepts it.
-      const response = await createCheckout.mutateAsync({ paymentId, billingCountry });
+      const response = await createCheckout({ paymentId, billingCountry });
 
       setClientSecret(response.checkout.clientSecret);
       setStripePromise(
@@ -261,7 +261,7 @@ const ListingRequestPaymentCheckout = () => {
       startedPaymentIdRef.current = null;
       setErrMsg(getErrorMessage(error));
     }
-  }, [createCheckout.mutateAsync, paymentId, billingCountry]);
+  }, [createCheckout, paymentId, billingCountry]);
 
   useEffect(() => {
     if (!policiesAccepted) return;
