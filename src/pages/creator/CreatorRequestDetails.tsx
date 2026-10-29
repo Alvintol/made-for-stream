@@ -12,6 +12,12 @@ import {
   getListingRequestStatusTone,
 } from "../../domain/listings/listingRequests";
 import { getRequestNextStep, getRequestStages } from "../../domain/listings/requestWorkspace";
+import {
+  consumerRightsAcknowledgementLabel,
+  consumerRightsHeading,
+  consumerRightsNotice,
+} from "../../domain/listings/consumerRights";
+import PolicyAcceptanceCheckbox from "../../components/legal/PolicyAcceptanceCheckbox";
 import ExpandingFormPanel from "../../components/listingRequests/workspace/ExpandingFormPanel";
 import ListingSnapshotDetails from "../../components/listingRequests/workspace/ListingSnapshotDetails";
 import ActionMenu from "../../components/ui/ActionMenu";
@@ -31,7 +37,7 @@ import {
   workspaceDate,
   type WorkspaceSectionSpec,
 } from "../../components/listingRequests/workspace/sectionSummaries";
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getAgreementPersonName } from '../../domain/listings/listingRequestAgreements';
 import ListingRequestAgreementBuilder from '../../components/listingRequests/agreements/ListingRequestAgreementBuilder';
 import ListingRequestAgreementCreatorActions from '../../components/listingRequests/agreements/ListingRequestAgreementCreatorActions';
@@ -108,6 +114,8 @@ const classes = {
   error: "formError",
   textarea: "formControl min-h-[140px]",
   infoCard: "notice noticeInfo",
+  consumerRights: "notice noticeInfo space-y-2",
+  consumerRightsTitle: "font-semibold",
 } as const;
 
 // Prefers handle for buyer display, then display name, then user id
@@ -185,13 +193,11 @@ const CreatorRequestDetails = () => {
 
 
   const [showDeclineForm, setShowDeclineForm] = useState(false);
-  const [declineReason, setDeclineReason] = useState("");
+  const [consumerRightsAcknowledged, setConsumerRightsAcknowledged] = useState(false);
+  // null until the creator types: the box shows the saved reason until then.
+  const [declineReasonDraft, setDeclineReasonDraft] = useState<string | null>(null);
   const [declineReasonError, setDeclineReasonError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!request?.creator_status_reason) return;
-    setDeclineReason(request.creator_status_reason);
-  }, [request?.creator_status_reason]);
+  const declineReason = declineReasonDraft ?? request?.creator_status_reason ?? "";
 
   const trimmedDeclineReason = declineReason.trim();
 
@@ -336,6 +342,7 @@ const CreatorRequestDetails = () => {
         requestId: request.id,
         status: "accepted",
         reason: null,
+        consumerRightsAcknowledged,
       });
     } catch {
       // Error is surfaced below
@@ -627,13 +634,33 @@ const CreatorRequestDetails = () => {
                 </div>
               )}
 
+              {canAcceptListingRequest(request.status) && request.buyer_consumer_rights_region && (
+                <div className={classes.consumerRights}>
+                  <p className={classes.consumerRightsTitle}>
+                    {consumerRightsHeading(request.buyer_consumer_rights_region)}
+                  </p>
+                  <p>{consumerRightsNotice(request.buyer_consumer_rights_region)}</p>
+                  <PolicyAcceptanceCheckbox
+                    id="creator-consumer-rights"
+                    checked={consumerRightsAcknowledged}
+                    onChange={setConsumerRightsAcknowledged}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    {consumerRightsAcknowledgementLabel}
+                  </PolicyAcceptanceCheckbox>
+                </div>
+              )}
+
               <div className={classes.row}>
                 {canAcceptListingRequest(request.status) && (
                   <button
                     className={classes.btnPrimary}
                     type="button"
                     onClick={() => void handleAcceptRequest()}
-                    disabled={updateStatusMutation.isPending}
+                    disabled={
+                      updateStatusMutation.isPending ||
+                      (Boolean(request.buyer_consumer_rights_region) && !consumerRightsAcknowledged)
+                    }
                   >
                     {updateStatusMutation.isPending ? "Updating…" : "Accept commission request"}
                   </button>
@@ -666,7 +693,7 @@ const CreatorRequestDetails = () => {
                     className={classes.textarea}
                     value={declineReason}
                     onChange={(event) => {
-                      setDeclineReason(event.target.value);
+                      setDeclineReasonDraft(event.target.value);
                       setDeclineReasonError(null);
                     }}
                     placeholder="Explain why this commission request is being declined for audit and client clarity."

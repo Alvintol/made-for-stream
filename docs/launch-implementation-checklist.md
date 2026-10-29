@@ -940,13 +940,17 @@ Build order (each its own branch):
       (verified applied 2026-10-29), the TAX-008 ops email line, the admin
       page. Merged as #185. Not yet seen: the page signed in, and a real
       reminder email.
-- [ ] **Sanctions and Quebec block** at account details, listings, requests,
-      agreements and checkout. Built on `feat/sanctions-and-quebec-block`:
-      migration 171, the API's checkout check (internet-address country only
-      when `TAX_IP_COUNTRY_HEADER` is set), the form's message, ACC-006.
-      Owner applies the migration, deploys the API, merges.
-- [ ] **Fee-inclusive prices; EU/UK buyer tickbox at checkout; creator
-      notice and tickbox when accepting an EU/UK buyer's request.**
+- [x] **Sanctions and Quebec block** at account details, listings, requests,
+      agreements and checkout. Migration 171 (verified applied 2026-10-29),
+      the API's checkout check (internet-address country only when
+      `TAX_IP_COUNTRY_HEADER` is set), the form's message, ACC-006. Merged as
+      #186.
+- [ ] **Fee-inclusive prices; creator notice and tickbox when accepting an
+      EU/EEA/UK buyer's request.** Built on
+      `feat/fee-inclusive-prices-and-eu-cancellation`: migration 172,
+      website only (no API change), REQ-006. The buyer's express request to
+      start early already existed (20260923_138, AGR-007), so nothing new was
+      needed at checkout. Owner applies the migration, then merges.
 - [ ] **One policy release:** all mature content banned with takedown and
       ban, sanctions, Digital Services Act and Online Safety Act statements.
 - [ ] **GST/HST on Made for Stream's fees only** (the tax switch now taxes

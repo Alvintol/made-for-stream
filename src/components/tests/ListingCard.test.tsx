@@ -173,7 +173,9 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("$18 CAD")).toBeInTheDocument();
+    // The buyer service fee is included: 18.00 + 5% = 18.90.
+    expect(screen.getByText("$18.90 CAD")).toBeInTheDocument();
+    expect(screen.getByText("Includes 5% service fee")).toBeInTheDocument();
   });
 
   it("renders a starting_at price correctly", () => {
@@ -188,7 +190,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("From $90 CAD")).toBeInTheDocument();
+    expect(screen.getByText("From $94.50 CAD")).toBeInTheDocument();
   });
 
   it("renders a range price correctly", () => {
@@ -203,7 +205,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("$120–$420 CAD")).toBeInTheDocument();
+    expect(screen.getByText("$126–$441 CAD")).toBeInTheDocument();
   });
 
   it("links to the listing page", () => {

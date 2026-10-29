@@ -355,7 +355,7 @@ const RequestListing = () => {
             amount={estimateAmount}
             amountMax={budget?.max ?? null}
             currency={listingCurrency}
-            amountLabel={hasBudget ? "Your budget" : "Listing price"}
+            amountLabel={hasBudget ? "Your budget" : "Creator's price"}
             feeRate={feeRate}
           />
 

@@ -46,7 +46,9 @@ const fetchCreatorRequest = async (
     completed_by_user_id,
     cancelled_at,
     cancelled_by_user_id,
-    cancellation_reason
+    cancellation_reason,
+    buyer_consumer_rights_region,
+    creator_consumer_rights_acknowledged_at
   `)
     .eq("id", requestId)
     .eq("creator_user_id", userId)

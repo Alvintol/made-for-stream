@@ -9,6 +9,7 @@ import {
   type ListingRequestListView,
   type ListingRequestStatus,
 } from "../../domain/listings/listingRequests";
+import type { ConsumerRightsRegion } from "../../domain/listings/consumerRights";
 import type { ListingRequestSnapshot } from "../../lib/listings/listingRequestSnapshot";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -37,6 +38,9 @@ export type ListingRequestRow = {
   cancelled_at: string | null;
   cancelled_by_user_id: string | null;
   cancellation_reason: string | null;
+  // Read on the creator's request page only (20261029_172).
+  buyer_consumer_rights_region?: ConsumerRightsRegion | null;
+  creator_consumer_rights_acknowledged_at?: string | null;
 };
 
 export type ListingRequestProfile = {

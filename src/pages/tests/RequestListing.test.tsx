@@ -173,7 +173,7 @@ describe("RequestListing", () => {
 
     const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
 
-    expect(invoice.getByText("Listing price")).toBeInTheDocument();
+    expect(invoice.getByText("Creator's price")).toBeInTheDocument();
     expect(invoice.getByText("Buyer service fee (5%)")).toBeInTheDocument();
     expect(invoice.getByText("$2.50 CAD")).toBeInTheDocument();
     expect(invoice.getByText("$52.50 CAD")).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe("RequestListing", () => {
 
     const invoice = within(screen.getByRole("region", { name: "Estimated invoice" }));
 
-    expect(invoice.getByText("Listing price")).toBeInTheDocument();
+    expect(invoice.getByText("Creator's price")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Send commission request" }));
 
