@@ -436,7 +436,7 @@ describe("RequestListing", () => {
 
     renderPage();
 
-    expect(screen.getByRole("heading", { name: "Commission flow unavailable" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Commission requests unavailable" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send commission request" })).not.toBeInTheDocument();
   });
 });

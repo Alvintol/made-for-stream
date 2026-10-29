@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseListingRequestReferenceLinks,
-  BUDGET_FORMAT_MESSAGE,
   parseListingRequestBudget,
   validateListingRequestForm,
 } from "../listings/listingRequestForm";
@@ -77,8 +76,8 @@ describe("listing commission form helpers", () => {
 
     expect(result.values).toBeNull();
     expect(result.errors).toEqual({
-      requestTitle: "Summary must be between 3 and 120 characters.",
-      requestDetails: "Details must be between 10 and 2000 characters.",
+      requestTitle: "request.error.title",
+      requestDetails: "request.error.details",
     });
   });
 
@@ -92,7 +91,7 @@ describe("listing commission form helpers", () => {
     });
 
     expect(result.values).toBeNull();
-    expect(result.errors.budgetAmount).toBe(BUDGET_FORMAT_MESSAGE);
+    expect(result.errors.budgetAmount).toBe("request.error.budget");
   });
 
   it("reads a single budget amount however it is written", () => {
@@ -154,7 +153,7 @@ describe("listing commission form helpers", () => {
     });
 
     expect(result.values).toBeNull();
-    expect(result.errors.referenceLinks).toBe("Add up to 5 reference links.");
+    expect(result.errors.referenceLinks).toBe("request.error.referencesMax");
   });
 
   it("rejects non-http reference links", () => {
@@ -167,8 +166,6 @@ describe("listing commission form helpers", () => {
     });
 
     expect(result.values).toBeNull();
-    expect(result.errors.referenceLinks).toBe(
-      "Reference links must start with http:// or https://."
-    );
+    expect(result.errors.referenceLinks).toBe("request.error.referencesUrl");
   });
 });

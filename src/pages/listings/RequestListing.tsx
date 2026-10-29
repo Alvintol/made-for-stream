@@ -1,4 +1,5 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
+import { useT } from "../../lib/i18n/i18n";
 import { useState, type FormEvent, type ReactNode } from "react";
 import {
   convertAmount,
@@ -118,11 +119,7 @@ const fieldIds: Record<keyof ListingRequestFormErrors, string> = {
 // Matches the order the fields appear in the form.
 const fieldOrder = Object.keys(fieldIds) as Array<keyof ListingRequestFormErrors>;
 
-const nextSteps = [
-  "The creator reviews your commission request and can ask questions in chat.",
-  "If they accept, you agree on scope, price and timeline.",
-  "Payment happens only after you accept the agreement.",
-];
+const nextSteps = ["request.step1", "request.step2", "request.step3"] as const;
 
 type StateCardProps = {
   backTo: string;
@@ -160,7 +157,7 @@ const RequestListing = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-
+  const t = useT();
   const { data, isLoading, error } = usePublicListing(id ?? null);
   const createRequestMutation = useCreateListingRequest();
   const activeRequestQuery = useActiveListingRequestForListing(id ?? null);
@@ -180,7 +177,7 @@ const RequestListing = () => {
 
   const creatorName = creator?.handle
     ? `@${creator.handle}`
-    : creator?.display_name ?? "this creator";
+    : creator?.display_name ?? t("request.thisCreator");
 
   const referenceCount = parseListingRequestReferenceLinks(referenceLinksText).length;
 
@@ -241,13 +238,13 @@ const RequestListing = () => {
   };
 
   if (isLoading) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   if (error || !listing) {
     return (
-      <StateCard backTo="/market" backLabel="Back to market" title="Listing not found">
-        This listing is not available for commission requests right now.
+      <StateCard backTo="/market" backLabel={t("listing.backToMarket")} title={t("listing.notFound")}>
+        {t("request.notFoundText")}
       </StateCard>
     );
   }
@@ -258,63 +255,66 @@ const RequestListing = () => {
     return (
       <StateCard
         backTo={listingPath}
-        backLabel="Back to listing"
-        title="Sign in to send a commission request"
+        backLabel={t("request.backToListing")}
+        title={t("request.signInTitle")}
         actions={
           <>
             <Link className={classes.btnPrimarySm} to="/signin">
-              Sign in
+              {t("nav.signIn")}
             </Link>
             <Link className={classes.btnOutlineSm} to={listingPath}>
-              Back to listing
+              {t("request.backToListing")}
             </Link>
           </>
         }
       >
-        You need to be signed in before sending a commission request to {creatorName}.
+        {t("request.signInText", { name: creatorName })}
       </StateCard>
     );
   }
 
   if (listing.fulfilment_mode !== "request") {
     return (
-      <StateCard backTo={listingPath} backLabel="Back to listing" title="Commission flow unavailable">
-        This listing is not using the request-based flow.
+      <StateCard
+        backTo={listingPath}
+        backLabel={t("request.backToListing")}
+        title={t("request.unavailableTitle")}
+      >
+        {t("request.unavailableText")}
       </StateCard>
     );
   }
 
   if (user.id === listing.user_id) {
     return (
-      <StateCard backTo={listingPath} backLabel="Back to listing" title="Own listing">
-        You cannot send a commission request for your own listing.
+      <StateCard backTo={listingPath} backLabel={t("request.backToListing")} title={t("request.ownTitle")}>
+        {t("request.ownText")}
       </StateCard>
     );
   }
 
   if (activeRequestQuery.isLoading) {
-    return <div className={classes.loadingText}>Checking commission status…</div>;
+    return <div className={classes.loadingText}>{t("request.checkingStatus")}</div>;
   }
 
   if (activeRequestQuery.data) {
     return (
       <StateCard
         backTo={listingPath}
-        backLabel="Back to listing"
-        title="Commission request already sent"
+        backLabel={t("request.backToListing")}
+        title={t("request.alreadySentTitle")}
         actions={
           <>
             <Link className={classes.btnPrimarySm} to={`/requests/${activeRequestQuery.data.id}`}>
-              View existing commission
+              {t("listing.viewCommission")}
             </Link>
             <Link className={classes.btnOutlineSm} to={listingPath}>
-              Back to listing
+              {t("request.backToListing")}
             </Link>
           </>
         }
       >
-        You already have an active commission for this listing. Continue the conversation from
-        your commission page.
+        {t("request.alreadySentText")}
       </StateCard>
     );
   }
@@ -323,10 +323,10 @@ const RequestListing = () => {
     return (
       <StateCard
         backTo={listingPath}
-        backLabel="Back to listing"
-        title="Commission requests are paused for this creator"
+        backLabel={t("request.backToListing")}
+        title={t("request.pausedTitle")}
       >
-        This creator can&rsquo;t accept new commission requests right now. Please check back later.
+        {t("request.pausedText")}
       </StateCard>
     );
   }
@@ -340,22 +340,22 @@ const RequestListing = () => {
     <div className={classes.page}>
       <header className={classes.header}>
         <Link className={classes.backLink} to={listingPath}>
-          ← <span className={classes.backText}>Back to listing</span>
+          ← <span className={classes.backText}>{t("request.backToListing")}</span>
         </Link>
         <div className={classes.headerText}>
-          <div className={classes.eyebrow}>New commission request</div>
-          <h1 className={classes.h1}>What do you need?</h1>
+          <div className={classes.eyebrow}>{t("request.eyebrow")}</div>
+          <h1 className={classes.h1}>{t("request.heading")}</h1>
         </div>
         <span className={classes.headerSpacer} aria-hidden="true" />
       </header>
 
       <div className={classes.layout}>
-        <aside className={classes.aside} aria-label="Listing summary">
+        <aside className={classes.aside} aria-label={t("request.summaryLabel")}>
           <CommissionEstimateCard
             amount={estimateAmount}
             amountMax={budget?.max ?? null}
             currency={listingCurrency}
-            amountLabel={hasBudget ? "Your budget" : "Creator's price"}
+            amountLabel={hasBudget ? t("request.yourBudget") : t("request.creatorsPrice")}
             feeRate={feeRate}
           />
 
@@ -380,7 +380,7 @@ const RequestListing = () => {
             </div>
 
             {listing.deliverables.length > 0 ? (
-              <ul className={classes.chips} aria-label="Deliverables">
+              <ul className={classes.chips} aria-label={t("request.deliverables")}>
                 {listing.deliverables.map((deliverable) => (
                   <li key={deliverable} className={classes.chip}>
                     {deliverable}
@@ -388,21 +388,18 @@ const RequestListing = () => {
                 ))}
               </ul>
             ) : (
-              <p className={classes.muted}>No deliverables were listed.</p>
+              <p className={classes.muted}>{t("request.noDeliverables")}</p>
             )}
 
-            <p className={classes.muted}>
-              Your commission request saves these listing details as they are now, so later edits
-              won’t change what you asked for.
-            </p>
+            <p className={classes.muted}>{t("request.snapshotNote")}</p>
 
             <div className={`${classes.steps} hidden lg:block`}>
-              <div className={classes.stepsTitle}>What happens next</div>
+              <div className={classes.stepsTitle}>{t("request.nextTitle")}</div>
               <ol className="space-y-2">
-                {nextSteps.map((text, index) => (
-                  <li key={text} className={classes.step}>
+                {nextSteps.map((key, index) => (
+                  <li key={key} className={classes.step}>
                     <span className={classes.stepNumber}>{index + 1}</span>
-                    {text}
+                    {t(key)}
                   </li>
                 ))}
               </ol>
@@ -414,14 +411,14 @@ const RequestListing = () => {
         <form className={classes.form} noValidate onSubmit={(event) => void handleSubmit(event)}>
           <div className={classes.group}>
             <div className={classes.groupHead}>
-              <h2 className={classes.groupTitle}>Your commission</h2>
-              <span className={classes.groupHint}>Required</span>
+              <h2 className={classes.groupTitle}>{t("request.yourCommission")}</h2>
+              <span className={classes.groupHint}>{t("request.required")}</span>
             </div>
 
             <div className={classes.field}>
               <div className={classes.labelRow}>
                 <label className={classes.label} htmlFor="request-title">
-                  Commission title / summary
+                  {t("request.titleLabel")}
                 </label>
                 <Counter value={requestTitle} max={TITLE_MAX} />
               </div>
@@ -431,14 +428,14 @@ const RequestListing = () => {
                 className={classes.input}
                 value={requestTitle}
                 onChange={(event) => setRequestTitle(event.target.value)}
-                placeholder="e.g. Cozy emote pack for my Twitch relaunch"
+                placeholder={t("request.titlePlaceholder")}
                 maxLength={TITLE_MAX}
                 {...fieldProps("requestTitle", "request-title-error")}
               />
               </KeptPlaceholder>
               {formErrors.requestTitle && (
                 <div id="request-title-error" className={classes.error}>
-                  {formErrors.requestTitle}
+                  {t(formErrors.requestTitle)}
                 </div>
               )}
             </div>
@@ -446,7 +443,7 @@ const RequestListing = () => {
             <div className={classes.field}>
               <div className={classes.labelRow}>
                 <label className={classes.label} htmlFor="request-details">
-                  Details
+                  {t("request.details")}
                 </label>
                 <Counter value={requestDetails} max={DETAILS_MAX} />
               </div>
@@ -456,31 +453,31 @@ const RequestListing = () => {
                 className={classes.textarea}
                 value={requestDetails}
                 onChange={(event) => setRequestDetails(event.target.value)}
-                placeholder="What you need, how you'll use it, style notes, and anything the creator should know."
+                placeholder={t("request.detailsPlaceholder")}
                 maxLength={DETAILS_MAX}
                 {...fieldProps("requestDetails", "request-details-error")}
               />
               </KeptPlaceholder>
               {formErrors.requestDetails ? (
                 <div id="request-details-error" className={classes.error}>
-                  {formErrors.requestDetails}
+                  {t(formErrors.requestDetails)}
                 </div>
               ) : (
-                <div className={classes.hint}>At least 10 characters.</div>
+                <div className={classes.hint}>{t("request.detailsHint")}</div>
               )}
             </div>
           </div>
 
           <div className={`${classes.group} ${classes.groupDivider}`}>
             <div className={classes.groupHead}>
-              <h2 className={classes.groupTitle}>Extras</h2>
-              <span className={classes.groupHint}>Optional</span>
+              <h2 className={classes.groupTitle}>{t("request.extras")}</h2>
+              <span className={classes.groupHint}>{t("request.optionalGroup")}</span>
             </div>
 
             <div className={classes.row2}>
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="requested-timeline">
-                  Deadline / timeline <span className={classes.optional}>optional</span>
+                  {t("request.timeline")} <span className={classes.optional}>{t("common.optional")}</span>
                 </label>
                 <KeptPlaceholder>
                 <input
@@ -488,21 +485,21 @@ const RequestListing = () => {
                   className={classes.input}
                   value={requestedTimeline}
                   onChange={(event) => setRequestedTimeline(event.target.value)}
-                  placeholder="e.g. Before June 10, flexible"
+                  placeholder={t("request.timelinePlaceholder")}
                   maxLength={TIMELINE_MAX}
                   {...fieldProps("requestedTimeline", "requested-timeline-error")}
                 />
                 </KeptPlaceholder>
                 {formErrors.requestedTimeline && (
                   <div id="requested-timeline-error" className={classes.error}>
-                    {formErrors.requestedTimeline}
+                    {t(formErrors.requestedTimeline)}
                   </div>
                 )}
               </div>
 
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="budget-amount">
-                  Budget <span className={classes.optional}>optional</span>
+                  {t("request.budget")} <span className={classes.optional}>{t("common.optional")}</span>
                 </label>
                 <div className={classes.money}>
                   <span className={classes.moneySign} aria-hidden="true">
@@ -513,34 +510,37 @@ const RequestListing = () => {
                     className={classes.moneyInput}
                     value={budgetText}
                     onChange={(event) => setBudgetText(event.target.value)}
-                    placeholder={`e.g. ${listing.price_min} or ${listing.price_min}-${Math.round(listing.price_min * 1.5)}`}
+                    placeholder={t("request.budgetPlaceholder", {
+                      min: listing.price_min,
+                      max: Math.round(listing.price_min * 1.5),
+                    })}
                     maxLength={40}
                     {...fieldProps("budgetAmount", "budget-amount-error")}
                   />
                 </div>
                 {formErrors.budgetAmount && (
                   <div id="budget-amount-error" className={classes.error}>
-                    {formErrors.budgetAmount}
+                    {t(formErrors.budgetAmount)}
                   </div>
                 )}
                 <div className={classes.hint}>
-                  An amount or a range.{" "}
+                  {t("request.budgetHint")}{" "}
                   {budgetLowInDisplayCurrency !== null && displayCurrency && (
                     <>
-                      ≈{" "}
-                      {formatCurrencyAmountRange(
-                        Math.round(budgetLowInDisplayCurrency),
-                        budgetHighInDisplayCurrency === null
-                          ? null
-                          : Math.round(budgetHighInDisplayCurrency),
-                        displayCurrency,
-                      )}{" "}
-                      in your currency.{" "}
+                      {t("request.inYourCurrency", {
+                        amount: formatCurrencyAmountRange(
+                          Math.round(budgetLowInDisplayCurrency),
+                          budgetHighInDisplayCurrency === null
+                            ? null
+                            : Math.round(budgetHighInDisplayCurrency),
+                          displayCurrency,
+                        ),
+                      })}{" "}
                     </>
                   )}
                   {feeRate.feeBps > 0
-                    ? `A ${formatFeeRateBps(feeRate.feeBps)} buyer service fee is added on top when you pay.`
-                    : "No buyer service fee is added when you pay."}
+                    ? t("request.feeAdded", { rate: formatFeeRateBps(feeRate.feeBps) })
+                    : t("request.noFee")}
                 </div>
               </div>
             </div>
@@ -548,13 +548,13 @@ const RequestListing = () => {
             <div className={classes.field}>
               <div className={classes.labelRow}>
                 <label className={classes.label} htmlFor="reference-links">
-                  References <span className={classes.optional}>optional</span>
+                  {t("request.references")} <span className={classes.optional}>{t("common.optional")}</span>
                 </label>
                 <span
                   className={referenceCount > REFERENCES_MAX ? classes.counterOver : classes.counter}
                   aria-hidden="true"
                 >
-                  {referenceCount}/{REFERENCES_MAX} links
+                  {t("request.referencesCount", { count: referenceCount, max: REFERENCES_MAX })}
                 </span>
               </div>
               <KeptPlaceholder>
@@ -563,13 +563,13 @@ const RequestListing = () => {
                 className={classes.smallTextarea}
                 value={referenceLinksText}
                 onChange={(event) => setReferenceLinksText(event.target.value)}
-                placeholder={"One link per line, e.g.\nhttps://example.com/moodboard"}
+                placeholder={t("request.referencesPlaceholder")}
                 {...fieldProps("referenceLinks", "reference-links-error")}
               />
               </KeptPlaceholder>
               {formErrors.referenceLinks && (
                 <div id="reference-links-error" className={classes.error}>
-                  {formErrors.referenceLinks}
+                  {t(formErrors.referenceLinks)}
                 </div>
               )}
             </div>
@@ -578,23 +578,23 @@ const RequestListing = () => {
               <div className={classes.submitError}>
                 {hasErrorMessage(createRequestMutation.error)
                   ? createRequestMutation.error.message
-                  : "Your commission request could not be sent right now."}
+                  : t("request.sendFailed")}
               </div>
             )}
           </div>
 
           <div className={classes.footer}>
-            <p className={classes.footerNote}>Nothing is charged until you accept an agreement.</p>
+            <p className={classes.footerNote}>{t("request.chargeNote")}</p>
             <div className={classes.footerActions}>
               <Link className={classes.btnOutline} to={listingPath}>
-                Cancel
+                {t("common.cancel")}
               </Link>
               <button
                 className={classes.btnPrimary}
                 type="submit"
                 disabled={createRequestMutation.isPending}
               >
-                {createRequestMutation.isPending ? "Submitting…" : "Send commission request"}
+                {createRequestMutation.isPending ? t("common.submitting") : t("listing.requestButton")}
               </button>
             </div>
           </div>

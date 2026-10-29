@@ -8,6 +8,7 @@ surfaces:
   - src/lib/i18n/messages/fr.ts          # French
   - src/components/app/LanguageSync.tsx  # sets the page language and <html lang>
   - src/components/settings/DisplayCurrencySettings.tsx
+  - src/domain/listings/listingRequestForm.ts  # form errors are translation keys
   - public.user_display_preferences.language  # 20261029_173
 unmatched_tier: 2
 ---
@@ -39,7 +40,9 @@ browser. Emails are still in English.
   creator cards, listing cards and prices, the listing page (including its
   report form), the report notes on creator profiles and conversations, and
   the page-not-found page.
-
+- 2026-10-29: the creator profile page (message form and report form), the
+  commission request form and its estimated invoice, and the request form's
+  error messages.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 

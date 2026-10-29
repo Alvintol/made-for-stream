@@ -5,8 +5,8 @@ import {
 } from "../../../domain/payments/listingRequestPaymentDisplay";
 import { useDisplayCurrency } from "../../../hooks/money/useDisplayCurrency";
 import type { BuyerServiceFeeRate } from "../../../hooks/payments/useBuyerServiceFeeRate";
+import { useT } from "../../../lib/i18n/i18n";
 import { convertAmount, formatCurrencyAmountRange } from "../../../lib/money/displayCurrency";
-
 type CommissionEstimateCardProps = {
   // In the creator's currency. Nothing is shown for a zero or missing amount.
   amount: number;
@@ -36,13 +36,6 @@ const classes = {
   note: "text-xs leading-5 text-zinc-500",
 } as const;
 
-const discountLabels: Record<BuyerServiceFeeRate["reason"], string> = {
-  standard: "Discount",
-  subscription: "Subscriber discount",
-  promotional: "Promotional discount",
-  goodwill: "Fee adjustment",
-};
-
 // What one project price comes to, in cents.
 const estimateFor = (amount: number, feeBps: number) => {
   const base = Math.round(amount * 100);
@@ -59,6 +52,7 @@ const estimateFor = (amount: number, feeBps: number) => {
 const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
   const { amount, amountMax = null, currency, amountLabel, feeRate } = props;
   const { displayCurrency, rates } = useDisplayCurrency();
+  const t = useT();
 
   if (!Number.isFinite(amount) || amount <= 0) return null;
 
@@ -74,10 +68,10 @@ const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
   const convertedHigh = high ? convert(high.total) : null;
 
   return (
-    <section className={classes.card} aria-label="Estimated invoice">
+    <section className={classes.card} aria-label={t("estimate.title")}>
       <div className={classes.head}>
-        <h2 className={classes.title}>Estimated invoice</h2>
-        <span className={classes.tag}>Example</span>
+        <h2 className={classes.title}>{t("estimate.title")}</h2>
+        <span className={classes.tag}>{t("estimate.example")}</span>
       </div>
 
       <dl className={classes.rows}>
@@ -86,44 +80,41 @@ const CommissionEstimateCard = (props: CommissionEstimateCardProps) => {
           <dd className={classes.amount}>{money((estimate) => estimate.base)}</dd>
         </div>
         <div className={classes.row}>
-          <dt>Buyer service fee ({formatFeeRateBps(STANDARD_FEE_BPS)})</dt>
+          <dt>{t("estimate.fee", { rate: formatFeeRateBps(STANDARD_FEE_BPS) })}</dt>
           <dd className={classes.amount}>{money((estimate) => estimate.standardFee)}</dd>
         </div>
         {low.discount > 0 && (
           <div className={classes.discount}>
-            <dt>{discountLabels[feeRate.reason]}</dt>
+            <dt>{t(`estimate.discount.${feeRate.reason}`)}</dt>
             <dd className={classes.amount}>−{money((estimate) => estimate.discount)}</dd>
           </div>
         )}
         <div className={classes.row}>
-          <dt>Tax</dt>
-          <dd className={classes.muted}>At checkout, if any</dd>
+          <dt>{t("estimate.tax")}</dt>
+          <dd className={classes.muted}>{t("estimate.taxValue")}</dd>
         </div>
         <div className={classes.total}>
-          <dt>Estimated total</dt>
+          <dt>{t("estimate.total")}</dt>
           <dd className={classes.amount}>{money((estimate) => estimate.total)}</dd>
         </div>
       </dl>
 
       {convertedLow !== null && displayCurrency && (
         <p className={classes.approx}>
-          ≈{" "}
-          {formatCurrencyAmountRange(
-            Math.round(convertedLow),
-            convertedHigh === null ? null : Math.round(convertedHigh),
-            displayCurrency,
-          )}{" "}
-          in your currency
+          {t("estimate.approx", {
+            amount: formatCurrencyAmountRange(
+              Math.round(convertedLow),
+              convertedHigh === null ? null : Math.round(convertedHigh),
+              displayCurrency,
+            ),
+          })}
         </p>
       )}
 
       <p className={classes.note}>
-        An example, not a quote. The creator sets the final price in the agreement, and you pay
-        in {currency.toUpperCase()}.{" "}
-        {low.fee > 0
-          ? "The buyer service fee is added to each payment."
-          : "No buyer service fee is added to your payments."}{" "}
-        A tip is optional.
+        {t("estimate.note", { currency: currency.toUpperCase() })}{" "}
+        {low.fee > 0 ? t("estimate.feeEachPayment") : t("estimate.noFee")}{" "}
+        {t("estimate.tip")}
       </p>
     </section>
   );
