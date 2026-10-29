@@ -1,4 +1,5 @@
 import { formatMoney } from "../../lib/formatMoney";
+import { english, type Translate } from "../../lib/i18n/i18n";
 import type {
   ListingRequestPaymentRow,
   ListingRequestPaymentStatus,
@@ -7,17 +8,8 @@ import type {
 
 export const getListingRequestPaymentTypeLabel = (
   paymentType: ListingRequestPaymentType,
-): string => {
-  const labelByType: Record<ListingRequestPaymentType, string> = {
-    one_time: "Project payment",
-    starting_payment: "Starting payment",
-    milestone_payment: "Milestone payment",
-    change_order_payment: "Change order payment",
-    final_balance: "Final balance",
-  };
-
-  return labelByType[paymentType];
-};
+  t: Translate = english,
+): string => t(`paymentType.${paymentType}`);
 
 export const getListingRequestPaymentStatusLabel = (
   status: ListingRequestPaymentStatus,
@@ -57,12 +49,13 @@ export const canOpenListingRequestPaymentCheckout = (
 
 export const getListingRequestPaymentTitle = (
   payment: Pick<ListingRequestPaymentRow, "metadata" | "payment_type">,
+  t: Translate = english,
 ): string => {
   const metadataTitle = payment.metadata?.payment_title;
 
   return typeof metadataTitle === "string" && metadataTitle.trim()
     ? metadataTitle.trim()
-    : getListingRequestPaymentTypeLabel(payment.payment_type);
+    : getListingRequestPaymentTypeLabel(payment.payment_type, t);
 };
 
 // Payment amounts are stored in minor units. This assumes a two-decimal
@@ -102,11 +95,11 @@ export const describeBuyerServiceFee = (payment: {
   buyer_service_fee_bps: number;
   buyer_service_fee_minimum_cents: number;
   currency: string;
-}): string => {
+}, t: Translate = english): string => {
   // A waived fee. Reporting this as "0% of the project payment" is accurate and
   // reads like a bug, so say what actually happened.
   if (payment.buyer_service_fee_cents === 0) {
-    return "waived on this payment.";
+    return t("fee.waived");
   }
 
   const rate = formatFeeRateBps(payment.buyer_service_fee_bps);
@@ -122,8 +115,8 @@ export const describeBuyerServiceFee = (payment: {
       payment.currency,
     );
 
-    return `${rate} of the project payment, with a ${minimum} minimum. The minimum applies here because ${rate} of this payment is less than ${minimum}.`;
+    return t("fee.rateWithMinimum", { rate, minimum });
   }
 
-  return `${rate} of the project payment.`;
+  return t("fee.rate", { rate });
 };

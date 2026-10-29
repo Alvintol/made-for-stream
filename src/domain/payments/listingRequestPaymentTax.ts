@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 // Sprint 7 (launch-scope.md section 12): buyer location evidence and the
 // checkout's tax line.
 //
@@ -102,14 +104,15 @@ export type PaymentTaxDisplayInput = {
 // showing a zero that could later change.
 export const describePaymentTaxLine = (
   payment: PaymentTaxDisplayInput,
+  t: Translate = english,
 ): { label: string; pending: boolean } => {
   if (!payment.tax_treatment) {
-    return { label: "Tax", pending: true };
+    return { label: t("tax.label"), pending: true };
   }
 
   const place = payment.tax_jurisdiction_region
     ? `${payment.tax_jurisdiction_country}-${payment.tax_jurisdiction_region}`
     : payment.tax_jurisdiction_country;
 
-  return { label: place ? `Tax (${place})` : "Tax", pending: false };
+  return { label: place ? t("tax.labelPlace", { place }) : t("tax.label"), pending: false };
 };

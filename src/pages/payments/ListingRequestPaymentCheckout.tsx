@@ -18,7 +18,7 @@ import { useCreateListingRequestPaymentCheckout } from "../../hooks/payments/use
 import { useListingRequestPayment } from "../../hooks/payments/useListingRequestPayments";
 import { useSetListingRequestPaymentTipAndSupport } from "../../hooks/payments/useSetListingRequestPaymentTipAndSupport";
 import { getStripeForConnectedAccount } from "../../lib/stripeClient";
-
+import { useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 const classes = {
   shell:
     "mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8",
@@ -57,10 +57,10 @@ const classes = {
   pendingAmount: "text-zinc-500",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
-    : "Something went wrong.";
+    : t("checkout.failed");
 
 // Shortcuts beside an amount box: a share of the project payment, worked out
 // to the cent and put in the box, where it can still be typed over. Nothing
@@ -127,6 +127,8 @@ const ExtraAmountRow = ({
 
 const ListingRequestPaymentCheckout = () => {
   const { paymentId = "" } = useParams<{ paymentId: string }>();
+  const t = useT();
+  const language = useLanguage();
   const { mutateAsync: createCheckout } = useCreateListingRequestPaymentCheckout();
   const setTipAndSupport = useSetListingRequestPaymentTipAndSupport();
   const paymentQuery = useListingRequestPayment(paymentId);
@@ -155,9 +157,9 @@ const ListingRequestPaymentCheckout = () => {
   const billingCountry = accountDetails.data?.country_code ?? "";
   const billingCountryName = useMemo(
     () =>
-      getBillingCountryOptions().find((option) => option.code === billingCountry)?.name ??
+      getBillingCountryOptions(language).find((option) => option.code === billingCountry)?.name ??
       billingCountry,
-    [billingCountry],
+    [billingCountry, language],
   );
 
   const parseAmountToCents = (value: string): number => {
@@ -165,7 +167,7 @@ const ListingRequestPaymentCheckout = () => {
     if (!trimmed) return 0;
     const parsed = Number(trimmed);
     if (!Number.isFinite(parsed) || parsed < 0) {
-      throw new Error("Enter a whole or decimal amount of zero or more.");
+      throw new Error(t("checkout.amountInvalid"));
     }
     return Math.round(parsed * 100);
   };
@@ -196,7 +198,7 @@ const ListingRequestPaymentCheckout = () => {
     setExtrasErrMsg(null);
 
     if (!billingCountry) {
-      setExtrasErrMsg("Add your account details in Settings before paying.");
+      setExtrasErrMsg(t("checkout.needDetails"));
       return;
     }
 
@@ -212,10 +214,10 @@ const ListingRequestPaymentCheckout = () => {
 
       setExtrasConfirmed(true);
     } catch (error) {
-      setExtrasErrMsg(getErrorMessage(error));
+      setExtrasErrMsg(getErrorMessage(error, t));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentId, tipInput, supportInput, billingCountry, setTipAndSupport.mutateAsync]);
+  }, [paymentId, tipInput, supportInput, billingCountry, setTipAndSupport.mutateAsync, t]);
 
   // Stripe checkout opens only after the buyer has confirmed their tip and
   // contribution choice, then accepted the project terms and policies for
@@ -232,7 +234,7 @@ const ListingRequestPaymentCheckout = () => {
 
   const startCheckout = useCallback(async () => {
     if (!paymentId) {
-      setErrMsg("Payment id is missing.");
+      setErrMsg(t("checkout.missingId"));
       return;
     }
 
@@ -259,9 +261,9 @@ const ListingRequestPaymentCheckout = () => {
       );
     } catch (error) {
       startedPaymentIdRef.current = null;
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
-  }, [createCheckout, paymentId, billingCountry]);
+  }, [createCheckout, paymentId, billingCountry, t]);
 
   useEffect(() => {
     if (!policiesAccepted) return;
@@ -269,7 +271,7 @@ const ListingRequestPaymentCheckout = () => {
     void startCheckout();
   }, [policiesAccepted, startCheckout]);
 
-  const taxLine = payment ? describePaymentTaxLine(payment) : null;
+  const taxLine = payment ? describePaymentTaxLine(payment, t) : null;
 
   // Until the tip and contribution are confirmed, the summary follows what
   // is in the boxes, so the buyer sees the total they are about to pay. Tax
@@ -292,48 +294,45 @@ const ListingRequestPaymentCheckout = () => {
   return (
     <main className={classes.shell}>
       <section className={classes.card}>
-        <h1 className={classes.title}>Complete payment</h1>
-        <p className={classes.text}>
-          Your payment is processed securely by Stripe inside Made for Stream. Payment
-          status updates after Stripe confirms the transaction.
-        </p>
+        <h1 className={classes.title}>{t("checkout.title")}</h1>
+        <p className={classes.text}>{t("checkout.intro")}</p>
       </section>
 
       {paymentQuery.isLoading && (
         <section className={classes.card}>
-          <p className={classes.text}>Loading payment details…</p>
+          <p className={classes.text}>{t("checkout.loading")}</p>
         </section>
       )}
 
       {paymentQuery.isError && (
-        <div className={classes.error}>We couldn’t load this payment. Please try again.</div>
+        <div className={classes.error}>{t("checkout.loadFailed")}</div>
       )}
 
       {!paymentQuery.isLoading && !paymentQuery.isError && !payment && (
-        <div className={classes.error}>This payment could not be found.</div>
+        <div className={classes.error}>{t("checkout.notFound")}</div>
       )}
 
       {payment && (
         <section className={classes.card}>
-          <h2 className={classes.summaryTitle}>{getListingRequestPaymentTitle(payment)}</h2>
+          <h2 className={classes.summaryTitle}>{getListingRequestPaymentTitle(payment, t)}</h2>
           <dl className={classes.amounts}>
             <div className={classes.amountRow}>
-              <dt>Project payment</dt>
+              <dt>{t("checkout.projectPayment")}</dt>
               <dd>{formatPaymentCents(payment.base_amount_cents, payment.currency)}</dd>
             </div>
             <div className={classes.amountRow}>
-              <dt>Buyer service fee</dt>
+              <dt>{t("checkout.fee")}</dt>
               <dd>{formatPaymentCents(payment.buyer_service_fee_cents, payment.currency)}</dd>
             </div>
             {shownTipCents > 0 && (
               <div className={classes.amountRow}>
-                <dt>Creator tip</dt>
+                <dt>{t("checkout.tip")}</dt>
                 <dd>{formatPaymentCents(shownTipCents, payment.currency)}</dd>
               </div>
             )}
             {shownSupportCents > 0 && (
               <div className={classes.amountRow}>
-                <dt>Made for Stream support</dt>
+                <dt>{t("checkout.support")}</dt>
                 <dd>{formatPaymentCents(shownSupportCents, payment.currency)}</dd>
               </div>
             )}
@@ -342,27 +341,25 @@ const ListingRequestPaymentCheckout = () => {
                 <dt>{taxLine.label}</dt>
                 <dd className={taxLine.pending ? classes.pendingAmount : undefined}>
                   {taxLine.pending
-                    ? "Calculated before payment"
+                    ? t("checkout.taxPending")
                     : formatPaymentCents(payment.tax_cents, payment.currency)}
                 </dd>
               </div>
             )}
             <div className={classes.totalRow}>
-              <dt>Total</dt>
+              <dt>{t("checkout.total")}</dt>
               <dd>{formatPaymentCents(shownTotalCents, payment.currency)}</dd>
             </div>
           </dl>
 
           <p className={classes.feeNote}>
-            The buyer service fee is {describeBuyerServiceFee(payment)}{" "}
+            {t("checkout.feeIs", { description: describeBuyerServiceFee(payment, t) })}{" "}
             {payment.buyer_service_fee_cents > 0
-              ? "It is the only fee added to what you pay."
-              : "Nothing is added to the project payment."}{" "}
-            The creator pays a separate platform fee out of their own proceeds,
-            along with the payment processor&rsquo;s charges, so it does not
-            increase this total.{" "}
+              ? t("checkout.onlyFee")
+              : t("checkout.nothingAdded")}{" "}
+            {t("checkout.creatorFee")}{" "}
             <Link className={classes.feeLink} to="/policies/fees">
-              Fee Schedule and Payment Terms
+              {t("checkout.feeLink")}
             </Link>
           </p>
         </section>
@@ -370,21 +367,15 @@ const ListingRequestPaymentCheckout = () => {
 
       {payment && !extrasConfirmed && (
         <section className={classes.card}>
-          <h2 className={classes.summaryTitle}>Add a tip or contribution (optional)</h2>
-          <p className={classes.text}>
-            Both are entirely optional and default to nothing added. A tip goes
-            to the creator in full. A contribution supports Made for Stream and
-            is added to the total you pay. Press a percentage of the project
-            payment, type an exact amount, or press Round up to bring your
-            total to a whole number.
-          </p>
+          <h2 className={classes.summaryTitle}>{t("checkout.extrasTitle")}</h2>
+          <p className={classes.text}>{t("checkout.extrasIntro")}</p>
 
           <div className={classes.extras}>
             <ExtraAmountRow
               inputId="tip-amount"
-              label="Tip for the creator"
-              hint="reaches them in full, no fee taken"
-              description="A thank-you on top of the project payment. It is optional and changes nothing about your commission."
+              label={t("checkout.tipLabel")}
+              hint={t("checkout.tipHint")}
+              description={t("checkout.tipText")}
               currency={payment.currency.toUpperCase()}
               value={tipInput}
               onChange={setTipEdit}
@@ -394,7 +385,7 @@ const ListingRequestPaymentCheckout = () => {
                   key={percent}
                   type="button"
                   className={classes.quickAmount}
-                  aria-label={`Tip ${percent}% of the project payment`}
+                  aria-label={t("checkout.tipPercent", { percent })}
                   onClick={() => setTipEdit(percentOfCents(payment.base_amount_cents, percent))}
                 >
                   {percent}%
@@ -403,19 +394,19 @@ const ListingRequestPaymentCheckout = () => {
               <button
                 type="button"
                 className={classes.quickAmount}
-                aria-label="Round your total up to a whole number with a tip"
+                aria-label={t("checkout.tipRoundUp")}
                 disabled={roundUpCents === 0}
                 onClick={() => setTipEdit(centsText(tipCentsNow + roundUpCents))}
               >
-                Round up
+                {t("checkout.roundUp")}
               </button>
             </ExtraAmountRow>
 
             <ExtraAmountRow
               inputId="support-amount"
-              label="Support Made for Stream"
-              hint="added to your total"
-              description="Made for Stream is built and run by one developer. A contribution helps pay for hosting and keeps the site running. It is optional and changes nothing about your commission."
+              label={t("checkout.supportLabel")}
+              hint={t("checkout.supportHint")}
+              description={t("checkout.supportText")}
               currency={payment.currency.toUpperCase()}
               value={supportInput}
               onChange={setSupportEdit}
@@ -425,7 +416,7 @@ const ListingRequestPaymentCheckout = () => {
                   key={percent}
                   type="button"
                   className={classes.quickAmount}
-                  aria-label={`Contribute ${percent}% of the project payment`}
+                  aria-label={t("checkout.supportPercent", { percent })}
                   onClick={() => setSupportEdit(percentOfCents(payment.base_amount_cents, percent))}
                 >
                   {percent}%
@@ -434,7 +425,7 @@ const ListingRequestPaymentCheckout = () => {
               <button
                 type="button"
                 className={classes.quickAmount}
-                aria-label="Contribute 1.00"
+                aria-label={t("checkout.supportOne", { amount: "1.00" })}
                 onClick={() => setSupportEdit("1.00")}
               >
                 1.00
@@ -442,31 +433,28 @@ const ListingRequestPaymentCheckout = () => {
               <button
                 type="button"
                 className={classes.quickAmount}
-                aria-label="Round your total up to a whole number with a contribution"
+                aria-label={t("checkout.supportRoundUp")}
                 disabled={roundUpCents === 0}
                 onClick={() => setSupportEdit(centsText(supportCentsNow + roundUpCents))}
               >
-                Round up
+                {t("checkout.roundUp")}
               </button>
             </ExtraAmountRow>
           </div>
 
-          <h2 className={`mt-6 ${classes.summaryTitle}`}>Billing location</h2>
-          <p className={classes.text}>
-            Used to work out whether tax applies to this payment. Any tax is
-            shown as its own line before you pay.
-          </p>
+          <h2 className={`mt-6 ${classes.summaryTitle}`}>{t("checkout.billingTitle")}</h2>
+          <p className={classes.text}>{t("checkout.billingText")}</p>
 
           <div className="mt-4 space-y-3">
             <div className={classes.fieldRow}>
               <span className={classes.fieldLabel}>
-                Billing country
-                <span className={classes.fieldHint}> — from your account details</span>
+                {t("checkout.billingCountry")}
+                <span className={classes.fieldHint}> — {t("checkout.billingFrom")}</span>
               </span>
               <span className="text-sm">
-                {billingCountry ? `${billingCountryName} ` : "Not set "}
+                {billingCountry ? billingCountryName : t("checkout.notSet")}{" "}
                 <Link className={classes.feeLink} to="/settings/personal">
-                  {billingCountry ? "Change in Settings" : "Add your account details"}
+                  {billingCountry ? t("checkout.changeInSettings") : t("checkout.addDetails")}
                 </Link>
               </span>
             </div>
@@ -481,7 +469,7 @@ const ListingRequestPaymentCheckout = () => {
               disabled={setTipAndSupport.isPending || accountDetails.isLoading}
               onClick={() => void onConfirmExtras()}
             >
-              {setTipAndSupport.isPending ? "Saving…" : "Continue to payment"}
+              {setTipAndSupport.isPending ? t("common.saving") : t("checkout.continue")}
             </button>
           </div>
         </section>
@@ -498,7 +486,7 @@ const ListingRequestPaymentCheckout = () => {
 
       {policiesAccepted && !errMsg && (!stripePromise || !checkoutOptions) && (
         <section className={classes.card}>
-          <p className={classes.text}>Preparing secure checkout…</p>
+          <p className={classes.text}>{t("checkout.preparing")}</p>
         </section>
       )}
 
@@ -515,7 +503,7 @@ const ListingRequestPaymentCheckout = () => {
 
       <div className={classes.actions}>
         <Link className={classes.btn} to="/requests">
-          Back to commissions
+          {t("checkout.back")}
         </Link>
       </div>
     </main>

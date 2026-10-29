@@ -37,6 +37,11 @@ export const translate = (
   );
 };
 
+// A translator for code outside components. Shared helpers take one and
+// default to English, so callers that are not translated yet are unchanged.
+export type Translate = (key: MessageKey, values?: TranslationValues) => string;
+export const english: Translate = (key, values) => translate("en", key, values);
+
 // The language the site is shown in right now. One value for the whole page,
 // set by <LanguageSync /> from the saved choice; a guess from the browser
 // until then.

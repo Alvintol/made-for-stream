@@ -980,7 +980,9 @@ Build order (each its own branch):
       as #190. Then (`feat/i18n-public-pages`): home, market, creators,
       cards and prices, the listing page and its report form, 404. Then
       (`feat/i18n-creator-profile-request`): the creator profile page and
-      the commission request form with its estimated invoice. Next:
+      the commission request form with its estimated invoice. Then
+      (`feat/i18n-buyer-commissions`): the buyer's commission list and
+      checkout, with shared status, payment and fee labels. Next:
       the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.

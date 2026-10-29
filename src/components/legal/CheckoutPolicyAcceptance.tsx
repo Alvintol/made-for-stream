@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   checkoutPolicyTypes,
-  earlyServiceRequestExplanation,
-  earlyServiceRequestHeading,
-  earlyServiceRequestLabel,
   getLatestAcceptedAt,
   getMissingPolicyTypes,
   toCurrentPolicyAcceptances,
@@ -15,7 +12,7 @@ import {
   useRecordPolicyAcceptances,
 } from "../../hooks/legal/usePolicyAcceptances";
 import PolicyAcceptanceCheckbox from "./PolicyAcceptanceCheckbox";
-
+import { useLanguage, useT } from "../../lib/i18n/i18n";
 type CheckoutPolicyAcceptanceProps = {
   listingRequestId: string;
   onAccepted: () => void;
@@ -32,8 +29,8 @@ const classes = {
   error: "notice noticeError",
 } as const;
 
-const formatAcceptedDate = (value: string): string =>
-  new Date(value).toLocaleDateString(undefined, {
+const formatAcceptedDate = (value: string, language: string): string =>
+  new Date(value).toLocaleDateString(language, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -55,7 +52,8 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
     relatedListingRequestId: listingRequestId,
   });
   const recordAcceptances = useRecordPolicyAcceptances();
-
+  const t = useT();
+  const language = useLanguage();
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [earlyStartRequested, setEarlyStartRequested] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -75,16 +73,17 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
     return (
       <section className={classes.card}>
         <p className={classes.text}>
-          You accepted the project terms, the{" "}
+          {t("checkoutTerms.acceptedStart")}{" "}
           <Link className={classes.link} to="/policies/fees" target="_blank" rel="noopener">
-            Fee Schedule
+            {t("checkoutTerms.feeSchedule")}
           </Link>{" "}
-          and the{" "}
+          {t("checkoutTerms.acceptedMiddle")}{" "}
           <Link className={classes.link} to="/policies/refunds" target="_blank" rel="noopener">
-            Refund, Cancellation and Dispute Policy
+            {t("checkoutTerms.refundPolicy")}
           </Link>{" "}
-          for this project
-          {acceptedAt ? ` on ${formatAcceptedDate(acceptedAt)}` : ""}.
+          {acceptedAt
+            ? t("checkoutTerms.acceptedEndOn", { date: formatAcceptedDate(acceptedAt, language) })
+            : t("checkoutTerms.acceptedEnd")}
         </p>
       </section>
     );
@@ -105,21 +104,21 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
     } catch (error) {
       logPolicyAcceptanceFailure("checkout acceptance", error);
       setErrMsg(
-        "We couldn’t record your acceptance, so checkout hasn’t started. Please try again.",
+        t("checkoutTerms.saveFailed"),
       );
     }
   };
 
   return (
-    <section className={classes.card} aria-label="Terms for this payment">
+    <section className={classes.card} aria-label={t("checkoutTerms.label")}>
       <div className={classes.group}>
-        <h2 className={classes.heading}>Project terms</h2>
+        <h2 className={classes.heading}>{t("checkoutTerms.heading")}</h2>
         <p className={classes.text}>
-          Review the{" "}
+          {t("checkoutTerms.reviewStart")}{" "}
           <Link className={classes.link} to={`/requests/${listingRequestId}`}>
-            project agreement
+            {t("checkoutTerms.agreementLink")}
           </Link>{" "}
-          for the scope, payment schedule and usage rights before you pay.
+          {t("checkoutTerms.reviewEnd")}
         </p>
 
         <PolicyAcceptanceCheckbox
@@ -128,22 +127,22 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
           onChange={setTermsAgreed}
           disabled={isBusy}
         >
-          I agree to the project scope, payment schedule, usage rights,{" "}
+          {t("checkoutTerms.agreeStart")}{" "}
           <Link className={classes.link} to="/policies/fees" target="_blank" rel="noopener">
-            Fee Schedule
+            {t("checkoutTerms.feeSchedule")}
           </Link>{" "}
-          and{" "}
+          {t("checkoutTerms.agreeAnd")}{" "}
           <Link className={classes.link} to="/policies/refunds" target="_blank" rel="noopener">
-            Refund, Cancellation and Dispute Policy
+            {t("checkoutTerms.refundPolicy")}
           </Link>{" "}
-          shown here.
+          {t("checkoutTerms.agreeEnd")}
         </PolicyAcceptanceCheckbox>
       </div>
 
       {needsEarlyStartRequest && (
       <div className={classes.group}>
-        <h2 className={classes.heading}>{earlyServiceRequestHeading}</h2>
-        <p className={classes.text}>{earlyServiceRequestExplanation}</p>
+        <h2 className={classes.heading}>{t("consent.earlyStartHeading")}</h2>
+        <p className={classes.text}>{t("consent.earlyStartText")}</p>
 
         <PolicyAcceptanceCheckbox
           id="checkout-early-service-request"
@@ -151,7 +150,7 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
           onChange={setEarlyStartRequested}
           disabled={isBusy}
         >
-          {earlyServiceRequestLabel}
+          {t("consent.earlyStartLabel")}
         </PolicyAcceptanceCheckbox>
       </div>
       )}
@@ -167,7 +166,7 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
           }
           onClick={() => void onContinue()}
         >
-          {recordAcceptances.isPending ? "Saving…" : "Continue to payment"}
+          {recordAcceptances.isPending ? t("common.saving") : t("checkout.continue")}
         </button>
       </div>
 

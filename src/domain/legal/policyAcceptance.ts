@@ -6,7 +6,7 @@ import { paymentTermsVersion } from "./paymentTerms";
 import { privacyChanges, privacyVersion } from "./privacyPolicy";
 import { refundPolicyVersion } from "./refundPolicy";
 import { termsChanges, termsVersion } from "./termsOfService";
-
+import { english } from "../../lib/i18n/i18n";
 // Mirrors the policy_type check constraint on public.policy_acceptances.
 // "early_service_request" is the EU/UK express request to start work before
 // the statutory cancellation period ends (Refund Policy section 1). It needs
@@ -52,14 +52,12 @@ export const currentPolicyVersions: Record<PolicyType, string> = {
 // acceptance, where the database requires it (20260923_138), and again at
 // checkout if the Refund Policy has changed since. One copy so the two can
 // never say different things.
-export const earlyServiceRequestHeading =
-  "Starting work before the cancellation period ends";
+// The wording lives in lib/i18n (consent.earlyStart*), English being the master.
+export const earlyServiceRequestHeading = english("consent.earlyStartHeading");
 
-export const earlyServiceRequestExplanation =
-  "If you are a consumer in the EU or UK, you may have 14 days to cancel this purchase. The creator can only begin work during that period if you ask them to.";
+export const earlyServiceRequestExplanation = english("consent.earlyStartText");
 
-export const earlyServiceRequestLabel =
-  "I expressly request that the creator begin work now, before any 14-day cancellation period I may have has ended. I understand that if I cancel during that period, I may have to pay for work already supplied, and that I will lose my right to cancel once the work has been fully completed.";
+export const earlyServiceRequestLabel = english("consent.earlyStartLabel");
 
 export const signupPolicyTypes: PolicyType[] = ["terms", "privacy"];
 
