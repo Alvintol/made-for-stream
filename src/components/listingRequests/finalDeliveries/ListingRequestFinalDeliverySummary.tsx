@@ -8,7 +8,7 @@ import {
 import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
 import DeliveryFileDownloads from "./DeliveryFileDownloads";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
-
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestFinalDeliveryViewer =
   | "buyer"
   | "creator"
@@ -63,19 +63,21 @@ const classes = {
     "notice noticeError mt-4",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "Final deliveries could not be loaded.";
+    : t("deliveries.loadFailed");
 
 const formatDate = (
-  value?: string | null
+  value: string | null | undefined,
+  language: string,
+  t: Translate
 ): string =>
   value
-    ? new Intl.DateTimeFormat("en-CA", {
+    ? new Intl.DateTimeFormat(language, {
         dateStyle: "medium",
       }).format(new Date(value))
-    : "Not submitted";
+    : t("deliveries.notSubmitted");
 
 const getStatusClass = (
   finalDelivery: ListingRequestFinalDeliveryRow
@@ -122,6 +124,8 @@ const ListingRequestFinalDeliverySummary = ({
   isLoading = false,
   error,
 }: ListingRequestFinalDeliverySummaryProps) => {
+  const t = useT();
+  const language = useLanguage();
   const hasError = Boolean(error);
 
   const visibleFinalDeliveries =
@@ -136,13 +140,13 @@ const ListingRequestFinalDeliverySummary = ({
 
         {isLoading && (
           <div className={classes.loading}>
-            Loading final deliveries…
+            {t("deliveries.loading")}
           </div>
         )}
 
         {!isLoading && hasError && (
           <div className={classes.error}>
-            {getErrorMessage(error)}
+            {getErrorMessage(error, t)}
           </div>
         )}
 
@@ -150,8 +154,7 @@ const ListingRequestFinalDeliverySummary = ({
           !hasError &&
           visibleFinalDeliveries.length === 0 && (
             <div className={classes.empty}>
-              No final project delivery has been created
-              yet.
+              {t("deliveries.empty")}
             </div>
           )}
 
@@ -186,10 +189,10 @@ const ListingRequestFinalDeliverySummary = ({
                             classes.itemVersion
                           }
                         >
-                          Delivery version{" "}
-                          {
-                            finalDelivery.version_number
-                          }
+                          {t("deliveries.version", {
+                            version:
+                              finalDelivery.version_number,
+                          })}
                         </div>
                       </div>
 
@@ -199,7 +202,8 @@ const ListingRequestFinalDeliverySummary = ({
                         )}
                       >
                         {getListingRequestFinalDeliveryStatusLabel(
-                          finalDelivery.status
+                          finalDelivery.status,
+                          t
                         )}
                       </span>
                     </div>
@@ -210,7 +214,8 @@ const ListingRequestFinalDeliverySummary = ({
                       }
                     >
                       {getListingRequestFinalDeliveryStatusSummary(
-                        finalDelivery.status
+                        finalDelivery.status,
+                        t
                       )}
                     </p>
 
@@ -227,7 +232,7 @@ const ListingRequestFinalDeliverySummary = ({
                             classes.metaLabel
                           }
                         >
-                          Submitted
+                          {t("deliveries.submitted")}
                         </div>
 
                         <div
@@ -236,7 +241,9 @@ const ListingRequestFinalDeliverySummary = ({
                           }
                         >
                           {formatDate(
-                            finalDelivery.submitted_at
+                            finalDelivery.submitted_at,
+                            language,
+                            t
                           )}
                         </div>
                       </div>
@@ -252,7 +259,7 @@ const ListingRequestFinalDeliverySummary = ({
                               classes.metaLabel
                             }
                           >
-                            Buyer approved
+                            {t("deliveries.buyerApproved")}
                           </div>
 
                           <div
@@ -261,7 +268,9 @@ const ListingRequestFinalDeliverySummary = ({
                             }
                           >
                             {formatDate(
-                              finalDelivery.buyer_approved_at
+                              finalDelivery.buyer_approved_at,
+                              language,
+                              t
                             )}
                           </div>
                         </div>
@@ -280,15 +289,14 @@ const ListingRequestFinalDeliverySummary = ({
                               rel="noreferrer"
                               target="_blank"
                             >
-                              Delivery link {index + 1}
+                              {t("deliveries.link", { number: index + 1 })}
                             </a>
                           )
                         )}
                       </div>
                     ) : (
                       <div className={classes.noLinks}>
-                        No external delivery links were
-                        provided.
+                        {t("deliveries.noLinks")}
                       </div>
                     )}
 
@@ -304,9 +312,7 @@ const ListingRequestFinalDeliverySummary = ({
 
                     {finalDelivery.delivery_files_deleted_at && (
                       <div className={classes.noLinks}>
-                        The uploaded files were deleted 180
-                        days after the commission closed, as
-                        our Privacy Policy describes.
+                        {t("deliveries.filesDeleted")}
                       </div>
                     )}
 
@@ -314,21 +320,21 @@ const ListingRequestFinalDeliverySummary = ({
                       finalDelivery.off_site_delivery_methods
                         .length > 0 && (
                         <div className={classes.noLinks}>
-                          Also sent off site, as reported by
-                          the creator:{" "}
-                          {describeOffSiteDelivery(
-                            finalDelivery.off_site_delivery_methods,
-                            finalDelivery.off_site_delivery_other
-                          )}
-                          . Made for Stream has no copy of that
-                          work and cannot confirm it arrived.
+                          {t("offSite.reported", {
+                            methods:
+                              describeOffSiteDelivery(
+                                finalDelivery.off_site_delivery_methods,
+                                finalDelivery.off_site_delivery_other,
+                                t
+                              ) ?? "",
+                          })}
                         </div>
                       )}
 
                     {finalDelivery.revision_request_reason && (
                       <div className={classes.revision}>
                         <strong>
-                          Revision requested:
+                          {t("revision.requested")}
                         </strong>{" "}
                         {
                           finalDelivery.revision_request_reason

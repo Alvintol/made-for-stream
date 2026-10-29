@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ListingRequestMilestoneRow } from "../../../hooks/creatorRequests/useListingRequestMilestones";
 import type { RespondListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useRespondListingRequestMilestone";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestMilestoneBuyerActionsProps = {
   milestone: ListingRequestMilestoneRow | null;
   isPending?: boolean;
@@ -42,7 +42,7 @@ const classes = {
     "notice noticeError mt-3",
 };
 
-const getErrorMessage = (error: unknown): string | null => {
+const getErrorMessage = (error: unknown, t: Translate): string | null => {
   if (!error) {
     return null;
   }
@@ -63,49 +63,45 @@ const getErrorMessage = (error: unknown): string | null => {
     );
   }
 
-  return "The milestone response could not be saved.";
+  return t("milestoneReview.saveFailed");
 };
-
-const getMilestonePosition = (
-  milestone: ListingRequestMilestoneRow
-): string => `Milestone ${milestone.sort_order + 1}`;
-
 const getIsSubmittedMilestone = (
   milestone: ListingRequestMilestoneRow | null
 ): boolean => milestone?.status === "submitted";
 
 const getBuyerMilestoneStatusMessage = (
-  milestone: ListingRequestMilestoneRow
+  milestone: ListingRequestMilestoneRow,
+  t: Translate
 ): string => {
-  const milestoneLabel = getMilestonePosition(milestone);
+  const number = milestone.sort_order + 1;
 
   if (milestone.status === "pending") {
-    return `${milestoneLabel} is waiting for the creator to submit work for buyer review.`;
+    return t("milestoneReview.pending", { number });
   }
 
   if (milestone.status === "revision_requested") {
-    return `${milestoneLabel} has revisions requested. The creator needs to submit an updated version before you can review it again.`;
+    return t("milestoneReview.revision", { number });
   }
 
   if (
     milestone.status === "buyer_approved" ||
     milestone.status === "payment_required"
   ) {
-    return `${milestoneLabel} has been approved. Payment is now awaiting admin confirmation before the creator can continue.`;
+    return t("milestoneReview.approved", { number });
   }
 
   if (milestone.status === "paid") {
-    return `${milestoneLabel} payment has been confirmed.`;
+    return t("milestoneReview.paid", { number });
   }
 
   if (milestone.status === "cancelled") {
-    return `${milestoneLabel} was cancelled.`;
+    return t("milestoneReview.cancelled", { number });
   }
 
-  return `${milestoneLabel} is currently ${milestone.status.replaceAll(
-    "_",
-    " "
-  )}.`;
+  return t("milestoneReview.other", {
+    number,
+    status: milestone.status.replaceAll("_", " "),
+  });
 };
 
 const ListingRequestMilestoneBuyerActions = ({
@@ -114,6 +110,7 @@ const ListingRequestMilestoneBuyerActions = ({
   error = null,
   onRespondMilestone,
 }: ListingRequestMilestoneBuyerActionsProps) => {
+  const t = useT();
   const [showRevisionForm, setShowRevisionForm] =
     useState(false);
   const [revisionReason, setRevisionReason] =
@@ -122,7 +119,7 @@ const ListingRequestMilestoneBuyerActions = ({
     useState<string | null>(null);
 
   const errorMessage =
-    clientError ?? getErrorMessage(error);
+    clientError ?? getErrorMessage(error, t);
 
   const handleApprove = async () => {
     const currentMilestone = milestone;
@@ -169,9 +166,7 @@ const ListingRequestMilestoneBuyerActions = ({
       cleanReason.length < 10 ||
       cleanReason.length > 2000
     ) {
-      setClientError(
-        "Revision notes must be between 10 and 2000 characters."
-      );
+      setClientError(t("milestoneReview.notesLength"));
 
       return;
     }
@@ -192,16 +187,15 @@ const ListingRequestMilestoneBuyerActions = ({
     return (
       <section className={classes.card}>
         <p className={classes.eyebrow}>
-          Milestone review
+          {t("milestoneReview.eyebrow")}
         </p>
 
         <h2 className={classes.title}>
-          No milestone is ready for review.
+          {t("milestoneReview.noneTitle")}
         </h2>
 
         <p className={classes.description}>
-          The creator can submit the next milestone once
-          earlier milestone work and payments are resolved.
+          {t("milestoneReview.noneText")}
         </p>
       </section>
     );
@@ -213,16 +207,17 @@ const ListingRequestMilestoneBuyerActions = ({
     return (
       <section className={classes.card}>
         <p className={classes.eyebrow}>
-          Milestone review
+          {t("milestoneReview.eyebrow")}
         </p>
 
         <h2 className={classes.title}>
-          No milestone response needed
+          {t("milestoneReview.noResponseTitle")}
         </h2>
 
         <p className={classes.description}>
           {getBuyerMilestoneStatusMessage(
-            currentMilestone
+            currentMilestone,
+            t
           )}
         </p>
       </section>
@@ -232,18 +227,18 @@ const ListingRequestMilestoneBuyerActions = ({
   return (
     <section className={classes.card}>
       <p className={classes.eyebrow}>
-        Milestone review
+        {t("milestoneReview.eyebrow")}
       </p>
 
       <h2 className={classes.title}>
-        Review {getMilestonePosition(currentMilestone)}
-        : {currentMilestone.title}
+        {t("milestoneReview.title", {
+          number: currentMilestone.sort_order + 1,
+          title: currentMilestone.title,
+        })}
       </h2>
 
       <p className={classes.description}>
-        Approve this milestone when the submitted work is
-        accepted. If something needs to change, commission
-        revisions and include clear notes for the creator.
+        {t("milestoneReview.text")}
       </p>
 
       {errorMessage && (
@@ -259,7 +254,7 @@ const ListingRequestMilestoneBuyerActions = ({
           type="button"
           onClick={handleApprove}
         >
-          Approve milestone
+          {t("milestoneReview.approve")}
         </button>
 
         <button
@@ -268,19 +263,19 @@ const ListingRequestMilestoneBuyerActions = ({
           type="button"
           onClick={handleOpenRevisionForm}
         >
-          Request revisions
+          {t("revision.request")}
         </button>
       </div>
 
       <Collapse open={showRevisionForm}>
         <div className={classes.form}>
           <label className={classes.label}>
-            Revision notes
+            {t("milestoneReview.notesLabel")}
             <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               disabled={isPending}
-              placeholder="Describe what needs to change before this milestone can be approved."
+              placeholder={t("milestoneReview.notesPlaceholder")}
               value={revisionReason}
               onChange={(event) =>
                 setRevisionReason(
@@ -292,9 +287,7 @@ const ListingRequestMilestoneBuyerActions = ({
           </label>
 
           <p className={classes.help}>
-            Be specific so the creator knows what to
-            adjust. Notes must be between 10 and 2000
-            characters.
+            {t("milestoneReview.notesHelp")}
           </p>
 
           <div className={classes.actions}>
@@ -304,7 +297,7 @@ const ListingRequestMilestoneBuyerActions = ({
               type="button"
               onClick={handleRequestRevision}
             >
-              Send revision request
+              {t("milestoneReview.send")}
             </button>
 
             <button
@@ -313,7 +306,7 @@ const ListingRequestMilestoneBuyerActions = ({
               type="button"
               onClick={handleCancelRevision}
             >
-              Cancel revision request
+              {t("milestoneReview.cancel")}
             </button>
           </div>
         </div>

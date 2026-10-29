@@ -92,7 +92,7 @@ describe(
 
       expect(
         screen.getByText(
-          "Milestone 1 has been approved. Payment is now awaiting admin confirmation before the creator can continue."
+          "Milestone 1 has been approved. The creator continues once its payment is confirmed."
         )
       ).toBeInTheDocument();
     });

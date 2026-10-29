@@ -1,5 +1,6 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
+import { useT } from "../../lib/i18n/i18n";
 import { Link, useParams } from "react-router-dom";
 import { useBuyerRequest } from "../../hooks/creatorRequests/useBuyerRequest";
 import {
@@ -101,6 +102,7 @@ const BuyerRequestDetails = () => {
   const [isArchiveConfirming, setIsArchiveConfirming] = useState(false);
 
   const { id } = useParams<{ id: string }>();
+  const t = useT();
 
   const { data, isLoading, error } = useBuyerRequest(id ?? null);
   const archiveRequestMutation = useArchiveBuyerListingRequest();
@@ -218,7 +220,8 @@ const BuyerRequestDetails = () => {
 
   const finalDeliveryApprovalBlockedReason =
     getListingRequestFinalDeliveryApprovalBlockedReason(
-      buyerVisibleAgreement
+      buyerVisibleAgreement,
+      t
     );
 
   // The same rule as require_off_site_receipts_before_approval: receipts of

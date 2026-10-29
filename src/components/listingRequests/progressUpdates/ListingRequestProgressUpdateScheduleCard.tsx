@@ -4,7 +4,7 @@ import {
 } from "../../../domain/listings/listingRequestProgressUpdates";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
 import type { ListingRequestProgressUpdateRow } from "../../../hooks/creatorRequests/useListingRequestProgressUpdates";
-
+import { useLanguage, useT } from "../../../lib/i18n/i18n";
 type ScheduleAgreement = Pick<
   ListingRequestAgreementRow,
   | "status"
@@ -53,17 +53,6 @@ const classes = {
   metaValue: "text-sm font-semibold",
 } as const;
 
-const statusLabels: Record<
-  ListingRequestProgressUpdateScheduleStatus,
-  string
-> = {
-  not_started: "Update schedule not started",
-  upcoming: "Update scheduled",
-  due_soon: "Update due soon",
-  overdue: "Update overdue",
-  satisfied: "Update requirement satisfied",
-};
-
 const statusClasses: Record<
   ListingRequestProgressUpdateScheduleStatus,
   string
@@ -75,23 +64,12 @@ const statusClasses: Record<
   satisfied: classes.satisfiedCard,
 };
 
-const badgeLabels: Record<
-  ListingRequestProgressUpdateScheduleStatus,
-  string
-> = {
-  not_started: "Not started",
-  upcoming: "Upcoming",
-  due_soon: "Due soon",
-  overdue: "Overdue",
-  satisfied: "Satisfied",
-};
-
-const formatDateTime = (value: string): string => {
+const formatDateTime = (value: string, language: string): string => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat("en-CA", {
+    : new Intl.DateTimeFormat(language, {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(date);
@@ -102,6 +80,9 @@ const ListingRequestProgressUpdateScheduleCard = ({
   updates,
   now,
 }: ListingRequestProgressUpdateScheduleCardProps) => {
+  const t = useT();
+  const language = useLanguage();
+
   if (!agreement || agreement.status !== "buyer_accepted") {
     return null;
   }
@@ -111,17 +92,18 @@ const ListingRequestProgressUpdateScheduleCard = ({
       agreement,
       updates,
       now,
+      t,
     });
 
   const nextUpdateText = schedule.nextUpdateDueAt
-    ? formatDateTime(schedule.nextUpdateDueAt)
+    ? formatDateTime(schedule.nextUpdateDueAt, language)
     : schedule.status === "satisfied"
-      ? "Requirement completed"
-      : "Not scheduled";
+      ? t("updateSchedule.requirementDone")
+      : t("updateSchedule.notScheduled");
 
   const lastUpdateText = schedule.lastUpdateAt
-    ? formatDateTime(schedule.lastUpdateAt)
-    : "No updates posted";
+    ? formatDateTime(schedule.lastUpdateAt, language)
+    : t("updateSchedule.noUpdates");
 
   return (
     <div
@@ -130,7 +112,7 @@ const ListingRequestProgressUpdateScheduleCard = ({
       <div className={classes.header}>
         <div className={classes.heading}>
           <h2 className={classes.title}>
-            {statusLabels[schedule.status]}
+            {t(`updateSchedule.title.${schedule.status}`)}
           </h2>
 
           <p className={classes.text}>
@@ -139,14 +121,14 @@ const ListingRequestProgressUpdateScheduleCard = ({
         </div>
 
         <span className={classes.badge}>
-          {badgeLabels[schedule.status]}
+          {t(`updateSchedule.badge.${schedule.status}`)}
         </span>
       </div>
 
       <div className={classes.metaGrid}>
         <div className={classes.metaBlock}>
           <div className={classes.metaLabel}>
-            Next update due
+            {t("updateSchedule.nextDue")}
           </div>
 
           <div className={classes.metaValue}>
@@ -156,7 +138,7 @@ const ListingRequestProgressUpdateScheduleCard = ({
 
         <div className={classes.metaBlock}>
           <div className={classes.metaLabel}>
-            Last update
+            {t("updateSchedule.lastUpdate")}
           </div>
 
           <div className={classes.metaValue}>
@@ -166,7 +148,7 @@ const ListingRequestProgressUpdateScheduleCard = ({
 
         <div className={classes.metaBlock}>
           <div className={classes.metaLabel}>
-            Updates posted
+            {t("updateSchedule.posted")}
           </div>
 
           <div className={classes.metaValue}>

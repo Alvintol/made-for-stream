@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.14";
+export const siteVersion = "V0.7.15";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.15",
+    date: "2026-10-29",
+    title: "Clearer milestone review",
+    changes: [
+      "When you review a milestone, the instructions now read \"request revisions\" instead of a mistyped word.",
+      "After you approve a milestone, the page says the creator continues once its payment is confirmed, instead of saying the payment waits for an admin.",
+    ],
+  },
   {
     version: "V0.7.14",
     date: "2026-10-29",

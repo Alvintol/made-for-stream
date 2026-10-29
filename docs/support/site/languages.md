@@ -51,7 +51,12 @@ browser. Emails are still in English.
   "I understand" boxes and the accept-or-decline box), the work-readiness
   card and the payments card. Agreement statuses, payment structures and
   timings, timeline-hold reasons and payment statuses follow the language
-  wherever they appear. The rest of the commission page is still English.
+  wherever they appear.
+- 2026-10-29: on the commission page, milestones (with the buyer's review
+  box), the final delivery (with its files and the buyer's response box) and
+  progress updates (with the update schedule). How work was sent off site
+  follows the language too. Change orders, cancellation and the page's own
+  headings are still English.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -111,8 +116,9 @@ with "Your choice could not be saved. Please try again."
 - **Emails are English only.**
 - **The consent wording needs the policy translator's check.** The checkout
   agreement line, the early-start request (`consent.earlyStart*`, also
-  used when accepting an agreement) and the agreement's "I understand" boxes
-  (`agreement.understand`, `agreementReview.progress`) were translated
+  used when accepting an agreement), the agreement's "I understand" boxes
+  (`agreement.understand`, `agreementReview.progress`) and what approving a
+  final delivery confirms (`deliveryReview.approveNote`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
   them with the policies before French is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under

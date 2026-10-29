@@ -5,6 +5,7 @@
 //
 // The list and the limits mirror public.clean_off_site_delivery_methods.
 
+import { english, hasMessage, type Translate } from "../../lib/i18n/i18n";
 export const offSiteDeliveryMethods = [
   "email",
   "discord",
@@ -15,10 +16,10 @@ export const offSiteDeliveryMethods = [
 export type OffSiteDeliveryMethod = (typeof offSiteDeliveryMethods)[number];
 
 export const offSiteDeliveryMethodLabels: Record<OffSiteDeliveryMethod, string> = {
-  email: "Email",
-  discord: "Discord",
-  text_message: "Text message",
-  other: "Another way",
+  email: english("offSiteMethod.email"),
+  discord: english("offSiteMethod.discord"),
+  text_message: english("offSiteMethod.text_message"),
+  other: english("offSiteMethod.other"),
 };
 
 export const OFF_SITE_OTHER_MIN_LENGTH = 2;
@@ -82,12 +83,14 @@ export const toOffSiteDeliveryInput = (
 export const describeOffSiteDelivery = (
   methods: readonly string[] | null | undefined,
   other: string | null | undefined,
+  t: Translate = english,
 ): string | null => {
   if (!methods || methods.length === 0) return null;
 
   return methods
     .map((method) => {
-      const label = offSiteDeliveryMethodLabels[method as OffSiteDeliveryMethod] ?? method;
+      const key = `offSiteMethod.${method}`;
+      const label = hasMessage(key) ? t(key) : method;
 
       return method === "other" && other ? `${label} (${other})` : label;
     })
