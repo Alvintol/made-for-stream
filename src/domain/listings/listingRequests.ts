@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export type ListingRequestStatus =
   | "submitted"
   | "accepted"
@@ -42,39 +44,42 @@ export const getListingRequestStatusesForView = (
 export const getListingRequestStatusLabel = (
   status: ListingRequestStatus,
   archiveContext?: ListingRequestArchiveContext,
-  cancellationContext?: ListingRequestCancellationContext
+  cancellationContext?: ListingRequestCancellationContext,
+  t: Translate = english
 ): string =>
-  status === "submitted"
-    ? "Under review"
-    : status === "accepted"
-      ? "Accepted"
-      : status === "completed"
-        ? "Completed"
-        : status === "declined"
-          ? "Declined"
-          : status === "cancelled"
-            ? cancellationContext?.cancelled_by_user_id &&
-              cancellationContext.buyer_user_id &&
-              cancellationContext.cancelled_by_user_id ===
-              cancellationContext.buyer_user_id
-              ? "Cancelled by buyer"
-              : cancellationContext?.cancelled_by_user_id &&
-                cancellationContext.creator_user_id &&
+  t(
+    status === "submitted"
+      ? "requestStatus.submitted"
+      : status === "accepted"
+        ? "requestStatus.accepted"
+        : status === "completed"
+          ? "requestStatus.completed"
+          : status === "declined"
+            ? "requestStatus.declined"
+            : status === "cancelled"
+              ? cancellationContext?.cancelled_by_user_id &&
+                cancellationContext.buyer_user_id &&
                 cancellationContext.cancelled_by_user_id ===
-                cancellationContext.creator_user_id
-                ? "Cancelled by creator"
-                : "Cancelled"
-            : archiveContext?.archived_by_user_id &&
-              archiveContext.buyer_user_id &&
-              archiveContext.archived_by_user_id ===
-              archiveContext.buyer_user_id
-              ? "Withdrawn by buyer"
+                cancellationContext.buyer_user_id
+                ? "requestStatus.cancelledByBuyer"
+                : cancellationContext?.cancelled_by_user_id &&
+                  cancellationContext.creator_user_id &&
+                  cancellationContext.cancelled_by_user_id ===
+                  cancellationContext.creator_user_id
+                  ? "requestStatus.cancelledByCreator"
+                  : "requestStatus.cancelled"
               : archiveContext?.archived_by_user_id &&
-                archiveContext.creator_user_id &&
+                archiveContext.buyer_user_id &&
                 archiveContext.archived_by_user_id ===
-                archiveContext.creator_user_id
-                ? "Archived by creator"
-                : "Archived";
+                archiveContext.buyer_user_id
+                ? "requestStatus.withdrawnByBuyer"
+                : archiveContext?.archived_by_user_id &&
+                  archiveContext.creator_user_id &&
+                  archiveContext.archived_by_user_id ===
+                  archiveContext.creator_user_id
+                  ? "requestStatus.archivedByCreator"
+                  : "requestStatus.archived"
+  );
 
 export const getListingRequestStatusTone = (
   status: ListingRequestStatus

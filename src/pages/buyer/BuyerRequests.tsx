@@ -14,7 +14,7 @@ import {
 } from "../../domain/listings/listings";
 import { useMyBuyerRequests } from "../../hooks/creatorRequests/useMyBuyerRequests";
 import { StaggerGroup } from "../../lib/motion";
-
+import { hasMessage, useLanguage, useT } from "../../lib/i18n/i18n";
 type BuyerRequestsProps = {
   view?: ListingRequestListView;
 };
@@ -62,38 +62,24 @@ const classes = {
 
 const pageSize = 12;
 
-const viewContent: Record<
-  ListingRequestListView,
-  {
-    title: string;
-    description: string;
-    emptyMessage: string;
-  }
-> = {
+// Translation keys (lib/i18n) for each tab.
+const viewContent = {
   active: {
-    title: "My commissions",
-    description:
-      "Review active commissions you have submitted to creators.",
-    emptyMessage:
-      "You do not have any active commissions.",
+    title: "buyerRequests.activeTitle",
+    description: "buyerRequests.activeText",
+    emptyMessage: "buyerRequests.activeEmpty",
   },
-
   completed: {
-    title: "Completed projects",
-    description:
-      "Review projects whose final delivery you approved.",
-    emptyMessage:
-      "You do not have any completed projects.",
+    title: "buyerRequests.completedTitle",
+    description: "buyerRequests.completedText",
+    emptyMessage: "buyerRequests.completedEmpty",
   },
-
   archived: {
-    title: "Archived commissions",
-    description:
-      "Review declined, cancelled, and archived commissions.",
-    emptyMessage:
-      "You do not have any archived commissions.",
+    title: "buyerRequests.archivedTitle",
+    description: "buyerRequests.archivedText",
+    emptyMessage: "buyerRequests.archivedEmpty",
   },
-};
+} as const satisfies Record<ListingRequestListView, Record<string, string>>;
 
 // Prefers handle for creator display, then display name, then user id.
 const creatorText = (
@@ -110,13 +96,13 @@ const creatorText = (
     fallbackUserId;
 
 // Formats request timestamps for buyer cards.
-const dateText = (value: string) => {
+const dateText = (value: string, language: string) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(
-      undefined,
+      language,
       {
         year: "numeric",
         month: "short",
@@ -143,6 +129,8 @@ const getStatusPillClass = (
 const BuyerRequests = ({
   view = "active",
 }: BuyerRequestsProps) => {
+  const t = useT();
+  const language = useLanguage();
   const [page, setPage] = useState(1);
   const [pageView, setPageView] = useState(view);
   const content = viewContent[view];
@@ -173,11 +161,11 @@ const BuyerRequests = ({
     <div className={classes.page}>
       <div className={classes.header}>
         <h1 className={classes.h1}>
-          {content.title}
+          {t(content.title)}
         </h1>
 
         <p className={classes.sub}>
-          {content.description}
+          {t(content.description)}
         </p>
       </div>
 
@@ -190,7 +178,7 @@ const BuyerRequests = ({
           }
           to="/requests"
         >
-          Active commissions
+          {t("buyerRequests.tabActive")}
         </Link>
 
         <Link
@@ -201,7 +189,7 @@ const BuyerRequests = ({
           }
           to="/requests/completed"
         >
-          Completed projects
+          {t("buyerRequests.completedTitle")}
         </Link>
 
         <Link
@@ -212,32 +200,31 @@ const BuyerRequests = ({
           }
           to="/requests/archived"
         >
-          Archived commissions
+          {t("buyerRequests.archivedTitle")}
         </Link>
 
         <div className={classes.pagerText}>
           {isLoading
-            ? "Loading…"
-            : `${totalCount} commission(s) found`}
+            ? t("common.loading")
+            : t("buyerRequests.found", { count: totalCount })}
         </div>
 
         {pageCount > 0 && (
           <div className={classes.pagerText}>
-            Page {page} of {pageCount}
+            {t("buyerRequests.page", { page, pageCount })}
           </div>
         )}
       </div>
 
       {error && (
         <div className={classes.errorCard}>
-          Your commissions could not be loaded
-          right now.
+          {t("buyerRequests.loadFailed")}
         </div>
       )}
 
       {isLoading && (
         <div className={classes.loadingText}>
-          Loading commissions…
+          {t("buyerRequests.loading")}
         </div>
       )}
 
@@ -246,7 +233,7 @@ const BuyerRequests = ({
         items.length === 0 && (
           <div className={classes.card}>
             <p className={classes.text}>
-              {content.emptyMessage}
+              {t(content.emptyMessage)}
             </p>
           </div>
         )}
@@ -256,7 +243,13 @@ const BuyerRequests = ({
         items.length > 0 && (
           <>
             <StaggerGroup className={classes.grid} itemCount={items.length} resetKey={String(page)}>
-              {items.map((item) => (
+              {items.map((item) => {
+                const snapshot = item.request.listing_snapshot;
+                const offeringKey = `offering.${snapshot.offering_type}`;
+                const categoryKey = `category.${snapshot.category}`;
+                const fulfilmentKey = `fulfilment.${snapshot.fulfilment_mode}`;
+
+                return (
                 <div
                   className={classes.card}
                   key={item.request.id}
@@ -275,12 +268,7 @@ const BuyerRequests = ({
                     </h2>
 
                     <p className={classes.text}>
-                      Listing:{" "}
-                      {
-                        item.request
-                          .listing_snapshot
-                          .title
-                      }
+                      {t("buyerRequests.listing", { title: snapshot.title })}
                     </p>
 
                     {getListingRequestDisplayPreview(
@@ -304,18 +292,15 @@ const BuyerRequests = ({
                             classes.unreadPill
                           }
                         >
-                          New message
+                          {t("buyerRequests.newMessage")}
                         </span>
                       )}
                   </div>
 
                   <p className={classes.text}>
-                    Creator:{" "}
-                    {creatorText(
-                      item.creator,
-                      item.request
-                        .creator_user_id
-                    )}
+                    {t("buyerRequests.creator", {
+                      name: creatorText(item.creator, item.request.creator_user_id),
+                    })}
                   </p>
 
                   <div
@@ -333,7 +318,7 @@ const BuyerRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Status
+                        {t("buyerRequests.status")}
                       </div>
 
                       <div
@@ -344,7 +329,8 @@ const BuyerRequests = ({
                         {getListingRequestStatusLabel(
                           item.request.status,
                           item.request,
-                          item.request
+                          item.request,
+                          t
                         )}
                       </div>
                     </div>
@@ -360,8 +346,8 @@ const BuyerRequests = ({
                         }
                       >
                         {view === "completed"
-                          ? "Completed"
-                          : "Submitted"}
+                          ? t("buyerRequests.completedOn")
+                          : t("buyerRequests.submittedOn")}
                       </div>
 
                       <div
@@ -377,7 +363,8 @@ const BuyerRequests = ({
                             item.request
                               .updated_at
                             : item.request
-                              .created_at
+                              .created_at,
+                          language
                         )}
                       </div>
                     </div>
@@ -392,7 +379,7 @@ const BuyerRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Purchase flow
+                        {t("buyerRequests.purchaseFlow")}
                       </div>
 
                       <div
@@ -400,11 +387,7 @@ const BuyerRequests = ({
                           classes.metaValue
                         }
                       >
-                        {
-                          item.request
-                            .listing_snapshot
-                            .fulfilment_mode
-                        }
+                        {hasMessage(fulfilmentKey) ? t(fulfilmentKey) : snapshot.fulfilment_mode}
                       </div>
                     </div>
 
@@ -418,7 +401,7 @@ const BuyerRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Price snapshot
+                        {t("buyerRequests.priceSnapshot")}
                       </div>
 
                       <div
@@ -435,21 +418,13 @@ const BuyerRequests = ({
                     <span
                       className={classes.pill}
                     >
-                      {
-                        item.request
-                          .listing_snapshot
-                          .offering_type
-                      }
+                      {hasMessage(offeringKey) ? t(offeringKey) : snapshot.offering_type}
                     </span>
 
                     <span
                       className={classes.pill}
                     >
-                      {
-                        item.request
-                          .listing_snapshot
-                          .category
-                      }
+                      {hasMessage(categoryKey) ? t(categoryKey) : snapshot.category}
                     </span>
                   </div>
 
@@ -460,11 +435,12 @@ const BuyerRequests = ({
                       }
                       to={`/requests/${item.request.id}`}
                     >
-                      View commission
+                      {t("buyerRequests.view")}
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </StaggerGroup>
 
             <div className={classes.row}>
@@ -483,7 +459,7 @@ const BuyerRequests = ({
                   )
                 }
               >
-                Previous
+                {t("common.previous")}
               </button>
 
               <button
@@ -506,7 +482,7 @@ const BuyerRequests = ({
                   )
                 }
               >
-                Next
+                {t("common.next")}
               </button>
             </div>
           </>

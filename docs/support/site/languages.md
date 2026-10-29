@@ -43,6 +43,10 @@ browser. Emails are still in English.
 - 2026-10-29: the creator profile page (message form and report form), the
   commission request form and its estimated invoice, and the request form's
   error messages.
+- 2026-10-29: the buyer's commission list (active, completed, archived) and
+  checkout: the payment summary, tip and contribution, billing location and
+  the terms box with the early-start request. Commission statuses, payment
+  types and the fee and tax lines follow the language wherever they appear.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -100,6 +104,13 @@ with "Your choice could not be saved. Please try again."
 - **Most screens are not translated yet.** Including the policies, which need a
   human translator.
 - **Emails are English only.**
+- **The consent wording needs the policy translator's check.** The checkout
+  agreement line and the early-start request (`consent.earlyStart*`, also
+  used when accepting an agreement) were translated here, not by a
+  translator. They are what the buyer agrees to, so check them with the
+  policies before French is marked ready.
+- **Messages from the server** (an error from checkout, for example) are
+  still in English.
 - **Numbers and money** still use English formatting: French writes "5 %" and
   "105 € EUR", the site shows "5%" and "€105 EUR". Dates and currency names
   follow the language.
