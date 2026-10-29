@@ -5,7 +5,7 @@ import { creatorTermsVersion } from "./creatorTerms";
 import { paymentTermsVersion } from "./paymentTerms";
 import { privacyChanges, privacyVersion } from "./privacyPolicy";
 import { refundPolicyVersion } from "./refundPolicy";
-import { termsVersion } from "./termsOfService";
+import { termsChanges, termsVersion } from "./termsOfService";
 
 // Mirrors the policy_type check constraint on public.policy_acceptances.
 // "early_service_request" is the EU/UK express request to start work before
@@ -73,6 +73,7 @@ const policyTitles: Partial<Record<PolicyType, string>> = {
 const policyChanges: Partial<
   Record<PolicyType, { version: string; items: readonly string[] }>
 > = {
+  terms: termsChanges,
   privacy: privacyChanges,
 };
 

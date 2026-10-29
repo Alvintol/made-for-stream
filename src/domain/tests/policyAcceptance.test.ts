@@ -1,5 +1,6 @@
 import { getPolicyChangeSummaries } from "../legal/policyAcceptance";
 import { privacyChanges } from "../legal/privacyPolicy";
+import { termsChanges } from "../legal/termsOfService";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -147,6 +148,12 @@ describe("Stripe agreement links", () => {
       expect(privacyChanges.items.length).toBeGreaterThan(0);
     });
 
+    it("has a summary written for the Terms of Service's current version", () => {
+      // Fails when termsVersion is bumped and the summary is not rewritten.
+      expect(termsChanges.version).toBe(termsVersion);
+      expect(termsChanges.items.length).toBeGreaterThan(0);
+    });
+
     it("lists the changes for a document the person accepted before", () => {
       const summaries = getPolicyChangeSummaries(
         ["privacy"],
@@ -169,11 +176,11 @@ describe("Stripe agreement links", () => {
 
     it("says a document changed even when no summary was written for it", () => {
       const [summary] = getPolicyChangeSummaries(
-        ["terms"],
-        [{ policy_type: "terms" }],
+        ["cookie"],
+        [{ policy_type: "cookie" }],
       );
 
-      expect(summary.title).toBe("Terms of Service");
+      expect(summary.policyType).toBe("cookie");
       expect(summary.items).toEqual([]);
     });
   });

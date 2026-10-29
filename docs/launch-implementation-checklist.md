@@ -945,14 +945,20 @@ Build order (each its own branch):
       the API's checkout check (internet-address country only when
       `TAX_IP_COUNTRY_HEADER` is set), the form's message, ACC-006. Merged as
       #186.
-- [ ] **Fee-inclusive prices; creator notice and tickbox when accepting an
-      EU/EEA/UK buyer's request.** Built on
-      `feat/fee-inclusive-prices-and-eu-cancellation`: migration 172,
-      website only (no API change), REQ-006. The buyer's express request to
-      start early already existed (20260923_138, AGR-007), so nothing new was
-      needed at checkout. Owner applies the migration, then merges.
+- [x] **Fee-inclusive prices; creator notice and tickbox when accepting an
+      EU/EEA/UK buyer's request.** Migration 172 (verified applied
+      2026-10-29), website only, REQ-006. The buyer's express request to start
+      early already existed (20260923_138, AGR-007). Merged as #187.
 - [ ] **One policy release:** all mature content banned with takedown and
       ban, sanctions, Digital Services Act and Online Safety Act statements.
+      Built on `feat/policy-release-content-sanctions-safety`: Terms,
+      Privacy Policy, Community Guidelines and Creator Terms at version
+      2026-10-29 (Refund Policy and Payment Terms unchanged, so checkout does
+      not ask again); a "what changed" summary for the Terms; MOD-005. Website
+      only. Removals, statements of reasons and bans are done by hand
+      (MOD-005); the EU legal representative is not named yet (owner's step
+      below). Once Made for Stream is live, a change like this needs 30 days'
+      notice (Terms section 13).
 - [ ] **GST/HST on Made for Stream's fees only** (the tax switch now taxes
       the whole price; the creator fee has no tax line).
 - [ ] **UK Online Safety Act risk assessments and Digital Services Act

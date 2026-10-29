@@ -1,19 +1,17 @@
-export const privacyVersion = "2026-10-16";
+export const privacyVersion = "2026-10-29";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-10-16",
+  version: "2026-10-29",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "Files a creator uploads with a final delivery are stored privately. Only the creator, the buyer (once nothing is owed for the final release) and Made for Stream's administrators can open them.",
-    "Delivered files are kept while the commission is open and for 180 days after it closes, then deleted, in the same way as commission images.",
-    "Earlier change (version 2026-10-12): images uploaded to a commission are kept while it is open and for 180 days after it closes, then deleted.",
-    "Earlier change (version 2026-10-12): we record failed actions and page-load errors, for up to 90 days, to fix faults and notice misuse.",
-    "Earlier change (version 2026-10-12-2): the preview images of a listing that is no longer offered are deleted 180 days after it stops being offered, and the listing returns to a draft.",
-    "Earlier change (version 2026-10-12-2): if you ask to be shown what is new on the site after an update, we record that choice and the last update you were shown.",
+    "When you send a commission request, the creator is told whether you have EU (including EEA) or UK consumer rights, so they know you can cancel within 14 days. They are not told your country or address.",
+    "We use the country in your account address, and the country of your internet connection at checkout, to check that Made for Stream is available where you are.",
+    "We report child sexual abuse material to the authorities as the law requires, and tell the police when someone's life or safety is at risk.",
+    "Earlier change (version 2026-10-16): files a creator uploads with a final delivery are stored privately, and are kept while the commission is open and for 180 days after it closes.",
   ],
 } as const;
 
@@ -34,7 +32,7 @@ export const privacySections = [
       "Information: Creator applications; Examples and sources: Samples or sample links, application answers, eligibility acknowledgements, review status and relevant moderation history",
       "Information: Projects and communications; Examples and sources: Listings, requests, agreement versions, messages, change orders, progress, deliveries, images and files that you or the other party upload to a commission, such as reference images, milestone previews and the files of a final delivery, complaints and support evidence",
       "Information: Payments; Examples and sources: Transaction and connected-account IDs, amounts, currency, fee, contribution and tax breakdowns, payment status, refund and dispute records, and limited payment-method information made available by Stripe",
-      "Information: Tax location evidence; Examples and sources: The country, region and postal code in your private account details, which are your billing location, and, where available, the country associated with your IP address and the country of the card used, recorded to work out where tax applies. From the IP address and the card only the country is kept, never the IP address or card details",
+      "Information: Tax location evidence; Examples and sources: The country, region and postal code in your private account details, which are your billing location, and, where available, the country associated with your IP address and the country of the card used, recorded to work out where tax applies and to check that Made for Stream is available where you are. From the IP address and the card only the country is kept, never the IP address or card details",
       "Information: Technical and security; Examples and sources: IP address, device and browser information, access and error logs, security events and relevant session identifiers. When something you try on the site does not go through, or a page cannot load what it needs, the site makes a record of it: your account ID if you are signed in, the page you were on with any record number removed, the error code, and the message you were shown",
       "Information: Choices and acceptance records; Examples and sources: Terms version and time of acceptance, a request to start work before a cancellation period ends, privacy preferences, cookie choices, whether you have opted in to promotional email and when you last changed that choice, and whether you have asked to be shown what is new on the site after an update, with the last update you were shown",
       "Information: Copyright reports; Examples and sources: Contact information, work locations, declarations, notices, counter-notices and related decisions",
@@ -55,6 +53,7 @@ export const privacySections = [
     "title": "4. Public information and recipients",
     "body": [
       "Public profile fields, published listings and portfolio previews are visible to other users and may be indexed or copied by others. A draft application, private message or private project delivery is not public merely because Made for Stream stores it. Necessary project details are shared with the other party, and authorised personnel may review relevant records for support, safety or legal reasons. Access is limited to the task.",
+      "When you send a commission request, the creator is told whether your account address gives you EU (including EEA) or UK consumer rights, so that they know you can usually cancel within 14 days. They see only that, not your country or address.",
       "Private account details are not public and are not passed to the other party to a project as a matter of course. Access is limited to authorised personnel who need them for support, tax, dispute or legal work. We disclose them outside Made for Stream only where the law requires it, for example to a tax authority or under valid legal process, where consumer law requires a seller acting as a business to be identified to a buyer, to a payment provider or bank where that is needed to answer a payment dispute, or with your permission.",
       "We use service providers for hosting, databases, authentication, payments and email. Made for Stream uses Supabase for account, authentication and database functions; Google Cloud to run our application server; Stripe for payment and connected-account services and, where tax is calculated, Stripe Tax; and Cloudflare for our domain, inbound email routing and outbound service email. Our fonts are served from our own site, so loading a page does not send requests to Google Fonts. Each provider, what it does and where it processes information is listed in the Service Provider Register (/policies/service-providers). A new provider is added to the register before it processes personal information. We share only what is needed for the stated service and require appropriate safeguards.",
       "Google, Twitch or other providers you select supply the identity or connection information covered by your authorisation. Their own services remain governed by their notices. We do not need your sign-in-provider password. Disconnecting an optional link stops future access through that authorisation, subject to existing records and provider controls.",
@@ -73,7 +72,8 @@ export const privacySections = [
     "title": "6. Copyright reports and complaint evidence",
     "body": [
       "We may share a copyright notice and relevant sender details with the affected uploader. A valid DMCA counter-notice is forwarded to the original claimant as part of the legal process. The Copyright Infringement and DMCA Policy explains what is required. Avoid including unrelated sensitive information; contact us about a safety concern before submitting if appropriate.",
-      "Moderation reports are not routinely published. Confidentiality cannot be absolute: we may need to explain an allegation, disclose relevant evidence for a fair response or comply with law. We restrict sharing to the purpose and redact unrelated information where appropriate."
+      "Moderation reports are not routinely published. Confidentiality cannot be absolute: we may need to explain an allegation, disclose relevant evidence for a fair response or comply with law. We restrict sharing to the purpose and redact unrelated information where appropriate.",
+      "We report child sexual abuse material to the authorities as the law requires (in Canada, to Cybertip.ca), with the account and content information the law asks for, and we tell the police when we have reason to believe someone's life or safety is at risk."
     ]
   },
   {

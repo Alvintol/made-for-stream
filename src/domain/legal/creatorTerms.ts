@@ -1,4 +1,4 @@
-export const creatorTermsVersion = "2026-09-23";
+export const creatorTermsVersion = "2026-10-29";
 
 export const creatorTermsSections = [
   {
@@ -50,10 +50,10 @@ export const creatorTermsSections = [
     ]
   },
   {
-    "title": "7. Mature content and prohibited offers",
+    "title": "7. No mature content, and prohibited offers",
     "body": [
-      "The Community Guidelines governs permitted mature, non-explicit material, labels, safe previews and recipient consent. Do not publish mature material on a surface without the required working controls. Pornography, sexual-gratification content or services, exploitative or non-consensual sexual material, sexualised minors or minor-looking characters, and other prohibited categories may not be advertised, commissioned or delivered through Made for Stream, including through external links.",
-      "Comply with Stripe's applicable restricted-business rules (https://stripe.com/legal/restricted-businesses). Made for Stream approval or a mature label is not payment-provider approval. Ask support before publishing borderline content; we may refuse a category that cannot be lawfully or contractually supported."
+      "Mature and adult content is not allowed on Made for Stream (Community Guidelines section 3). Do not advertise, accept, make or deliver it, including through files sent outside Made for Stream or external links, and decline any request for it. It is removed, and it can lead to suspension or a permanent ban. Pornography, sexual-gratification content or services, exploitative or non-consensual sexual material, and sexualised minors or minor-looking characters lead to a permanent ban.",
+      "Comply with Stripe's applicable restricted-business rules (https://stripe.com/legal/restricted-businesses). Made for Stream approval is not payment-provider approval. Ask support before publishing borderline content; we may refuse a category that cannot be lawfully or contractually supported."
     ]
   },
   {
