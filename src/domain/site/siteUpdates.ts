@@ -30,12 +30,20 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.10";
+export const siteVersion = "V0.7.11";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.11",
+    date: "2026-10-29",
+    title: "Clearer commission request message",
+    changes: [
+      "A listing that doesn't take commission requests now says so plainly.",
+    ],
+  },
   {
     version: "V0.7.10",
     date: "2026-10-29",

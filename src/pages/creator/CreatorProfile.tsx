@@ -1,5 +1,5 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
-import { useT } from "../../lib/i18n/i18n";
+import { hasMessage, useT } from "../../lib/i18n/i18n";
 import { Collapse } from "../../lib/motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
@@ -159,15 +159,19 @@ const CreatorLinkButton = ({
   </a>
 );
 
-const CreatorNotFound = () => (
-  <div className={classes.notFoundWrap}>
-    <h1 className={classes.h1}>Creator not found</h1>
+const CreatorNotFound = () => {
+  const t = useT();
 
-    <Link to="/creators" className={classes.btnOutline}>
-      Back to creators
-    </Link>
-  </div>
-);
+  return (
+    <div className={classes.notFoundWrap}>
+      <h1 className={classes.h1}>{t("creatorProfile.notFound")}</h1>
+
+      <Link to="/creators" className={classes.btnOutline}>
+        {t("creatorProfile.backToCreators")}
+      </Link>
+    </div>
+  );
+};
 
 const CreatorProfile = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -223,7 +227,7 @@ const CreatorProfile = () => {
       });
 
       setProfileReportSuccess(
-        "Profile report submitted. An admin will review it soon."
+        t("creatorProfile.reportSubmitted")
       );
       setProfileReportDetails("");
       setIsProfileReportOpen(false);
@@ -231,7 +235,7 @@ const CreatorProfile = () => {
       setProfileReportError(
         hasErrorMessage(error)
           ? error.message
-          : "Profile report could not be submitted."
+          : t("creatorProfile.reportFailed")
       );
     }
   };
@@ -241,7 +245,7 @@ const CreatorProfile = () => {
   if (isLoading) {
     return (
       <div className={classes.container}>
-        <div className={classes.loadingText}>Loading…</div>
+        <div className={classes.loadingText}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -275,9 +279,9 @@ const CreatorProfile = () => {
 
   const inquiryMessageError =
     inquiryMessageTrimmed.length > 0 && inquiryMessageTrimmed.length < 10
-      ? "Message must be at least 10 characters."
+      ? t("creatorProfile.messageTooShort", { min: 10 })
       : inquiryMessageTrimmed.length > 2000
-        ? "Message must be 2000 characters or less."
+        ? t("creatorProfile.messageTooLong", { max: 2000 })
         : null;
 
   const canSubmitInquiry =
@@ -306,16 +310,16 @@ const CreatorProfile = () => {
   return (
     <div className={classes.container}>
       <Link to="/creators" className={classes.backLink}>
-        ← Back
+        {t("listing.back")}
       </Link>
 
       <section className={classes.card}>
         <div className={classes.titleRow}>
           <h1 className={classes.h1}>
-            {profile.display_name ?? profile.handle ?? "Creator"}
+            {profile.display_name ?? profile.handle ?? t("common.creator")}
           </h1>
 
-          {isLive && <span className={classes.badgeLive}>Live</span>}
+          {isLive && <span className={classes.badgeLive}>{t("common.live")}</span>}
         </div>
 
         {profile.bio && <p className={classes.bio}>{profile.bio}</p>}
@@ -324,7 +328,7 @@ const CreatorProfile = () => {
           {watchUrl && (
             <CreatorLinkButton
               href={watchUrl}
-              label={isLive ? "Watch live on Twitch" : "Twitch"}
+              label={isLive ? t("creatorProfile.watchLive") : "Twitch"}
               platform="twitch"
             />
           )}
@@ -339,23 +343,18 @@ const CreatorProfile = () => {
         </div>
 
         <div className={classes.inquiryBox}>
-          <div className={classes.inquiryTitle}>Message this creator</div>
+          <div className={classes.inquiryTitle}>{t("creatorProfile.messageTitle")}</div>
 
-          <p className={classes.inquiryText}>
-            Start a focused conversation with a required topic so the creator knows what
-            you are asking about.
-          </p>
+          <p className={classes.inquiryText}>{t("creatorProfile.messageIntro")}</p>
 
           {authLoading ? (
-            <p className={classes.inquiryText}>Checking sign-in status…</p>
+            <p className={classes.inquiryText}>{t("common.checkingSignIn")}</p>
           ) : !user ? (
             <Link to="/signin" className={`${classes.btnPrimary} mt-3 inline-flex`}>
-              Sign in to message
+              {t("creatorProfile.signInToMessage")}
             </Link>
           ) : isOwnProfile ? (
-            <p className={classes.inquiryText}>
-              You cannot start a conversation with your own creator profile.
-            </p>
+            <p className={classes.inquiryText}>{t("creatorProfile.messageOwn")}</p>
           ) : (
             <>
               <button
@@ -363,14 +362,16 @@ const CreatorProfile = () => {
                 type="button"
                 onClick={() => setShowInquiryForm((current) => !current)}
               >
-                {showInquiryForm ? "Cancel message" : "Message creator"}
+                {showInquiryForm
+                  ? t("creatorProfile.cancelMessage")
+                  : t("creatorProfile.messageCreator")}
               </button>
 
               <Collapse open={showInquiryForm}>
                 <div className={classes.form}>
                   <div className={classes.field}>
                     <label className={classes.label} htmlFor="creatorInquiryTopic">
-                      Topic
+                      {t("creatorProfile.topic")}
                     </label>
 
                     <select
@@ -383,11 +384,11 @@ const CreatorProfile = () => {
                         )
                       }
                     >
-                      <option value="">Choose a topic</option>
+                      <option value="">{t("creatorProfile.chooseTopic")}</option>
 
                       {conversationInitiationReasonOptions.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(`topic.${option.value}`)}
                         </option>
                       ))}
                     </select>
@@ -395,7 +396,7 @@ const CreatorProfile = () => {
 
                   <div className={classes.field}>
                     <label className={classes.label} htmlFor="creatorInquiryMessage">
-                      Message
+                      {t("creatorProfile.message")}
                     </label>
 
                     <KeptPlaceholder>
@@ -404,14 +405,18 @@ const CreatorProfile = () => {
                       className={classes.textarea}
                       value={inquiryMessage}
                       onChange={(event) => setInquiryMessage(event.target.value)}
-                      placeholder="Ask a focused question about availability, style fit, pricing, deliverables, or project scope."
+                      placeholder={t("creatorProfile.messagePlaceholder")}
                       maxLength={2000}
                       disabled={createInquiryMutation.isPending}
                     />
                     </KeptPlaceholder>
 
                     <div className={classes.hint}>
-                      {inquiryMessageTrimmed.length}/2000 characters. Minimum 10.
+                      {t("creatorProfile.messageCharacters", {
+                        count: inquiryMessageTrimmed.length,
+                        max: 2000,
+                        min: 10,
+                      })}
                     </div>
 
                     {inquiryMessageError && (
@@ -421,7 +426,7 @@ const CreatorProfile = () => {
 
                   {createInquiryMutation.error && (
                     <div className={classes.errorBox}>
-                      Conversation could not be started right now.
+                      {t("creatorProfile.startFailed")}
                     </div>
                   )}
 
@@ -432,8 +437,8 @@ const CreatorProfile = () => {
                     disabled={!canSubmitInquiry}
                   >
                     {createInquiryMutation.isPending
-                      ? "Starting conversation…"
-                      : "Start conversation"}
+                      ? t("creatorProfile.starting")
+                      : t("creatorProfile.start")}
                   </button>
                 </div>
               </Collapse>
@@ -456,7 +461,7 @@ const CreatorProfile = () => {
               <div className={classes.liveMeta}>
                 {stream.gameName ?? ""}
                 <span className={classes.liveDot}> • </span>
-                {stream.viewerCount ?? 0} viewers
+                {t("common.viewers", { count: stream.viewerCount ?? 0 })}
               </div>
 
               {stream.title && (
@@ -468,13 +473,17 @@ const CreatorProfile = () => {
       </section>
 
       <section className={classes.listingsSection}>
-        <h2 className={classes.h2}>Listings</h2>
+        <h2 className={classes.h2}>{t("creatorProfile.listings")}</h2>
 
         {listings.length === 0 ? (
-          <p className={classes.emptyText}>No listings yet.</p>
+          <p className={classes.emptyText}>{t("creatorProfile.noListings")}</p>
         ) : (
           <div className={classes.grid}>
-            {listings.map((listing) => (
+            {listings.map((listing) => {
+              const offeringKey = `offering.${listing.offering_type}`;
+              const categoryKey = `category.${listing.category}`;
+
+              return (
               <Link
                 key={listing.id}
                 to={`/listing/${listing.id}`}
@@ -497,27 +506,24 @@ const CreatorProfile = () => {
 
                   <div className={classes.listingMeta}>
                     <span className={classes.listingMetaLeft}>
-                      {listing.offering_type}
+                      {hasMessage(offeringKey) ? t(offeringKey) : listing.offering_type}
                     </span>
 
                     <span className={classes.listingMetaRight}>
-                      {listing.category}
+                      {hasMessage(categoryKey) ? t(categoryKey) : listing.category}
                     </span>
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
       <div className={classes.reportCard}>
-        <h2 className={classes.reportTitle}>Report creator</h2>
+        <h2 className={classes.reportTitle}>{t("creatorProfile.reportTitle")}</h2>
 
-        <p className={classes.reportText}>
-          Report this creator profile if it appears unsafe, misleading, abusive,
-          impersonated, or against Made for Stream rules. Reporting does not automatically
-          restrict the profile.
-        </p>
+        <p className={classes.reportText}>{t("creatorProfile.reportIntro")}</p>
 
         {profileReportSuccess && (
           <div className={classes.successCard}>{profileReportSuccess}</div>
@@ -528,23 +534,19 @@ const CreatorProfile = () => {
         )}
 
         {authLoading ? (
-          <p className={classes.reportText}>Checking sign-in status…</p>
+          <p className={classes.reportText}>{t("common.checkingSignIn")}</p>
         ) : !user ? (
           <div className={classes.reportForm}>
-            <p className={classes.reportText}>
-              You need to sign in before reporting a creator.
-            </p>
+            <p className={classes.reportText}>{t("creatorProfile.reportSignIn")}</p>
 
             <p className={classes.reportText}>{t("report.withoutAccountNote")}</p>
 
             <Link className={classes.btnOutline} to="/signin">
-              Sign in to report
+              {t("report.signInLink")}
             </Link>
           </div>
         ) : isOwnProfile ? (
-          <p className={classes.reportText}>
-            You cannot report your own creator profile.
-          </p>
+          <p className={classes.reportText}>{t("creatorProfile.reportOwn")}</p>
         ) : (
           <div className={classes.reportForm}>
             {!isProfileReportOpen ? (
@@ -557,13 +559,13 @@ const CreatorProfile = () => {
                   setProfileReportError(null);
                 }}
               >
-                Report creator
+                {t("creatorProfile.reportTitle")}
               </button>
             ) : (
               <>
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="profileReportReason">
-                    Reason
+                    {t("report.reason")}
                   </label>
 
                   <select
@@ -578,7 +580,7 @@ const CreatorProfile = () => {
                   >
                     {moderationReportReasonOptions.map((option) => (
                       <option key={option.value} value={option.value}>
-                        {option.label}
+                        {t(`report.reason.${option.value}`)}
                       </option>
                     ))}
                   </select>
@@ -586,7 +588,7 @@ const CreatorProfile = () => {
 
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="profileReportDetails">
-                    Details
+                    {t("report.details")}
                   </label>
 
                   <KeptPlaceholder>
@@ -595,14 +597,14 @@ const CreatorProfile = () => {
                     className={classes.textarea}
                     value={profileReportDetails}
                     onChange={(event) => setProfileReportDetails(event.target.value)}
-                    placeholder="Optional. Add context that will help admins review this profile."
+                    placeholder={t("creatorProfile.reportDetailsPlaceholder")}
                     maxLength={2000}
                     disabled={submitProfileReport.isPending}
                   />
                   </KeptPlaceholder>
 
                   <div className={classes.hint}>
-                    {profileReportDetailsTrimmed.length}/2000 characters.
+                    {t("report.characters", { count: profileReportDetailsTrimmed.length, max: 2000 })}
                   </div>
                 </div>
 
@@ -616,8 +618,8 @@ const CreatorProfile = () => {
                     onClick={() => void handleSubmitProfileReport()}
                   >
                     {submitProfileReport.isPending
-                      ? "Submitting…"
-                      : "Submit report"}
+                      ? t("report.submitting")
+                      : t("report.submit")}
                   </button>
 
                   <button
@@ -629,7 +631,7 @@ const CreatorProfile = () => {
                       setProfileReportError(null);
                     }}
                   >
-                    Cancel
+                    {t("report.cancel")}
                   </button>
                 </div>
               </>

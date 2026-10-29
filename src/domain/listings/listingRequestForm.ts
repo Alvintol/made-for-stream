@@ -1,5 +1,5 @@
+import type { MessageKey } from "../../lib/i18n/messages/en";
 import { SUPPORTED_CURRENCY_CODES } from "../payments/supportedCurrencies";
-
 export type ListingRequestFormInput = {
   requestTitle: string;
   requestDetails: string;
@@ -8,12 +8,13 @@ export type ListingRequestFormInput = {
   referenceLinksText: string;
 };
 
+// Each error is a translation key (lib/i18n).
 export type ListingRequestFormErrors = {
-  requestTitle?: string;
-  requestDetails?: string;
-  requestedTimeline?: string;
-  budgetAmount?: string;
-  referenceLinks?: string;
+  requestTitle?: MessageKey;
+  requestDetails?: MessageKey;
+  requestedTimeline?: MessageKey;
+  budgetAmount?: MessageKey;
+  referenceLinks?: MessageKey;
 };
 
 export type ValidListingRequestForm = {
@@ -28,9 +29,6 @@ export type ValidListingRequestForm = {
 };
 
 export const BUDGET_MAX = 999999.99;
-
-export const BUDGET_FORMAT_MESSAGE =
-  "Enter an amount such as 100, or a range such as 100-150. Put anything else about your budget in the details.";
 
 export type ListingRequestBudget = { min: number; max: number | null };
 
@@ -107,30 +105,29 @@ export const validateListingRequestForm = (
   );
 
   if (requestTitle.length < 3 || requestTitle.length > 120) {
-    errors.requestTitle = "Summary must be between 3 and 120 characters.";
+    errors.requestTitle = "request.error.title";
   }
 
   if (requestDetails.length < 10 || requestDetails.length > 2000) {
-    errors.requestDetails = "Details must be between 10 and 2000 characters.";
+    errors.requestDetails = "request.error.details";
   }
 
   if (requestedTimeline.length > 160) {
-    errors.requestedTimeline = "Timeline must be 160 characters or fewer.";
+    errors.requestedTimeline = "request.error.timeline";
   }
 
   const budget = parseListingRequestBudget(budgetText);
 
   if (budget === "invalid") {
-    errors.budgetAmount = BUDGET_FORMAT_MESSAGE;
+    errors.budgetAmount = "request.error.budget";
   }
 
   if (referenceLinks.length > 5) {
-    errors.referenceLinks = "Add up to 5 reference links.";
+    errors.referenceLinks = "request.error.referencesMax";
   } else if (
     referenceLinks.some((link) => !isValidListingRequestReferenceUrl(link))
   ) {
-    errors.referenceLinks =
-      "Reference links must start with http:// or https://.";
+    errors.referenceLinks = "request.error.referencesUrl";
   }
 
   if (Object.keys(errors).length > 0) {
