@@ -195,6 +195,21 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        <div className={classes.toolCard}>
+          <h2 className={classes.toolTitle}>Tax reporting</h2>
+
+          <p className={classes.toolText}>
+            The reports owed to tax authorities and the GST/HST return, when
+            each is due, the creators each covers, and a file to file from.
+          </p>
+
+          <div className={classes.row}>
+            <Link className={classes.btnPrimary} to="/admin/tax-reporting">
+              View tax reporting
+            </Link>
+          </div>
+        </div>
+
       </div>
     </div>
   );

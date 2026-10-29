@@ -14,6 +14,41 @@
 // page path to open (or null when there is none).
 const requestLink = (id) => (id ? `/admin/requests/${id}` : null);
 
+// The reports on the tax calendar (tax_reporting_obligations, 20261028_170).
+// The admin Tax reporting page has the same names
+// (src/domain/payments/taxReporting.ts).
+export const TAX_REPORT_NAMES = {
+  eu_dac7: "EU DAC7 creator report",
+  ca_dpi: "Canada platform operator report (CRA)",
+  uk_dpi: "UK digital platform report (HMRC)",
+  nz_dpi: "New Zealand platform operator report (Inland Revenue)",
+  au_serr: "Australia sharing economy report (ATO)",
+  us_1099k: "US Form 1099-K",
+  ca_gst: "GST/HST return and payment",
+};
+
+const describeTaxReportDue = (d) => {
+  const start = String(d.period_start || "");
+  const end = String(d.period_end || "");
+  const period =
+    start.endsWith("-01-01") && end.endsWith("-12-31") && start.slice(0, 4) === end.slice(0, 4)
+      ? start.slice(0, 4)
+      : `${start} to ${end}`;
+  const daysLeft = Number(d.days_left) || 0;
+  const when =
+    daysLeft < 0
+      ? `${plural(-daysLeft, "day")} overdue`
+      : daysLeft === 0
+        ? "due today"
+        : `in ${plural(daysLeft, "day")}`;
+  const sellers =
+    d.seller_count === null || d.seller_count === undefined
+      ? ""
+      : `; ${plural(d.seller_count, "creator")} to report`;
+
+  return `${TAX_REPORT_NAMES[d.regime] ?? d.regime} for ${period}: due ${d.due_date} (${when})${sellers}`;
+};
+
 export const OPS_ALERTS = {
   stuck_payment: {
     playbookIssue: "PAY-005",
@@ -158,6 +193,18 @@ export const OPS_ALERTS = {
     describe: (d) =>
       `The work for ${d.subject || "the commission"}: ${d.status === "not_received" ? "the buyer says it has not arrived" : "no answer from the buyer"}, ${plural(d.waiting_days, "day")} since it was sent`,
     link: (d) => requestLink(d.listing_request_id),
+  },
+  // Sent 30, 14, 7 and 1 days before the due date and daily once overdue:
+  // the subject id carries the step, so each step is a new line.
+  tax_report_due: {
+    playbookIssue: "TAX-008",
+    playbook: "docs/support/payments/tax.md",
+    title: "Tax report or return due",
+    meaning: "A report to a tax authority, or Made for Stream's own GST/HST return, is due soon or overdue and has not been marked filed.",
+    todo: "Open Tax reporting, download the report, file it with the authority, then mark it filed with the confirmation number.",
+    remind: false,
+    describe: describeTaxReportDue,
+    link: () => "/admin/tax-reporting",
   },
 };
 

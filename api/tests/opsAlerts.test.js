@@ -19,9 +19,9 @@ const migration = readRepoFile(
   "supabase/migrations/20260924_139_add_connect_account_state_and_ops_alerts.sql",
 );
 
-// list_ops_alerts() was last redefined here (the off-site receipt added).
+// list_ops_alerts() was last redefined here (tax report deadlines added).
 const latestListOpsAlerts = readRepoFile(
-  "supabase/migrations/20261016_166_confirm_off_site_receipt.sql",
+  "supabase/migrations/20261028_170_add_tax_reporting.sql",
 );
 
 const listOpsAlertsBody = latestListOpsAlerts.slice(
@@ -310,6 +310,7 @@ describe("renderOpsAlertDigest", () => {
       app_failure_burst: { user_id: "user-9", occurrences: 40, distinct_failures: 12, most_common: "This change order is not available for your response." },
       storage_usage_high: { kind: "stored", threshold_bytes: 85899345920, used_bytes: 90194313216, included_bytes: 107374182400 },
       off_site_receipt_overdue: { listing_request_id: "req-3", subject: "the final delivery (Final files)", status: "not_received", waiting_days: 12 },
+      tax_report_due: { regime: "eu_dac7", period_start: "2026-01-01", period_end: "2026-12-31", due_date: "2027-01-31", days_left: 7, seller_count: 3 },
     };
 
     const rows = Object.entries(OPS_ALERTS).map(([alertId, alert]) => ({
@@ -323,7 +324,9 @@ describe("renderOpsAlertDigest", () => {
 
     const { subject, text, html } = render(rows);
 
-    expect(subject).toBe("[Made for Stream ops] 13 open alerts");
+    expect(subject).toBe("[Made for Stream ops] 14 open alerts");
+    expect(text).toContain("EU DAC7 creator report for 2026: due 2027-01-31 (in 7 days); 3 creators to report");
+    expect(text).toContain("Open: https://madeforstream.com/admin/tax-reporting");
     expect(text).toContain("The work for the final delivery (Final files): the buyer says it has not arrived, 12 days since it was sent");
     expect(text).toContain("Stored files reached 84.0 GB (mark 80.0 GB; the plan includes 100.0 GB)");
     expect(text).toContain(
@@ -362,6 +365,46 @@ describe("renderOpsAlertDigest", () => {
     expect(text).toContain("a=<b>");
     expect(html).toContain("x&lt;1&gt;");
     expect(html).not.toContain("<b>");
+  });
+});
+
+describe("tax_report_due", () => {
+  const describeDue = OPS_ALERTS.tax_report_due.describe;
+
+  it("names the report, the year, the due date and the creators to report", () => {
+    expect(
+      describeDue({
+        regime: "ca_dpi",
+        period_start: "2026-01-01",
+        period_end: "2026-12-31",
+        due_date: "2027-01-31",
+        days_left: 11,
+        seller_count: 1,
+      }),
+    ).toBe("Canada platform operator report (CRA) for 2026: due 2027-01-31 (in 11 days); 1 creator to report");
+  });
+
+  it("gives a half-year period in full, and says when the return is overdue", () => {
+    expect(
+      describeDue({
+        regime: "au_serr",
+        period_start: "2027-01-01",
+        period_end: "2027-06-30",
+        due_date: "2027-07-31",
+        days_left: 0,
+        seller_count: 2,
+      }),
+    ).toBe("Australia sharing economy report (ATO) for 2027-01-01 to 2027-06-30: due 2027-07-31 (due today); 2 creators to report");
+    expect(
+      describeDue({
+        regime: "ca_gst",
+        period_start: "2026-01-01",
+        period_end: "2026-12-31",
+        due_date: "2027-04-30",
+        days_left: -3,
+        seller_count: null,
+      }),
+    ).toBe("GST/HST return and payment for 2026: due 2027-04-30 (3 days overdue)");
   });
 });
 

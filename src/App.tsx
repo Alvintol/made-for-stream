@@ -30,6 +30,7 @@ import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
 import AdminRequestDetails from "./pages/admin/AdminRequestDetails";
 import AdminRequests from "./pages/admin/AdminRequests";
 import AdminStorage from "./pages/admin/AdminStorage";
+import AdminTaxReporting from "./pages/admin/AdminTaxReporting";
 import BuyerRequestDetails from "./pages/buyer/BuyerRequestDetails";
 import BuyerRequests from "./pages/buyer/BuyerRequests";
 import ApplyCreator from "./pages/creator/ApplyCreator";
@@ -214,6 +215,10 @@ const App = () => {
             <Route
               path="/admin/storage"
               element={<AdminStorage />}
+            />
+            <Route
+              path="/admin/tax-reporting"
+              element={<AdminTaxReporting />}
             />
           </Route>
 
