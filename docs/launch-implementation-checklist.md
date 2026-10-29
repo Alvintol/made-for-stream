@@ -909,12 +909,57 @@ before sending. Six known gaps, each waiting on an answer:
       and there is no reverse charge (question 9).
 - [ ] **Seller reporting.** The site holds legal name, date of birth, address,
       individual or business, and optional business and tax numbers, none of
-      them checked by the site. No W-9 or W-8BEN, no DAC7 or Canadian platform
-      report, nothing filed (questions 24 to 27).
+      them checked by the site. No W-9 or W-8BEN, nothing filed (questions 24
+      to 27). **2026-10-28:** the admin Tax reporting page and its deadline
+      reminders exist (`20261028_170`, TAX-008); the figures and a file to
+      file from, not each authority's upload format.
 - [ ] **Receipts do not say who the seller is.** The receipt email gives the
       amount and the project title only (question 4).
 - [ ] **Nothing limits which countries a buyer may pay from** (questions 18
       and 19).
+
+**Compliance plan for a global beta (decided 2026-10-28)**
+
+Owner's decisions:
+
+- Made for Stream uses the business number and GST account of Created by
+  Alvin (sole proprietor). It is already registered, so GST/HST applies to
+  Made for Stream's fees from the first Canadian sale; production tax
+  collection is off and must be fee-only before Canadian payments.
+- Prices are shown with the 5% buyer service fee included.
+- All mature content is banned, not only explicit content.
+- French: a site-wide translation widget (Common Ninja) was declined (breaks
+  React pages, sees private pages, unreliable for the Terms). The site text is
+  translated in code, the policies by a translator; Quebec is blocked until
+  French ships. Machine translation of listings waits until then.
+
+Build order (each its own branch):
+
+- [ ] **Tax reporting dashboard and deadline reminders.** Built on
+      `feat/tax-reporting-dashboard`: migration 170, the TAX-008 ops email
+      line, the admin page. Owner applies the migration, deploys the API,
+      merges.
+- [ ] **Sanctions and Quebec block** at account details and checkout.
+- [ ] **Fee-inclusive prices; EU/UK buyer tickbox at checkout; creator
+      notice and tickbox when accepting an EU/UK buyer's request.**
+- [ ] **One policy release:** all mature content banned with takedown and
+      ban, sanctions, Digital Services Act and Online Safety Act statements.
+- [ ] **GST/HST on Made for Stream's fees only** (the tax switch now taxes
+      the whole price; the creator fee has no tax line).
+- [ ] **UK Online Safety Act risk assessments and Digital Services Act
+      gaps** (report form fields, statements of reasons, contact points).
+- [ ] **French, in stages.**
+
+Owner's steps, outside the code:
+
+- [ ] Add "Made for Stream" as an operating name on the business number, and
+      register the trade name in Alberta.
+- [ ] Hire an EU and a UK representative (privacy, and the EU Digital
+      Services Act).
+- [ ] Register for each platform reporting service before its first due
+      date (TAX-008 lists them); DAC7 once the first EU creator is paid.
+- [ ] Tell us if the GST/HST return is filed quarterly or monthly: the
+      reminders assume annual.
 
 Found while writing the brief, 2026-10-13:
 

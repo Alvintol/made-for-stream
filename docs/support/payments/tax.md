@@ -17,7 +17,14 @@ surfaces:
   - api/server.js  # applyCheckoutTax, finalizePaidPaymentTaxBestEffort, reverseRefundTaxBestEffort
   - src/pages/payments/ListingRequestPaymentCheckout.tsx
   - src/domain/payments/listingRequestPaymentTax.ts
-  - public.list_ops_alerts()  # tax_evidence_insufficient, tax_transaction_missing, tax_reversal_missing, paid_wave2_currency (20260924_139)
+  - public.list_ops_alerts()  # tax_evidence_insufficient, tax_transaction_missing, tax_reversal_missing, paid_wave2_currency (20260924_139), tax_report_due (20261028_170)
+  - public.tax_reporting_obligations()  # the tax calendar (20261028_170)
+  - public.tax_report_filings
+  - public.admin_get_tax_reporting_overview()
+  - public.admin_list_tax_report_sellers()
+  - public.admin_set_tax_report_filed()
+  - src/pages/admin/AdminTaxReporting.tsx
+  - src/domain/payments/taxReporting.ts
 unmatched_tier: 2
 ---
 
@@ -90,6 +97,7 @@ the session: that makes the creator's account the liable party.
 | (internal) A refund returned tax but Stripe Tax was not reversed, or the ledger tax disagrees | [`TAX-004`](#tax-004--refund-tax-not-reversed-or-ledger-mismatch) |
 | (internal) Every checkout fails with "Tax collection is enabled but …" | [`TAX-005`](#tax-005--tax-configuration-incomplete) |
 | (internal) Ops alert: a sale was paid in a currency other than CAD or USD | [`TAX-007`](#tax-007--paid-sale-in-a-currency-whose-tax-advice-is-open) |
+| (internal) Ops alert: a tax report or the GST/HST return is due or overdue | [`TAX-008`](#tax-008--tax-report-or-return-due) |
 
 ---
 
@@ -435,7 +443,100 @@ collected or filed.
 
 ---
 
+## `TAX-008` — Tax report or return due
+
+```yaml
+id: TAX-008
+tier: 2
+signals:
+  - source: alert
+    match: "tax_report_due (TAX-008)"
+    where: "public.list_ops_alerts(), emailed by POST /api/internal/ops/alerts/run"
+  - source: ui
+    match: "Only an administrator can see tax reporting."
+    where: "src/pages/admin/AdminTaxReporting.tsx (admin_get_tax_reporting_overview, admin_list_tax_report_sellers)"
+  - source: ui
+    match: "That report period is not on the tax calendar."
+    where: "admin_set_tax_report_filed"
+auto_fix: none
+reason_not_automatable: "filing is done by the owner on each tax authority's own site"
+escalate_with:
+  - "the report name and period from the email"
+  - "whether the report was filed, and its confirmation number"
+```
+
+**What it is (2026-10-28, `20261028_170`).** Made for Stream reports each
+creator's earnings to the tax authority of the country the creator lives in,
+and files its own GST/HST return. The admin **Tax reporting** page
+(`/admin/tax-reporting`) lists every report from launch onwards with its
+due date, how many creators it covers and whether it is marked filed. The
+ops email lists an unfiled report **30, 14, 7 and 1 days** before it is due
+and **every day** once overdue. Each step is a separate email line, sent
+once.
+
+| Report | Creators it covers | Period | Due |
+| --- | --- | --- | --- |
+| EU DAC7 | living in an EU country | calendar year, figures by quarter | 31 January |
+| Canada (CRA) | living in Canada | calendar year | 31 January |
+| UK (HMRC) | living in the UK | calendar year | 31 January |
+| New Zealand (Inland Revenue) | living in New Zealand | calendar year | 31 January |
+| Australia (ATO) | living in Australia | each half year | 31 July and 31 January |
+| US Form 1099-K | living in the US, paid over $20,000 in more than 200 payments | calendar year | 31 January to the creator; 31 March to the IRS by e-file |
+| GST/HST return | Made for Stream itself | calendar year (annual filer) | pay by 30 April, file by 15 June |
+
+Where a creator lives is their account address country, or their Stripe
+account's country when they have no account details. A creator report is
+only emailed when it has at least one creator to report; the GST/HST return
+always is. Reports due before 1 October 2026 are ignored.
+
+**Fix (filing a report).**
+
+1. Open Tax reporting and choose the report. The table shows each creator's
+   payments, amount paid (the work and the tip), refunds and the creator fees
+   Made for Stream kept, by currency and quarter, and lists missing details
+   (tax number, date of birth, address).
+2. Ask any creator with missing details to complete them in Settings →
+   Personal details, then reload.
+3. Download the file. It holds private identity details: keep it off shared
+   drives and delete it after filing.
+4. File it in that authority's own format on its own site. The file is the
+   working copy; it is not in any authority's upload format.
+5. Press **Mark as filed** and enter the confirmation number. The reminders
+   stop. **Undo** brings them back.
+
+For the GST/HST return, use Made for Stream's fee income for the year
+together with Created by Alvin's: it is one return for the same business
+number.
+
+**Before the first report of each kind (owner's steps).**
+
+- DAC7: register with one EU country's tax authority once the first EU
+  creator is paid. That country is where every DAC7 report is filed. Once
+  registered, some countries expect a report even in a year with no EU
+  creators: check with that country, because this page only reminds you when
+  there is someone to report.
+- UK, Canada, New Zealand and Australia: register for each authority's
+  platform reporting service before the first due date.
+- 1099-K: Stripe can file these for a fee (Stripe Dashboard → Connect → Tax
+  forms).
+
+**Money impact.** Late or missing reports carry penalties from each
+authority.
+
+---
+
 ## Known gaps
+
+- **Not in any authority's upload format.** The Tax reporting file is a
+  spreadsheet of the figures and identity details; each authority has its
+  own XML format or online form.
+- **The creator's full bank account number is not stored.** DAC7 asks for
+  the account the creator is paid into. Stripe gives Made for Stream only the
+  last four digits, so it has to be asked from the creator.
+- **The GST/HST schedule assumes an annual filer.** A quarterly or monthly
+  filer changes `tax_reporting_obligations()`.
+- **Amounts are by currency, not converted.** Each authority's conversion
+  rule is applied when filing.
 
 - **Wave 2 currencies are enabled before the advice.** Tracked as
   [`TAX-007`](#tax-007--paid-sale-in-a-currency-whose-tax-advice-is-open), which
