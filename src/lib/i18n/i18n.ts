@@ -10,6 +10,10 @@ const messages: Record<LanguageCode, Record<MessageKey, Message>> = { en, fr };
 
 export type TranslationValues = Record<string, string | number>;
 
+// Whether a key exists, for keys built from data (a listing's category or
+// type): an unknown value is shown as it is instead.
+export const hasMessage = (key: string): key is MessageKey => key in en;
+
 // "{name}" in a message is replaced by values.name. A plural message picks
 // its form from values.count by the language's own plural rules.
 export const translate = (
@@ -18,6 +22,10 @@ export const translate = (
   values: TranslationValues = {},
 ): string => {
   const message = messages[language][key] ?? en[key];
+
+  // Only reachable with a key built from data; hasMessage() guards those.
+  if (message === undefined) return key;
+
   const text =
     typeof message === "string"
       ? message

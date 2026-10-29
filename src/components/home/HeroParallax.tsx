@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { gsap, motion, prefersReducedMotion, useGSAP } from "../../lib/motion";
-
+import { useT } from "../../lib/i18n/i18n";
 gsap.registerPlugin(ScrollTrigger);
 
 type HeroParallaxProps = {
@@ -72,7 +72,7 @@ const ArtImage = ({ url, className }: { url?: string; className: string }) =>
 
 const HeroParallax = ({ previewUrls }: HeroParallaxProps) => {
   const heroRef = useRef<HTMLElement>(null);
-
+  const t = useT();
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
@@ -168,49 +168,47 @@ const HeroParallax = ({ previewUrls }: HeroParallaxProps) => {
         <div className={classes.copy} data-hero-copy>
           <p className={classes.tagline}>
             <span className={classes.taglineRule} aria-hidden="true" />
-            For Creators, By Creators
+            {t("home.tagline")}
           </p>
 
           <h1 id="home-hero-title" className={classes.title}>
-            Made for Stream — assets & services,{" "}
-            <span className={classes.titleAccent}>in one trusted place.</span>
+            {t("home.titleStart")}{" "}
+            <span className={classes.titleAccent}>{t("home.titleAccent")}</span>
           </h1>
 
           <p className={classes.lede}>
-            Find emote artists, overlay designers, PNG/VTuber creators, riggers,
-            editors, and audio help — with clear categories and “Live now”
-            discovery.
+            {t("home.lede")}
           </p>
 
           <div className={classes.actions}>
             <Link to="/market" className={classes.primary}>
-              Browse market
+              {t("home.browseMarket")}
             </Link>
 
             <Link to="/creators" className={classes.secondary}>
-              Find creators
+              {t("home.findCreators")}
             </Link>
 
             <Link to="/live" className={classes.secondary}>
-              Live now
+              {t("home.liveNow")}
             </Link>
           </div>
 
           <div className={classes.chips}>
             <Link to="/market?cat=video-editing&video=long-form" className={classes.chip}>
-              Long form edits
+              {t("home.chipLongForm")}
             </Link>
 
             <Link to="/market?cat=video-editing&video=short-form" className={classes.chip}>
-              Short form edits
+              {t("home.chipShortForm")}
             </Link>
 
             <Link to="/market?cat=vtuber-rigging" className={classes.chip}>
-              PNG/VTuber rigging help
+              {t("home.chipRigging")}
             </Link>
 
             <Link to="/market?cat=audio-tech-help" className={classes.chip}>
-              Audio tech help
+              {t("home.chipAudio")}
             </Link>
           </div>
         </div>
@@ -243,7 +241,7 @@ const HeroParallax = ({ previewUrls }: HeroParallaxProps) => {
       </div>
 
       <div className={classes.scrollCue} aria-hidden="true">
-        <span>Scroll</span>
+        <span>{t("home.scroll")}</span>
         <span className={classes.scrollCueLine} />
       </div>
     </section>

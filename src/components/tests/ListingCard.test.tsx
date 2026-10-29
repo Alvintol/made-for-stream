@@ -126,7 +126,7 @@ describe("ListingCard", () => {
 
     renderWithProviders(<ListingCard listing={listing} creator={creator} />);
 
-    expect(screen.getByText("service")).toBeInTheDocument();
+    expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
   it("renders the creator name", () => {

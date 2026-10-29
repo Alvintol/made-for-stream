@@ -1,4 +1,5 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
+import { useT } from "../../lib/i18n/i18n";
 import { Collapse } from "../../lib/motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
@@ -12,8 +13,6 @@ import { useSubmitProfileModerationReport } from '../../hooks/moderation/useSubm
 import {
   ModerationReportReasonCode,
   moderationReportReasonOptions,
-  reportSubmitNote,
-  reportWithoutAccountNote,
 } from '../../domain/moderation/moderationReports';
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
@@ -174,6 +173,7 @@ const CreatorProfile = () => {
   const { handle } = useParams<{ handle: string }>();
   const { twitchByLogin } = useTwitchStreams();
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
 
   const { data, isLoading, error } = usePublicCreatorProfile(handle ?? null);
@@ -535,7 +535,7 @@ const CreatorProfile = () => {
               You need to sign in before reporting a creator.
             </p>
 
-            <p className={classes.reportText}>{reportWithoutAccountNote}</p>
+            <p className={classes.reportText}>{t("report.withoutAccountNote")}</p>
 
             <Link className={classes.btnOutline} to="/signin">
               Sign in to report
@@ -606,7 +606,7 @@ const CreatorProfile = () => {
                   </div>
                 </div>
 
-                <p className={classes.hint}>{reportSubmitNote}</p>
+                <p className={classes.hint}>{t("report.submitNote")}</p>
 
                 <div className={classes.row}>
                   <button

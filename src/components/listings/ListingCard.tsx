@@ -1,7 +1,7 @@
 import FavouriteButton from "../layout/FavouriteButton";
 import ListingPriceText from "./ListingPriceText";
 import { Link } from "react-router-dom";
-
+import { hasMessage, useT } from "../../lib/i18n/i18n";
 const classes = {
   card: "card group relative flex flex-col overflow-hidden hover:-translate-y-0.5",
   favWrap: "absolute right-3 top-3 z-10",
@@ -55,7 +55,9 @@ type ListingCardProps = {
 };
 
 const ListingCard = ({ listing, creator }: ListingCardProps) => {
-  const creatorLabel = creator.isLive ? `${creator.name} • Live` : creator.name;
+  const t = useT();
+  const offeringKey = `offering.${listing.offering_type}`;
+  const creatorLabel = creator.isLive ? t("common.creatorLive", { name: creator.name }) : creator.name;
 
   return (
     <Link to={`/listing/${listing.id}`} className={classes.card}>
@@ -78,11 +80,13 @@ const ListingCard = ({ listing, creator }: ListingCardProps) => {
         <div className={classes.shade} />
 
         <div className={classes.badges}>
-          <span className={classes.badge}>{listing.offering_type}</span>
+          <span className={classes.badge}>
+            {hasMessage(offeringKey) ? t(offeringKey) : listing.offering_type}
+          </span>
 
-          {listing.is_free && <span className={classes.badge}>Free</span>}
+          {listing.is_free && <span className={classes.badge}>{t("common.free")}</span>}
 
-          {creator.isLive && <span className={classes.liveBadge}>Live</span>}
+          {creator.isLive && <span className={classes.liveBadge}>{t("common.live")}</span>}
         </div>
       </div>
 

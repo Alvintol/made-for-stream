@@ -1,4 +1,5 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
+import { hasMessage, useLanguage, useT } from "../../lib/i18n/i18n";
 import { FadeIn } from "../../lib/motion";
 import ListingPriceText from "../../components/listings/ListingPriceText";
 import ListingAnimatedPreview from "../../components/listings/ListingAnimatedPreview";
@@ -33,8 +34,6 @@ import { useState } from 'react';
 import {
   ModerationReportReasonCode,
   moderationReportReasonOptions,
-  reportSubmitNote,
-  reportWithoutAccountNote,
 } from '../../domain/moderation/moderationReports';
 import { useSubmitListingModerationReport } from '../../hooks/moderation/useSubmitListingModerationReport';
 import { useAuth } from '../../providers/AuthProvider';
@@ -105,27 +104,30 @@ const classes = {
 } as const;
 
 // Formats the updated timestamp for buyer-facing display
-const updatedText = (value: string): string => {
+const updatedText = (value: string, language: string): string => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleDateString(undefined, {
+    : date.toLocaleDateString(language, {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
 };
 
-const ListingNotFound = () => (
-  <div className={classes.notFoundWrap}>
-    <h1 className={classes.h1}>Listing not found</h1>
+const ListingNotFound = () => {
+  const t = useT();
 
-    <Link to="/market" className={classes.backBtn}>
-      Back to market
-    </Link>
-  </div>
-);
+  return (
+    <div className={classes.notFoundWrap}>
+      <h1 className={classes.h1}>{t("listing.notFound")}</h1>
+      <Link to="/market" className={classes.backBtn}>
+        {t("listing.backToMarket")}
+      </Link>
+    </div>
+  );
+};
 
 const ListingPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -133,6 +135,8 @@ const ListingPage = () => {
   const { data, isLoading, error } = usePublicListing(id ?? null);
 
   const { user } = useAuth();
+  const t = useT();
+  const language = useLanguage();
   const submitListingReport = useSubmitListingModerationReport();
 
   const defaultReportReason = moderationReportReasonOptions[0]?.value ?? null;
@@ -182,7 +186,7 @@ const ListingPage = () => {
       });
 
       setReportSuccess(
-        "Listing report submitted. An admin will review it soon."
+        t("listing.reportSubmitted")
       );
       setReportDetails("");
       setIsReportOpen(false);
@@ -190,7 +194,7 @@ const ListingPage = () => {
       setReportError(
         hasErrorMessage(error)
           ? error.message
-          : "Listing report could not be submitted."
+          : t("listing.reportFailed")
       );
     }
   };
@@ -200,7 +204,7 @@ const ListingPage = () => {
   if (isLoading) {
     return (
       <div className={classes.page}>
-        <div className={classes.loadingText}>Loading…</div>
+        <div className={classes.loadingText}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -222,13 +226,16 @@ const ListingPage = () => {
   const stream = twitchLogin ? twitchByLogin[twitchLogin] : undefined;
   const isLive = Boolean(stream);
 
-  const creatorName = creator?.display_name ?? creator?.handle ?? "Creator";
+  const creatorName = creator?.display_name ?? creator?.handle ?? t("common.creator");
+  const offeringKey = `offering.${listing.offering_type}`;
+  const categoryKey = `category.${listing.category}`;
+  const videoKey = `video.${listing.video_subtype}`;
   const creatorLink = creator?.handle ? `/creator/${creator.handle}` : null;
 
   return (
     <div className={classes.page}>
       <Link to="/market" className={classes.backLink}>
-        ← Back
+        {t("listing.back")}
       </Link>
 
       <div className={classes.grid}>
@@ -253,9 +260,10 @@ const ListingPage = () => {
           <div className={classes.titleRow}>
             <h1 className={classes.h1}>{listing.title}</h1>
 
-            <span className={classes.badge}>{listing.offering_type}</span>
-
-            {isLive && <span className={classes.liveBadge}>Live</span>}
+            <span className={classes.badge}>
+              {hasMessage(offeringKey) ? t(offeringKey) : listing.offering_type}
+            </span>
+            {isLive && <span className={classes.liveBadge}>{t("common.live")}</span>}
           </div>
 
           <p className={classes.desc}>{listing.short}</p>
@@ -263,7 +271,7 @@ const ListingPage = () => {
           <div className={classes.priceRow}>
             <div className={classes.price}>
               {listing.is_free ? (
-                "Free"
+                t("common.free")
               ) : (
                 <ListingPriceText listing={listing} variant="detailed" />
               )}
@@ -271,26 +279,27 @@ const ListingPage = () => {
 
             {creatorLink ? (
               <Link to={creatorLink} className={classes.creatorLink}>
-                by {creatorName}
-                {isLive ? " • Live" : ""} →
+                {t("common.by")} {isLive ? t("common.creatorLive", { name: creatorName }) : creatorName} →
               </Link>
             ) : (
               <span className={classes.creatorLink}>
-                by {creatorName}
-                {isLive ? " • Live" : ""}
+                {t("common.by")} {isLive ? t("common.creatorLive", { name: creatorName }) : creatorName}
               </span>
             )}
           </div>
 
           <p className={classes.metaText}>
-            Last updated: {updatedText(listing.updated_at)}
+            {t("listing.lastUpdated", { date: updatedText(listing.updated_at, language) })}
           </p>
 
           <div className={classes.chips}>
-            <span className={classes.chip}>{listing.category}</span>
-
+            <span className={classes.chip}>
+              {hasMessage(categoryKey) ? t(categoryKey) : listing.category}
+            </span>
             {listing.video_subtype && (
-              <span className={classes.chip}>{listing.video_subtype}</span>
+              <span className={classes.chip}>
+                {hasMessage(videoKey) ? t(videoKey) : listing.video_subtype}
+              </span>
             )}
 
             {listing.deliverables.map((deliverable) => (
@@ -315,7 +324,7 @@ const ListingPage = () => {
                 <div className={classes.liveMeta}>
                   {stream.gameName ?? ""}
                   <span className={classes.liveDot}> • </span>
-                  {stream.viewerCount ?? 0} viewers
+                  {t("common.viewers", { count: stream.viewerCount ?? 0 })}
                 </div>
 
                 {stream.title && (
@@ -330,14 +339,14 @@ const ListingPage = () => {
               <>
                 <div className={classes.ctaTitle}>
                   {listing.free_delivery_type === "download"
-                    ? "Free download"
-                    : "Free — hosted elsewhere"}
+                    ? t("listing.freeDownload")
+                    : t("listing.freeElsewhere")}
                 </div>
 
                 <p className={classes.ctaText}>
                   {listing.free_delivery_type === "download"
-                    ? "No payment, no sign-in required — this file is uploaded and hosted here."
-                    : "This opens on the creator's own site or store, outside Made for Stream."}
+                    ? t("listing.freeDownloadText")
+                    : t("listing.freeElsewhereText")}
                 </p>
 
                 <a
@@ -350,31 +359,30 @@ const ListingPage = () => {
                     : {})}
                 >
                   {listing.free_delivery_type === "download"
-                    ? "Download for free"
-                    : "Get it free ↗"}
+                    ? t("listing.downloadFree")
+                    : t("listing.getFree")}
                 </a>
               </>
             ) : (
               <>
-                <div className={classes.ctaTitle}>{fulfilmentCopy.title}</div>
-
-                <p className={classes.ctaText}>{fulfilmentCopy.text}</p>
+                <div className={classes.ctaTitle}>{t(fulfilmentCopy.title)}</div>
+                <p className={classes.ctaText}>{t(fulfilmentCopy.text)}</p>
 
                 {listing.fulfilment_mode === "request" ? (
                   activeRequestQuery.isLoading ? (
-                    <span className={classes.ctaLink}>Checking commission…</span>
+                    <span className={classes.ctaLink}>{t("listing.checkingCommission")}</span>
                   ) : activeListingRequest ? (
                     <Link className={classes.ctaLink} to={`/requests/${activeListingRequest.id}`}>
-                      View existing commission
+                      {t("listing.viewCommission")}
                     </Link>
                   ) : (
                     <Link className={classes.ctaLink} to={`/listing/${listing.id}/request`}>
-                      Send commission request
+                      {t("listing.requestButton")}
                     </Link>
                   )
                 ) : (
                   <Link className={classes.ctaLink} to="#">
-                    {fulfilmentCopy.primaryLabel}
+                    {t(fulfilmentCopy.primaryLabel)}
                   </Link>
                 )}
               </>
@@ -382,11 +390,10 @@ const ListingPage = () => {
           </div>
 
           <div className={classes.reportCard}>
-            <h2 className={classes.reportTitle}>Report listing</h2>
+            <h2 className={classes.reportTitle}>{t("listing.reportTitle")}</h2>
 
             <p className={classes.reportText}>
-              Report this listing if it appears unsafe, misleading, stolen, abusive, or
-              against Made for Stream rules. Reporting does not automatically hide the listing.
+              {t("listing.reportIntro")}
             </p>
 
             {reportSuccess && (
@@ -400,18 +407,18 @@ const ListingPage = () => {
             {!user ? (
               <div className={classes.reportForm}>
                 <p className={classes.reportText}>
-                  You need to sign in before reporting a listing.
+                  {t("listing.reportSignIn")}
                 </p>
 
-                <p className={classes.reportText}>{reportWithoutAccountNote}</p>
+                <p className={classes.reportText}>{t("report.withoutAccountNote")}</p>
 
                 <Link className={classes.btnOutline} to="/signin">
-                  Sign in to report
+                  {t("report.signInLink")}
                 </Link>
               </div>
             ) : isOwnListing ? (
               <p className={classes.reportText}>
-                You cannot report your own listing.
+                {t("listing.reportOwn")}
               </p>
             ) : (
               <div className={classes.reportForm}>
@@ -425,13 +432,13 @@ const ListingPage = () => {
                       setReportError(null);
                     }}
                   >
-                    Report listing
+                    {t("listing.reportTitle")}
                   </button>
                 ) : (
                   <FadeIn className="space-y-3">
                     <div className={classes.field}>
                       <label className={classes.label} htmlFor="listingReportReason">
-                        Reason
+                        {t("report.reason")}
                       </label>
 
                       <select
@@ -446,7 +453,7 @@ const ListingPage = () => {
                       >
                         {moderationReportReasonOptions.map((option) => (
                           <option key={option.value} value={option.value}>
-                            {option.label}
+                            {t(`report.reason.${option.value}`)}
                           </option>
                         ))}
                       </select>
@@ -454,7 +461,7 @@ const ListingPage = () => {
 
                     <div className={classes.field}>
                       <label className={classes.label} htmlFor="listingReportDetails">
-                        Details
+                        {t("report.details")}
                       </label>
 
                       <KeptPlaceholder>
@@ -463,17 +470,17 @@ const ListingPage = () => {
                         className={classes.textarea}
                         value={reportDetails}
                         onChange={(event) => setReportDetails(event.target.value)}
-                        placeholder="Optional. Add context that will help admins review this report."
+                        placeholder={t("listing.reportDetailsPlaceholder")}
                         maxLength={2000}
                       />
                       </KeptPlaceholder>
 
                       <div className={classes.hint}>
-                        {reportDetailsTrimmed.length}/2000 characters.
+                        {t("report.characters", { count: reportDetailsTrimmed.length, max: 2000 })}
                       </div>
                     </div>
 
-                    <p className={classes.hint}>{reportSubmitNote}</p>
+                    <p className={classes.hint}>{t("report.submitNote")}</p>
 
                     <div className={classes.row}>
                       <button
@@ -483,8 +490,8 @@ const ListingPage = () => {
                         onClick={() => void handleSubmitListingReport()}
                       >
                         {submitListingReport.isPending
-                          ? "Submitting…"
-                          : "Submit report"}
+                          ? t("report.submitting")
+                          : t("report.submit")}
                       </button>
 
                       <button
@@ -496,7 +503,7 @@ const ListingPage = () => {
                           setReportError(null);
                         }}
                       >
-                        Cancel
+                        {t("report.cancel")}
                       </button>
                     </div>
                   </FadeIn>
