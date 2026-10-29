@@ -949,9 +949,9 @@ Build order (each its own branch):
       EU/EEA/UK buyer's request.** Migration 172 (verified applied
       2026-10-29), website only, REQ-006. The buyer's express request to start
       early already existed (20260923_138, AGR-007). Merged as #187.
-- [ ] **One policy release:** all mature content banned with takedown and
+- [x] **One policy release:** all mature content banned with takedown and
       ban, sanctions, Digital Services Act and Online Safety Act statements.
-      Built on `feat/policy-release-content-sanctions-safety`: Terms,
+      Merged as #188: Terms,
       Privacy Policy, Community Guidelines and Creator Terms at version
       2026-10-29 (Refund Policy and Payment Terms unchanged, so checkout does
       not ask again); a "what changed" summary for the Terms; MOD-005. Website
@@ -963,6 +963,14 @@ Build order (each its own branch):
       the whole price; the creator fee has no tax line).
 - [ ] **UK Online Safety Act risk assessments and Digital Services Act
       gaps** (report form fields, statements of reasons, contact points).
+      Built on `feat/online-safety-report-statement`: report forms ask why
+      content is illegal and carry the reporter's accuracy statement; signed-out
+      pages say how to report by email; relabelled reasons (no database
+      change). The illegal content risk assessment, the children's access
+      assessment and a Digital Services Act record are drafts kept **locally**
+      in `claude/compliance/` (gitignored: the repo is public and they
+      describe weak points). Owner reviews, adopts and dates them. Website
+      only.
 - [ ] **French, in stages.**
 
 Owner's steps, outside the code:
@@ -970,7 +978,12 @@ Owner's steps, outside the code:
 - [ ] Add "Made for Stream" as an operating name on the business number, and
       register the trade name in Alberta.
 - [ ] Hire an EU and a UK representative (privacy, and the EU Digital
-      Services Act).
+      Services Act), and name the EU legal representative in Terms section 1.
+- [ ] Review, edit, date and keep the three drafts in `claude/compliance/`.
+      The children's access assessment concludes Made for Stream is likely to
+      be accessed by children (no age assurance); confirm or record why not.
+- [ ] Decide who checks the report queue if you are away for more than a few
+      days.
 - [ ] Register for each platform reporting service before its first due
       date (TAX-008 lists them); DAC7 once the first EU creator is paid.
 - [ ] Tell us if the GST/HST return is filed quarterly or monthly: the

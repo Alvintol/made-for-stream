@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.07";
+export const siteVersion = "V0.7.08";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.08",
+    date: "2026-10-29",
+    title: "Clearer reporting",
+    changes: [
+      "Report forms ask you to say why, if you believe something is illegal, and remind you that a report should be accurate and complete.",
+      "The report reasons now include \"Illegal, or against another Made for Stream rule\", and \"Inappropriate, mature or adult content\".",
+      "Message reports can now use the \"Illegal, or against another Made for Stream rule\" reason too.",
+      "If you're signed out, listing and creator pages tell you how to report by email without an account.",
+    ],
+  },
   {
     version: "V0.7.07",
     date: "2026-10-29",

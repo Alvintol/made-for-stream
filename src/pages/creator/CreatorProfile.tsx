@@ -9,7 +9,12 @@ import { ConversationInitiationReasonCode, conversationInitiationReasonOptions }
 import { useCreateCreatorInquiryConversation } from '../../hooks/conversations/useCreateInquiryConversation';
 import { useAuth } from '../../providers/AuthProvider';
 import { useSubmitProfileModerationReport } from '../../hooks/moderation/useSubmitProfileModerationReport';
-import { ModerationReportReasonCode, moderationReportReasonOptions } from '../../domain/moderation/moderationReports';
+import {
+  ModerationReportReasonCode,
+  moderationReportReasonOptions,
+  reportSubmitNote,
+  reportWithoutAccountNote,
+} from '../../domain/moderation/moderationReports';
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
 const classes = {
@@ -530,6 +535,8 @@ const CreatorProfile = () => {
               You need to sign in before reporting a creator.
             </p>
 
+            <p className={classes.reportText}>{reportWithoutAccountNote}</p>
+
             <Link className={classes.btnOutline} to="/signin">
               Sign in to report
             </Link>
@@ -598,6 +605,8 @@ const CreatorProfile = () => {
                     {profileReportDetailsTrimmed.length}/2000 characters.
                   </div>
                 </div>
+
+                <p className={classes.hint}>{reportSubmitNote}</p>
 
                 <div className={classes.row}>
                   <button

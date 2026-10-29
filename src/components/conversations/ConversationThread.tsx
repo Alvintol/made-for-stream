@@ -14,6 +14,7 @@ import {
   conversationModerationReportReasonOptions,
   getModerationReportStatusLabel,
   getModerationReportStatusSummary,
+  reportSubmitNote,
   type ModerationReportReasonCode,
 } from "../../domain/moderation/moderationReports";
 import { useCloseConversation } from "../../hooks/conversations/useCloseConversation";
@@ -838,6 +839,8 @@ const ConversationThread = ({
                   <div className={classes.errorNotice}>{reportReasonDetailsError}</div>
                 )}
               </div>
+
+              <p className={classes.hint}>{reportSubmitNote}</p>
 
               <div className={classes.row}>
                 <button
