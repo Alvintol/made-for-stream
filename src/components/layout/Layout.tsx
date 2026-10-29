@@ -5,6 +5,7 @@ import { PageTransition } from '../../lib/motion';
 import CookieConsent from '../legal/CookieConsent';
 import PolicyAcceptanceGate from '../legal/PolicyAcceptanceGate';
 import SiteUpdatesNotice from '../app/SiteUpdatesNotice';
+import LanguageSync from '../app/LanguageSync';
 
 const classes = {
   shell: 'appShell',
@@ -16,6 +17,7 @@ const Layout = () => {
 
   return (
     <div className={classes.shell}>
+      <LanguageSync />
       <Nav />
       <main className={classes.main}>
         <PolicyAcceptanceGate>

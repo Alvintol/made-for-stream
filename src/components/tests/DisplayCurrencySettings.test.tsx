@@ -60,9 +60,23 @@ describe("<DisplayCurrencySettings />", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
-      expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd" }),
+      expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: "usd", language: null }),
     );
     expect(await screen.findByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("saves a language only once one is chosen, so the browser's is followed until then", async () => {
+    mocks.saved = { country_code: "CA", display_currency: null };
+
+    render(<DisplayCurrencySettings />);
+
+    // A development server offers French before it is ready.
+    fireEvent.change(screen.getByLabelText(/^Language/), { target: { value: "fr" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith({ country_code: "CA", display_currency: null, language: "fr" }),
+    );
   });
 
   it("drops an unsaved edit when the saved values change elsewhere", () => {

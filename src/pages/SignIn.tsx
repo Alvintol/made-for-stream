@@ -5,6 +5,7 @@ import {
   signupPolicyTypes,
   toCurrentPolicyAcceptances,
 } from "../domain/legal/policyAcceptance";
+import { useT } from "../lib/i18n/i18n";
 import { savePendingPolicyAcceptance } from "../lib/legal/pendingPolicyAcceptance";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../providers/AuthProvider";
@@ -63,10 +64,6 @@ const getErrorMessage = (error: unknown, fallback: string): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
     : fallback;
-
-// Asked before every sign-in method; there is no separate sign-up step.
-const POLICY_REQUIRED_MESSAGE =
-  "Please accept the Terms of Service and Privacy Policy to continue.";
 
 // Standard post-auth redirect back into the app
 const getRedirectTo = (): string => `${window.location.origin}/`;
@@ -140,6 +137,7 @@ const SocialButton = (props: SocialButtonProps) => {
 const SignIn = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const t = useT();
 
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -199,7 +197,7 @@ const SignIn = () => {
       setErr(
         getErrorMessage(
           error,
-          `Could not start ${provider} sign-in.`
+          t("signin.oauthFailed", { provider })
         )
       );
       setBusy(false);
@@ -217,7 +215,7 @@ const SignIn = () => {
     if (!requireAgreement()) return;
 
     if (!value) {
-      setErr("Please enter your email.");
+      setErr(t("signin.emailRequired"));
       return;
     }
 
@@ -236,7 +234,7 @@ const SignIn = () => {
 
       setSent(true);
     } catch (error) {
-      setErr(getErrorMessage(error, "Could not send sign-in link."));
+      setErr(getErrorMessage(error, t("signin.linkFailed")));
     } finally {
       setBusy(false);
     }
@@ -254,7 +252,7 @@ const SignIn = () => {
 
       navigate("/");
     } catch (error) {
-      setErr(getErrorMessage(error, "Could not sign out."));
+      setErr(getErrorMessage(error, t("signin.signOutFailed")));
     } finally {
       setBusy(false);
     }
@@ -264,12 +262,12 @@ const SignIn = () => {
     return (
       <div className={classes.page}>
         <div className={classes.card}>
-          <h1 className={classes.h1}>You’re signed in</h1>
+          <h1 className={classes.h1}>{t("signin.signedInTitle")}</h1>
 
           <p className={classes.p}>
-            Signed in as{" "}
+            {t("signin.signedInAs")}{" "}
             <span className={classes.signedInEmail}>
-              {user.email ?? "your account"}
+              {user.email ?? t("signin.yourAccount")}
             </span>.
           </p>
 
@@ -280,11 +278,11 @@ const SignIn = () => {
               type="button"
               disabled={busy}
             >
-              Sign out
+              {t("signin.signOut")}
             </button>
 
             <Link className={classes.btnAlt} to="/creators">
-              Browse creators
+              {t("signin.browseCreators")}
             </Link>
           </div>
 
@@ -298,23 +296,21 @@ const SignIn = () => {
     <div className={classes.page}>
       <div className={classes.card}>
         <div className={classes.header}>
-          <h1 className={classes.h1}>Sign in</h1>
-          <p className={classes.p}>
-            Use Twitch or Google, or get a sign-in link by email.
-          </p>
+          <h1 className={classes.h1}>{t("signin.title")}</h1>
+          <p className={classes.p}>{t("signin.intro")}</p>
         </div>
 
         <div className={classes.providerStack}>
           <SocialButton
             provider="twitch"
-            label="Sign in with Twitch"
+            label={t("signin.twitch")}
             onClick={() => void onOAuthSignIn("twitch")}
             disabled={busy}
           />
 
           <SocialButton
             provider="google"
-            label="Sign in with Google"
+            label={t("signin.google")}
             onClick={() => void onOAuthSignIn("google")}
             disabled={busy}
           />
@@ -322,13 +318,13 @@ const SignIn = () => {
 
         <div className={classes.dividerRow}>
           <div className={classes.dividerLine} />
-          <div className={classes.dividerText}>or by email</div>
+          <div className={classes.dividerText}>{t("signin.orByEmail")}</div>
           <div className={classes.dividerLine} />
         </div>
 
         <form className={classes.form} onSubmit={onSubmit} noValidate>
           <label className={classes.label} htmlFor="signin-email">
-            Email
+            {t("signin.email")}
           </label>
 
           <input
@@ -337,12 +333,12 @@ const SignIn = () => {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.currentTarget.value)}
-            placeholder="you@example.com"
+            placeholder={t("signin.emailPlaceholder")}
             autoComplete="email"
           />
 
           <button className={classes.btnEmail} type="submit" disabled={busy}>
-            {busy ? "Working…" : "Send sign-in link"}
+            {busy ? t("signin.working") : t("signin.sendLink")}
           </button>
         </form>
 
@@ -358,34 +354,34 @@ const SignIn = () => {
             onChange={onAgreedChange}
             disabled={busy}
           >
-            I agree to the{" "}
+            {t("signin.agreeBefore")}{" "}
             <Link className={classes.policyLink} to="/terms" target="_blank" rel="noopener">
-              Terms of Service
+              {t("signin.agreeTerms")}
             </Link>{" "}
-            and the{" "}
+            {t("signin.agreeAnd")}{" "}
             <Link className={classes.policyLink} to="/privacy" target="_blank" rel="noopener">
-              Privacy Policy
+              {t("signin.agreePrivacy")}
             </Link>
-            .
+            {t("signin.agreeAfter")}
           </PolicyAcceptanceCheckbox>
           </div>
 
           {policyAttempts > 0 && (
             <p className={classes.policyError} role="alert">
-              {POLICY_REQUIRED_MESSAGE}
+              {t("signin.policyRequired")}
             </p>
           )}
         </div>
 
         {sent && !err && (
-          <div className={classes.msgOk}>Link sent. Check your inbox and spam folder.</div>
+          <div className={classes.msgOk}>{t("signin.linkSent")}</div>
         )}
 
         {err && <div className={classes.msgErr}>{err}</div>}
 
         <div className={classes.footer}>
           <Link className={classes.homeLink} to="/">
-            Back home
+            {t("signin.backHome")}
           </Link>
         </div>
       </div>

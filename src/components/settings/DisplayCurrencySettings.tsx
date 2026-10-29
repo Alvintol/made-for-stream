@@ -4,7 +4,8 @@ import {
   useDisplayPreferences,
   useSaveDisplayPreferences,
 } from "../../hooks/money/useDisplayCurrency";
-import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "../../lib/i18n/languages";
+import { useLanguage, useT } from "../../lib/i18n/i18n";
+import { OFFERED_LANGUAGES } from "../../lib/i18n/languages";
 import { getCurrencyForCountry, getCurrencyName } from "../../lib/money/displayCurrency";
 
 const classes = {
@@ -28,6 +29,9 @@ const classes = {
 const DisplayCurrencySettings = () => {
   const preferencesQuery = useDisplayPreferences();
   const savePreferences = useSaveDisplayPreferences();
+  const t = useT();
+  // The language the page is in now: the saved choice, or the browser's.
+  const currentLanguage = useLanguage();
 
   const saved = preferencesQuery.data ?? null;
 
@@ -39,6 +43,7 @@ const DisplayCurrencySettings = () => {
   const [draft, setDraft] = useState<{
     savedAt: number | undefined;
     currency?: string;
+    language?: string;
   }>({ savedAt });
   const [justSaved, setJustSaved] = useState(false);
 
@@ -46,6 +51,7 @@ const DisplayCurrencySettings = () => {
   // Not edited here: it follows the account details.
   const country = saved?.country_code ?? "";
   const currency = edits.currency ?? saved?.display_currency ?? "";
+  const language = edits.language ?? currentLanguage;
 
   const countryCurrency = getCurrencyForCountry(country);
 
@@ -56,6 +62,9 @@ const DisplayCurrencySettings = () => {
       await savePreferences.mutateAsync({
         country_code: country || null,
         display_currency: currency || null,
+        // Saved only once chosen here, so someone who never picks one keeps
+        // following their browser.
+        language: edits.language ?? saved?.language ?? null,
       });
       setJustSaved(true);
     } catch {
@@ -66,27 +75,36 @@ const DisplayCurrencySettings = () => {
   return (
     <>
       <p className={classes.text}>
-        Creators set prices in their own currency, and you always pay in the creator's currency.
-        We can also show an approximate price in yours.
+        {t("display.intro")}
       </p>
 
       <div className={classes.form}>
         <label className={classes.wideField}>
-          <span className={classes.label}>Language</span>
-          {/* ponytail: one language, so there is nothing to save yet. See
-              lib/i18n/languages.ts for what a second one needs. */}
-          <select className={classes.input} defaultValue={DEFAULT_LANGUAGE}>
-            {SUPPORTED_LANGUAGES.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.name}
+          <span className={classes.label}>{t("display.language")}</span>
+          <select
+            className={classes.input}
+            value={language}
+            disabled={preferencesQuery.isLoading}
+            onChange={(event) => {
+              setDraft({ ...edits, language: event.target.value });
+              setJustSaved(false);
+            }}
+          >
+            {OFFERED_LANGUAGES.map((option) => (
+              <option key={option.code} value={option.code} lang={option.code}>
+                {option.name}
               </option>
             ))}
           </select>
-          <span className={classes.hint}>More languages are planned.</span>
+          <span className={classes.hint}>
+            {OFFERED_LANGUAGES.length > 1
+              ? t("display.languageHintUnfinished")
+              : t("display.languageHint")}
+          </span>
         </label>
 
         <label className={classes.wideField}>
-          <span className={classes.label}>Show prices in</span>
+          <span className={classes.label}>{t("display.showPricesIn")}</span>
           <select
             className={classes.input}
             value={currency}
@@ -98,8 +116,8 @@ const DisplayCurrencySettings = () => {
           >
             <option value="">
               {countryCurrency
-                ? `My country's currency (${countryCurrency.toUpperCase()})`
-                : "The creator's own currency (no conversion)"}
+                ? t("display.countryCurrency", { currency: countryCurrency.toUpperCase() })
+                : t("display.creatorCurrency")}
             </option>
             {SUPPORTED_CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -108,7 +126,7 @@ const DisplayCurrencySettings = () => {
             ))}
           </select>
           <span className={classes.hint}>
-            Converted prices are estimates and are marked with ≈.
+            {t("display.estimateHint")}
           </span>
         </label>
       </div>
@@ -120,21 +138,20 @@ const DisplayCurrencySettings = () => {
           disabled={savePreferences.isPending || preferencesQuery.isLoading}
           onClick={() => void save()}
         >
-          {savePreferences.isPending ? "Saving…" : "Save"}
+          {savePreferences.isPending ? t("display.saving") : t("display.save")}
         </button>
       </div>
 
       {justSaved && (
         <div className={classes.success} role="status">
-          Saved.
-          {savePreferences.isGuest &&
-            " Sign in to keep it: without an account it lasts until you reload or close this page."}
+          {t("display.saved")}
+          {savePreferences.isGuest && t("display.guestNote")}
         </div>
       )}
 
       {savePreferences.error && (
         <div className={classes.error} role="alert">
-          Your choice could not be saved. Please try again.
+          {t("display.saveError")}
         </div>
       )}
     </>

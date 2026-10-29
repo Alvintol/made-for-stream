@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useDisplayCurrency } from "../../hooks/money/useDisplayCurrency";
-import { DEFAULT_LANGUAGE } from "../../lib/i18n/languages";
+import { useLanguage, useT } from "../../lib/i18n/i18n";
 import DisplayCurrencySettings from "../settings/DisplayCurrencySettings";
 
 const classes = {
@@ -25,8 +25,10 @@ const GlobeIcon = () => (
 const RegionPicker = () => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { displayCurrency } = useDisplayCurrency();
+  const language = useLanguage();
+  const t = useT();
 
-  const label = [DEFAULT_LANGUAGE, displayCurrency]
+  const label = [language, displayCurrency]
     .filter(Boolean)
     .join(" · ")
     .toUpperCase();
@@ -37,8 +39,8 @@ const RegionPicker = () => {
         type="button"
         className={classes.button}
         aria-haspopup="dialog"
-        aria-label={`Language and currency (${label})`}
-        title="Language and currency"
+        aria-label={t("region.button", { label })}
+        title={t("region.title")}
         onClick={() => dialogRef.current?.showModal()}
       >
         <GlobeIcon />
@@ -57,13 +59,13 @@ const RegionPicker = () => {
         <div className={classes.body}>
           <div className={classes.header}>
             <h2 id="region-dialog-title" className={classes.title}>
-              Language and currency
+              {t("region.title")}
             </h2>
 
             <button
               type="button"
               className={classes.close}
-              aria-label="Close"
+              aria-label={t("region.close")}
               onClick={() => dialogRef.current?.close()}
             >
               ✕
