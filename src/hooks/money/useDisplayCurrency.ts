@@ -6,6 +6,8 @@ import { useAuth } from "../../providers/AuthProvider";
 export type DisplayPreferences = {
   country_code: string | null;
   display_currency: string | null;
+  // The chosen site language (20261029_173). Null: follow the browser.
+  language?: string | null;
 };
 
 const getApiBase = (): string =>
@@ -50,7 +52,7 @@ export const useDisplayPreferences = () => {
 
       const { data, error } = await supabase
         .from("user_display_preferences")
-        .select("country_code, display_currency")
+        .select("country_code, display_currency, language")
         .eq("user_id", userId)
         .maybeSingle();
 

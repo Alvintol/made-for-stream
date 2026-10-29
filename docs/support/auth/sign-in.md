@@ -217,7 +217,10 @@ tier: 2
 signals:
   - source: ui
     match: "Please accept the Terms of Service and Privacy Policy to continue."
-    where: "src/pages/SignIn.tsx, under the agreement box"
+    where: "src/pages/SignIn.tsx, under the agreement box (signin.policyRequired)"
+  - source: ui
+    match: "Veuillez accepter les Conditions d’utilisation et la Politique de confidentialité pour continuer."
+    where: "the same, with the site in French (site/languages.md)"
 auto_fix: none
 reason_not_automatable: "the person has to tick the box; nothing is wrong"
 ```

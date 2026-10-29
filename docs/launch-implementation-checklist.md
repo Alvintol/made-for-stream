@@ -971,7 +971,15 @@ Build order (each its own branch):
       in `claude/compliance/` (gitignored: the repo is public and they
       describe weak points). Owner reviews, adopts and dates them. Website
       only.
-- [ ] **French, in stages.**
+- [ ] **French, in stages.** Foundation built on `feat/i18n-foundation`
+      (2026-10-29): our own translation helper (no library, no widget),
+      migration 173 (the saved language), `<html lang>`, French offered only
+      in development or with `VITE_OFFER_UNFINISHED_LANGUAGES=true` until
+      ready. Translated so far: top bar, menu, categories, footer, language
+      and currency dialog, sign-in (LANG-001 in `site/languages.md`). Next:
+      the remaining screens a few at a time, then the policies by a
+      translator, then a French speaker's review, then mark French ready and
+      lift the Quebec block.
 
 Owner's steps, outside the code:
 

@@ -13,6 +13,8 @@ import { useSellerAccess } from '../../hooks/creatorApplication/useSellerAccess'
 import { useMyAdminAccess } from '../../hooks/admin/useMyAdminAccess';
 import { useMessagesInbox } from '../../hooks/conversations/useMessagesInbox';
 import { useCollapsed, useFitCount } from "../../hooks/useCollapsed";
+import { useT } from "../../lib/i18n/i18n";
+import type { MessageKey } from "../../lib/i18n/messages/en";
 import RegionPicker from "./RegionPicker";
 import ThemeToggle from "./ThemeToggle";
 
@@ -138,6 +140,7 @@ const Nav = () => {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const [q, setQ] = useState("");
+  const t = useT();
   const topRowRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const categoryInnerRef = useRef<HTMLDivElement | null>(null);
@@ -177,9 +180,9 @@ const Nav = () => {
     () =>
       CATEGORIES.map((category) => ({
         key: String(category.key),
-        label: String(category.label),
+        label: t(`category.${category.key}` as MessageKey),
       })),
-    []
+    [t]
   );
 
   // Category chips only reflect the ?cat= param while on /market — on /free
@@ -194,11 +197,11 @@ const Nav = () => {
   // Every chip in the category rail, in order. As many as fit are shown; the
   // rest sit behind the "Other categories" button.
   const categoryItems = [
-    { key: "all", to: "/market", label: "All", className: chipClass(null) },
+    { key: "all", to: "/market", label: t("nav.all"), className: chipClass(null) },
     {
       key: "free",
       to: "/free",
-      label: "Free",
+      label: t("nav.free"),
       className: isFreeRoute ? classes.chipActive : classes.chip,
     },
     ...categoryLinks.map((category) => ({
@@ -220,7 +223,7 @@ const Nav = () => {
     : classes.chip;
 
   const otherCategoriesLabel =
-    shownCategories.length > 0 ? "Other categories" : "Categories";
+    shownCategories.length > 0 ? t("nav.otherCategories") : t("nav.categories");
 
   const renderCategoryChip = (item: (typeof categoryItems)[number]) => (
     <Link key={item.key} to={item.to} className={item.className}>
@@ -246,7 +249,7 @@ const Nav = () => {
       to="/creator/dashboard"
       className={({ isActive }) => getAuthPillClass(isActive)}
     >
-      Dashboard
+      {t("nav.dashboard")}
     </NavLink>
   );
 
@@ -255,19 +258,19 @@ const Nav = () => {
       to="/messages"
       aria-label={
         unreadMessageCount > 0
-          ? `Inbox, ${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-          : "Inbox"
+          ? t("nav.inboxUnread", { count: unreadMessageCount })
+          : t("nav.inbox")
       }
       title={
         unreadMessageCount > 0
-          ? `${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`
-          : "Inbox"
+          ? t("nav.unread", { count: unreadMessageCount })
+          : t("nav.inbox")
       }
       className={({ isActive }) => getAuthPillClass(isActive)}
     >
       <span className={classes.navLabelWrap}>
         <InboxIcon />
-        <span className="navWord">Inbox</span>
+        <span className="navWord">{t("nav.inbox")}</span>
 
         {unreadMessageCount > 0 && (
           <span className={classes.navPillCount}>
@@ -280,7 +283,7 @@ const Nav = () => {
 
   const signInLink = !loading && !user && (
     <NavLink to="/signin" className={classes.signInButton}>
-      Sign in
+      {t("nav.signIn")}
     </NavLink>
   );
 
@@ -292,11 +295,11 @@ const Nav = () => {
   const pageLinks = (withPriority: boolean) => (
     <>
       <NavLink to="/market" className={({ isActive }) => getPillClass(isActive)}>
-        Market
+        {t("nav.market")}
       </NavLink>
 
       <NavLink to="/creators" className={({ isActive }) => getPillClass(isActive)}>
-        Creators
+        {t("nav.creators")}
       </NavLink>
 
       {withPriority && dashboardLink}
@@ -306,18 +309,18 @@ const Nav = () => {
           to="/admin/dashboard"
           className={({ isActive }) => getAuthPillClass(isActive)}
         >
-          Admin
+          {t("nav.admin")}
         </NavLink>
       )}
 
       <NavLink
         to="/live"
-        title="Live"
+        title={t("nav.live")}
         className={({ isActive }) => getLivePillClass(isActive, liveCount)}
       >
         <span className={classes.navLabelWrap}>
           <LiveIcon />
-          <span className="navWord">Live</span>
+          <span className="navWord">{t("nav.live")}</span>
 
           {liveCount > 0 && (
             <span className={classes.navPillCount}>{liveCount}</span>
@@ -332,11 +335,11 @@ const Nav = () => {
       {!loading && user && (
         <NavLink
           to="/settings/profile"
-          title="Settings"
+          title={t("nav.settings")}
           className={({ isActive }) => getAuthPillClass(isActive)}
         >
           <SettingsIcon />
-          <span className="navWord">Settings</span>
+          <span className="navWord">{t("nav.settings")}</span>
         </NavLink>
       )}
 
@@ -348,7 +351,7 @@ const Nav = () => {
           className={`${classes.navPillButton} ${classes.navPillIdle}`}
           onClick={onSignOut}
         >
-          Sign out
+          {t("nav.signOut")}
         </button>
       )}
     </>
@@ -384,20 +387,20 @@ const Nav = () => {
         <form className={classes.form} onSubmit={onSubmit} data-flexible>
           <input
             className={classes.searchInput}
-            aria-label="Search marketplace"
+            aria-label={t("nav.searchLabel")}
             value={q}
             onChange={(event) => setQ(event.currentTarget.value)}
-            placeholder="Search emotes, overlays, VTuber models, editors, riggers…"
+            placeholder={t("nav.searchPlaceholder")}
           />
 
           <button type="submit" className={classes.searchButton}>
-            Search
+            {t("nav.search")}
           </button>
         </form>
 
         <nav
           ref={navRef}
-          aria-label="Main"
+          aria-label={t("nav.main")}
           aria-hidden={navCollapsed}
           className={`${classes.nav} ${navCollapsed ? classes.collapsed : ""}`.trim()}
         >
@@ -422,7 +425,7 @@ const Nav = () => {
           <button
             type="button"
             className={classes.menuButton}
-            aria-label="Menu"
+            aria-label={t("nav.menu")}
             aria-expanded={openMenu === "nav"}
             onClick={() => setOpenMenu(openMenu === "nav" ? null : "nav")}
           >
@@ -433,7 +436,7 @@ const Nav = () => {
 
       {navCollapsed && openMenu === "nav" && (
         <nav
-          aria-label="Menu"
+          aria-label={t("nav.menu")}
           className={classes.navMenu}
           onClick={(event) => {
             // Choosing a page closes the menu. The language, currency and
@@ -464,7 +467,7 @@ const Nav = () => {
                 {item.label}
               </span>
             ))}
-            <span className={classes.chip}>Other categories ▾</span>
+            <span className={classes.chip}>{t("nav.otherCategories")} ▾</span>
           </div>
 
           <div className={classes.categoryRow} data-flexible>
@@ -483,7 +486,7 @@ const Nav = () => {
 
                 {openMenu === "categories" && (
                   <nav
-                    aria-label="Other categories"
+                    aria-label={t("nav.otherCategories")}
                     // Opens leftwards from the button unless that would run
                     // off the left edge of a narrow window.
                     className={`${classes.categoryMenu} ${shownCategories.length > 1 ? "right-0" : "left-0"}`}
@@ -498,11 +501,11 @@ const Nav = () => {
 
           <div className={classes.statementWrap}>
             <span className={classes.statement}>
-              Human-made • No generative AI
+              {t("nav.statement")}
             </span>
 
             <Link to="/about" className={classes.aboutLink}>
-              Learn more →
+              {t("nav.learnMore")}
             </Link>
           </div>
         </div>
