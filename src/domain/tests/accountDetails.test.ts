@@ -1,8 +1,13 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
   emptyAccountDetailsForm,
   getRegionOptions,
+  QUEBEC_MESSAGE,
+  SANCTIONED_COUNTRIES,
+  SANCTIONED_COUNTRY_MESSAGE,
   toAccountDetailsForm,
   validateAccountDetails,
   type AccountDetailsForm,
@@ -21,6 +26,29 @@ const valid: AccountDetailsForm = {
   postal_code: "T2T 2T2",
   country_code: "CA",
 };
+
+describe("places Made for Stream does not serve", () => {
+  it("refuses a sanctioned country, and Quebec, with the database's own sentences", () => {
+    expect(validateAccountDetails({ ...valid, country_code: "RU", region: "", postal_code: "" }, today).errors).toEqual({
+      country_code: SANCTIONED_COUNTRY_MESSAGE,
+    });
+    expect(validateAccountDetails({ ...valid, region: "QC" }, today).errors).toEqual({ region: QUEBEC_MESSAGE });
+    expect(validateAccountDetails({ ...valid, region: "ON" }, today).errors).toEqual({});
+  });
+
+  it("matches the database's list and wording exactly", () => {
+    const migration = fs
+      .readFileSync(
+        path.resolve(__dirname, "../../../supabase/migrations/20261029_171_block_sanctioned_countries_and_quebec.sql"),
+        "utf8",
+      )
+      .replace(/''/g, "'");
+
+    expect(migration).toContain(`in (${SANCTIONED_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
+    expect(migration).toContain(SANCTIONED_COUNTRY_MESSAGE);
+    expect(migration).toContain(QUEBEC_MESSAGE);
+  });
+});
 
 describe("validateAccountDetails", () => {
   it("accepts a complete individual and tidies what was typed", () => {

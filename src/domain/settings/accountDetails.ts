@@ -77,6 +77,17 @@ export const getRegionOptions = (
     .sort((a, b) => a.name.localeCompare(b.name, locale));
 };
 
+// Places Made for Stream does not serve, as the database's
+// blocked_location_message() (20261029_171) says them: sanctioned countries,
+// and Quebec until the site is in French.
+export const SANCTIONED_COUNTRIES = ["BY", "CU", "IR", "KP", "RU", "SY"] as const;
+
+export const SANCTIONED_COUNTRY_MESSAGE =
+  "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider.";
+
+export const QUEBEC_MESSAGE =
+  "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way.";
+
 const yearsAgo = (years: number, today: Date): string => {
   const date = new Date(Date.UTC(today.getFullYear() - years, today.getMonth(), today.getDate()));
 
@@ -111,6 +122,12 @@ export const validateAccountDetails = (
   if (REGION_CODES[trimmed.country_code]) {
     require("region", "Choose your province or state.");
     require("postal_code", "Enter your postal or ZIP code.");
+  }
+
+  if ((SANCTIONED_COUNTRIES as readonly string[]).includes(trimmed.country_code.toUpperCase())) {
+    errors.country_code = SANCTIONED_COUNTRY_MESSAGE;
+  } else if (trimmed.country_code === "CA" && trimmed.region.toUpperCase() === "QC") {
+    errors.region = QUEBEC_MESSAGE;
   }
 
   if (trimmed.account_type === "business") {

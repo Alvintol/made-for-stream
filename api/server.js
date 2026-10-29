@@ -2291,6 +2291,26 @@ const recordTaxEvidence = async (paymentId, evidenceType, country, source) => {
   }
 };
 
+// Sanctioned countries, and Quebec until the site is in French
+// (20261029_171, ACC-006): the payer's saved address, then the country of
+// their internet address when TAX_IP_COUNTRY_HEADER is set. Checked before
+// a session is reused or created; the database refuses checkout_opened for
+// a blocked address as well.
+const assertCheckoutLocationAllowed = async ({ req, userId }) => {
+  const { data: message, error } = await supabaseAdmin.rpc("blocked_checkout_message", {
+    p_user_id: userId,
+    p_ip_country: getIpCountryFromRequest(req, TAX_CONFIG.ipCountryHeader),
+  });
+
+  if (error) {
+    throw new Error("Your location could not be checked. Please try again.");
+  }
+
+  if (message) {
+    throw new Error(message);
+  }
+};
+
 const applyCheckoutTax = async ({ stripeClient, payment, req, userId }) => {
   if (TAX_CONFIG.configError) {
     throw new Error(TAX_CONFIG.configError);
@@ -2977,6 +2997,7 @@ app.post("/api/stripe/checkout/session", async (req, res) => {
 
     assertCheckoutPaymentCanBeOpened({ payment, userId });
     await assertCheckoutPoliciesAccepted({ payment, userId });
+    await assertCheckoutLocationAllowed({ req, userId });
 
     const creatorPaymentAccount = await getReadyCreatorPaymentAccount(
       payment.creator_user_id,
