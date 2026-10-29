@@ -41,6 +41,20 @@ export default defineConfig([
     },
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // A provider's own hook, context or shared classes live beside it.
+      // Editing one of these files reloads the page instead of hot-swapping.
+      'react-refresh/only-export-components': ['error', {
+        allowConstantExport: true,
+        allowExportNames: [
+          'useAuth',
+          'useCookiePreferences',
+          'useTheme',
+          'useWorkspace',
+          'HubStateContext',
+          'HubActionsContext',
+          'actionMenuItemClasses',
+        ],
+      }],
     },
   },
   {

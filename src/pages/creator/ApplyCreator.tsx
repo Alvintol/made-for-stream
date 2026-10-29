@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../providers/AuthProvider";
 import { useSellerAccess } from "../../hooks/creatorApplication/useSellerAccess";
@@ -199,19 +199,20 @@ const ApplyCreator = () => {
     ageAndCapacity: false,
   });
 
-  useEffect(() => {
-    setAgreements({
-      terms: Boolean(sellerApplication?.agreed_to_terms),
-      originalWork: Boolean(sellerApplication?.agreed_to_original_work),
-      manualReview: Boolean(sellerApplication?.agreed_to_manual_review),
-      ageAndCapacity: Boolean(sellerApplication?.agreed_to_age_and_capacity),
-    });
-  }, [
-    sellerApplication?.agreed_to_terms,
-    sellerApplication?.agreed_to_original_work,
-    sellerApplication?.agreed_to_manual_review,
-    sellerApplication?.agreed_to_age_and_capacity,
-  ]);
+  // The saved answers load into the checkboxes whenever they change (while
+  // rendering, not in an effect).
+  const savedAgreements: Record<AgreementKey, boolean> = {
+    terms: Boolean(sellerApplication?.agreed_to_terms),
+    originalWork: Boolean(sellerApplication?.agreed_to_original_work),
+    manualReview: Boolean(sellerApplication?.agreed_to_manual_review),
+    ageAndCapacity: Boolean(sellerApplication?.agreed_to_age_and_capacity),
+  };
+  const savedAgreementsKey = JSON.stringify(savedAgreements);
+  const [agreementsFor, setAgreementsFor] = useState<string | null>(null);
+  if (savedAgreementsKey !== agreementsFor) {
+    setAgreementsFor(savedAgreementsKey);
+    setAgreements(savedAgreements);
+  }
 
   const recentUploadSample = useMemo(
     () => samples.find(isRequiredRecentUploadSample) ?? null,
@@ -219,9 +220,13 @@ const ApplyCreator = () => {
   );
   const otherSamples = samples.filter((sample) => sample !== recentUploadSample);
 
-  useEffect(() => {
+  const [recentUploadFor, setRecentUploadFor] = useState<typeof recentUploadSample | undefined>(
+    undefined
+  );
+  if (recentUploadSample !== recentUploadFor) {
+    setRecentUploadFor(recentUploadSample);
     setRecentUploadUrl(recentUploadSample?.url ?? "");
-  }, [recentUploadSample]);
+  }
 
   const acceptedCount = Object.values(agreements).filter(Boolean).length;
   const agreementsAccepted = acceptedCount === 4;

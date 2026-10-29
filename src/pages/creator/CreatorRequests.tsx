@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useState } from "react";
 import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { Link } from "react-router-dom";
 
@@ -147,11 +144,14 @@ const CreatorRequests = ({
   view = "active",
 }: CreatorRequestsProps) => {
   const [page, setPage] = useState(1);
+  const [pageView, setPageView] = useState(view);
   const content = viewContent[view];
 
-  useEffect(() => {
+  // Another tab starts on page 1 (reset while rendering, not in an effect).
+  if (pageView !== view) {
+    setPageView(view);
     setPage(1);
-  }, [view]);
+  }
 
   const {
     data,

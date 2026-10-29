@@ -118,7 +118,6 @@ const ExpandingFormPanel = ({ title, description, launchLabel, children }: Expan
       document.removeEventListener("keydown", handleKey);
     };
     // close only reads refs, so re-binding on each render isn't needed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   return (
@@ -163,6 +162,8 @@ const ExpandingFormPanel = ({ title, description, launchLabel, children }: Expan
               </div>
 
               <div className={classes.body}>
+                {/* The form calls close only from its own handlers, never while rendering. */}
+                {/* eslint-disable-next-line react-hooks/refs */}
                 {typeof children === "function" ? children(close) : children}
               </div>
             </div>

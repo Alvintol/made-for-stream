@@ -406,7 +406,6 @@ const ListingRequestAgreementBuilder = ({
       form.paymentStructure === "deposit_balance"
         ? parsePositiveNumber(form.depositAmount)
         : null;
-    const estimatedWorkDays = parseWholeNumber(form.estimatedWorkDays);
     const includedRevisionCount = parseWholeNumber(form.includedRevisionCount);
     const estimatedCompletionAt = getIsoFromDateInput(
       form.estimatedCompletionDate

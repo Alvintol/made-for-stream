@@ -111,15 +111,22 @@ const MyReports = () => {
 
   const unreadIds = reports.filter((report) => report.has_unread_update).map((report) => report.id);
   const unreadKey = unreadIds.join(",");
+  const [freshKey, setFreshKey] = useState<string | null>(null);
   const markedKeyRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (isLoading || error || !unreadKey || markedKeyRef.current === unreadKey) return;
-
-    markedKeyRef.current = unreadKey;
+  // New updates stay highlighted after they are marked seen (recorded while
+  // rendering, not in an effect); the effect tells the server once per set.
+  if (!isLoading && !error && unreadKey && freshKey !== unreadKey) {
+    setFreshKey(unreadKey);
     setFreshUpdateIds((current) => new Set([...current, ...unreadKey.split(",")]));
+  }
+
+  useEffect(() => {
+    if (!freshKey || markedKeyRef.current === freshKey) return;
+
+    markedKeyRef.current = freshKey;
     markReportsSeen.mutate();
-  }, [isLoading, error, unreadKey, markReportsSeen]);
+  }, [freshKey, markReportsSeen]);
 
   const hasReports = !isLoading && !error && reports.length > 0;
 
