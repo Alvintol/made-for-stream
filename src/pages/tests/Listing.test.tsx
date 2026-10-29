@@ -111,6 +111,8 @@ describe("<ListingPage /> report UI", () => {
     expect(
       screen.getByText("You need to sign in before reporting a listing.")
     ).toBeInTheDocument();
+    // Anyone can report, account or not (Terms section 10).
+    expect(screen.getByText(/No account\? Email safety@madeforstream\.com/)).toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: "Sign in to report" })).toHaveAttribute(
       "href",

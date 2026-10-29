@@ -42,9 +42,10 @@ export const conversationModerationReportReasonOptions: Array<{
     { value: "spam", label: "Spam or repeated unwanted messages" },
     { value: "harassment", label: "Harassment or abusive behaviour" },
     { value: "scam_or_suspicious", label: "Scam or suspicious behaviour" },
-    { value: "inappropriate_content", label: "Inappropriate content" },
+    { value: "inappropriate_content", label: "Inappropriate, mature or adult content" },
     { value: "unsolicited_images", label: "Unsolicited images or references" },
     { value: "off_platform_payment", label: "Asked to move payment off-platform" },
+    { value: "policy_violation", label: "Illegal, or against another Made for Stream rule" },
     { value: "other", label: "Other" },
   ];
 
@@ -82,15 +83,28 @@ export const moderationReportReasonOptions: Array<{
     { value: "spam", label: "Spam or repeated unwanted messages" },
     { value: "harassment", label: "Harassment or abusive behaviour" },
     { value: "scam_or_suspicious", label: "Scam or suspicious behaviour" },
-    { value: "inappropriate_content", label: "Inappropriate content" },
+    { value: "inappropriate_content", label: "Inappropriate, mature or adult content" },
     { value: "unsolicited_images", label: "Unsolicited images or references" },
     { value: "off_platform_payment", label: "Asked to move payment off-platform" },
     { value: "misleading_listing", label: "Misleading listing" },
     { value: "stolen_or_copied_work", label: "Stolen or copied work" },
     { value: "impersonation", label: "Impersonation" },
-    { value: "policy_violation", label: "Policy violation" },
+    { value: "policy_violation", label: "Illegal, or against another Made for Stream rule" },
     { value: "other", label: "Other" },
   ];
+
+// Shown above every report form's submit button. A notice of illegal content
+// must explain why it is illegal and carry the sender's statement that it is
+// accurate (EU Digital Services Act article 16, Community Guidelines
+// section 6). The reporter's identity and the content's location come from
+// the signed-in account and the page.
+export const reportSubmitNote =
+  "If you believe it is illegal, say why in the details. By sending this report, you confirm that you believe it is accurate and complete.";
+
+// Shown to someone signed out: anyone can report, account or not
+// (Terms section 10).
+export const reportWithoutAccountNote =
+  "No account? Email safety@madeforstream.com with this page's address and why you are reporting it.";
 
 export const getModerationReportTargetTypeLabel = (
   targetType: ModerationReportTargetType

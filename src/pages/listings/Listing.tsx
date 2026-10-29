@@ -30,7 +30,12 @@ const getFreeListingHref = (listing: PublicListingRow): string | null => {
   return null;
 };
 import { useState } from 'react';
-import { ModerationReportReasonCode, moderationReportReasonOptions } from '../../domain/moderation/moderationReports';
+import {
+  ModerationReportReasonCode,
+  moderationReportReasonOptions,
+  reportSubmitNote,
+  reportWithoutAccountNote,
+} from '../../domain/moderation/moderationReports';
 import { useSubmitListingModerationReport } from '../../hooks/moderation/useSubmitListingModerationReport';
 import { useAuth } from '../../providers/AuthProvider';
 import { useActiveListingRequestForListing } from '../../hooks/listings/useActiveListingRequestForListing';
@@ -398,6 +403,8 @@ const ListingPage = () => {
                   You need to sign in before reporting a listing.
                 </p>
 
+                <p className={classes.reportText}>{reportWithoutAccountNote}</p>
+
                 <Link className={classes.btnOutline} to="/signin">
                   Sign in to report
                 </Link>
@@ -465,6 +472,8 @@ const ListingPage = () => {
                         {reportDetailsTrimmed.length}/2000 characters.
                       </div>
                     </div>
+
+                    <p className={classes.hint}>{reportSubmitNote}</p>
 
                     <div className={classes.row}>
                       <button
