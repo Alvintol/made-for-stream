@@ -30,22 +30,21 @@ export const normaliseFulfilmentMode = (
   allowsInstantFulfilment(offeringType) ? fulfilmentMode : "request";
 
 // Buyer-facing CTA copy for public listing pages
+// The listing page's call to action, as translation keys (lib/i18n).
 export const getFulfilmentModeCopy = (
   fulfilmentMode: ListingFulfilmentMode
 ) =>
   fulfilmentMode === "instant"
-    ? {
-      title: "Instant purchase coming soon",
-      text:
-        "This listing is intended for direct repeat purchases once digital delivery is added.",
-      primaryLabel: "Buy instantly soon",
-    }
-    : {
-      title: "Commission flow coming soon",
-      text:
-        "This listing is intended to start with creator review or confirmation before work begins.",
-      primaryLabel: "Commission commissions coming soon",
-    };
+    ? ({
+      title: "listing.instantTitle",
+      text: "listing.instantText",
+      primaryLabel: "listing.instantButton",
+    } as const)
+    : ({
+      title: "listing.requestTitle",
+      text: "listing.requestText",
+      primaryLabel: "listing.requestButton",
+    } as const);
 
 // Free listings skip Stripe entirely: a creator gives a listing away either
 // as a direct file download (uploaded to the free-assets storage bucket) or

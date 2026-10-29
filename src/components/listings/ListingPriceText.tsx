@@ -4,6 +4,7 @@ import {
 } from "../../domain/payments/listingRequestPaymentDisplay";
 import { useDisplayCurrency } from "../../hooks/money/useDisplayCurrency";
 import { useBuyerServiceFeeRate } from "../../hooks/payments/useBuyerServiceFeeRate";
+import { useLanguage, useT } from "../../lib/i18n/i18n";
 import {
   formatApproximateListingPrice,
   formatListingPrice,
@@ -41,6 +42,9 @@ const classes = {
 const ListingPriceText = ({ listing, variant = "compact" }: ListingPriceTextProps) => {
   const { displayCurrency, rates } = useDisplayCurrency();
   const { feeBps } = useBuyerServiceFeeRate();
+  const t = useT();
+  const language = useLanguage();
+  const from = t("price.from");
 
   const withFee = {
     ...listing,
@@ -49,32 +53,28 @@ const ListingPriceText = ({ listing, variant = "compact" }: ListingPriceTextProp
       listing.price_max === null ? null : priceWithBuyerServiceFee(listing.price_max, feeBps),
   };
 
-  const actual = formatListingPrice(withFee);
-  const approximate = formatApproximateListingPrice(withFee, displayCurrency, rates);
+  const actual = formatListingPrice(withFee, from);
+  const approximate = formatApproximateListingPrice(withFee, displayCurrency, rates, from);
+  const rate = formatFeeRateBps(feeBps);
   // A free listing has no fee to mention.
-  const feeText =
-    feeBps > 0 && withFee.price_min > 0 ? `Includes ${formatFeeRateBps(feeBps)} service fee` : null;
+  const showFee = feeBps > 0 && withFee.price_min > 0;
+  const listingCurrency = (listing.currency || LEGACY_LISTING_CURRENCY).toUpperCase();
 
   if (variant === "compact") {
     return (
       <>
         {approximate && displayCurrency ? (
-          <span title={`Priced in ${(listing.currency || LEGACY_LISTING_CURRENCY).toUpperCase()}: ${actual}. The figure shown is an estimate.`}>
+          <span title={t("price.estimateTitle", { currency: listingCurrency, price: actual })}>
             {approximate}
-            <span className="sr-only">
-              {" "}
-              (approximate; the listing is priced at {actual})
-            </span>
+            <span className="sr-only"> {t("price.approximate", { price: actual })}</span>
           </span>
         ) : (
           actual
         )}
-        {feeText && <span className={classes.fee}>{feeText}</span>}
+        {showFee && <span className={classes.fee}>{t("price.includesFee", { rate })}</span>}
       </>
     );
   }
-
-  const listingCurrency = (listing.currency || LEGACY_LISTING_CURRENCY).toUpperCase();
 
   return (
     <>
@@ -82,19 +82,20 @@ const ListingPriceText = ({ listing, variant = "compact" }: ListingPriceTextProp
 
       {approximate && displayCurrency && <div className={classes.approx}>{approximate}</div>}
 
-      {feeText && (
+      {showFee && (
         <p className={classes.note}>
-          {feeText}: the creator's price is {formatListingPrice(listing)}. Tax, if any, is
-          added at checkout.
+          {t("price.feeNote", { rate, price: formatListingPrice(listing, from) })}
         </p>
       )}
 
       {approximate && displayCurrency && (
         <p className={classes.note}>
-          This listing is priced in {getCurrencyName(listingCurrency)} ({listingCurrency}), the
-          creator's currency. The {displayCurrency.toUpperCase()} figure is an estimate from the
-          European Central Bank's reference rate for {rates?.date}. You pay in {listingCurrency},
-          and your bank or card provider sets the rate you actually get.
+          {t("price.currencyNote", {
+            currencyName: getCurrencyName(listingCurrency, language),
+            currency: listingCurrency,
+            displayCurrency: displayCurrency.toUpperCase(),
+            date: rates?.date ?? "",
+          })}
         </p>
       )}
     </>

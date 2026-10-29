@@ -3,6 +3,7 @@ import CreatorCard, { type CreatorCardModel } from "../../components/creators/Cr
 import { normalizeTwitchLogin } from "../../domain/twitch";
 import { usePublicCreators, type PublicCreatorItem } from "../../hooks/usePublicCreators";
 import { useTwitchStreams } from "../../hooks/useTwitchStreams";
+import { useT } from "../../lib/i18n/i18n";
 import { StaggerGroup } from "../../lib/motion";
 import {
   useHubState,
@@ -121,27 +122,32 @@ const getFilteredCreators = (
   });
 };
 
-const PageHeader = () => (
-  <div className={classes.headerWrap}>
-    <h1 className={classes.h1}>Creators</h1>
-    <p className={classes.subtitle}>
-      Find artists, editors, and VTuber asset creators.
-    </p>
-  </div>
-);
+const PageHeader = () => {
+  const t = useT();
+
+  return (
+    <div className={classes.headerWrap}>
+      <h1 className={classes.h1}>{t("creators.title")}</h1>
+      <p className={classes.subtitle}>{t("creators.subtitle")}</p>
+    </div>
+  );
+};
 
 type FiltersRowProps = {
   filters: HubFilters;
   setFilters: HubActions["setFilters"];
 };
 
-const FiltersRow = ({ filters, setFilters }: FiltersRowProps) => (
+const FiltersRow = ({ filters, setFilters }: FiltersRowProps) => {
+  const t = useT();
+
+  return (
   <div className={classes.filtersGrid}>
     <input
       className={classes.input}
       value={filters.q}
       onChange={(event) => setFilters({ q: event.currentTarget.value })}
-      placeholder="Search creators (emotes, vtuber, editing, style tags...)"
+      placeholder={t("creators.searchPlaceholder")}
     />
 
     <div className={classes.togglesRow}>
@@ -154,7 +160,7 @@ const FiltersRow = ({ filters, setFilters }: FiltersRowProps) => (
             setFilters({ onlyLive: event.currentTarget.checked })
           }
         />
-        Live
+        {t("common.live")}
       </label>
 
       <label className={classes.label}>
@@ -166,11 +172,12 @@ const FiltersRow = ({ filters, setFilters }: FiltersRowProps) => (
             setFilters({ onlyOpen: event.currentTarget.checked })
           }
         />
-        Open
+        {t("creators.open")}
       </label>
     </div>
   </div>
-);
+  );
+};
 
 const CreatorsPage = () => {
   const { filters } = useHubState();
@@ -178,7 +185,7 @@ const CreatorsPage = () => {
   const { twitchByLogin } = useTwitchStreams();
 
   const { data: items = [], isLoading, error } = usePublicCreators();
-
+  const t = useT();
   const creators = useMemo(() => {
     return items.map((item) => {
       const twitchAccount =
@@ -206,16 +213,16 @@ const CreatorsPage = () => {
       <PageHeader />
       <FiltersRow filters={filters} setFilters={setFilters} />
 
-      {isLoading && <div className={classes.loadingText}>Loading…</div>}
+      {isLoading && <div className={classes.loadingText}>{t("common.loading")}</div>}
 
       {error && !isLoading && (
         <div className={classes.loadingText}>
-          Could not load creators.
+          {t("creators.loadError")}
         </div>
       )}
 
       {!isLoading && !error && filtered.length === 0 && (
-        <div className={classes.emptyText}>No creators found.</div>
+        <div className={classes.emptyText}>{t("creators.empty")}</div>
       )}
 
       <StaggerGroup className={classes.cardsGrid} itemCount={filtered.length}>

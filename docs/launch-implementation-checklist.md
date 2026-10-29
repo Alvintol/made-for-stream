@@ -976,7 +976,9 @@ Build order (each its own branch):
       migration 173 (the saved language), `<html lang>`, French offered only
       in development or with `VITE_OFFER_UNFINISHED_LANGUAGES=true` until
       ready. Translated so far: top bar, menu, categories, footer, language
-      and currency dialog, sign-in (LANG-001 in `site/languages.md`). Next:
+      and currency dialog, sign-in (LANG-001 in `site/languages.md`). Merged
+      as #190. Then (`feat/i18n-public-pages`): home, market, creators,
+      cards and prices, the listing page and its report form, 404. Next:
       the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.

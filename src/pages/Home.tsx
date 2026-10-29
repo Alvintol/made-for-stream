@@ -1,14 +1,13 @@
 import { useMemo } from "react";
 import ListingPriceText from "../components/listings/ListingPriceText";
 import { Link } from "react-router-dom";
-import { CATEGORIES } from "../domain/catalog";
 import { normalizeTwitchLogin, type TwitchStream } from "../domain/twitch";
 import { useMarketListings, type MarketListingItem } from "../hooks/listings/useMarketListings";
 import { usePublicCreators, type PublicCreatorItem } from "../hooks/usePublicCreators";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { StaggerGroup } from "../lib/motion";
 import HeroParallax from "../components/home/HeroParallax";
-
+import { hasMessage, useT } from "../lib/i18n/i18n";
 const classes = {
   page: "space-y-16",
 
@@ -61,23 +60,11 @@ const classes = {
   emptyText: "notice noticeNeutral",
 } as const;
 
-// Fast lookup map for category labels by key
-const categoryLabels = Object.fromEntries(
-  CATEGORIES.map((category) => [category.key, category.label])
-) as Record<string, string>;
-
-// Converts a category key into its display label
-const categoryLabel = (key: string): string => categoryLabels[key] ?? key;
-
 // Converts offering type into a small display pill label
-const offeringPill = (offeringType: string): string =>
-  offeringType === "digital"
-    ? "Digital"
-    : offeringType === "commission"
-      ? "Commission"
-      : offeringType === "service"
-        ? "Service"
-        : offeringType;
+const offeringPill = (offeringType: string, t: ReturnType<typeof useT>): string =>
+  offeringType === "digital" || offeringType === "commission" || offeringType === "service"
+    ? t(`offering.${offeringType}`)
+    : offeringType;
 
 type SectionHeaderProps = {
   eyebrow: string;
@@ -115,13 +102,13 @@ type FeaturedListingCardProps = {
 
 const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
   const { listing, creator } = item;
-
+  const t = useT();
   const videoSuffix =
     listing.category === "video-editing" && listing.video_subtype
-      ? ` • ${listing.video_subtype === "long-form" ? "Long Form" : "Short Form"}`
+      ? ` • ${t(listing.video_subtype === "long-form" ? "video.long-form" : "video.short-form")}`
       : "";
-
-  const creatorName = creator?.display_name ?? creator?.handle ?? "Unknown creator";
+  const creatorName = creator?.display_name ?? creator?.handle ?? t("common.unknownCreator");
+  const categoryKey = `category.${listing.category}`;
 
   return (
     <Link to={`/listing/${listing.id}`} className={classes.card}>
@@ -138,8 +125,8 @@ const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
         )}
 
         <div className={classes.mediaBadges}>
-          <span className={classes.badge}>{offeringPill(listing.offering_type)}</span>
-          <span className={classes.badgeFeatured}>Featured</span>
+          <span className={classes.badge}>{offeringPill(listing.offering_type, t)}</span>
+          <span className={classes.badgeFeatured}>{t("home.featuredTitle")}</span>
         </div>
       </div>
 
@@ -149,7 +136,7 @@ const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
             <div className={classes.featuredTitle}>{listing.title}</div>
 
             <div className={classes.featuredMeta}>
-              {categoryLabel(listing.category)}
+              {hasMessage(categoryKey) ? t(categoryKey) : listing.category}
               {videoSuffix}
             </div>
           </div>
@@ -164,7 +151,7 @@ const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
             {creatorName.charAt(0)}
           </span>
           <span>
-            by <span className={classes.featuredByName}>{creatorName}</span>
+            {t("common.by")} <span className={classes.featuredByName}>{creatorName}</span>
           </span>
         </div>
       </div>
@@ -177,19 +164,22 @@ type FeaturedSectionProps = {
   isLoading: boolean;
 };
 
-const FeaturedSection = ({ featuredListings, isLoading }: FeaturedSectionProps) => (
+const FeaturedSection = ({ featuredListings, isLoading }: FeaturedSectionProps) => {
+  const t = useT();
+
+  return (
   <section className={classes.section}>
     <SectionHeader
-      eyebrow="Handpicked"
-      title="Featured"
+      eyebrow={t("home.featuredEyebrow")}
+      title={t("home.featuredTitle")}
       to="/market"
-      linkText="Browse market →"
+      linkText={t("home.browseMarketArrow")}
     />
 
     {isLoading ? (
-      <p className={classes.loadingText}>Loading featured listings…</p>
+      <p className={classes.loadingText}>{t("home.loadingFeatured")}</p>
     ) : featuredListings.length === 0 ? (
-      <p className={classes.emptyText}>No listings available yet.</p>
+      <p className={classes.emptyText}>{t("home.noListings")}</p>
     ) : (
       <StaggerGroup className={classes.grid} itemCount={featuredListings.length}>
         {featuredListings.map((item) => (
@@ -198,7 +188,8 @@ const FeaturedSection = ({ featuredListings, isLoading }: FeaturedSectionProps) 
       </StaggerGroup>
     )}
   </section>
-);
+  );
+};
 
 type LiveNowItem = {
   creator: PublicCreatorItem["profile"];
@@ -209,6 +200,7 @@ type LiveNowItem = {
 type LiveCreatorCardProps = LiveNowItem;
 
 const LiveCreatorCard = ({ creator, verified, stream }: LiveCreatorCardProps) => {
+  const t = useT();
   const thumb =
     stream.thumbnailUrl
       ?.replace("{width}", "640")
@@ -224,22 +216,22 @@ const LiveCreatorCard = ({ creator, verified, stream }: LiveCreatorCardProps) =>
         )}
 
         <div className={classes.mediaBadges}>
-          <span className={classes.badgeLive}>Live</span>
-          {verified && <span className={classes.badge}>Verified</span>}
+          <span className={classes.badgeLive}>{t("common.live")}</span>
+          {verified && <span className={classes.badge}>{t("common.verified")}</span>}
         </div>
       </div>
 
       <div className={classes.cardBody}>
         <div className={classes.liveRow}>
           <div className={classes.liveTitle}>
-            {creator.display_name ?? creator.handle ?? "Creator"}
+            {creator.display_name ?? creator.handle ?? t("common.creator")}
           </div>
         </div>
 
         <p className={classes.liveDesc}>{stream.title ?? ""}</p>
 
         <p className={classes.liveMeta}>
-          Twitch • {stream.viewerCount ?? 0} viewers
+          Twitch • {t("common.viewers", { count: stream.viewerCount ?? 0 })}
           {stream.gameName ? ` • ${stream.gameName}` : ""}
         </p>
       </div>
@@ -253,25 +245,28 @@ type LiveNowSectionProps = {
   errorMsg: string | null;
 };
 
-const LiveNowSection = ({ liveNow, isFetching, errorMsg }: LiveNowSectionProps) => (
+const LiveNowSection = ({ liveNow, isFetching, errorMsg }: LiveNowSectionProps) => {
+  const t = useT();
+
+  return (
   <section className={classes.section}>
     <SectionHeader
-      eyebrow="On air"
-      title="Live now"
+      eyebrow={t("home.liveEyebrow")}
+      title={t("home.liveNow")}
       to="/live"
-      linkText="View all →"
+      linkText={t("home.viewAll")}
     />
 
     {errorMsg && (
       <div className={classes.liveErrorCard}>
-        <div className={classes.liveErrorTitle}>Live status unavailable</div>
+        <div className={classes.liveErrorTitle}>{t("home.liveUnavailable")}</div>
         <div className={classes.liveErrorBody}>{errorMsg}</div>
       </div>
     )}
 
     {liveNow.length === 0 ? (
       <p className={classes.emptyText}>
-        {isFetching ? "Checking live status…" : "No one is live right now."}
+        {isFetching ? t("home.checkingLive") : t("home.noOneLive")}
       </p>
     ) : (
       <StaggerGroup className={classes.grid} itemCount={Math.min(liveNow.length, 6)}>
@@ -286,7 +281,8 @@ const LiveNowSection = ({ liveNow, isFetching, errorMsg }: LiveNowSectionProps) 
       </StaggerGroup>
     )}
   </section>
-);
+  );
+};
 
 const Home = () => {
   const { twitchByLogin, isFetching, error } = useTwitchStreams();

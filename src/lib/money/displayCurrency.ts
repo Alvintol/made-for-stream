@@ -70,14 +70,16 @@ const priceRange = (listing: ListingPriceInput): { min: number; max: number | nu
     listing.price_type === "range" ? (listing.price_max ?? listing.price_min) : null,
 });
 
+// fromWord: "From" in the page's language (price.from).
 const formatRange = (
   priceType: string,
   min: number,
   max: number | null,
   currency: string,
+  fromWord = "From",
 ): string => {
   if (priceType === "starting_at") {
-    return `From ${formatCurrencyAmount(min, currency)}`;
+    return `${fromWord} ${formatCurrencyAmount(min, currency)}`;
   }
 
   if (priceType === "range" && max !== null) {
@@ -92,10 +94,10 @@ const formatRange = (
 };
 
 // The listing's real price, in the creator's currency.
-export const formatListingPrice = (listing: ListingPriceInput): string => {
+export const formatListingPrice = (listing: ListingPriceInput, fromWord?: string): string => {
   const { min, max } = priceRange(listing);
 
-  return formatRange(listing.price_type, min, max, normalise(listing.currency));
+  return formatRange(listing.price_type, min, max, normalise(listing.currency), fromWord);
 };
 
 // Null when the amount cannot be converted (same currency is not a
@@ -122,6 +124,7 @@ export const formatApproximateListingPrice = (
   listing: ListingPriceInput,
   displayCurrency: string | null | undefined,
   rates: ExchangeRates | null | undefined,
+  fromWord?: string,
 ): string | null => {
   if (!displayCurrency) return null;
 
@@ -139,14 +142,15 @@ export const formatApproximateListingPrice = (
     Math.round(convertedMin),
     convertedMax === null ? null : Math.round(convertedMax),
     normalise(displayCurrency),
+    fromWord,
   )}`;
 };
 
-export const getCurrencyName = (currency: string): string => {
+export const getCurrencyName = (currency: string, language = "en"): string => {
   const code = currency.toUpperCase();
 
   try {
-    return new Intl.DisplayNames(["en"], { type: "currency" }).of(code) ?? code;
+    return new Intl.DisplayNames([language], { type: "currency" }).of(code) ?? code;
   } catch {
     return code;
   }

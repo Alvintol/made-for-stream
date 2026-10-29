@@ -14,9 +14,9 @@ import {
   conversationModerationReportReasonOptions,
   getModerationReportStatusLabel,
   getModerationReportStatusSummary,
-  reportSubmitNote,
   type ModerationReportReasonCode,
 } from "../../domain/moderation/moderationReports";
+import { useT } from "../../lib/i18n/i18n";
 import { useCloseConversation } from "../../hooks/conversations/useCloseConversation";
 import {
   useApproveBuyerImageUpload,
@@ -297,6 +297,7 @@ const ConversationThread = ({
   const approveBuyerImageUploadMutation = useApproveBuyerImageUpload();
   const revokeBuyerImageUploadMutation = useRevokeBuyerImageUpload();
   const reportConversationMutation = useSubmitModerationReport();
+  const t = useT();
   const markConversationReadMutation = useMarkConversationRead();
   const { data: myReports = [] } = useMyModerationReports();
   const { data: participants = [] } = useConversationParticipants(conversation.id);
@@ -840,7 +841,7 @@ const ConversationThread = ({
                 )}
               </div>
 
-              <p className={classes.hint}>{reportSubmitNote}</p>
+              <p className={classes.hint}>{t("report.submitNote")}</p>
 
               <div className={classes.row}>
                 <button

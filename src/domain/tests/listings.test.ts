@@ -31,19 +31,17 @@ describe("listings domain helpers", () => {
 
   it("returns commission CTA copy for commission listings", () => {
     expect(getFulfilmentModeCopy("request")).toEqual({
-      title: "Commission flow coming soon",
-      text:
-        "This listing is intended to start with creator review or confirmation before work begins.",
-      primaryLabel: "Commission commissions coming soon",
+      title: "listing.requestTitle",
+      text: "listing.requestText",
+      primaryLabel: "listing.requestButton",
     });
   });
 
   it("returns instant CTA copy for instant listings", () => {
     expect(getFulfilmentModeCopy("instant")).toEqual({
-      title: "Instant purchase coming soon",
-      text:
-        "This listing is intended for direct repeat purchases once digital delivery is added.",
-      primaryLabel: "Buy instantly soon",
+      title: "listing.instantTitle",
+      text: "listing.instantText",
+      primaryLabel: "listing.instantButton",
     });
   });
 

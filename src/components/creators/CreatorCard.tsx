@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import FavouriteButton from '../layout/FavouriteButton';
-
+import { useT } from "../../lib/i18n/i18n";
+import type { MessageKey } from "../../lib/i18n/messages/en";
 const classes = {
   card: "card group relative flex flex-col overflow-hidden hover:-translate-y-0.5",
   favWrap: "absolute right-3 top-3 z-10",
@@ -72,7 +73,7 @@ type CreatorCardProps = {
 
 const CreatorCard = ({ creator }: CreatorCardProps) => {
   const isLive = Boolean(creator.live?.isLive);
-
+  const t = useT();
   const commissionClass = `${classes.statusBase} ${getCommissionStatusClass(
     creator.commissionStatus
   )}`;
@@ -96,13 +97,13 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 
           {creator.verified && (
             <span className={`${classes.badgeBase} ${classes.badgeVerified}`}>
-              Verified
+              {t("common.verified")}
             </span>
           )}
 
           {isLive && (
             <span className={`${classes.badgeBase} ${classes.badgeLive}`}>
-              Live
+              {t("common.live")}
             </span>
           )}
         </div>
@@ -111,7 +112,11 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 
         <div className={classes.metaRow}>
           <span className={commissionClass}>
-            Commissions: {creator.commissionStatus}
+            {t("creatorCard.commissions", {
+              status: ["open", "limited", "closed"].includes(creator.commissionStatus)
+                ? t(`commissionStatus.${creator.commissionStatus}` as MessageKey)
+                : creator.commissionStatus,
+            })}
           </span>
 
           <div className={classes.tagsWrap}>

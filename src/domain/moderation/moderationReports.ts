@@ -93,18 +93,11 @@ export const moderationReportReasonOptions: Array<{
     { value: "other", label: "Other" },
   ];
 
-// Shown above every report form's submit button. A notice of illegal content
-// must explain why it is illegal and carry the sender's statement that it is
-// accurate (EU Digital Services Act article 16, Community Guidelines
-// section 6). The reporter's identity and the content's location come from
-// the signed-in account and the page.
-export const reportSubmitNote =
-  "If you believe it is illegal, say why in the details. By sending this report, you confirm that you believe it is accurate and complete.";
-
-// Shown to someone signed out: anyone can report, account or not
-// (Terms section 10).
-export const reportWithoutAccountNote =
-  "No account? Email safety@madeforstream.com with this page's address and why you are reporting it.";
+// The note above every report form's submit button is report.submitNote in
+// lib/i18n: a notice of illegal content must explain why it is illegal and
+// carry the sender's statement that it is accurate (EU Digital Services Act
+// article 16). report.withoutAccountNote tells someone signed out that they
+// can report by email (Terms section 10).
 
 export const getModerationReportTargetTypeLabel = (
   targetType: ModerationReportTargetType

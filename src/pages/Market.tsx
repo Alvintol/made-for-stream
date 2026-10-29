@@ -6,6 +6,8 @@ import { CATEGORIES } from "../domain/catalog";
 import { normalizeTwitchLogin } from "../domain/twitch";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { useMarketListings, type MarketListingItem } from "../hooks/listings/useMarketListings";
+import { useT } from "../lib/i18n/i18n";
+import type { MessageKey } from "../lib/i18n/messages/en";
 import {
   useHubActions,
   useHubState,
@@ -36,10 +38,7 @@ const classes = {
 
 // Sourced from src/domain/catalog.ts so Market and the rest of the app
 // (creator specialty labels, etc.) can never drift out of sync again.
-const categoryOptions = [
-  { key: "all", label: "All categories" },
-  ...CATEGORIES,
-] as const;
+const categoryKeys = ["all", ...CATEGORIES.map((category) => category.key)] as const;
 
 // Builds a search string for listing filtering
 const getListingHaystack = (item: MarketListingItem): string => {
@@ -95,7 +94,7 @@ const Market = ({ forceFree = false }: MarketProps) => {
   const { twitchByLogin } = useTwitchStreams();
 
   const { data: items = [], isLoading, error } = useMarketListings();
-
+  const t = useT();
   // Syncs supported URL params into Hub filter state
   useEffect(() => {
     const fromUrl = parseFromUrl(search);
@@ -177,11 +176,11 @@ const Market = ({ forceFree = false }: MarketProps) => {
   return (
     <div className={classes.page}>
       <div className={classes.headerWrap}>
-        <h1 className={classes.h1}>{forceFree ? "Free" : "Market"}</h1>
+        <h1 className={classes.h1}>{forceFree ? t("market.freeTitle") : t("market.title")}</h1>
         <p className={classes.subtitle}>
           {forceFree
-            ? "Free assets and games creators are giving away to try out."
-            : "Digital packs + commission offerings."}
+            ? t("market.freeSubtitle")
+            : t("market.subtitle")}
         </p>
       </div>
 
@@ -190,7 +189,7 @@ const Market = ({ forceFree = false }: MarketProps) => {
           className={classes.input}
           value={filters.q}
           onChange={(event) => setFilters({ q: event.currentTarget.value })}
-          placeholder="Search listings..."
+          placeholder={t("market.searchPlaceholder")}
         />
 
         {!forceFree && (
@@ -201,10 +200,10 @@ const Market = ({ forceFree = false }: MarketProps) => {
               setFilters({ type: event.currentTarget.value as OfferingType })
             }
           >
-            <option value="all">All types</option>
-            <option value="digital">Digital</option>
-            <option value="commission">Commission</option>
-            <option value="service">Service</option>
+            <option value="all">{t("market.allTypes")}</option>
+            <option value="digital">{t("offering.digital")}</option>
+            <option value="commission">{t("offering.commission")}</option>
+            <option value="service">{t("offering.service")}</option>
           </select>
         )}
 
@@ -215,9 +214,9 @@ const Market = ({ forceFree = false }: MarketProps) => {
             setFilters({ category: event.currentTarget.value as CategoryKey })
           }
         >
-          {categoryOptions.map((category) => (
-            <option key={category.key} value={category.key}>
-              {category.label}
+          {categoryKeys.map((key) => (
+            <option key={key} value={key}>
+              {key === "all" ? t("market.allCategories") : t(`category.${key}` as MessageKey)}
             </option>
           ))}
         </select>
@@ -233,21 +232,21 @@ const Market = ({ forceFree = false }: MarketProps) => {
             aria-pressed={filters.freeOnly}
             onClick={() => setFilters({ freeOnly: !filters.freeOnly })}
           >
-            Free only
+            {t("market.freeOnly")}
           </button>
         </div>
       )}
 
-      {isLoading && <div className={classes.loadingText}>Loading…</div>}
+      {isLoading && <div className={classes.loadingText}>{t("common.loading")}</div>}
 
       {error && !isLoading && (
         <div className={classes.loadingText}>
-          Could not load marketplace listings.
+          {t("market.loadError")}
         </div>
       )}
 
       {!isLoading && !error && filtered.length === 0 && (
-        <div className={classes.emptyText}>No listings found.</div>
+        <div className={classes.emptyText}>{t("market.empty")}</div>
       )}
 
       <StaggerGroup
@@ -279,11 +278,12 @@ const Market = ({ forceFree = false }: MarketProps) => {
                 price_type: listing.price_type,
                 price_min: listing.price_min,
                 price_max: listing.price_max,
+                currency: listing.currency,
                 preview_url: listing.preview_url,
                 is_free: listing.is_free,
               }}
               creator={{
-                name: creator?.display_name ?? creator?.handle ?? "Unknown creator",
+                name: creator?.display_name ?? creator?.handle ?? t("common.unknownCreator"),
                 isLive,
               }}
             />

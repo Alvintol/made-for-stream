@@ -31,8 +31,17 @@ person's choice is saved on their account (`user_display_preferences.language`).
 A visitor's choice lasts until they reload, and nothing is stored in the
 browser. Emails are still in English.
 
-**What is translated (2026-10-29):** the top bar, menu and category names,
-the footer, the language and currency dialog, and the sign-in page.
+**What is translated:**
+
+- 2026-10-29: the top bar, menu and category names, the footer, the language
+  and currency dialog, and the sign-in page.
+- 2026-10-29: the home page, the market and free pages, the creators list and
+  creator cards, listing cards and prices, the listing page (including its
+  report form), the report notes on creator profiles and conversations, and
+  the page-not-found page.
+
+A category, listing type or video type the lists do not know (an old value
+on a listing) is shown as it is written, never as an error (`hasMessage`).
 
 ## Quick triage
 
@@ -88,7 +97,9 @@ with "Your choice could not be saved. Please try again."
 - **Most screens are not translated yet.** Including the policies, which need a
   human translator.
 - **Emails are English only.**
-- **Dates, numbers and currency names** still use English formatting in places.
+- **Numbers and money** still use English formatting: French writes "5 %" and
+  "105 € EUR", the site shows "5%" and "€105 EUR". Dates and currency names
+  follow the language.
 - **Listings and messages are not translated.** They stay in the language they
   were written in.
 - **The French has not been checked by a French speaker.** Do that before
