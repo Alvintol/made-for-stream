@@ -8,6 +8,7 @@ import {
   type OffSiteReceiptRow,
 } from "../../../hooks/conversations/useOffSiteReceipts";
 import { hasErrorMessage } from "../../../lib/errorMessage";
+import { useT } from "../../../lib/i18n/i18n";
 import { OFF_SITE_RECEIPTS_TARGET } from "../workspace/focusMessages";
 
 type OffSiteReceiptPanelProps = {
@@ -38,6 +39,7 @@ const classes = {
 // is written into the chat. The commission cannot be completed until every
 // one is confirmed (MIL-008).
 const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffSiteReceiptPanelProps) => {
+  const t = useT();
   const { data: receipts = [] } = useOffSiteReceipts(requestId);
   const respond = useRespondOffSiteReceipt(requestId);
   const record = useAdminRecordOffSiteReceipt(requestId);
@@ -50,14 +52,18 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
   const error = respond.error ?? record.error;
 
   const describe = (receipt: OffSiteReceiptRow) =>
-    `${creatorName} says the work for ${receipt.subject} was sent outside Made for Stream, by: ${describeOffSiteDelivery(receipt.methods, receipt.other) ?? "another way"}.`;
+    t("offSiteReceipt.says", {
+      creator: creatorName,
+      subject: receipt.subject,
+      methods: describeOffSiteDelivery(receipt.methods, receipt.other, t) ?? t("offSiteReceipt.anotherWay"),
+    });
 
   return (
     <div className={classes.anchor} id={OFF_SITE_RECEIPTS_TARGET} tabIndex={-1}>
       {open.map((receipt) => (
-        <section className={classes.card} key={receipt.id} aria-label="Work sent outside Made for Stream">
+        <section className={classes.card} key={receipt.id} aria-label={t("offSiteReceipt.label")}>
           <h3 className={classes.title}>
-            {viewer === "buyer" ? "Did the work arrive?" : "Waiting for the buyer to confirm"}
+            {t(viewer === "buyer" ? "offSiteReceipt.titleBuyer" : "offSiteReceipt.titleOther")}
           </h3>
 
           <p className={classes.text}>{describe(receipt)}</p>
@@ -65,8 +71,8 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
           {receipt.status === "not_received" && (
             <p className={classes.text}>
               {viewer === "buyer"
-                ? "You said it hasn't arrived. Confirm here once it does."
-                : `${buyerName} says it has not arrived. ${viewer === "creator" ? "Send it again, or deliver it through this page, and say so in the chat." : ""}`}
+                ? t("offSiteReceipt.notArrivedBuyer")
+                : `${t("offSiteReceipt.notArrived", { buyer: buyerName })} ${viewer === "creator" ? t("offSiteReceipt.notArrivedCreator") : ""}`}
             </p>
           )}
 
@@ -79,7 +85,7 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
                   type="button"
                   onClick={() => respond.mutate({ receiptId: receipt.id, received: true })}
                 >
-                  I received it
+                  {t("offSiteReceipt.received")}
                 </button>
 
                 {receipt.status === "awaiting" && (
@@ -89,29 +95,27 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
                     type="button"
                     onClick={() => respond.mutate({ receiptId: receipt.id, received: false })}
                   >
-                    It hasn&rsquo;t arrived
+                    {t("offSiteReceipt.notArrivedButton")}
                   </button>
                 )}
               </div>
 
               <p className={classes.hint}>
-                Confirm in the chat that you received the work sent outside Made for Stream before
-                approving the final delivery. Your answer is written into the chat.
+                {t("deliveryReview.offSiteFirst")} {t("offSiteReceipt.answerNote")}
               </p>
             </>
           )}
 
           {viewer === "creator" && receipt.status === "awaiting" && (
             <p className={classes.hint}>
-              {buyerName} has been asked to confirm in this chat. The commission cannot be completed
-              until they do.
+              {t("offSiteReceipt.creatorHint", { buyer: buyerName })}
             </p>
           )}
 
           {viewer === "admin" && (
             <div className={classes.wrap}>
               <label className={classes.label} htmlFor={`off-site-note-${receipt.id}`}>
-                How was the receipt confirmed?
+                {t("offSiteReceipt.adminLabel")}
               </label>
               <textarea
                 className={classes.textarea}
@@ -130,12 +134,11 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
                   type="button"
                   onClick={() => record.mutate({ receiptId: receipt.id, note: notes[receipt.id] ?? "" })}
                 >
-                  Record as received
+                  {t("offSiteReceipt.adminRecord")}
                 </button>
               </div>
               <p className={classes.hint}>
-                Only when the buyer has confirmed it some other way, for example to support. The
-                note is written into the chat.
+                {t("offSiteReceipt.adminHint")}
               </p>
             </div>
           )}
@@ -144,7 +147,7 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
 
       {error && (
         <p className={classes.error} role="alert">
-          {hasErrorMessage(error) ? error.message : "The answer could not be saved. Reload the page and try again."}
+          {hasErrorMessage(error) ? error.message : t("offSiteReceipt.saveFailed")}
         </p>
       )}
     </div>

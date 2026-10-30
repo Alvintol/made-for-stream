@@ -1,3 +1,4 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
 import type {
   ListingRequestAgreementStatus,
   ListingRequestPaymentStructure,
@@ -117,7 +118,10 @@ export const getRequestMilestoneProgress = (
   total: milestones.length,
 });
 
-export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] => {
+export const getRequestStages = (
+  input: RequestWorkspaceInput,
+  t: Translate = english
+): RequestStage[] => {
   const { requestStatus, agreement } = input;
 
   if (
@@ -143,12 +147,12 @@ export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] =
   const stages: RequestStage[] = [
     {
       key: "submitted",
-      label: requestStatus === "submitted" ? "In review" : "Accepted",
+      label: t(requestStatus === "submitted" ? "stage.inReview" : "stage.accepted"),
       state: stateFor(requestStatus !== "submitted", requestStatus === "submitted"),
     },
     {
       key: "agreement",
-      label: "Agreement",
+      label: t("stage.agreement"),
       state: stateFor(accepted, requestStatus === "accepted" && !accepted),
     },
   ];
@@ -156,7 +160,7 @@ export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] =
   if (needsStartingPayment) {
     stages.push({
       key: "payment",
-      label: agreement?.payment_structure === "deposit_balance" ? "Deposit" : "Payment",
+      label: t(agreement?.payment_structure === "deposit_balance" ? "stage.deposit" : "stage.payment"),
       state: stateFor(
         accepted && isStartingPaymentResolved(input),
         accepted && !isStartingPaymentResolved(input)
@@ -166,8 +170,8 @@ export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] =
 
   const workLabel =
     agreement?.payment_structure === "milestone_payments" && milestoneProgress.total > 0
-      ? `Milestones ${milestoneProgress.done}/${milestoneProgress.total}`
-      : "In progress";
+      ? t("stage.milestones", { done: milestoneProgress.done, total: milestoneProgress.total })
+      : t("stage.inProgress");
 
   stages.push(
     {
@@ -180,12 +184,12 @@ export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] =
     },
     {
       key: "delivery",
-      label: "Delivery",
+      label: t("stage.delivery"),
       state: stateFor(false, accepted && deliveryInReview),
     },
     {
       key: "complete",
-      label: "Complete",
+      label: t("stage.complete"),
       state: stateFor(false, false),
     }
   );
@@ -195,7 +199,11 @@ export const getRequestStages = (input: RequestWorkspaceInput): RequestStage[] =
 
 const step = (value: RequestNextStep): RequestNextStep => value;
 
-export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextStep => {
+export const getRequestNextStep = (
+  input: RequestWorkspaceInput,
+  t: Translate = english,
+  language?: string
+): RequestNextStep => {
   const { requestStatus, agreement } = input;
 
   if (requestStatus === "declined") {
@@ -203,10 +211,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "declined",
       owner: null,
       tone: "closed",
-      actionTitle: "Commission request declined",
-      actionDescription: "This commission is closed and read-only.",
-      waitingTitle: "Commission request declined",
-      waitingDescription: "This commission is closed and read-only.",
+      actionTitle: t("nextStep.declined.actionTitle"),
+      actionDescription: t("nextStep.declined.actionDescription"),
+      waitingTitle: t("nextStep.declined.actionTitle"),
+      waitingDescription: t("nextStep.declined.actionDescription"),
     });
   }
 
@@ -215,10 +223,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "archived",
       owner: null,
       tone: "closed",
-      actionTitle: "Commission archived",
-      actionDescription: "Archived commissions are kept for your records and are read-only.",
-      waitingTitle: "Commission archived",
-      waitingDescription: "Archived commissions are kept for your records and are read-only.",
+      actionTitle: t("nextStep.archived.actionTitle"),
+      actionDescription: t("nextStep.archived.actionDescription"),
+      waitingTitle: t("nextStep.archived.actionTitle"),
+      waitingDescription: t("nextStep.archived.actionDescription"),
     });
   }
 
@@ -227,10 +235,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "cancelled",
       owner: null,
       tone: "closed",
-      actionTitle: "Commission cancelled",
-      actionDescription: "This commission was cancelled and is now read-only.",
-      waitingTitle: "Commission cancelled",
-      waitingDescription: "This commission was cancelled and is now read-only.",
+      actionTitle: t("nextStep.cancelled.actionTitle"),
+      actionDescription: t("nextStep.cancelled.actionDescription"),
+      waitingTitle: t("nextStep.cancelled.actionTitle"),
+      waitingDescription: t("nextStep.cancelled.actionDescription"),
     });
   }
 
@@ -242,12 +250,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
         key: "cancellation-disputed",
         owner: null,
         tone: "closed",
-        actionTitle: "Cancellation under review",
-        actionDescription:
-          "The cancellation statement was disputed. Made for Stream will review and decide.",
-        waitingTitle: "Cancellation under review",
-        waitingDescription:
-          "The cancellation statement was disputed. Made for Stream will review and decide.",
+        actionTitle: t("nextStep.cancellationDisputed.actionTitle"),
+        actionDescription: t("nextStep.cancellationDisputed.actionDescription"),
+        waitingTitle: t("nextStep.cancellationDisputed.actionTitle"),
+        waitingDescription: t("nextStep.cancellationDisputed.actionDescription"),
         sectionId: "request",
       });
     }
@@ -257,16 +263,15 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
         key: "submit-cancellation-statement",
         owner: "creator",
         tone: "action",
-        actionTitle: "Submit the cancellation statement",
-        actionDescription:
-          "A cancellation was proposed. Provide an itemised earned-value statement for each paid payment.",
-        actionLabel: "Open cancellation",
-        waitingTitle: "Waiting for the creator's cancellation statement",
+        actionTitle: t("nextStep.submitCancellationStatement.actionTitle"),
+        actionDescription: t("nextStep.submitCancellationStatement.actionDescription"),
+        actionLabel: t("nextStep.submitCancellationStatement.actionLabel"),
+        waitingTitle: t("nextStep.submitCancellationStatement.waitingTitle"),
         waitingDescription: cancellationProposal.statement_due_at
-          ? `The creator has until ${new Date(
-              cancellationProposal.statement_due_at
-            ).toLocaleString()} to respond.`
-          : "The creator has three business days to respond.",
+          ? t("nextStep.submitCancellationStatement.waitingUntil", {
+              date: new Date(cancellationProposal.statement_due_at).toLocaleString(language),
+            })
+          : t("nextStep.submitCancellationStatement.waitingDays"),
         sectionId: "request",
       });
     }
@@ -276,12 +281,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
         key: "respond-cancellation-statement",
         owner: "buyer",
         tone: "action",
-        actionTitle: "Review the cancellation statement",
-        actionDescription:
-          "The creator itemised what they consider earned. Accept it or dispute it.",
-        actionLabel: "Review cancellation",
-        waitingTitle: "Waiting for the buyer to respond to the cancellation statement",
-        waitingDescription: "The project stays open until they accept or dispute it.",
+        actionTitle: t("nextStep.respondCancellationStatement.actionTitle"),
+        actionDescription: t("nextStep.respondCancellationStatement.actionDescription"),
+        actionLabel: t("nextStep.respondCancellationStatement.actionLabel"),
+        waitingTitle: t("nextStep.respondCancellationStatement.waitingTitle"),
+        waitingDescription: t("nextStep.respondCancellationStatement.waitingDescription"),
         sectionId: "request",
       });
     }
@@ -292,10 +296,10 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "completed",
       owner: null,
       tone: "done",
-      actionTitle: "Project complete",
-      actionDescription: "The final delivery was approved. Everything below is kept for reference.",
-      waitingTitle: "Project complete",
-      waitingDescription: "The final delivery was approved. Everything below is kept for reference.",
+      actionTitle: t("nextStep.completed.actionTitle"),
+      actionDescription: t("nextStep.completed.actionDescription"),
+      waitingTitle: t("nextStep.completed.actionTitle"),
+      waitingDescription: t("nextStep.completed.actionDescription"),
       sectionId: "delivery",
     });
   }
@@ -305,11 +309,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "review-request",
       owner: "creator",
       tone: "action",
-      actionTitle: "Review this commission",
-      actionDescription: "Accept to start agreeing terms, or decline with a reason.",
-      actionLabel: "Review commission",
-      waitingTitle: "Waiting for the creator to review your commission request",
-      waitingDescription: "You can agree terms once they accept.",
+      actionTitle: t("nextStep.reviewRequest.actionTitle"),
+      actionDescription: t("nextStep.reviewRequest.actionDescription"),
+      actionLabel: t("nextStep.reviewRequest.actionLabel"),
+      waitingTitle: t("nextStep.reviewRequest.waitingTitle"),
+      waitingDescription: t("nextStep.reviewRequest.waitingDescription"),
       sectionId: "request",
     });
   }
@@ -319,11 +323,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "create-agreement",
       owner: "creator",
       tone: "action",
-      actionTitle: "Create the project agreement",
-      actionDescription: "Set scope, price, timeline and payments for the buyer to accept.",
-      actionLabel: "Start agreement",
-      waitingTitle: "The creator is preparing the project agreement",
-      waitingDescription: "You'll review scope, price and timeline before any payment.",
+      actionTitle: t("nextStep.createAgreement.actionTitle"),
+      actionDescription: t("nextStep.createAgreement.actionDescription"),
+      actionLabel: t("nextStep.createAgreement.actionLabel"),
+      waitingTitle: t("nextStep.createAgreement.waitingTitle"),
+      waitingDescription: t("nextStep.createAgreement.waitingDescription"),
       sectionId: "agreement",
     });
   }
@@ -333,11 +337,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "send-agreement",
       owner: "creator",
       tone: "action",
-      actionTitle: "Send the project agreement",
-      actionDescription: "Your draft is ready. Check it over and send it to the buyer.",
-      actionLabel: "Review draft",
-      waitingTitle: "The creator is preparing the project agreement",
-      waitingDescription: "You'll review scope, price and timeline before any payment.",
+      actionTitle: t("nextStep.sendAgreement.actionTitle"),
+      actionDescription: t("nextStep.sendAgreement.actionDescription"),
+      actionLabel: t("nextStep.sendAgreement.actionLabel"),
+      waitingTitle: t("nextStep.createAgreement.waitingTitle"),
+      waitingDescription: t("nextStep.createAgreement.waitingDescription"),
       sectionId: "agreement",
     });
   }
@@ -347,11 +351,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "accept-agreement",
       owner: "buyer",
       tone: "action",
-      actionTitle: "Review and accept the agreement",
-      actionDescription: "Check the scope, price and timeline, then accept or decline.",
-      actionLabel: "Review agreement",
-      waitingTitle: "Waiting for the buyer to accept the agreement",
-      waitingDescription: "Work can start once they accept and pay any starting payment.",
+      actionTitle: t("nextStep.acceptAgreement.actionTitle"),
+      actionDescription: t("nextStep.acceptAgreement.actionDescription"),
+      actionLabel: t("nextStep.acceptAgreement.actionLabel"),
+      waitingTitle: t("nextStep.acceptAgreement.waitingTitle"),
+      waitingDescription: t("nextStep.acceptAgreement.waitingDescription"),
       sectionId: "agreement",
     });
   }
@@ -361,28 +365,27 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "revise-agreement",
       owner: "creator",
       tone: "action",
-      actionTitle: "Revise the project agreement",
-      actionDescription: "The buyer declined the last version. Update the terms and send a new one.",
-      actionLabel: "Open agreement",
-      waitingTitle: "The creator is revising the agreement",
-      waitingDescription: "You declined the last version. A new one will appear here to review.",
+      actionTitle: t("nextStep.reviseAgreement.actionTitle"),
+      actionDescription: t("nextStep.reviseAgreement.actionDescription"),
+      actionLabel: t("nextStep.reviseAgreement.actionLabel"),
+      waitingTitle: t("nextStep.reviseAgreement.waitingTitle"),
+      waitingDescription: t("nextStep.reviseAgreement.waitingDescription"),
       sectionId: "agreement",
     });
   }
 
   if (agreement.starting_payment_status === "payment_required") {
-    const paymentName =
-      agreement.payment_structure === "deposit_balance" ? "deposit" : "starting payment";
+    const isDeposit = agreement.payment_structure === "deposit_balance";
 
     return step({
       key: "pay-starting",
       owner: "buyer",
       tone: "action",
-      actionTitle: `Pay the ${paymentName}`,
-      actionDescription: "Work begins once it's paid.",
-      actionLabel: "Go to payments",
-      waitingTitle: `Waiting for the buyer's ${paymentName}`,
-      waitingDescription: "Hold off on starting work until it's confirmed.",
+      actionTitle: t(isDeposit ? "nextStep.payStarting.actionTitleDeposit" : "nextStep.payStarting.actionTitle"),
+      actionDescription: t("nextStep.payStarting.actionDescription"),
+      actionLabel: t("nextStep.payStarting.actionLabel"),
+      waitingTitle: t(isDeposit ? "nextStep.payStarting.waitingTitleDeposit" : "nextStep.payStarting.waitingTitle"),
+      waitingDescription: t("nextStep.payStarting.waitingDescription"),
       sectionId: "payments",
     });
   }
@@ -392,11 +395,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "respond-change-order",
       owner: "buyer",
       tone: "action",
-      actionTitle: "Review the change order",
-      actionDescription: "The creator proposed changes to the agreed terms. Accept or decline them.",
-      actionLabel: "Review change order",
-      waitingTitle: "Waiting for the buyer to respond to the change order",
-      waitingDescription: "The current terms stay in place until they respond.",
+      actionTitle: t("nextStep.respondChangeOrder.actionTitle"),
+      actionDescription: t("nextStep.respondChangeOrder.actionDescription"),
+      actionLabel: t("nextStep.respondChangeOrder.actionLabel"),
+      waitingTitle: t("nextStep.respondChangeOrder.waitingTitle"),
+      waitingDescription: t("nextStep.respondChangeOrder.waitingDescription"),
       sectionId: "changeOrders",
     });
   }
@@ -406,11 +409,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "send-change-order",
       owner: "creator",
       tone: "action",
-      actionTitle: "Send your change order",
-      actionDescription: "You have a draft change order that the buyer hasn't seen yet.",
-      actionLabel: "Review draft",
-      waitingTitle: "The creator is working on your project",
-      waitingDescription: "You'll be asked to review anything that needs your input.",
+      actionTitle: t("nextStep.sendChangeOrder.actionTitle"),
+      actionDescription: t("nextStep.sendChangeOrder.actionDescription"),
+      actionLabel: t("nextStep.sendAgreement.actionLabel"),
+      waitingTitle: t("nextStep.sendChangeOrder.waitingTitle"),
+      waitingDescription: t("nextStep.sendChangeOrder.waitingDescription"),
       sectionId: "changeOrders",
     });
   }
@@ -420,11 +423,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "pay-change-order",
       owner: "buyer",
       tone: "action",
-      actionTitle: "Pay for the accepted change order",
-      actionDescription: "The extra work starts once this payment is made.",
-      actionLabel: "Go to payments",
-      waitingTitle: "Waiting for the change order payment",
-      waitingDescription: "The added scope starts once it's paid.",
+      actionTitle: t("nextStep.payChangeOrder.actionTitle"),
+      actionDescription: t("nextStep.payChangeOrder.actionDescription"),
+      actionLabel: t("nextStep.payStarting.actionLabel"),
+      waitingTitle: t("nextStep.payChangeOrder.waitingTitle"),
+      waitingDescription: t("nextStep.payChangeOrder.waitingDescription"),
       sectionId: "payments",
     });
   }
@@ -436,11 +439,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "review-delivery",
       owner: "buyer",
       tone: "action",
-      actionTitle: "Review the final delivery",
-      actionDescription: "Approve it to complete the project, or ask for revisions.",
-      actionLabel: "Review delivery",
-      waitingTitle: "Waiting for the buyer to review the final delivery",
-      waitingDescription: "The project completes once they approve it.",
+      actionTitle: t("nextStep.reviewDelivery.actionTitle"),
+      actionDescription: t("nextStep.reviewDelivery.actionDescription"),
+      actionLabel: t("nextStep.reviewDelivery.actionLabel"),
+      waitingTitle: t("nextStep.reviewDelivery.waitingTitle"),
+      waitingDescription: t("nextStep.reviewDelivery.waitingDescription"),
       sectionId: "delivery",
     });
   }
@@ -450,11 +453,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "submit-delivery-draft",
       owner: "creator",
       tone: "action",
-      actionTitle: "Submit your final delivery",
-      actionDescription: "Your final delivery draft is ready to send to the buyer.",
-      actionLabel: "Review draft",
-      waitingTitle: "The creator is preparing the final delivery",
-      waitingDescription: "You'll be asked to review it when it's ready.",
+      actionTitle: t("nextStep.submitDeliveryDraft.actionTitle"),
+      actionDescription: t("nextStep.submitDeliveryDraft.actionDescription"),
+      actionLabel: t("nextStep.sendAgreement.actionLabel"),
+      waitingTitle: t("nextStep.submitDeliveryDraft.waitingTitle"),
+      waitingDescription: t("nextStep.submitDeliveryDraft.waitingDescription"),
       sectionId: "delivery",
     });
   }
@@ -464,11 +467,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "pay-final-balance",
       owner: "buyer",
       tone: "action",
-      actionTitle: "Pay the final balance",
-      actionDescription: "The final files are released once the balance is paid.",
-      actionLabel: "Go to payments",
-      waitingTitle: "Waiting for the buyer's final balance",
-      waitingDescription: "Final release is unlocked once it's paid.",
+      actionTitle: t("nextStep.payFinalBalance.actionTitle"),
+      actionDescription: t("nextStep.payFinalBalance.actionDescription"),
+      actionLabel: t("nextStep.payStarting.actionLabel"),
+      waitingTitle: t("nextStep.payFinalBalance.waitingTitle"),
+      waitingDescription: t("nextStep.payFinalBalance.waitingDescription"),
       sectionId: "payments",
     });
   }
@@ -478,18 +481,21 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
     const active = getActiveListingRequestMilestone(milestones);
 
     if (active) {
-      const label = `milestone ${active.sort_order + 1}: ${active.title}`;
+      const label = t("nextStep.milestoneLabel", {
+        number: active.sort_order + 1,
+        title: active.title,
+      });
 
       if (active.status === "submitted") {
         return step({
           key: "review-milestone",
           owner: "buyer",
           tone: "action",
-          actionTitle: `Review ${label}`,
-          actionDescription: "Approve the work to release this milestone's payment, or ask for revisions.",
-          actionLabel: "Review milestone",
-          waitingTitle: `Waiting for the buyer to review ${label}`,
-          waitingDescription: "The next milestone unlocks after approval and payment.",
+          actionTitle: t("nextStep.reviewMilestone.actionTitle", { label }),
+          actionDescription: t("nextStep.reviewMilestone.actionDescription"),
+          actionLabel: t("nextStep.reviewMilestone.actionLabel"),
+          waitingTitle: t("nextStep.reviewMilestone.waitingTitle", { label }),
+          waitingDescription: t("nextStep.reviewMilestone.waitingDescription"),
           sectionId: "milestones",
         });
       }
@@ -499,11 +505,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
           key: "pay-milestone",
           owner: "buyer",
           tone: "action",
-          actionTitle: `Pay for ${label}`,
-          actionDescription: "You approved this milestone. The next one unlocks once it's paid.",
-          actionLabel: "Go to payments",
-          waitingTitle: `Waiting for payment on ${label}`,
-          waitingDescription: "The next milestone unlocks once it's confirmed.",
+          actionTitle: t("nextStep.payMilestone.actionTitle", { label }),
+          actionDescription: t("nextStep.payMilestone.actionDescription"),
+          actionLabel: t("nextStep.payStarting.actionLabel"),
+          waitingTitle: t("nextStep.payMilestone.waitingTitle", { label }),
+          waitingDescription: t("nextStep.payMilestone.waitingDescription"),
           sectionId: "payments",
         });
       }
@@ -512,15 +518,20 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
         key: "submit-milestone",
         owner: "creator",
         tone: "action",
-        actionTitle:
-          active.status === "revision_requested" ? `Revise ${label}` : `Submit ${label}`,
-        actionDescription:
+        actionTitle: t(
           active.status === "revision_requested"
-            ? "The buyer asked for changes. Update the work and resubmit."
-            : "Share the work and delivery links for the buyer to review.",
-        actionLabel: "Open milestones",
-        waitingTitle: `The creator is working on ${label}`,
-        waitingDescription: "You'll be asked to review it once it's submitted.",
+            ? "nextStep.submitMilestone.actionTitleRevise"
+            : "nextStep.submitMilestone.actionTitle",
+          { label }
+        ),
+        actionDescription: t(
+          active.status === "revision_requested"
+            ? "nextStep.submitMilestone.actionDescriptionRevise"
+            : "nextStep.submitMilestone.actionDescription"
+        ),
+        actionLabel: t("nextStep.submitMilestone.actionLabel"),
+        waitingTitle: t("nextStep.submitMilestone.waitingTitle", { label }),
+        waitingDescription: t("nextStep.submitMilestone.waitingDescription"),
         sectionId: "milestones",
       });
     }
@@ -531,11 +542,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
       key: "revise-delivery",
       owner: "creator",
       tone: "action",
-      actionTitle: "Revise the final delivery",
-      actionDescription: "The buyer asked for revisions. Prepare an updated delivery.",
-      actionLabel: "Open delivery",
-      waitingTitle: "The creator is revising the final delivery",
-      waitingDescription: "You'll be asked to review the updated version.",
+      actionTitle: t("nextStep.reviseDelivery.actionTitle"),
+      actionDescription: t("nextStep.reviseDelivery.actionDescription"),
+      actionLabel: t("nextStep.reviseDelivery.actionLabel"),
+      waitingTitle: t("nextStep.reviseDelivery.waitingTitle"),
+      waitingDescription: t("nextStep.reviseDelivery.waitingDescription"),
       sectionId: "delivery",
     });
   }
@@ -544,11 +555,11 @@ export const getRequestNextStep = (input: RequestWorkspaceInput): RequestNextSte
     key: "work-in-progress",
     owner: "creator",
     tone: "action",
-    actionTitle: "Work on the project and submit the final delivery",
-    actionDescription: "Post progress updates as you go so the buyer stays in the loop.",
-    actionLabel: "Open delivery",
-    waitingTitle: "The creator is working on your project",
-    waitingDescription: "You'll be asked to review anything that needs your input.",
+    actionTitle: t("nextStep.workInProgress.actionTitle"),
+    actionDescription: t("nextStep.workInProgress.actionDescription"),
+    actionLabel: t("nextStep.reviseDelivery.actionLabel"),
+    waitingTitle: t("nextStep.sendChangeOrder.waitingTitle"),
+    waitingDescription: t("nextStep.sendChangeOrder.waitingDescription"),
     sectionId: "delivery",
   });
 };

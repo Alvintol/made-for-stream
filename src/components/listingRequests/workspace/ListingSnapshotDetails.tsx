@@ -1,6 +1,6 @@
 import type { ListingRequestSnapshot } from "../../../lib/listings/listingRequestSnapshot";
 import { formatListingPrice } from "../../../lib/money/displayCurrency";
-
+import { hasMessage, useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingSnapshotDetailsProps = {
   snapshot: ListingRequestSnapshot;
   extraRows?: { label: string; value: string }[];
@@ -11,19 +11,19 @@ const classes = {
   rows: "divide-y divide-[var(--hairline)] rounded-xl border border-[var(--hairline)] text-sm",
   row: "flex items-start justify-between gap-3 px-3 py-2",
   label: "text-zinc-600",
-  value: "text-right font-semibold capitalize text-zinc-900",
+  value: "text-right font-semibold text-zinc-900 first-letter:uppercase",
   groupLabel: "metaLabel",
   chips: "flex flex-wrap gap-1.5",
   chip: "rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700",
   none: "text-xs text-zinc-500",
 } as const;
 
-const dateText = (value: string) => {
+const dateText = (value: string, language: string) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(language, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -32,18 +32,22 @@ const dateText = (value: string) => {
     });
 };
 
-const priceText = (snapshot: ListingRequestSnapshot) => formatListingPrice(snapshot);
+// A value the lists do not know (an old one on a listing) is shown as written.
+const wordFor = (prefix: string, value: string, t: Translate) => {
+  const key = `${prefix}.${value}`;
 
-const humanize = (value: string) => value.replace(/[_-]+/g, " ");
-
+  return hasMessage(key) ? t(key) : value.replace(/[_-]+/g, " ");
+};
 const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDetailsProps) => {
+  const t = useT();
+  const language = useLanguage();
   const rows = [
-    { label: "Title", value: snapshot.title },
-    { label: "Price", value: priceText(snapshot) },
-    { label: "Offering", value: humanize(snapshot.offering_type) },
-    { label: "Purchase flow", value: humanize(snapshot.fulfilment_mode) },
-    { label: "Category", value: humanize(snapshot.category) },
-    { label: "Listing last updated", value: dateText(snapshot.updated_at) },
+    { label: t("snapshot.title"), value: snapshot.title },
+    { label: t("snapshot.price"), value: formatListingPrice(snapshot, t("price.from")) },
+    { label: t("snapshot.offering"), value: wordFor("offering", snapshot.offering_type, t) },
+    { label: t("buyerRequests.purchaseFlow"), value: wordFor("fulfilment", snapshot.fulfilment_mode, t) },
+    { label: t("snapshot.category"), value: wordFor("category", snapshot.category, t) },
+    { label: t("snapshot.updated"), value: dateText(snapshot.updated_at, language) },
     ...extraRows,
   ];
 
@@ -59,7 +63,7 @@ const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDet
       </dl>
 
       <div className="space-y-1.5">
-        <div className={classes.groupLabel}>Deliverables</div>
+        <div className={classes.groupLabel}>{t("snapshot.deliverables")}</div>
         {snapshot.deliverables.length > 0 ? (
           <div className={classes.chips}>
             {snapshot.deliverables.map((deliverable) => (
@@ -69,12 +73,12 @@ const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDet
             ))}
           </div>
         ) : (
-          <p className={classes.none}>No deliverables were listed.</p>
+          <p className={classes.none}>{t("snapshot.noDeliverables")}</p>
         )}
       </div>
 
       <div className="space-y-1.5">
-        <div className={classes.groupLabel}>Tags</div>
+        <div className={classes.groupLabel}>{t("snapshot.tags")}</div>
         {snapshot.tags.length > 0 ? (
           <div className={classes.chips}>
             {snapshot.tags.map((tag) => (
@@ -84,7 +88,7 @@ const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDet
             ))}
           </div>
         ) : (
-          <p className={classes.none}>No tags were listed.</p>
+          <p className={classes.none}>{t("snapshot.noTags")}</p>
         )}
       </div>
     </div>

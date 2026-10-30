@@ -1,7 +1,7 @@
 import ConversationThread from "../../conversations/ConversationThread";
 import OffSiteReceiptPanel from "./OffSiteReceiptPanel";
 import { useRequestConversation } from "../../../hooks/conversations/useRequestConversation";
-
+import { useT } from "../../../lib/i18n/i18n";
 type RequestConversationThreadProps = {
   requestId: string;
   buyerLabel: string;
@@ -30,8 +30,9 @@ const RequestConversationThread = ({
   creatorName,
   viewer,
   requestReadOnly = false,
-  requestReadOnlyMessage = "This commission is read-only.",
+  requestReadOnlyMessage,
 }: RequestConversationThreadProps) => {
+  const t = useT();
   const {
     data: conversation,
     isLoading,
@@ -41,7 +42,7 @@ const RequestConversationThread = ({
   if (isLoading) {
     return (
       <div className={classes.stateCard}>
-        <div className={classes.loadingText}>Loading conversation…</div>
+        <div className={classes.loadingText}>{t("requestChat.loading")}</div>
       </div>
     );
   }
@@ -49,9 +50,9 @@ const RequestConversationThread = ({
   if (error || !conversation) {
     return (
       <div className={classes.stateCard}>
-        <h2 className={classes.title}>Messages</h2>
+        <h2 className={classes.title}>{t("requestChat.title")}</h2>
         <div className={classes.errorNotice}>
-          Conversation could not be loaded right now.
+          {t("requestChat.loadFailed")}
         </div>
       </div>
     );
@@ -73,13 +74,13 @@ const RequestConversationThread = ({
       creatorLabel={creatorLabel}
       buyerName={buyerName}
       creatorName={creatorName}
-      readOnlyNotice={requestReadOnly ? requestReadOnlyMessage : null}
-      emptyText="No follow-up messages yet."
-      composerPlaceholder="Write a follow-up message…"
+      readOnlyNotice={requestReadOnly ? requestReadOnlyMessage ?? t("requestChat.readOnly") : null}
+      emptyText={t("requestChat.empty")}
+      composerPlaceholder={t("requestChat.placeholder")}
       header={
         <>
-          <h2 className={classes.title}>Messages</h2>
-          <p className={classes.sub}>Follow-up messages linked to this commission.</p>
+          <h2 className={classes.title}>{t("requestChat.title")}</h2>
+          <p className={classes.sub}>{t("requestChat.sub")}</p>
         </>
       }
     />

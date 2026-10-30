@@ -4,7 +4,7 @@ import {
   type ListingRequestCancellationContext,
   type ListingRequestStatus,
 } from "../../../domain/listings/listingRequests";
-
+import { useT } from "../../../lib/i18n/i18n";
 type RequestStatusNoticeProps = {
   status: ListingRequestStatus;
   reason?: string | null;
@@ -19,17 +19,19 @@ const RequestStatusNotice = ({
   archiveContext,
   cancellationContext,
 }: RequestStatusNoticeProps) => {
+  const t = useT();
+
   if (status !== "declined" && status !== "archived" && status !== "cancelled")
     return null;
 
   return (
     <div className={status === "declined" ? "notice noticeError" : "notice noticeNeutral"}>
       <p>
-        {getListingRequestStatusSummary(status, archiveContext, cancellationContext)}
+        {getListingRequestStatusSummary(status, archiveContext, cancellationContext, t)}
       </p>
       {status === "declined" && reason && (
         <p className="mt-1">
-          <span className="font-semibold">Decline reason: </span>
+          <span className="font-semibold">{t("statusNotice.declineReason")}</span>{" "}
           {reason}
         </p>
       )}

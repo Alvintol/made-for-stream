@@ -97,31 +97,32 @@ export const getListingRequestStatusTone = (
 export const getListingRequestStatusSummary = (
   status: ListingRequestStatus,
   archiveContext?: ListingRequestArchiveContext,
-  cancellationContext?: ListingRequestCancellationContext
+  cancellationContext?: ListingRequestCancellationContext,
+  t: Translate = english
 ): string =>
   status === "submitted"
-    ? "This commission request is currently under review by the creator."
+    ? t("statusSummary.submitted")
     : status === "accepted"
-      ? "The creator has accepted this commission request."
+      ? t("statusSummary.accepted")
       : status === "completed"
-        ? "The buyer approved the final delivery and the project is complete."
+        ? t("statusSummary.completed")
         : status === "declined"
-          ? "The creator has declined this commission request."
+          ? t("statusSummary.declined")
           : status === "cancelled"
             ? cancellationContext?.cancellation_reason
-              ? `This commission was cancelled: ${cancellationContext.cancellation_reason}`
-              : "This commission has been cancelled."
+              ? t("statusSummary.cancelledReason", { reason: cancellationContext.cancellation_reason })
+              : t("statusSummary.cancelled")
             : archiveContext?.archived_by_user_id &&
               archiveContext.buyer_user_id &&
               archiveContext.archived_by_user_id ===
               archiveContext.buyer_user_id
-              ? "The buyer withdrew this commission request."
+              ? t("statusSummary.withdrawn")
               : archiveContext?.archived_by_user_id &&
                 archiveContext.creator_user_id &&
                 archiveContext.archived_by_user_id ===
                 archiveContext.creator_user_id
-                ? "The creator archived this commission."
-                : "This commission has been archived.";
+                ? t("statusSummary.archivedByCreator")
+                : t("statusSummary.archived");
 
 export const canAcceptListingRequest = (
   status: ListingRequestStatus
