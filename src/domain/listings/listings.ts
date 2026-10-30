@@ -128,12 +128,14 @@ export const isAdminHiddenListing = (listing: {
 export const getListingVisibilityLabel = (listing: {
   is_active: boolean;
   admin_hidden_at?: string | null;
-}): string =>
-  isAdminHiddenListing(listing)
-    ? "Hidden by admin"
-    : listing.is_active
-      ? "Visible"
-      : "Inactive";
+}, t: Translate = english): string =>
+  t(
+    isAdminHiddenListing(listing)
+      ? "listingStatus.hidden"
+      : listing.is_active
+        ? "listingStatus.visible"
+        : "listingStatus.inactive"
+  );
 
 export type ListingStatusKey = "draft" | "live" | "inactive" | "admin_hidden";
 
@@ -142,29 +144,29 @@ export const getListingStatusSummary = (listing: {
   status: string;
   is_active: boolean;
   admin_hidden_at?: string | null;
-}): { key: ListingStatusKey; title: string; description: string } =>
+}, t: Translate = english): { key: ListingStatusKey; title: string; description: string } =>
   isAdminHiddenListing(listing)
     ? {
         key: "admin_hidden",
-        title: "Locked by an admin",
-        description: "Buyers cannot see this listing, and you cannot change it until an admin restores it.",
+        title: t("listingSummary.hiddenTitle"),
+        description: t("listingSummary.hiddenText"),
       }
     : listing.status === "draft"
       ? {
           key: "draft",
-          title: "Draft: only you can see this",
-          description: "Buyers cannot see or commission this listing until you publish it.",
+          title: t("listingSummary.draftTitle"),
+          description: t("listingSummary.draftText"),
         }
       : listing.is_active
         ? {
             key: "live",
-            title: "Live: buyers can see this",
-            description: "This listing is published and shown in the market.",
+            title: t("listingSummary.liveTitle"),
+            description: t("listingSummary.liveText"),
           }
         : {
             key: "inactive",
-            title: "Deactivated: hidden from buyers",
-            description: "This listing is published but switched off. Reactivate it to show it in the market again.",
+            title: t("listingSummary.inactiveTitle"),
+            description: t("listingSummary.inactiveText"),
           };
 
 export type ListingRequestDisplayInput = {

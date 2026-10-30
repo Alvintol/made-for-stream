@@ -20,7 +20,7 @@ import {
   type ListingStatusKey,
 } from '../../domain/listings/listings';
 import ListingPublishChecklist from '../../components/listings/ListingPublishChecklist';
-
+import { dateLocale, useLanguage, useT, wordFor } from "../../lib/i18n/i18n";
 // Stays under the site header on wide screens, so the answer to "is this
 // live?" and the next action are always on screen.
 const statusBannerBase =
@@ -122,37 +122,37 @@ const classes = {
     "rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700",
 } as const;
 
-const dateText = (value: string) => {
+const dateText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
 };
 
-const revisionEventLabel = (eventType: ListingRevisionRow["event_type"]) =>
+const revisionEventKey = (eventType: ListingRevisionRow["event_type"]) =>
   eventType === "created"
-    ? "Created"
+    ? "revision.event.created"
     : eventType === "updated"
-      ? "Updated"
+      ? "revision.event.updated"
       : eventType === "published"
-        ? "Published"
+        ? "revision.event.published"
         : eventType === "deactivated"
-          ? "Deactivated"
+          ? "revision.event.deactivated"
           : eventType === "reactivated"
-            ? "Reactivated"
-            : "Moved to draft";
+            ? "revision.event.reactivated"
+            : "revision.event.moved";
 
-const revisionDateText = (value: string) => {
+const revisionDateText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -162,6 +162,8 @@ const revisionDateText = (value: string) => {
 };
 
 const CreatorListingDetails = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -190,7 +192,7 @@ const CreatorListingDetails = () => {
     if (!listing) return;
 
     const confirmed = window.confirm(
-      `Move listing "${listing.title}" back to draft? It will be removed from the public market until you publish it again.`
+      t("listingDetails.confirmMove", { title: listing.title })
     );
 
     if (!confirmed) return;
@@ -207,7 +209,7 @@ const CreatorListingDetails = () => {
     if (!listing) return;
 
     const confirmed = window.confirm(
-      `Deactivate listing "${listing.title}"? It will be hidden from the market until reactivated.`
+      t("listingDetails.confirmDeactivate", { title: listing.title })
     );
 
     if (!confirmed) return;
@@ -239,7 +241,7 @@ const CreatorListingDetails = () => {
     if (!listing) return;
 
     const confirmed = window.confirm(
-      `Delete draft listing "${listing.title}"? This cannot be undone.`
+      t("myListings.confirmDelete", { title: listing.title })
     );
 
     if (!confirmed) return;
@@ -256,7 +258,7 @@ const CreatorListingDetails = () => {
     if (!listing || !publishReadiness.isReady) return;
 
     const confirmed = window.confirm(
-      `Publish listing "${listing.title}" now? It will become visible in the market.`
+      t("listingDetails.confirmPublish", { title: listing.title })
     );
 
     if (!confirmed) return;
@@ -269,21 +271,19 @@ const CreatorListingDetails = () => {
   };
 
   if (isLoading) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   if (error || !listing) {
     return (
       <div className={classes.page}>
         <Link to="/creator/listings" className={classes.backLink}>
-          ← Back to my listings
+          ← {t("listingForm.back")}
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Listing not found</h1>
-          <p className={classes.sub}>
-            This listing could not be loaded from your creator account.
-          </p>
+          <h1 className={classes.h1}>{t("listingForm.notFound")}</h1>
+          <p className={classes.sub}>{t("listingForm.notFoundText")}</p>
         </div>
       </div>
     );
@@ -293,23 +293,20 @@ const CreatorListingDetails = () => {
   const isDraftInactive =
     listing.status === "draft" && !listing.is_active && !isAdminHidden;
 
-  const publishReadiness = getListingPublishReadiness(listing);
-  const statusSummary = getListingStatusSummary(listing);
+  const publishReadiness = getListingPublishReadiness(listing, t);
+  const statusSummary = getListingStatusSummary(listing, t);
   const missingChecks = getMissingPublishCheckCount(publishReadiness);
 
   return (
     <div className={classes.page}>
       <Link className={classes.btnOutline} to="/creator/listings">
-        Back to listings
+        {t("listingDetails.back")}
       </Link>
 
       <div className={classes.header}>
         <h1 className={classes.h1}>{listing.title}</h1>
 
-        <p className={classes.sub}>
-          Only you can see this page. It shows whether buyers can see the listing and what is
-          left to do.
-        </p>
+        <p className={classes.sub}>{t("listingDetails.sub")}</p>
       </div>
 
       <div
@@ -323,7 +320,7 @@ const CreatorListingDetails = () => {
             {isDraftInactive && !publishReadiness.isReady && (
               <>
                 {" "}
-                {missingChecks} checklist {missingChecks === 1 ? "item" : "items"} left.
+                {t("listingDetails.checklistLeft", { count: missingChecks })}
               </>
             )}
           </div>
@@ -337,11 +334,11 @@ const CreatorListingDetails = () => {
               onClick={handlePublishListing}
               disabled={publishListingMutation.isPending}
             >
-              {publishListingMutation.isPending ? "Publishing…" : "Publish now"}
+              {t(publishListingMutation.isPending ? "listingDetails.publishing" : "listingForm.publishNow")}
             </button>
           ) : (
             <a className={classes.btnOutline} href="#publish-checklist">
-              See what is missing
+              {t("listingDetails.seeMissing")}
             </a>
           ))}
 
@@ -352,39 +349,40 @@ const CreatorListingDetails = () => {
             onClick={handleReactivateListing}
             disabled={setListingActiveStateMutation.isPending}
           >
-            {setListingActiveStateMutation.isPending ? "Updating…" : "Reactivate"}
+            {t(setListingActiveStateMutation.isPending ? "creatorCommission.updating" : "listingDetails.reactivate")}
           </button>
         )}
       </div>
 
       {carriedPublishError && !publishListingMutation.error && isDraftInactive && (
         <div className={classes.errorCard}>
-          Your listing was saved as a draft, but it could not be published: {carriedPublishError}
+          {t("listingDetails.savedNotPublished", { reason: carriedPublishError })}
         </div>
       )}
 
       {moveListingToDraftMutation.error && (
         <div className={classes.errorCard}>
-          This listing could not be moved back to draft right now.
+          {t("listingDetails.moveFailed")}
         </div>
       )}
 
       {publishListingMutation.error && (
         <div className={classes.errorCard}>
-          This listing could not be published:{" "}
-          {getErrorText(publishListingMutation.error, "please try again.")}
+          {t("listingDetails.publishFailed", {
+            reason: getErrorText(publishListingMutation.error, t("listingForm.tryAgain")),
+          })}
         </div>
       )}
 
       {setListingActiveStateMutation.error && (
         <div className={classes.errorCard}>
-          This listing visibility could not be updated right now.
+          {t("listingDetails.visibilityFailed")}
         </div>
       )}
 
       {deleteDraftMutation.error && (
         <div className={classes.errorCard}>
-          This draft could not be deleted right now.
+          {t("myListings.deleteFailed")}
         </div>
       )}
 
@@ -398,17 +396,17 @@ const CreatorListingDetails = () => {
               loading="lazy"
             />
           ) : (
-            <div className={classes.previewEmpty}>No preview image</div>
+            <div className={classes.previewEmpty}>{t("myListings.noPreview")}</div>
           )}
 
           <div className={classes.card}>
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Summary</h2>
+              <h2 className={classes.sectionTitle}>{t("listingDetails.summary")}</h2>
               <p className={classes.text}>{listing.short}</p>
             </div>
 
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Deliverables</h2>
+              <h2 className={classes.sectionTitle}>{t("snapshot.deliverables")}</h2>
 
               {listing.deliverables.length > 0 ? (
                 <div className={classes.list}>
@@ -419,12 +417,12 @@ const CreatorListingDetails = () => {
                   ))}
                 </div>
               ) : (
-                <p className={classes.text}>No deliverables added yet.</p>
+                <p className={classes.text}>{t("listingDetails.noDeliverables")}</p>
               )}
             </div>
 
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Tags</h2>
+              <h2 className={classes.sectionTitle}>{t("snapshot.tags")}</h2>
 
               {listing.tags.length > 0 ? (
                 <div className={classes.pills}>
@@ -435,7 +433,7 @@ const CreatorListingDetails = () => {
                   ))}
                 </div>
               ) : (
-                <p className={classes.text}>No tags added yet.</p>
+                <p className={classes.text}>{t("listingDetails.noTags")}</p>
               )}
             </div>
           </div>
@@ -444,88 +442,86 @@ const CreatorListingDetails = () => {
         <div className={classes.section}>
           <div className={classes.card}>
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Listing status</h2>
+              <h2 className={classes.sectionTitle}>{t("listingDetails.status")}</h2>
 
               <div className={classes.pills}>
                 {listing.status === "draft" ? (
-                  <span className={classes.draftPill}>Draft</span>
+                  <span className={classes.draftPill}>{t("listingStatus.draft")}</span>
                 ) : (
-                  <span className={classes.pill}>Published</span>
+                  <span className={classes.pill}>{t("listingStatus.published")}</span>
                 )}
 
                 {isAdminHidden ? (
                   <span className={classes.adminHiddenPill}>
-                    {getListingVisibilityLabel(listing)}
+                    {getListingVisibilityLabel(listing, t)}
                   </span>
                 ) : listing.is_active ? (
                   <span className={classes.activePill}>
-                    {getListingVisibilityLabel(listing)}
+                    {getListingVisibilityLabel(listing, t)}
                   </span>
                 ) : (
                   <span className={classes.inactivePill}>
-                    {getListingVisibilityLabel(listing)}
+                    {getListingVisibilityLabel(listing, t)}
                   </span>
                 )}
               </div>
 
               {isAdminHidden && (
                 <div className={classes.warningCard}>
-                  This listing has been hidden by moderation and cannot be edited, published,
-                  restored, activated, or deleted until an admin restores it.
+                  {t("listingDetails.hiddenWarning")}
                 </div>
               )}
             </div>
 
             <div className={classes.metaGrid}>
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Price</div>
+                <div className={classes.metaLabel}>{t("snapshot.price")}</div>
                 <div className={classes.metaValue}>
-                  {formatListingPrice(listing)}
+                  {formatListingPrice(listing, t("price.from"))}
                 </div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Offering type</div>
-                <div className={classes.metaValue}>{listing.offering_type}</div>
+                <div className={classes.metaLabel}>{t("listingForm.offeringLabel")}</div>
+                <div className={classes.metaValue}>{wordFor("offering", listing.offering_type, t)}</div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Purchase flow</div>
-                <div className={classes.metaValue}>{listing.fulfilment_mode}</div>
+                <div className={classes.metaLabel}>{t("buyerRequests.purchaseFlow")}</div>
+                <div className={classes.metaValue}>{wordFor("fulfilment", listing.fulfilment_mode, t)}</div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Category</div>
-                <div className={classes.metaValue}>{listing.category}</div>
+                <div className={classes.metaLabel}>{t("snapshot.category")}</div>
+                <div className={classes.metaValue}>{wordFor("category", listing.category, t)}</div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Video subtype</div>
+                <div className={classes.metaLabel}>{t("listingForm.videoLabel")}</div>
                 <div className={classes.metaValue}>
-                  {listing.video_subtype ?? "None"}
+                  {listing.video_subtype
+                    ? wordFor("video", listing.video_subtype, t)
+                    : t("listingForm.videoNone")}
                 </div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Created</div>
-                <div className={classes.metaValue}>{dateText(listing.created_at)}</div>
+                <div className={classes.metaLabel}>{t("listingDetails.created")}</div>
+                <div className={classes.metaValue}>{dateText(listing.created_at, locale)}</div>
               </div>
 
               <div className={classes.metaBlock}>
-                <div className={classes.metaLabel}>Last updated</div>
-                <div className={classes.metaValue}>{dateText(listing.updated_at)}</div>
+                <div className={classes.metaLabel}>{t("listingDetails.lastUpdated")}</div>
+                <div className={classes.metaValue}>{dateText(listing.updated_at, locale)}</div>
               </div>
             </div>
           </div>
 
           <div className={`${classes.readinessCard} scroll-mt-48`} id="publish-checklist">
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Publish checklist</h2>
+              <h2 className={classes.sectionTitle}>{t("listingForm.checklist")}</h2>
 
-              <p className={classes.text}>
-                Every item must be done before a listing can be published. Edit the draft to
-                fill in anything that is missing.
-              </p>
+              <p className={classes.text}>{t("listingDetails.checklistText")}</p>
             </div>
 
             <ListingPublishChecklist readiness={publishReadiness} />
@@ -533,26 +529,23 @@ const CreatorListingDetails = () => {
 
           <div className={classes.revisionCard}>
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Revision history</h2>
+              <h2 className={classes.sectionTitle}>{t("revision.title")}</h2>
 
-              <p className={classes.text}>
-                This private history is only for creator-side review and future dispute support.
-                Buyers do not see it.
-              </p>
+              <p className={classes.text}>{t("listingDetails.revisionText")}</p>
             </div>
 
             {revisionsError && (
               <div className={classes.errorCard}>
-                Revision history could not be loaded right now.
+                {t("revision.loadFailed")}
               </div>
             )}
 
             {isLoadingRevisions && (
-              <div className={classes.loadingText}>Loading revision history…</div>
+              <div className={classes.loadingText}>{t("revision.loading")}</div>
             )}
 
             {!isLoadingRevisions && !revisionsError && (revisionsPage?.rows.length ?? 0) === 0 && (
-              <p className={classes.text}>No revisions have been recorded yet.</p>
+              <p className={classes.text}>{t("revision.none")}</p>
             )}
 
             {!isLoadingRevisions && !revisionsError && (revisionsPage?.rows.length ?? 0) > 0 && (
@@ -560,17 +553,17 @@ const CreatorListingDetails = () => {
                 <div className={classes.revisionList}>
                   {revisionsPage?.rows.map((revision, index, rows) => {
                     const previousRevision = rows[index + 1] ?? null;
-                    const changes = getListingRevisionChanges(revision, previousRevision);
+                    const changes = getListingRevisionChanges(revision, previousRevision, t);
 
                     return (
                       <div key={revision.id} className={classes.revisionItem}>
                         <div className={classes.revisionTop}>
                           <div className={classes.revisionTitle}>
-                            {revisionEventLabel(revision.event_type)}
+                            {t(revisionEventKey(revision.event_type))}
                           </div>
 
                           <div className={classes.revisionMeta}>
-                            {revisionDateText(revision.created_at)}
+                            {revisionDateText(revision.created_at, locale)}
                           </div>
                         </div>
 
@@ -595,7 +588,7 @@ const CreatorListingDetails = () => {
                       className={classes.btnOutline}
                       to={`/creator/listings/${listing.id}/revisions`}
                     >
-                      View more revisions
+                      {t("listingDetails.moreRevisions")}
                     </Link>
                   )}
                 </div>
@@ -605,19 +598,17 @@ const CreatorListingDetails = () => {
 
           <div className={classes.card}>
             <div className={classes.section}>
-              <h2 className={classes.sectionTitle}>Actions</h2>
+              <h2 className={classes.sectionTitle}>{t("listingDetails.actions")}</h2>
 
               <p className={classes.text}>
-                {isAdminHidden
-                  ? "This listing is locked by moderation. You can view it here, but creator actions are disabled until an admin restores it."
-                  : "Manage this listing here. Drafts can be edited or published, and published listings can be hidden, restored, or moved back to draft for further edits."}
+                {t(isAdminHidden ? "listingDetails.actionsLocked" : "listingDetails.actionsText")}
               </p>
             </div>
 
             <div className={classes.row}>
               {isAdminHidden ? (
                 <button className={classes.btnDisabled} type="button" disabled>
-                  Locked by admin
+                  {t("myListings.lockedByAdmin")}
                 </button>
               ) : isDraftInactive ? (
                 <>
@@ -625,7 +616,7 @@ const CreatorListingDetails = () => {
                     className={classes.btnOutline}
                     to={`/creator/listings/${listing.id}/edit`}
                   >
-                    Edit draft
+                    {t("myListings.editDraft")}
                   </Link>
 
                   <button
@@ -634,7 +625,7 @@ const CreatorListingDetails = () => {
                     onClick={handleDeleteDraft}
                     disabled={deleteDraftMutation.isPending}
                   >
-                    {deleteDraftMutation.isPending ? "Deleting…" : "Delete draft"}
+                    {t(deleteDraftMutation.isPending ? "myListings.deleting" : "myListings.deleteDraft")}
                   </button>
 
                   {publishReadiness.isReady ? (
@@ -644,13 +635,11 @@ const CreatorListingDetails = () => {
                       onClick={handlePublishListing}
                       disabled={publishListingMutation.isPending}
                     >
-                      {publishListingMutation.isPending
-                        ? "Publishing…"
-                        : "Publish listing"}
+                      {t(publishListingMutation.isPending ? "listingDetails.publishing" : "listingDetails.publish")}
                     </button>
                   ) : (
                     <span className={classes.btnDisabled}>
-                      Complete checklist to publish
+                      {t("listingDetails.completeChecklist")}
                     </span>
                   )}
                 </>
@@ -663,9 +652,7 @@ const CreatorListingDetails = () => {
                       onClick={handleDeactivateListing}
                       disabled={setListingActiveStateMutation.isPending}
                     >
-                      {setListingActiveStateMutation.isPending
-                        ? "Updating…"
-                        : "Deactivate listing"}
+                      {t(setListingActiveStateMutation.isPending ? "creatorCommission.updating" : "listingDetails.deactivate")}
                     </button>
                   ) : (
                     <button
@@ -674,9 +661,7 @@ const CreatorListingDetails = () => {
                       onClick={handleReactivateListing}
                       disabled={setListingActiveStateMutation.isPending}
                     >
-                      {setListingActiveStateMutation.isPending
-                        ? "Updating…"
-                        : "Reactivate listing"}
+                      {t(setListingActiveStateMutation.isPending ? "creatorCommission.updating" : "listingDetails.reactivateListing")}
                     </button>
                   )}
 
@@ -686,17 +671,15 @@ const CreatorListingDetails = () => {
                     onClick={handleMoveToDraft}
                     disabled={moveListingToDraftMutation.isPending}
                   >
-                    {moveListingToDraftMutation.isPending
-                      ? "Moving to draft…"
-                      : "Edit Listing"}
+                    {t(moveListingToDraftMutation.isPending ? "listingDetails.movingDraft" : "listingDetails.edit")}
                   </button>
                 </>
               ) : (
-                <span className={classes.btnDisabled}>No actions available</span>
+                <span className={classes.btnDisabled}>{t("listingDetails.noActions")}</span>
               )}
 
               <Link className={classes.btnOutline} to="/creator/listings">
-                Back to listings
+                {t("listingDetails.back")}
               </Link>
             </div>
           </div>

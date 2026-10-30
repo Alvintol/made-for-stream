@@ -76,6 +76,10 @@ browser. Emails are still in English.
 - 2026-10-30: creating and editing a listing, with the publish checklist and
   the preview image and animated preview fields. The category is typed the
   way the market writes it (`emotes`), in either language.
+- 2026-10-30: the creator's listing list, a listing's page and revision
+  history, and the creator application. The required sample keeps its saved
+  English title ("Most Recent Upload/Vod"), which is matched on; the page
+  shows it in the page's language.
 - 2026-10-30: the milestone, final delivery and progress update forms, with
   file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their
@@ -147,9 +151,10 @@ with "Your choice could not be saved. Please try again."
   used when accepting an agreement), the agreement's "I understand" boxes
   (`agreement.understand`, `agreementReview.progress`), what approving a
   final delivery confirms (`deliveryReview.approveNote`), what accepting
-  a change order agrees to (`changeOrderReview.acceptNote`) and the creator's
+  a change order agrees to (`changeOrderReview.acceptNote`), the creator's
   notice and tick box about a buyer's right to cancel
-  (`consumerRights.notice`, `consumerRights.acknowledge`) were translated
+  (`consumerRights.notice`, `consumerRights.acknowledge`) and the four
+  creator application agreements (`apply.agree*`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
   them with the policies before French is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under

@@ -3,7 +3,7 @@ import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { useMyListings, type MyListingRow } from "../../hooks/listings/useMyListings";
 import { useDeleteListingDraft } from '../../hooks/listings/useDeleteListingDraft';
 import { getListingVisibilityLabel, isAdminHiddenListing } from '../../domain/listings/listings';
-
+import { dateLocale, useLanguage, useT, wordFor, type Translate } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-6",
   header: "space-y-1",
@@ -57,14 +57,15 @@ const classes = {
 } as const;
 
 // Formats the listing price for creator-facing cards
-const priceText = (listing: MyListingRow): string => formatListingPrice(listing);
+const priceText = (listing: MyListingRow, t: Translate): string =>
+  formatListingPrice(listing, t("price.from"));
 
 // Formats the last updated date into a readable local date string
-const updatedText = (value: string): string => {
+const updatedText = (value: string, locale: string | undefined): string => {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleDateString(undefined, {
+    : date.toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -72,13 +73,15 @@ const updatedText = (value: string): string => {
 };
 
 const CreatorListings = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const { data, isLoading, error } = useMyListings();
 
   const deleteDraftMutation = useDeleteListingDraft();
 
   const handleDeleteDraft = async (listingId: string, title: string) => {
     const confirmed = window.confirm(
-      `Delete draft listing "${title}"? This cannot be undone.`
+      t("myListings.confirmDelete", { title })
     );
 
     if (!confirmed) return;
@@ -91,52 +94,48 @@ const CreatorListings = () => {
   };
 
   if (isLoading) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   return (
     <div className={classes.page}>
       <Link to="/creator/dashboard" className={classes.backLink}>
-        ← Back to creator dashboard
+        ← {t("myListings.back")}
       </Link>
 
       <div className={classes.header}>
-        <h1 className={classes.h1}>My listings</h1>
+        <h1 className={classes.h1}>{t("dashboard.linkListings")}</h1>
 
-        <p className={classes.sub}>
-          View your private drafts and future published listings in one place.
-        </p>
+        <p className={classes.sub}>{t("myListings.text")}</p>
       </div>
 
       <div className={classes.row}>
         <Link className={classes.btnPrimary} to="/creator/listings/new">
-          Create listing
+          {t("dashboard.create")}
         </Link>
       </div>
 
       {error && (
         <div className={classes.errorCard}>
-          Your listings could not be loaded right now.
+          {t("myListings.loadFailed")}
         </div>
       )}
 
       {deleteDraftMutation.error && (
         <div className={classes.errorCard}>
-          This draft could not be deleted right now.
+          {t("myListings.deleteFailed")}
         </div>
       )}
 
       {!error && (data?.length ?? 0) === 0 && (
         <div className={classes.emptyCard}>
-          <h2 className={classes.cardTitle}>No listings yet</h2>
+          <h2 className={classes.cardTitle}>{t("myListings.emptyTitle")}</h2>
 
-          <p className={classes.cardText}>
-            Your draft listings will appear here after you create them.
-          </p>
+          <p className={classes.cardText}>{t("myListings.emptyText")}</p>
 
           <div className={classes.row}>
             <Link className={classes.btnPrimary} to="/creator/listings/new">
-              Create your first listing
+              {t("myListings.createFirst")}
             </Link>
           </div>
         </div>
@@ -154,27 +153,27 @@ const CreatorListings = () => {
                 <div className={classes.cardTop}>
                   <div className={classes.cardTitleWrap}>
                     <h2 className={classes.cardTitle}>{listing.title}</h2>
-                    <p className={classes.cardText}>{priceText(listing)}</p>
+                    <p className={classes.cardText}>{priceText(listing, t)}</p>
                   </div>
 
                   <div className={classes.metaRow}>
                     {listing.status === "draft" ? (
-                      <span className={classes.draftPill}>Draft</span>
+                      <span className={classes.draftPill}>{t("listingStatus.draft")}</span>
                     ) : (
-                      <span className={classes.pill}>Published</span>
+                      <span className={classes.pill}>{t("listingStatus.published")}</span>
                     )}
 
                     {isAdminHidden ? (
                       <span className={classes.adminHiddenPill}>
-                        {getListingVisibilityLabel(listing)}
+                        {getListingVisibilityLabel(listing, t)}
                       </span>
                     ) : listing.is_active ? (
                       <span className={classes.activePill}>
-                        {getListingVisibilityLabel(listing)}
+                        {getListingVisibilityLabel(listing, t)}
                       </span>
                     ) : (
                       <span className={classes.inactivePill}>
-                        {getListingVisibilityLabel(listing)}
+                        {getListingVisibilityLabel(listing, t)}
                       </span>
                     )}
                   </div>
@@ -188,30 +187,29 @@ const CreatorListings = () => {
                     loading="lazy"
                   />
                 ) : (
-                  <div className={classes.thumbEmpty}>No preview image</div>
+                  <div className={classes.thumbEmpty}>{t("myListings.noPreview")}</div>
                 )}
 
                 <p className={classes.cardText}>{listing.short}</p>
 
                 {isAdminHidden && (
                   <p className={classes.warningText}>
-                    This listing has been hidden by moderation and cannot be edited, restored,
-                    published, or deleted until an admin reviews it.
+                    {t("myListings.hiddenWarning")}
                   </p>
                 )}
 
                 <div className={classes.metaRow}>
-                  <span className={classes.pill}>{listing.offering_type}</span>
-                  <span className={classes.pill}>{listing.category}</span>
+                  <span className={classes.pill}>{wordFor("offering", listing.offering_type, t)}</span>
+                  <span className={classes.pill}>{wordFor("category", listing.category, t)}</span>
 
                   {listing.video_subtype && (
-                    <span className={classes.pill}>{listing.video_subtype}</span>
+                    <span className={classes.pill}>{wordFor("video", listing.video_subtype, t)}</span>
                   )}
                 </div>
 
                 <div className={classes.footer}>
                   <div className={classes.dateText}>
-                    Updated: {updatedText(listing.updated_at)}
+                    {t("myListings.updated", { date: updatedText(listing.updated_at, locale) })}
                   </div>
 
                   <div className={classes.row}>
@@ -219,12 +217,12 @@ const CreatorListings = () => {
                       className={classes.btnOutline}
                       to={`/creator/listings/${listing.id}`}
                     >
-                      View details
+                      {t("nextCard.viewDetails")}
                     </Link>
 
                     {isAdminHidden ? (
                       <button className={classes.btnDisabled} type="button" disabled>
-                        Locked by admin
+                        {t("myListings.lockedByAdmin")}
                       </button>
                     ) : canEditDraft ? (
                       <>
@@ -232,7 +230,7 @@ const CreatorListings = () => {
                           className={classes.btnOutline}
                           to={`/creator/listings/${listing.id}/edit`}
                         >
-                          Edit draft
+                          {t("myListings.editDraft")}
                         </Link>
 
                         <button
@@ -241,11 +239,11 @@ const CreatorListings = () => {
                           onClick={() => handleDeleteDraft(listing.id, listing.title)}
                           disabled={deleteDraftMutation.isPending}
                         >
-                          {deleteDraftMutation.isPending ? "Deleting…" : "Delete draft"}
+                          {t(deleteDraftMutation.isPending ? "myListings.deleting" : "myListings.deleteDraft")}
                         </button>
                       </>
                     ) : (
-                      <span className={classes.btnDisabled}>Edit later</span>
+                      <span className={classes.btnDisabled}>{t("myListings.editLater")}</span>
                     )}
                   </div>
                 </div>

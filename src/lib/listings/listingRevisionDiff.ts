@@ -1,5 +1,5 @@
 import type { ListingRevisionRow } from "../../hooks/listings/useListingRevisions";
-
+import { english, wordFor, type Translate } from "../i18n/i18n";
 export type ListingRevisionChange = {
   key:
   | "title"
@@ -20,32 +20,38 @@ export type ListingRevisionChange = {
   to?: string;
 };
 
-const priceText = (
+export const revisionPriceText = (
   priceType: "fixed" | "starting_at" | "range",
   priceMin: number,
-  priceMax: number | null
+  priceMax: number | null,
+  t: Translate = english
 ) =>
   priceType === "fixed"
     ? `$${priceMin}`
     : priceType === "starting_at"
-      ? `From $${priceMin}`
+      ? `${t("price.from")} $${priceMin}`
       : `$${priceMin}–$${priceMax ?? priceMin}`;
 
-const statusText = (status: "draft" | "published", isActive: boolean) =>
-  `${status} • ${isActive ? "Active" : "Inactive"}`;
-
-const listText = (items: string[]) => (items.length > 0 ? items.join(", ") : "None");
-
+export const revisionStatusText = (
+  status: "draft" | "published",
+  isActive: boolean,
+  t: Translate = english
+) =>
+  `${t(status === "draft" ? "revision.statusDraft" : "revision.statusPublished")} • ${t(isActive ? "revision.active" : "listingStatus.inactive")}`;
 // Builds human-readable change labels between two revision snapshots
 export const getListingRevisionChanges = (
   current: ListingRevisionRow,
-  previous: ListingRevisionRow | null
+  previous: ListingRevisionRow | null,
+  t: Translate = english
 ): ListingRevisionChange[] => {
+  const none = t("listingForm.videoNone");
+  const listText = (items: string[]) => (items.length > 0 ? items.join(", ") : none);
+
   if (!previous) {
     return [
       {
         key: "status",
-        label: "Initial listing revision recorded",
+        label: t("revisionChange.initial"),
       },
     ];
   }
@@ -58,7 +64,7 @@ export const getListingRevisionChanges = (
   if (currentSnapshot.title !== previousSnapshot.title) {
     changes.push({
       key: "title",
-      label: "Title changed",
+      label: t("revisionChange.title"),
       from: `"${previousSnapshot.title}"`,
       to: `"${currentSnapshot.title}"`,
     });
@@ -67,56 +73,58 @@ export const getListingRevisionChanges = (
   if (currentSnapshot.fulfilment_mode !== previousSnapshot.fulfilment_mode) {
     changes.push({
       key: "fulfilment_mode",
-      label: "Fulfilment mode changed",
-      from: previousSnapshot.fulfilment_mode,
-      to: currentSnapshot.fulfilment_mode,
+      label: t("revisionChange.fulfilment"),
+      from: wordFor("fulfilment", previousSnapshot.fulfilment_mode, t),
+      to: wordFor("fulfilment", currentSnapshot.fulfilment_mode, t),
     });
   }
 
   if (currentSnapshot.short !== previousSnapshot.short) {
     changes.push({
       key: "short",
-      label: "Short description changed",
+      label: t("revisionChange.short"),
     });
   }
 
   if (currentSnapshot.offering_type !== previousSnapshot.offering_type) {
     changes.push({
       key: "offering_type",
-      label: "Offering type changed",
-      from: previousSnapshot.offering_type,
-      to: currentSnapshot.offering_type,
+      label: t("revisionChange.offering"),
+      from: wordFor("offering", previousSnapshot.offering_type, t),
+      to: wordFor("offering", currentSnapshot.offering_type, t),
     });
   }
 
   if (currentSnapshot.category !== previousSnapshot.category) {
     changes.push({
       key: "category",
-      label: "Category changed",
-      from: previousSnapshot.category,
-      to: currentSnapshot.category,
+      label: t("revisionChange.category"),
+      from: wordFor("category", previousSnapshot.category, t),
+      to: wordFor("category", currentSnapshot.category, t),
     });
   }
 
   if (currentSnapshot.video_subtype !== previousSnapshot.video_subtype) {
     changes.push({
       key: "video_subtype",
-      label: "Video subtype changed",
-      from: previousSnapshot.video_subtype ?? "None",
-      to: currentSnapshot.video_subtype ?? "None",
+      label: t("revisionChange.video"),
+      from: previousSnapshot.video_subtype ? wordFor("video", previousSnapshot.video_subtype, t) : none,
+      to: currentSnapshot.video_subtype ? wordFor("video", currentSnapshot.video_subtype, t) : none,
     });
   }
 
-  const currentPrice = priceText(
+  const currentPrice = revisionPriceText(
     currentSnapshot.price_type,
     currentSnapshot.price_min,
-    currentSnapshot.price_max
+    currentSnapshot.price_max,
+    t
   );
 
-  const previousPrice = priceText(
+  const previousPrice = revisionPriceText(
     previousSnapshot.price_type,
     previousSnapshot.price_min,
-    previousSnapshot.price_max
+    previousSnapshot.price_max,
+    t
   );
 
   if (
@@ -126,7 +134,7 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "price",
-      label: "Price changed",
+      label: t("revisionChange.price"),
       from: previousPrice,
       to: currentPrice,
     });
@@ -138,7 +146,7 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "deliverables",
-      label: "Deliverables changed",
+      label: t("revisionChange.deliverables"),
       from: listText(previousSnapshot.deliverables),
       to: listText(currentSnapshot.deliverables),
     });
@@ -147,7 +155,7 @@ export const getListingRevisionChanges = (
   if (JSON.stringify(currentSnapshot.tags) !== JSON.stringify(previousSnapshot.tags)) {
     changes.push({
       key: "tags",
-      label: "Tags changed",
+      label: t("revisionChange.tags"),
       from: listText(previousSnapshot.tags),
       to: listText(currentSnapshot.tags),
     });
@@ -156,9 +164,9 @@ export const getListingRevisionChanges = (
   if (currentSnapshot.preview_url !== previousSnapshot.preview_url) {
     changes.push({
       key: "preview_url",
-      label: "Preview image changed",
-      from: previousSnapshot.preview_url ?? "None",
-      to: currentSnapshot.preview_url ?? "None",
+      label: t("revisionChange.preview"),
+      from: previousSnapshot.preview_url ?? none,
+      to: currentSnapshot.preview_url ?? none,
     });
   }
 
@@ -168,9 +176,9 @@ export const getListingRevisionChanges = (
   ) {
     changes.push({
       key: "status",
-      label: "Status changed",
-      from: statusText(previousSnapshot.status, previousSnapshot.is_active),
-      to: statusText(currentSnapshot.status, currentSnapshot.is_active),
+      label: t("revisionChange.status"),
+      from: revisionStatusText(previousSnapshot.status, previousSnapshot.is_active, t),
+      to: revisionStatusText(currentSnapshot.status, currentSnapshot.is_active, t),
     });
   }
 
@@ -179,7 +187,7 @@ export const getListingRevisionChanges = (
     : [
       {
         key: "status",
-        label: "Revision recorded with no tracked field differences",
+        label: t("revisionChange.none"),
       },
     ];
 };

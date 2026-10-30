@@ -1,6 +1,6 @@
 import type { ListingRequestSnapshot } from "../../../lib/listings/listingRequestSnapshot";
 import { formatListingPrice } from "../../../lib/money/displayCurrency";
-import { dateLocale, hasMessage, useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT, wordFor } from "../../../lib/i18n/i18n";
 type ListingSnapshotDetailsProps = {
   snapshot: ListingRequestSnapshot;
   extraRows?: { label: string; value: string }[];
@@ -32,12 +32,6 @@ const dateText = (value: string, language: string | undefined) => {
     });
 };
 
-// A value the lists do not know (an old one on a listing) is shown as written.
-const wordFor = (prefix: string, value: string, t: Translate) => {
-  const key = `${prefix}.${value}`;
-
-  return hasMessage(key) ? t(key) : value.replace(/[_-]+/g, " ");
-};
 const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDetailsProps) => {
   const t = useT();
   const language = dateLocale(useLanguage());

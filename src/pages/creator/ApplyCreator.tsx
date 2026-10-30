@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../providers/AuthProvider";
 import { useSellerAccess } from "../../hooks/creatorApplication/useSellerAccess";
@@ -25,6 +25,7 @@ import {
 } from "../../domain/creatorApplication/creatorApplication";
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
 import StatusHeader, { type StatusHeaderStage } from "../../components/ui/StatusHeader";
+import { useT, type Translate } from "../../lib/i18n/i18n";
 import { FadeIn } from "../../lib/motion";
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 
@@ -106,24 +107,31 @@ const classes = {
   introList: "grid gap-2 sm:grid-cols-2",
 } as const;
 
-const agreementCopy: Record<AgreementKey, ReactNode> = {
-  terms: (
-    <>
-      I have read, understood, and agree to the{" "}
-      <Link className={classes.inlineLink} to="/terms/creator" target="_blank" rel="noreferrer">
-        Creator Terms
-      </Link>
-      .
-    </>
-  ),
-  originalWork:
-    "My samples are my own work, or work I have the clear right to showcase.",
-  manualReview:
-    "Creator access is reviewed manually and may be approved, rejected, paused, suspended, or sent back for changes.",
-  ageAndCapacity:
-    "I am at least 18 (or the higher age of majority where I live) and legally able to enter a binding agreement.",
-};
+const agreementKeys: AgreementKey[] = ["terms", "originalWork", "manualReview", "ageAndCapacity"];
 
+const AgreementCopy = ({ agreement }: { agreement: AgreementKey }) => {
+  const t = useT();
+
+  return agreement === "terms" ? (
+    <>
+      {t("apply.agreeTermsStart")}{" "}
+      <Link className={classes.inlineLink} to="/terms/creator" target="_blank" rel="noreferrer">
+        {t("apply.agreeTermsLink")}
+      </Link>
+      {t("apply.agreeTermsEnd")}
+    </>
+  ) : (
+    <>
+      {t(
+        agreement === "originalWork"
+          ? "apply.agreeOriginal"
+          : agreement === "manualReview"
+            ? "apply.agreeReview"
+            : "apply.agreeAge"
+      )}
+    </>
+  );
+};
 const requirementSection: Record<CreatorApplicationRequirementKey, SectionKey> = {
   profile: "basics",
   platform: "basics",
@@ -132,10 +140,10 @@ const requirementSection: Record<CreatorApplicationRequirementKey, SectionKey> =
   agreements: "agreements",
 };
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
-    : "Something went wrong.";
+    : t("apply.failed");
 
 const hostOf = (url: string | null | undefined) => {
   try {
@@ -151,14 +159,18 @@ const Mark = ({ done }: { done: boolean }) => (
   </span>
 );
 
-const DoneBadge = ({ done, todo }: { done: boolean; todo?: string }) =>
-  done ? (
-    <span className={`${classes.badge} ${classes.badgeDone}`}>Done</span>
+const DoneBadge = ({ done, todo }: { done: boolean; todo?: string }) => {
+  const t = useT();
+
+  return done ? (
+    <span className={`${classes.badge} ${classes.badgeDone}`}>{t("apply.done")}</span>
   ) : todo ? (
     <span className={`${classes.badge} ${classes.badgeMuted}`}>{todo}</span>
   ) : null;
+};
 
 const ApplyCreator = () => {
+  const t = useT();
   const { user, loading } = useAuth();
 
   const {
@@ -239,7 +251,7 @@ const ApplyCreator = () => {
     hasLinkedPlatform: hasLinkedCreatorPlatform,
     samples,
     agreementsAccepted,
-  });
+  }, t);
   const blocker = getFirstApplicationBlocker(requirements);
   const doneCount = requirements.filter((item) => item.done).length;
   const attentionSection = phase === "editing" && blocker ? requirementSection[blocker.key] : null;
@@ -255,7 +267,7 @@ const ApplyCreator = () => {
 
   const loadError = [sellerAccessError, samplesError, queueError]
     .filter(Boolean)
-    .map(getErrorMessage)
+    .map((error) => getErrorMessage(error, t))
     .join(" ");
 
   const sectionFlags = (key: SectionKey) => ({
@@ -282,15 +294,15 @@ const ApplyCreator = () => {
     resetMessages();
 
     if (!canStartApplication) {
-      setErrMsg("Add a display name and handle in settings before starting your application.");
+      setErrMsg(t("apply.errorProfile"));
       return;
     }
 
     try {
       await upsertApplication.mutateAsync({ status: "draft", ...agreementPayload });
-      setOkMsg("Application started. Add your samples below.");
+      setOkMsg(t("apply.started"));
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
@@ -301,12 +313,12 @@ const ApplyCreator = () => {
     if (!applicationId || !canEdit) return;
 
     if (!recentUploadSample && counts.total >= MAX_WORK_SAMPLES) {
-      setErrMsg(`You can add a maximum of ${MAX_WORK_SAMPLES} work samples.`);
+      setErrMsg(t("apply.errorMax", { count: MAX_WORK_SAMPLES }));
       return;
     }
 
     if (!isValidPublicUrl(nextUrl)) {
-      setErrMsg("Add a valid public link to your most recent upload or VOD.");
+      setErrMsg(t("apply.errorRecentLink"));
       return;
     }
 
@@ -318,9 +330,9 @@ const ApplyCreator = () => {
         sortOrder: counts.total,
       });
       setRecentUploadUrl(nextUrl);
-      setOkMsg("Most recent upload saved.");
+      setOkMsg(t("apply.recentSaved"));
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
@@ -332,17 +344,17 @@ const ApplyCreator = () => {
     if (!applicationId || !canEdit) return;
 
     if (counts.total >= MAX_WORK_SAMPLES) {
-      setErrMsg(`You can add a maximum of ${MAX_WORK_SAMPLES} work samples.`);
+      setErrMsg(t("apply.errorMax", { count: MAX_WORK_SAMPLES }));
       return;
     }
 
     if (!nextTitle) {
-      setErrMsg("Give the sample a title.");
+      setErrMsg(t("apply.errorSampleTitle"));
       return;
     }
 
     if (!isValidPublicUrl(nextUrl)) {
-      setErrMsg("Add a valid public link for the sample.");
+      setErrMsg(t("apply.errorSampleLink"));
       return;
     }
 
@@ -357,9 +369,9 @@ const ApplyCreator = () => {
       setTitle("");
       setDescription("");
       setUrl("");
-      setOkMsg("Work sample added.");
+      setOkMsg(t("apply.sampleAdded"));
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
@@ -368,9 +380,9 @@ const ApplyCreator = () => {
 
     try {
       await removeSample.mutateAsync(sampleId);
-      setOkMsg("Work sample removed.");
+      setOkMsg(t("apply.sampleRemoved"));
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
@@ -378,7 +390,7 @@ const ApplyCreator = () => {
     resetMessages();
 
     if (!applicationId || !canSubmit) {
-      setErrMsg(blocker?.blocker ?? "This application can't be submitted right now.");
+      setErrMsg(blocker?.blocker ?? t("apply.errorSubmit"));
       return;
     }
 
@@ -394,23 +406,23 @@ const ApplyCreator = () => {
         sampleCount: counts.total,
         videoCount: counts.videos,
       });
-      setOkMsg("Application submitted. We'll let you know once it has been reviewed.");
+      setOkMsg(t("apply.submitted"));
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
   if (!loading && !user) {
     return (
       <div className={classes.card}>
-        <div className={classes.cardTitle}>You’re not signed in</div>
-        <p className={classes.text}>Sign in to start or manage your creator application.</p>
+        <div className={classes.cardTitle}>{t("apply.signedOutTitle")}</div>
+        <p className={classes.text}>{t("apply.signedOutText")}</p>
         <div className={classes.actions}>
           <Link className={classes.btnPrimary} to="/signin">
-            Sign in
+            {t("apply.signIn")}
           </Link>
           <Link className={classes.btnOutline} to="/">
-            Back home
+            {t("apply.home")}
           </Link>
         </div>
       </div>
@@ -422,12 +434,12 @@ const ApplyCreator = () => {
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
     const steps = [
-      { key: "basics", label: "Account basics", done: basicsDone || inReviewOrLater },
-      { key: "samples", label: "Work samples", done: requirements.slice(2, 4).every((item) => item.done) || inReviewOrLater },
-      { key: "agreements", label: "Agreements", done: agreementsAccepted || inReviewOrLater },
+      { key: "basics", label: t("apply.stepBasics"), done: basicsDone || inReviewOrLater },
+      { key: "samples", label: t("apply.stepSamples"), done: requirements.slice(2, 4).every((item) => item.done) || inReviewOrLater },
+      { key: "agreements", label: t("apply.stepAgreements"), done: agreementsAccepted || inReviewOrLater },
       {
         key: "review",
-        label: phase === "approved" ? "Approved" : phase === "in_review" ? "In review" : "Submit",
+        label: t(phase === "approved" ? "apply.stepApproved" : phase === "in_review" ? "stage.inReview" : "apply.stepSubmit"),
         done: phase === "approved",
       },
     ];
@@ -446,17 +458,17 @@ const ApplyCreator = () => {
   const header = (
     <StatusHeader
       backTo="/settings/profile"
-      backLabel="Back to settings"
-      eyebrow="Creator application"
-      title="Apply to sell on Made for Stream"
+      backLabel={t("apply.back")}
+      eyebrow={t("apply.eyebrow")}
+      title={t("apply.title")}
       meta={[
-        <span key="review">Manually reviewed</span>,
-        <span key="human">Human-made work only</span>,
+        <span key="review">{t("apply.metaReview")}</span>,
+        <span key="human">{t("apply.metaHuman")}</span>,
         <span key="samples">
-          {MIN_WORK_SAMPLES}–{MAX_WORK_SAMPLES} samples
+          {t("apply.metaSamples", { min: MIN_WORK_SAMPLES, max: MAX_WORK_SAMPLES })}
         </span>,
       ]}
-      statusLabel={getCreatorApplicationStatusLabel(sellerApplication?.status)}
+      statusLabel={getCreatorApplicationStatusLabel(sellerApplication?.status, t)}
       statusTone={
         phase === "approved"
           ? "success"
@@ -471,8 +483,8 @@ const ApplyCreator = () => {
         reviewNote && phase !== "approved" ? (
           <div className={phase === "closed" ? classes.noticeErr : classes.noticeWarn}>
             <strong>
-              {sellerApplication?.rejection_reason ? "Reason: " : "Reviewer notes: "}
-            </strong>
+              {t(sellerApplication?.rejection_reason ? "apply.reason" : "apply.reviewerNotes")}
+            </strong>{" "}
             {reviewNote}
           </div>
         ) : undefined
@@ -496,9 +508,11 @@ const ApplyCreator = () => {
           return (
             <li key={sample.id} className={classes.row}>
               <div className={classes.rowMain}>
-                <div className={classes.rowTitle}>{sample.title}</div>
+                <div className={classes.rowTitle}>
+                  {isRequired ? t("apply.recentSampleTitle") : sample.title}
+                </div>
                 <div className={classes.rowSub}>
-                  {isRequired ? "Required link sample" : `${sample.sample_type} sample`}
+                  {t(isRequired ? "apply.requiredSample" : `apply.sampleType.${sample.sample_type}`)}
                   {sample.url && (
                     <>
                       {" · "}
@@ -517,7 +531,7 @@ const ApplyCreator = () => {
                   onClick={() => void onRemoveSample(sample.id)}
                   disabled={removeSample.isPending}
                 >
-                  Remove
+                  {t("apply.remove")}
                 </button>
               )}
             </li>
@@ -525,7 +539,7 @@ const ApplyCreator = () => {
         })}
       </ul>
     ) : (
-      <p className={classes.small}>No samples added yet.</p>
+      <p className={classes.small}>{t("apply.noSamples")}</p>
     );
 
   if (phase === "not_started") {
@@ -534,20 +548,18 @@ const ApplyCreator = () => {
         {header}
         {messages}
 
-        <section className={classes.intro} aria-label="Before you start">
+        <section className={classes.intro} aria-label={t("apply.beforeStart")}>
           <div>
-            <h2 className={classes.cardTitle}>What you’ll need</h2>
-            <p className={classes.text}>
-              Applications are reviewed by the Made for Stream team to keep the marketplace human-made and trustworthy.
-            </p>
+            <h2 className={classes.cardTitle}>{t("apply.needTitle")}</h2>
+            <p className={classes.text}>{t("apply.needText")}</p>
           </div>
 
           <ul className={classes.introList}>
             {[
-              { done: profileReady, label: "A handle and display name" },
-              { done: hasLinkedCreatorPlatform, label: "A linked Twitch or YouTube account" },
-              { done: false, label: "A link to your most recent upload or VOD" },
-              { done: false, label: `${MIN_WORK_SAMPLES}–${MAX_WORK_SAMPLES} links to your work` },
+              { done: profileReady, label: t("apply.needHandle") },
+              { done: hasLinkedCreatorPlatform, label: t("apply.needPlatform") },
+              { done: false, label: t("apply.needRecent") },
+              { done: false, label: t("apply.needLinks", { min: MIN_WORK_SAMPLES, max: MAX_WORK_SAMPLES }) },
             ].map((item) => (
               <li key={item.label} className={classes.req}>
                 <Mark done={item.done} />
@@ -563,11 +575,11 @@ const ApplyCreator = () => {
               onClick={() => void onStartDraft()}
               disabled={upsertApplication.isPending || !canStartApplication}
             >
-              {upsertApplication.isPending ? "Starting…" : "Start application"}
+              {t(upsertApplication.isPending ? "apply.starting" : "apply.start")}
             </button>
             {!canStartApplication && (
               <Link className={classes.btnOutline} to="/settings/profile">
-                Finish your profile first
+                {t("apply.finishProfile")}
               </Link>
             )}
           </div>
@@ -582,42 +594,34 @@ const ApplyCreator = () => {
         {header}
         {messages}
 
-        <section className={classes.card} aria-label="Application status">
+        <section className={classes.card} aria-label={t("apply.statusLabel")}>
           {phase === "approved" ? (
             <>
-              <h2 className={classes.cardTitle}>You’re an approved creator</h2>
-              <p className={classes.text}>
-                Set up payouts, then publish your first listing.
-              </p>
+              <h2 className={classes.cardTitle}>{t("apply.approvedTitle")}</h2>
+              <p className={classes.text}>{t("apply.approvedText")}</p>
               <div className={classes.actions}>
                 <Link className={classes.btnPrimary} to="/creator/listings/new">
-                  Create a listing
+                  {t("apply.createListing")}
                 </Link>
                 <Link className={classes.btnOutline} to="/creator/dashboard">
-                  Creator dashboard
+                  {t("apply.dashboard")}
                 </Link>
                 <Link className={classes.btnOutline} to="/settings/profile">
-                  Payout settings
+                  {t("apply.payouts")}
                 </Link>
               </div>
             </>
           ) : phase === "in_review" ? (
             <>
-              <h2 className={classes.cardTitle}>Your application is with our reviewers</h2>
-              <p className={classes.text}>
-                There’s nothing more to do right now. We’ll update your status here and in settings once it has been reviewed.
-              </p>
+              <h2 className={classes.cardTitle}>{t("apply.reviewTitle")}</h2>
+              <p className={classes.text}>{t("apply.reviewText")}</p>
             </>
           ) : (
             <>
               <h2 className={classes.cardTitle}>
-                {sellerApplication?.status === "suspended"
-                  ? "Creator access is suspended"
-                  : "This application wasn’t approved"}
+                {t(sellerApplication?.status === "suspended" ? "apply.suspendedTitle" : "apply.rejectedTitle")}
               </h2>
-              <p className={classes.text}>
-                The application is closed and can’t be edited. Contact support if you think this is a mistake.
-              </p>
+              <p className={classes.text}>{t("apply.closedText")}</p>
             </>
           )}
         </section>
@@ -625,8 +629,8 @@ const ApplyCreator = () => {
         {phase !== "approved" && (
           <div className={classes.sections}>
             <CollapsibleSection
-              title="Submitted samples"
-              summary={`${counts.total} sample${counts.total === 1 ? "" : "s"}`}
+              title={t("apply.submittedSamples")}
+              summary={t("apply.sampleCount", { count: counts.total })}
             >
               {sampleRows(false)}
             </CollapsibleSection>
@@ -636,8 +640,8 @@ const ApplyCreator = () => {
     );
   }
 
-  const recentUrlError = getUrlValidationError(recentUploadUrl);
-  const sampleUrlError = getUrlValidationError(url);
+  const recentUrlError = getUrlValidationError(recentUploadUrl, t);
+  const sampleUrlError = getUrlValidationError(url, t);
   const atMax = counts.total >= MAX_WORK_SAMPLES;
 
   return (
@@ -649,8 +653,8 @@ const ApplyCreator = () => {
         <div className={classes.sections}>
           <CollapsibleSection
             id="application-basics"
-            title="Account basics"
-            summary={basicsDone ? "Profile and platform ready" : "Finish these in settings"}
+            title={t("apply.stepBasics")}
+            summary={t(basicsDone ? "apply.basicsReady" : "apply.basicsTodo")}
             badge={<DoneBadge done={basicsDone} />}
             {...sectionFlags("basics")}
           >
@@ -658,51 +662,51 @@ const ApplyCreator = () => {
               <li className={classes.row}>
                 <Mark done={profileReady} />
                 <div className={classes.rowMain}>
-                  <div className={classes.rowTitle}>Handle and display name</div>
-                  <div className={classes.rowSub}>Shown on your public creator profile</div>
+                  <div className={classes.rowTitle}>{t("apply.rowHandle")}</div>
+                  <div className={classes.rowSub}>{t("apply.rowHandleSub")}</div>
                 </div>
               </li>
               <li className={classes.row}>
                 <Mark done={hasLinkedCreatorPlatform} />
                 <div className={classes.rowMain}>
-                  <div className={classes.rowTitle}>Linked creator platform</div>
-                  <div className={classes.rowSub}>Twitch or YouTube, so reviewers can see your channel</div>
+                  <div className={classes.rowTitle}>{t("apply.rowPlatform")}</div>
+                  <div className={classes.rowSub}>{t("apply.rowPlatformSub")}</div>
                 </div>
               </li>
             </ul>
             {!basicsDone && (
               <Link className={classes.btnOutline} to="/settings/profile">
-                Open settings
+                {t("apply.openSettings")}
               </Link>
             )}
           </CollapsibleSection>
 
           <CollapsibleSection
             id="application-recent"
-            title="Most recent upload"
+            title={t("apply.recentTitle")}
             summary={
-              recentUploadSample?.url ? hostOf(recentUploadSample.url) : "Required — a VOD or upload from the last 30 days"
+              recentUploadSample?.url ? hostOf(recentUploadSample.url) : t("apply.recentRequired")
             }
-            badge={<DoneBadge done={counts.hasRecentUpload} todo="Required" />}
+            badge={<DoneBadge done={counts.hasRecentUpload} todo={t("apply.required")} />}
             {...sectionFlags("recent")}
           >
             <div className={classes.inline}>
               <label className={classes.field}>
-                <span className="sr-only">Most recent upload link</span>
+                <span className="sr-only">{t("apply.recentLink")}</span>
                 <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={recentUploadUrl}
                   onChange={(event) => setRecentUploadUrl(event.currentTarget.value)}
                   onBlur={() => setRecentUploadUrl((value) => normaliseUrlInput(value))}
-                  placeholder="twitch.tv/videos/… or youtube.com/watch?v=…"
+                  placeholder={t("apply.recentPlaceholder")}
                   disabled={!canEdit}
                 />
                 </KeptPlaceholder>
                 {recentUrlError ? (
                   <span className={classes.fieldError}>{recentUrlError}</span>
                 ) : (
-                  <span className={classes.small}>Counts as one of your {MIN_WORK_SAMPLES} required samples.</span>
+                  <span className={classes.small}>{t("apply.recentHint", { min: MIN_WORK_SAMPLES })}</span>
                 )}
               </label>
               <button
@@ -717,15 +721,15 @@ const ApplyCreator = () => {
                   (!recentUploadSample && atMax)
                 }
               >
-                {saveRecentUploadLink.isPending ? "Saving…" : recentUploadSample ? "Update" : "Save link"}
+                {t(saveRecentUploadLink.isPending ? "listingForm.saving" : recentUploadSample ? "apply.update" : "apply.saveLink")}
               </button>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection
             id="application-samples"
-            title="Work samples"
-            summary={`${counts.total} added · ${MIN_WORK_SAMPLES} minimum, ${MAX_WORK_SAMPLES} maximum`}
+            title={t("apply.stepSamples")}
+            summary={t("apply.samplesSummary", { count: counts.total, min: MIN_WORK_SAMPLES, max: MAX_WORK_SAMPLES })}
             badge={<DoneBadge done={requirements[3].done} />}
             {...sectionFlags("samples")}
           >
@@ -733,47 +737,47 @@ const ApplyCreator = () => {
 
             {canEdit && !atMax && (
               <div className={classes.addForm}>
-                <div className={classes.addTitle}>Add a sample</div>
+                <div className={classes.addTitle}>{t("apply.addSampleTitle")}</div>
                 <div className={classes.grid}>
                   <label className={classes.field}>
-                    <span className={classes.label}>Title</span>
+                    <span className={classes.label}>{t("listingForm.titleLabel")}</span>
                     <KeptPlaceholder>
                     <input
                       className={classes.input}
                       value={title}
                       onChange={(event) => setTitle(event.currentTarget.value)}
-                      placeholder="Emote portfolio, VOD edit reel…"
+                      placeholder={t("apply.samplePlaceholder")}
                     />
                     </KeptPlaceholder>
                   </label>
                   <label className={classes.field}>
-                    <span className={classes.label}>Link</span>
+                    <span className={classes.label}>{t("listingForm.link")}</span>
                     <KeptPlaceholder>
                     <input
                       className={classes.input}
                       value={url}
                       onChange={(event) => setUrl(event.currentTarget.value)}
                       onBlur={() => setUrl((value) => normaliseUrlInput(value))}
-                      placeholder="Portfolio, drive folder or showcase"
+                      placeholder={t("apply.linkPlaceholder")}
                     />
                     </KeptPlaceholder>
                     {sampleUrlError && <span className={classes.fieldError}>{sampleUrlError}</span>}
                   </label>
                   <label className={classes.fieldWide}>
-                    <span className={classes.label}>What it shows (optional)</span>
+                    <span className={classes.label}>{t("apply.shows")}</span>
                     <KeptPlaceholder>
                     <textarea
                       className={classes.textarea}
                       rows={2}
                       value={description}
                       onChange={(event) => setDescription(event.currentTarget.value)}
-                      placeholder="Your role and any useful context."
+                      placeholder={t("apply.showsPlaceholder")}
                     />
                     </KeptPlaceholder>
                   </label>
                 </div>
                 <div className={classes.addFooter}>
-                  <span className={classes.small}>Links only for now — image and video uploads are coming soon.</span>
+                  <span className={classes.small}>{t("apply.linksOnly")}</span>
                   <button
                     className={classes.btnPrimary}
                     type="button"
@@ -782,26 +786,26 @@ const ApplyCreator = () => {
                       addLinkSample.isPending || !title.trim() || !url.trim() || Boolean(sampleUrlError)
                     }
                   >
-                    {addLinkSample.isPending ? "Adding…" : "Add sample"}
+                    {t(addLinkSample.isPending ? "apply.adding" : "apply.add")}
                   </button>
                 </div>
               </div>
             )}
 
             {canEdit && atMax && (
-              <p className={classes.small}>You’ve reached the {MAX_WORK_SAMPLES}-sample limit.</p>
+              <p className={classes.small}>{t("apply.atMax", { count: MAX_WORK_SAMPLES })}</p>
             )}
           </CollapsibleSection>
 
           <CollapsibleSection
             id="application-agreements"
-            title="Agreements"
-            summary={agreementsAccepted ? "All accepted" : `${acceptedCount} of 4 accepted · saved when you submit`}
+            title={t("apply.stepAgreements")}
+            summary={agreementsAccepted ? t("apply.allAccepted") : t("apply.accepted", { count: acceptedCount })}
             badge={<DoneBadge done={agreementsAccepted} />}
             {...sectionFlags("agreements")}
           >
             <div className={classes.checks}>
-              {(Object.keys(agreementCopy) as AgreementKey[]).map((key) => (
+              {agreementKeys.map((key) => (
                 <label key={key} className={classes.check}>
                   <input
                     className={classes.checkbox}
@@ -813,18 +817,18 @@ const ApplyCreator = () => {
                     }}
                     disabled={!canEdit}
                   />
-                  <span>{agreementCopy[key]}</span>
+                  <span><AgreementCopy agreement={key} /></span>
                 </label>
               ))}
             </div>
           </CollapsibleSection>
         </div>
 
-        <aside className={classes.aside} aria-label="Submission checklist">
+        <aside className={classes.aside} aria-label={t("apply.checklist")}>
           <div className={classes.asideHead}>
-            <span className={classes.asideTitle}>Ready to submit?</span>
+            <span className={classes.asideTitle}>{t("apply.ready")}</span>
             <span className={classes.asideCount}>
-              {doneCount} of {requirements.length}
+              {t("apply.progress", { done: doneCount, total: requirements.length })}
             </span>
           </div>
 
@@ -852,10 +856,10 @@ const ApplyCreator = () => {
 
           <p className={isQueueFull ? classes.queueBlocked : classes.queue}>
             {!queueState
-              ? "Checking reviewer availability…"
+              ? t("apply.checkingSlots")
               : isQueueFull
-                ? `Applications are paused (${queueState.openCount}/${queueState.maxOpen} in review). Please check again later.`
-                : `${queueState.remaining} review slot${queueState.remaining === 1 ? "" : "s"} open`}
+                ? t("apply.paused", { open: queueState.openCount, max: queueState.maxOpen })
+                : t("apply.slots", { count: queueState.remaining })}
           </p>
 
           <button
@@ -864,18 +868,20 @@ const ApplyCreator = () => {
             onClick={() => void onSubmit()}
             disabled={!canSubmit}
           >
-            {submitApplication.isPending
-              ? "Submitting…"
-              : sellerApplication?.status === "needs_changes"
-                ? "Re-submit for review"
-                : "Submit for review"}
+            {t(
+              submitApplication.isPending
+                ? "apply.submitting"
+                : sellerApplication?.status === "needs_changes"
+                  ? "apply.resubmit"
+                  : "apply.submit"
+            )}
           </button>
 
           {blocker && <p className={classes.blocker}>{blocker.blocker}</p>}
         </aside>
       </div>
 
-      {(isAccessLoading || isSamplesLoading) && <p className={classes.small}>Loading…</p>}
+      {(isAccessLoading || isSamplesLoading) && <p className={classes.small}>{t("common.loading")}</p>}
     </div>
   );
 };

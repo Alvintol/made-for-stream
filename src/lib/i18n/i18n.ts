@@ -37,6 +37,14 @@ export const translate = (
   );
 };
 
+// A word for a value saved as a code (`category`, "emotes"). A value the lists
+// do not know, such as an old one on a listing, is shown as written.
+export const wordFor = (prefix: string, value: string, t: Translate): string => {
+  const key = `${prefix}.${value}`;
+
+  return hasMessage(key) ? t(key) : value.replace(/[_-]+/g, " ");
+};
+
 // The locale for a date on the page. English keeps the reader's own style
 // (a.m. in Canada, 24-hour in the UK); other languages use their own.
 export const dateLocale = (language: LanguageCode): string | undefined =>

@@ -1001,8 +1001,10 @@ Build order (each its own branch):
       plan. Then (`feat/i18n-creator-forms`): the milestone, final delivery
       and progress update forms. Then (`feat/i18n-change-order-builder`): the
       change order form, which finishes the creator's commission tools. Then
-      (`feat/i18n-listing-forms`): creating and editing a listing. Next: the
-      creator's listing pages and the creator application, then the remaining screens a few at a time, then the policies by a
+      (`feat/i18n-listing-forms`): creating and editing a listing. Then
+      (`feat/i18n-creator-listings`): the creator's listing pages and the
+      creator application, which finishes the creator's side. Next: My reports
+      and Settings, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 
