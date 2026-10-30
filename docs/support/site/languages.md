@@ -70,8 +70,9 @@ browser. Emails are still in English.
   the language wherever they are passed it. Dates in French follow French;
   English keeps the reader's own style (`dateLocale`).
 - 2026-10-30: the creator dashboard, the creator's commission list and
-  commission page, and the boxes for sending or withdrawing a draft. The
-  change order form is still English.
+  commission page, and the boxes for sending or withdrawing a draft.
+- 2026-10-30: the change order form, which finishes the creator's commission
+  tools.
 - 2026-10-30: the milestone, final delivery and progress update forms, with
   file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their

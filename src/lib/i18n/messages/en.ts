@@ -1702,6 +1702,42 @@ export const en = {
   "progressForm.posting": "Posting progress update…",
   "progressForm.post": "Post progress update",
 
+  // Creating a change order (changeOrders/ListingRequestChangeOrderBuilder.tsx)
+  "changeOrderForm.failed": "The project change order could not be created.",
+  "changeOrderForm.titleLength": "Change order title must be between 3 and 160 characters.",
+  "changeOrderForm.summaryLength": "Change order summary must be between 10 and 4000 characters.",
+  "changeOrderForm.impactNeeded": "Select at least one project term being changed.",
+  "changeOrderForm.totalInvalid": "Enter a revised total amount of 0 or more.",
+  "changeOrderForm.totalSame": "The revised total must differ from the current total.",
+  "changeOrderForm.dateNeeded": "Choose a revised completion date.",
+  "changeOrderForm.dateSame": "The revised completion date must differ from the current date.",
+  "changeOrderForm.dateFuture": "The revised completion date must be in the future.",
+  "changeOrderForm.nothingLeft":
+    "Nothing is left to pay on this project, so a change order cannot lower its price. Money already paid can only be returned as a refund.",
+  "changeOrderForm.amountNeeded": "Enter an amount for every remaining payment.",
+  "changeOrderForm.noRaise": "A lower total cannot raise a remaining payment.",
+  "changeOrderForm.mustAddUp": "The remaining payments must add up to {target}. They add up to {actual}.",
+  "changeOrderForm.title": "Create project change order",
+  "changeOrderForm.text":
+    "Formally document changes to the accepted project agreement. The changes do not become enforceable until the buyer accepts them.",
+  "changeOrderForm.startFrom": "This starts from the change order you withdrew (“{title}”). Change what you need, then send it.",
+  "changeOrderForm.titleLabel": "Change order title",
+  "changeOrderForm.summaryLabel": "Proposed change details",
+  "changeOrderForm.summaryHint": "Clearly describe what changes, why it is changing, and what the buyer will receive.",
+  "changeOrderForm.termsLegend": "Terms being changed",
+  "changeOrderForm.currentTotal": "Current project total",
+  "changeOrderForm.revisedTotal": "Revised project total",
+  "changeOrderForm.remainingLegend": "Remaining payments",
+  "changeOrderForm.remainingHelp":
+    "This lowers the total, so say what each payment that is not yet due becomes. Payments already paid or due stay as they are ({settled}), so the payments below must add up to {target}. Money already paid can only be returned as a refund.",
+  "changeOrderForm.paymentLabel": "{title} (now {amount})",
+  "changeOrderForm.currentDate": "Current completion date",
+  "changeOrderForm.revisedDate": "Revised completion date",
+  "changeOrderForm.sendNow": "Send to the buyer now. Uncheck to save as a private draft.",
+  "changeOrderForm.saving": "Saving change order…",
+  "changeOrderForm.createSend": "Create and send change order",
+  "changeOrderForm.saveDraft": "Save change order draft",
+
   // Page not found (src/pages/NotFound.tsx)
   "notFound.text": "That page doesn’t exist.",
   "notFound.home": "Go home",

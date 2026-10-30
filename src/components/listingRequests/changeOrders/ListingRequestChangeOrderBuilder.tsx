@@ -1,5 +1,6 @@
 import { hasErrorMessage } from "../../../lib/errorMessage";
 import { formatMoney } from "../../../lib/formatMoney";
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 import {
   useState,
   type SubmitEventHandler,
@@ -126,8 +127,8 @@ const defaultFormState: BuilderFormState = {
   sendNow: true,
 };
 
-const formatDate = (value: string): string =>
-  new Intl.DateTimeFormat("en-CA", {
+const formatDate = (value: string, language: string): string =>
+  new Intl.DateTimeFormat(language, {
     dateStyle: "medium",
   }).format(new Date(value));
 
@@ -178,10 +179,10 @@ const getStartingFormState = (
 
 const toCents = (value: number): number => Math.round(value * 100);
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project change order could not be created.";
+    : t("changeOrderForm.failed");
 
 const getImpact = (
   form: BuilderFormState
@@ -197,7 +198,8 @@ const getImpact = (
 
 const validateForm = (
   form: BuilderFormState,
-  agreement: ChangeOrderAgreement
+  agreement: ChangeOrderAgreement,
+  t: Translate
 ): BuilderValidationErrors => {
   const errors: BuilderValidationErrors = {};
   const impact = getImpact(form);
@@ -206,21 +208,18 @@ const validateForm = (
     form.title.trim().length < 3 ||
     form.title.trim().length > 160
   ) {
-    errors.title =
-      "Change order title must be between 3 and 160 characters.";
+    errors.title = t("changeOrderForm.titleLength");
   }
 
   if (
     form.summary.trim().length < 10 ||
     form.summary.trim().length > 4000
   ) {
-    errors.summary =
-      "Change order summary must be between 10 and 4000 characters.";
+    errors.summary = t("changeOrderForm.summaryLength");
   }
 
   if (!hasListingRequestChangeOrderImpact(impact)) {
-    errors.impact =
-      "Select at least one project term being changed.";
+    errors.impact = t("changeOrderForm.impactNeeded");
   }
 
   if (form.changesPrice) {
@@ -232,34 +231,29 @@ const validateForm = (
       !Number.isFinite(revisedTotalAmount) ||
       revisedTotalAmount < 0
     ) {
-      errors.revisedTotalAmount =
-        "Enter a revised total amount of 0 or more.";
+      errors.revisedTotalAmount = t("changeOrderForm.totalInvalid");
     } else if (
       revisedTotalAmount === agreement.total_amount
     ) {
-      errors.revisedTotalAmount =
-        "The revised total must differ from the current total.";
+      errors.revisedTotalAmount = t("changeOrderForm.totalSame");
     }
   }
 
   if (form.changesTimeline) {
     if (!form.revisedCompletionDate) {
-      errors.revisedCompletionDate =
-        "Choose a revised completion date.";
+      errors.revisedCompletionDate = t("changeOrderForm.dateNeeded");
     } else if (
       form.revisedCompletionDate ===
       getDateOnly(
         agreement.adjusted_estimated_completion_at
       )
     ) {
-      errors.revisedCompletionDate =
-        "The revised completion date must differ from the current date.";
+      errors.revisedCompletionDate = t("changeOrderForm.dateSame");
     } else if (
       form.revisedCompletionDate <
       getEarliestCompletionDate()
     ) {
-      errors.revisedCompletionDate =
-        "The revised completion date must be in the future.";
+      errors.revisedCompletionDate = t("changeOrderForm.dateFuture");
     }
   }
 
@@ -274,6 +268,8 @@ const ListingRequestChangeOrderBuilder = ({
   error,
   onCreateChangeOrder,
 }: ListingRequestChangeOrderBuilderProps) => {
+  const t = useT();
+  const language = useLanguage();
   const [form, setForm] =
     useState<BuilderFormState>(() =>
       getStartingFormState(startFrom)
@@ -370,7 +366,7 @@ const ListingRequestChangeOrderBuilder = ({
     }
 
     if (remainingPayments.length === 0) {
-      return "Nothing is left to pay on this project, so a change order cannot lower its price. Money already paid can only be returned as a refund.";
+      return t("changeOrderForm.nothingLeft");
     }
 
     const amounts = remainingPayments.map((payment) =>
@@ -382,7 +378,7 @@ const ListingRequestChangeOrderBuilder = ({
         (amount) => !Number.isFinite(amount) || amount < 0
       )
     ) {
-      return "Enter an amount for every remaining payment.";
+      return t("changeOrderForm.amountNeeded");
     }
 
     if (
@@ -391,18 +387,21 @@ const ListingRequestChangeOrderBuilder = ({
           amount > remainingPayments[index].amount
       )
     ) {
-      return "A lower total cannot raise a remaining payment.";
+      return t("changeOrderForm.noRaise");
     }
 
     return remainingCents === remainingTargetCents
       ? undefined
-      : `The remaining payments must add up to ${formatMoney(
-          remainingTargetCents / 100,
-          agreement.currency
-        )}. They add up to ${formatMoney(
-          remainingCents / 100,
-          agreement.currency
-        )}.`;
+      : t("changeOrderForm.mustAddUp", {
+          target: formatMoney(
+            remainingTargetCents / 100,
+            agreement.currency
+          ),
+          actual: formatMoney(
+            remainingCents / 100,
+            agreement.currency
+          ),
+        });
   };
 
   const handleSubmit: SubmitEventHandler<
@@ -413,7 +412,7 @@ const ListingRequestChangeOrderBuilder = ({
     const revisedPaymentsError = getRevisedPaymentsError();
 
     const nextErrors: BuilderValidationErrors = {
-      ...validateForm(form, agreement),
+      ...validateForm(form, agreement, t),
       ...(revisedPaymentsError
         ? { revisedPayments: revisedPaymentsError }
         : {}),
@@ -481,7 +480,7 @@ const ListingRequestChangeOrderBuilder = ({
   };
 
   const createErrorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   return (
@@ -492,21 +491,17 @@ const ListingRequestChangeOrderBuilder = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Create project change order
+            {t("changeOrderForm.title")}
           </h2>
 
           <p className={classes.text}>
-            Formally document changes to the accepted
-            project agreement. The changes do not become
-            enforceable until the buyer accepts them.
+            {t("changeOrderForm.text")}
           </p>
         </div>
 
         {startFrom && (
           <div className={classes.currentValue}>
-            This starts from the change order you withdrew
-            (“{startFrom.title}”). Change what you need,
-            then send it.
+            {t("changeOrderForm.startFrom", { title: startFrom.title })}
           </div>
         )}
 
@@ -521,7 +516,7 @@ const ListingRequestChangeOrderBuilder = ({
             className={classes.label}
             htmlFor="change-order-title"
           >
-            Change order title
+            {t("changeOrderForm.titleLabel")}
           </label>
 
           <input
@@ -549,7 +544,7 @@ const ListingRequestChangeOrderBuilder = ({
             className={classes.label}
             htmlFor="change-order-summary"
           >
-            Proposed change details
+            {t("changeOrderForm.summaryLabel")}
           </label>
 
           <textarea
@@ -566,8 +561,7 @@ const ListingRequestChangeOrderBuilder = ({
           />
 
           <p className={classes.help}>
-            Clearly describe what changes, why it is
-            changing, and what the buyer will receive.
+            {t("changeOrderForm.summaryHint")}
           </p>
 
           {validationErrors.summary && (
@@ -579,7 +573,7 @@ const ListingRequestChangeOrderBuilder = ({
 
         <fieldset className={classes.fieldset}>
           <legend className={classes.legend}>
-            Terms being changed
+            {t("changeOrderForm.termsLegend")}
           </legend>
 
           <div className={classes.checkboxGrid}>
@@ -597,7 +591,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Scope
+                {t("changeOrderImpact.scope")}
               </span>
             </label>
 
@@ -615,7 +609,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Price
+                {t("changeOrderImpact.price")}
               </span>
             </label>
 
@@ -633,7 +627,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Timeline
+                {t("changeOrderImpact.timeline")}
               </span>
             </label>
 
@@ -651,7 +645,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Deliverables
+                {t("changeOrderImpact.deliverables")}
               </span>
             </label>
 
@@ -671,7 +665,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Payment schedule
+                {t("changeOrderImpact.paymentSchedule")}
               </span>
             </label>
 
@@ -689,7 +683,7 @@ const ListingRequestChangeOrderBuilder = ({
               />
 
               <span className={classes.checkboxLabel}>
-                Milestones
+                {t("changeOrderImpact.milestones")}
               </span>
             </label>
           </div>
@@ -705,7 +699,7 @@ const ListingRequestChangeOrderBuilder = ({
           <div className={classes.grid}>
             <div className={classes.field}>
               <div className={classes.label}>
-                Current project total
+                {t("changeOrderForm.currentTotal")}
               </div>
 
               <div className={classes.currentValue}>
@@ -721,7 +715,7 @@ const ListingRequestChangeOrderBuilder = ({
                 className={classes.label}
                 htmlFor="change-order-total"
               >
-                Revised project total
+                {t("changeOrderForm.revisedTotal")}
               </label>
 
               <input
@@ -753,24 +747,20 @@ const ListingRequestChangeOrderBuilder = ({
         {lowersTotal && (
           <fieldset className={classes.fieldset}>
             <legend className={classes.legend}>
-              Remaining payments
+              {t("changeOrderForm.remainingLegend")}
             </legend>
 
             <p className={classes.help}>
-              This lowers the total, so say what each payment
-              that is not yet due becomes. Payments already
-              paid or due stay as they are (
-              {formatMoney(
-                settledCents / 100,
-                agreement.currency
-              )}
-              ), so the payments below must add up to{" "}
-              {formatMoney(
-                remainingTargetCents / 100,
-                agreement.currency
-              )}
-              . Money already paid can only be returned as a
-              refund.
+              {t("changeOrderForm.remainingHelp", {
+                settled: formatMoney(
+                  settledCents / 100,
+                  agreement.currency
+                ),
+                target: formatMoney(
+                  remainingTargetCents / 100,
+                  agreement.currency
+                ),
+              })}
             </p>
 
             {remainingPayments.map((payment) => (
@@ -782,12 +772,13 @@ const ListingRequestChangeOrderBuilder = ({
                   className={classes.label}
                   htmlFor={`change-order-payment-${payment.id}`}
                 >
-                  {payment.title} (now{" "}
-                  {formatMoney(
-                    payment.amount,
-                    agreement.currency
-                  )}
-                  )
+                  {t("changeOrderForm.paymentLabel", {
+                    title: payment.title,
+                    amount: formatMoney(
+                      payment.amount,
+                      agreement.currency
+                    ),
+                  })}
                 </label>
 
                 <input
@@ -827,12 +818,13 @@ const ListingRequestChangeOrderBuilder = ({
           <div className={classes.grid}>
             <div className={classes.field}>
               <div className={classes.label}>
-                Current completion date
+                {t("changeOrderForm.currentDate")}
               </div>
 
               <div className={classes.currentValue}>
                 {formatDate(
-                  agreement.adjusted_estimated_completion_at
+                  agreement.adjusted_estimated_completion_at,
+                  language
                 )}
               </div>
             </div>
@@ -842,7 +834,7 @@ const ListingRequestChangeOrderBuilder = ({
                 className={classes.label}
                 htmlFor="change-order-completion"
               >
-                Revised completion date
+                {t("changeOrderForm.revisedDate")}
               </label>
 
               <input
@@ -884,8 +876,7 @@ const ListingRequestChangeOrderBuilder = ({
           />
 
           <span className={classes.checkboxLabel}>
-            Send to the buyer now. Uncheck to save as a
-            private draft.
+            {t("changeOrderForm.sendNow")}
           </span>
         </label>
 
@@ -895,11 +886,13 @@ const ListingRequestChangeOrderBuilder = ({
             disabled={isPending}
             type="submit"
           >
-            {isPending
-              ? "Saving change order…"
-              : form.sendNow
-                ? "Create and send change order"
-                : "Save change order draft"}
+            {t(
+              isPending
+                ? "changeOrderForm.saving"
+                : form.sendNow
+                  ? "changeOrderForm.createSend"
+                  : "changeOrderForm.saveDraft"
+            )}
           </button>
         </div>
       </div>

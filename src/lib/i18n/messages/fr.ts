@@ -1676,6 +1676,42 @@ export const fr: Record<MessageKey, Message> = {
   "progressForm.posting": "Publication de la mise à jour…",
   "progressForm.post": "Publier la mise à jour",
 
+  "changeOrderForm.failed": "La modification n’a pas pu être créée.",
+  "changeOrderForm.titleLength": "Le titre de la modification doit compter entre 3 et 160 caractères.",
+  "changeOrderForm.summaryLength": "Le résumé de la modification doit compter entre 10 et 4000 caractères.",
+  "changeOrderForm.impactNeeded": "Choisissez au moins une condition du projet qui change.",
+  "changeOrderForm.totalInvalid": "Entrez un nouveau montant total de 0 ou plus.",
+  "changeOrderForm.totalSame": "Le nouveau total doit être différent du total actuel.",
+  "changeOrderForm.dateNeeded": "Choisissez une nouvelle date de fin.",
+  "changeOrderForm.dateSame": "La nouvelle date de fin doit être différente de la date actuelle.",
+  "changeOrderForm.dateFuture": "La nouvelle date de fin doit être dans le futur.",
+  "changeOrderForm.nothingLeft":
+    "Il ne reste rien à payer sur ce projet : une modification ne peut donc pas en réduire le prix. L’argent déjà payé ne peut être rendu que par un remboursement.",
+  "changeOrderForm.amountNeeded": "Entrez un montant pour chaque paiement restant.",
+  "changeOrderForm.noRaise": "Un total réduit ne peut pas augmenter un paiement restant.",
+  "changeOrderForm.mustAddUp": "Les paiements restants doivent totaliser {target}. Ils totalisent {actual}.",
+  "changeOrderForm.title": "Créer une modification du projet",
+  "changeOrderForm.text":
+    "Documentez officiellement les changements à l’entente du projet acceptée. Les changements ne s’appliquent qu’une fois acceptés par l’acheteur.",
+  "changeOrderForm.startFrom":
+    "Ce formulaire reprend la modification que vous avez retirée (« {title} »). Changez ce qu’il faut, puis envoyez-la.",
+  "changeOrderForm.titleLabel": "Titre de la modification",
+  "changeOrderForm.summaryLabel": "Détails du changement proposé",
+  "changeOrderForm.summaryHint": "Décrivez clairement ce qui change, pourquoi, et ce que l’acheteur recevra.",
+  "changeOrderForm.termsLegend": "Conditions qui changent",
+  "changeOrderForm.currentTotal": "Total actuel du projet",
+  "changeOrderForm.revisedTotal": "Nouveau total du projet",
+  "changeOrderForm.remainingLegend": "Paiements restants",
+  "changeOrderForm.remainingHelp":
+    "Ceci réduit le total : indiquez donc ce que devient chaque paiement qui n’est pas encore dû. Les paiements déjà effectués ou dus ne changent pas ({settled}), donc les paiements ci-dessous doivent totaliser {target}. L’argent déjà payé ne peut être rendu que par un remboursement.",
+  "changeOrderForm.paymentLabel": "{title} (actuellement {amount})",
+  "changeOrderForm.currentDate": "Date de fin actuelle",
+  "changeOrderForm.revisedDate": "Nouvelle date de fin",
+  "changeOrderForm.sendNow": "Envoyer à l’acheteur maintenant. Décochez pour enregistrer comme brouillon privé.",
+  "changeOrderForm.saving": "Enregistrement de la modification…",
+  "changeOrderForm.createSend": "Créer et envoyer la modification",
+  "changeOrderForm.saveDraft": "Enregistrer le brouillon de la modification",
+
   "notFound.text": "Cette page n’existe pas.",
   "notFound.home": "Retour à l’accueil",
 };
