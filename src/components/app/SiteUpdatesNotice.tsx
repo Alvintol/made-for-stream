@@ -6,7 +6,7 @@ import {
   useMarkSiteUpdatesSeen,
   useSiteUpdatePreferenceAtSignIn,
 } from "../../hooks/settings/useSiteUpdatePreference";
-
+import { useT } from "../../lib/i18n/i18n";
 const classes = {
   wrap: "fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:inset-x-auto sm:right-4 sm:justify-end",
   card: "card max-h-[70vh] w-full max-w-md space-y-3 overflow-y-auto p-5 shadow-lg",
@@ -24,6 +24,7 @@ const classes = {
 // Preferences. Closing it (or following the link) records the version in
 // the database, so it does not come back on another device.
 const SiteUpdatesNotice = () => {
+  const t = useT();
   const preferenceQuery = useSiteUpdatePreferenceAtSignIn();
   const markSeen = useMarkSiteUpdatesSeen();
   const [closed, setClosed] = useState(false);
@@ -47,15 +48,15 @@ const SiteUpdatesNotice = () => {
 
   return (
     <div className={classes.wrap}>
-      <section className={classes.card} role="dialog" aria-label="What's new on Made for Stream">
+      <section className={classes.card} role="dialog" aria-label={t("whatsNew.dialog")}>
         <div className={classes.header}>
           <div>
-            <h2 className={classes.title}>What&rsquo;s new: {latest.title}</h2>
+            <h2 className={classes.title}>{t("whatsNew.titleWith", { title: latest.title })}</h2>
             <p className={classes.version}>{latest.version}</p>
           </div>
 
           <button className={classes.btn} type="button" onClick={close}>
-            Close
+            {t("whatsNew.close")}
           </button>
         </div>
 
@@ -67,7 +68,7 @@ const SiteUpdatesNotice = () => {
 
         <div className={classes.footer}>
           <Link className={classes.link} to="/updates" onClick={close}>
-            See all updates
+            {t("whatsNew.all")}
           </Link>
         </div>
       </section>

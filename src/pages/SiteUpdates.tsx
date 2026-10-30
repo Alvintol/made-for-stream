@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { siteUpdates, siteUpdatesPageSize, siteVersion } from "../domain/site/siteUpdates";
-
+import { useLanguage, useT } from "../lib/i18n/i18n";
 const classes = {
   shell: "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6",
   title: "pageTitle",
@@ -20,8 +20,8 @@ const classes = {
   btn: "btnOutline btnSm",
 } as const;
 
-const formatDate = (value: string): string =>
-  new Intl.DateTimeFormat("en-CA", { dateStyle: "long", timeZone: "UTC" }).format(
+const formatDate = (value: string, language: string): string =>
+  new Intl.DateTimeFormat(language, { dateStyle: "long", timeZone: "UTC" }).format(
     new Date(`${value}T12:00:00.000Z`),
   );
 
@@ -33,6 +33,8 @@ const formatDate = (value: string): string =>
 // ponytail: the whole list ships with the page and only ten rows are drawn;
 // move it to a fetched file if it ever grows past a few hundred versions.
 const SiteUpdates = () => {
+  const t = useT();
+  const language = useLanguage();
   const [page, setPage] = useState(0);
 
   const first = page * siteUpdatesPageSize;
@@ -42,14 +44,8 @@ const SiteUpdates = () => {
   return (
     <div className={classes.shell}>
       <div>
-        <h1 className={classes.title}>What&rsquo;s new</h1>
-        <p className={classes.text}>
-          Made for Stream is in beta and changes often. Every version is listed here,
-          newest first: choose one to see what changed in it. The current version is{" "}
-          {siteVersion}. Updates are never sent by email; if you would like to be shown
-          the latest changes once, the next time you sign in after an update, turn that
-          on in Settings, under Preferences.
-        </p>
+        <h1 className={classes.title}>{t("whatsNew.title")}</h1>
+        <p className={classes.text}>{t("whatsNew.intro", { version: siteVersion })}</p>
       </div>
 
       <div className={classes.versions}>
@@ -63,9 +59,9 @@ const SiteUpdates = () => {
           >
             <summary className={classes.summary}>
               <span>{update.version}</span>
-              <span className={classes.date}>{formatDate(update.date)}</span>
+              <span className={classes.date}>{formatDate(update.date, language)}</span>
               {update.version === siteVersion && (
-                <span className={classes.current}>Current version</span>
+                <span className={classes.current}>{t("whatsNew.current")}</span>
               )}
               <span className={classes.chevron} aria-hidden="true">
                 &rsaquo;
@@ -85,23 +81,23 @@ const SiteUpdates = () => {
       </div>
 
       {siteUpdates.length > siteUpdatesPageSize && (
-        <nav className={classes.pager} aria-label="More versions">
+        <nav className={classes.pager} aria-label={t("whatsNew.more")}>
           <button
             className={classes.btn}
             type="button"
-            aria-label="Newer versions"
+            aria-label={t("whatsNew.newer")}
             disabled={page === 0}
             onClick={() => setPage(page - 1)}
           >
             &larr;
           </button>
           <span className={classes.pagerText}>
-            Versions {first + 1} to {last} of {siteUpdates.length}
+            {t("whatsNew.range", { first: first + 1, last, total: siteUpdates.length })}
           </span>
           <button
             className={classes.btn}
             type="button"
-            aria-label="Older versions"
+            aria-label={t("whatsNew.older")}
             disabled={last >= siteUpdates.length}
             onClick={() => setPage(page + 1)}
           >

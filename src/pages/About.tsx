@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-
+import { useT } from "../lib/i18n/i18n";
 const classes = {
   page: "space-y-8",
 
@@ -28,105 +28,98 @@ const classes = {
 } as const;
 
 const About = () => {
+  const t = useT();
+
   return (
     <div className={classes.page}>
       <section className={classes.hero}>
-        <h1 className={classes.h1}>About Made for Stream</h1>
-        <p className={classes.lead}>
-          Made for Stream is a discovery-first marketplace for creator-made assets and services —
-          emotes, overlays, PNG/VTuber models, rigging, editing, and audio help — in one trusted place.
-        </p>
+        <h1 className={classes.h1}>{t("about.title")}</h1>
+        <p className={classes.lead}>{t("about.lead")}</p>
 
         <div className={classes.heroActions}>
           <Link to="/market" className="btnPrimary">
-            Browse market
+            {t("about.browse")}
           </Link>
           <Link to="/creators" className="btnOutline">
-            Find creators
+            {t("about.creators")}
           </Link>
           <Link to="/live" className="btnOutline">
-            Live now
+            {t("about.live")}
           </Link>
         </div>
       </section>
 
       <section className={classes.grid}>
         <div className={classes.section}>
-          <h2 className={classes.h2}>What this is</h2>
-          <p className={classes.p}>
-            A focused hub where creators can be discovered by other creators and streamers without
-            digging through sketchy reposts or random DMs. The goal is to make it easier to browse,
-            compare, and contact the right person for the job.
-          </p>
+          <h2 className={classes.h2}>{t("about.whatTitle")}</h2>
+          <p className={classes.p}>{t("about.whatText")}</p>
 
           <div className={classes.chipRow}>
-            <span className={classes.chip}>Emotes</span>
-            <span className={classes.chip}>Overlays</span>
+            <span className={classes.chip}>{t("category.emotes")}</span>
+            <span className={classes.chip}>{t("category.overlays")}</span>
             <span className={classes.chip}>PNG/VTuber</span>
-            <span className={classes.chip}>Rigging</span>
-            <span className={classes.chip}>Video Editing</span>
-            <span className={classes.chip}>Audio Tech Help</span>
+            <span className={classes.chip}>{t("about.chipRigging")}</span>
+            <span className={classes.chip}>{t("category.video-editing")}</span>
+            <span className={classes.chip}>{t("category.audio-tech-help")}</span>
           </div>
         </div>
 
         <div className={classes.section}>
-          <h2 className={classes.h2}>v0 focus</h2>
+          <h2 className={classes.h2}>{t("about.doTitle")}</h2>
           <ul className={classes.list}>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Marketplace browsing with clear categories and filters
+              {t("about.do1")}
             </li>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Creator profiles and listings (discovery-first)
+              {t("about.do2")}
             </li>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Live discovery (Twitch now, YouTube next)
+              {t("about.do3")}
+            </li>
+            <li className={classes.li}>
+              <span className={classes.bullet} />
+              {t("about.do4")}
             </li>
           </ul>
-          <p className={classes.p}>
-            Payments and delivery protection are planned — but v0 is about building a strong, useful
-            discovery experience first.
-          </p>
+          <p className={classes.p}>{t("about.beta")}</p>
         </div>
       </section>
 
       <section className={classes.grid}>
         <div className={classes.section}>
-          <h2 className={classes.h2}>Policy</h2>
+          <h2 className={classes.h2}>{t("about.policyTitle")}</h2>
           <p className={classes.p}>
-            <strong>Human-made only.</strong> No generative AI listings. This keeps the marketplace
-            aligned with creators who value originality and fair credit.
+            <strong>{t("about.policyHuman")}</strong> {t("about.policyHumanText")}
           </p>
-          <p className={classes.p}>
-            Reporting and moderation will be added as the platform grows.
-          </p>
+          <p className={classes.p}>{t("about.policyReports")}</p>
         </div>
 
         <div className={classes.section}>
-          <h2 className={classes.h2}>Trust & safety vision</h2>
+          <h2 className={classes.h2}>{t("about.trustTitle")}</h2>
           <ul className={classes.list}>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Clear deliverables + terms per listing (revisions, turnaround, file formats)
+              {t("about.trust1")}
             </li>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Payment protection / “locked payments” to prevent ghosting or non-payment
+              {t("about.trust2")}
             </li>
             <li className={classes.li}>
               <span className={classes.bullet} />
-              Delivery confirmation and dispute flow (later)
+              {t("about.trust3")}
             </li>
           </ul>
         </div>
       </section>
 
       <section className={classes.note}>
-        <div className={classes.noteTitle}>Built by Alvin (Beans)</div>
+        <div className={classes.noteTitle}>{t("about.builtBy")}</div>
         <p className={classes.noteText}>
-          Follow along or say hi on Twitch:{" "}
+          {t("about.follow")}{" "}
           <a
             className={classes.link}
             href="https://www.twitch.tv/ImAllBeans"
@@ -135,7 +128,7 @@ const About = () => {
           >
             @ImAllBeans
           </a>
-          . This project is public and evolving — expect frequent improvements.
+          {t("about.followEnd")}
         </p>
       </section>
     </div>

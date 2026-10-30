@@ -11,7 +11,7 @@ import {
   useMyModerationReports,
 } from "../../hooks/moderation/useMyModerationReports";
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
-
+import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
 const classes = {
   card: "card overflow-hidden hover:shadow-[var(--shadow-md)]",
   toolbar:
@@ -51,14 +51,14 @@ const classes = {
 
 type ReportsFilter = "all" | "active" | "updates" | "resolved";
 
-const dateText = (value: string | null, withTime = false) => {
+const dateText = (value: string | null, locale: string | undefined, withTime = false) => {
   if (!value) return "—";
 
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -76,6 +76,8 @@ const statusClass: Record<ModerationReportStatus, string> = {
 };
 
 const MyReports = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const { data: reports = [], isLoading, error } = useMyModerationReports();
   const markReportsSeen = useMarkMyModerationReportsSeen();
 
@@ -103,10 +105,10 @@ const MyReports = () => {
           : reports;
 
   const reportFilters: Array<{ value: ReportsFilter; label: string; count: number }> = [
-    { value: "all", label: "All", count: reports.length },
-    { value: "active", label: "Active", count: activeReports.length },
-    { value: "updates", label: "Updates", count: reportsWithUpdates.length },
-    { value: "resolved", label: "Resolved", count: resolvedReports.length },
+    { value: "all", label: t("inbox.folder.all"), count: reports.length },
+    { value: "active", label: t("myReports.filterActive"), count: activeReports.length },
+    { value: "updates", label: t("myReports.filterUpdates"), count: reportsWithUpdates.length },
+    { value: "resolved", label: t("myReports.filterResolved"), count: resolvedReports.length },
   ];
 
   const unreadIds = reports.filter((report) => report.has_unread_update).map((report) => report.id);
@@ -134,12 +136,12 @@ const MyReports = () => {
     <div className={classes.card}>
       <div className={classes.toolbar}>
         <div>
-          <h2 className={classes.title}>My reports</h2>
-          <p className={classes.sub}>Reports you’ve submitted. Internal moderator notes stay private.</p>
+          <h2 className={classes.title}>{t("myReports.title")}</h2>
+          <p className={classes.sub}>{t("myReports.sub")}</p>
         </div>
 
         {hasReports && (
-          <div className={classes.filters} role="tablist" aria-label="Filter reports">
+          <div className={classes.filters} role="tablist" aria-label={t("myReports.filter")}>
             {reportFilters.map((filter) => {
               const isActive = reportsFilter === filter.value;
 
@@ -161,37 +163,37 @@ const MyReports = () => {
         )}
       </div>
 
-      {isLoading && <p className={classes.state}>Loading reports…</p>}
+      {isLoading && <p className={classes.state}>{t("myReports.loading")}</p>}
 
-      {error && <div className={classes.error}>Your reports could not be loaded right now.</div>}
+      {error && <div className={classes.error}>{t("myReports.loadFailed")}</div>}
 
       {!isLoading && !error && reports.length === 0 && (
-        <p className={classes.state}>You have not submitted any reports yet.</p>
+        <p className={classes.state}>{t("myReports.none")}</p>
       )}
 
       {hasReports && filteredReports.length === 0 && (
-        <p className={classes.state}>No reports match this filter.</p>
+        <p className={classes.state}>{t("myReports.noMatch")}</p>
       )}
 
       {hasReports && filteredReports.length > 0 && (
         <div className={classes.list}>
           {filteredReports.map((report) => {
             const isFresh = report.has_unread_update || freshUpdateIds.has(report.id);
-            const statusLabel = getModerationReportStatusLabel(report.status);
+            const statusLabel = getModerationReportStatusLabel(report.status, t);
 
             return (
               <CollapsibleSection
                 key={report.id}
                 headingLevel="h3"
                 title={report.target_label}
-                summary={`${getModerationReportTargetTypeLabel(report.target_type)} · ${dateText(report.created_at)}`}
+                summary={`${getModerationReportTargetTypeLabel(report.target_type, t)} · ${dateText(report.created_at, locale)}`}
                 defaultOpen={isFresh}
                 badge={
                   <span className={classes.badges}>
                     {isFresh && (
                       <span className={classes.newUpdate}>
-                        <span className="sm:hidden">New</span>
-                        <span className="hidden sm:inline">New moderator update</span>
+                        <span className="sm:hidden">{t("myReports.new")}</span>
+                        <span className="hidden sm:inline">{t("myReports.newUpdate")}</span>
                       </span>
                     )}
                     <span className={`${classes.status} ${statusClass[report.status as ModerationReportStatus] ?? classes.statusMuted}`}>
@@ -202,36 +204,36 @@ const MyReports = () => {
               >
                 <dl className={classes.facts}>
                   <div>
-                    <dt className={classes.factLabel}>Status</dt>
+                    <dt className={classes.factLabel}>{t("buyerRequests.status")}</dt>
                     <dd className={classes.factValue}>{statusLabel}</dd>
                   </div>
                   <div>
-                    <dt className={classes.factLabel}>Reason</dt>
-                    <dd className={classes.factValue}>{getModerationReportReasonLabel(report.reason_code)}</dd>
+                    <dt className={classes.factLabel}>{t("report.reason")}</dt>
+                    <dd className={classes.factValue}>{getModerationReportReasonLabel(report.reason_code, t)}</dd>
                   </div>
                   <div>
-                    <dt className={classes.factLabel}>Resolution</dt>
+                    <dt className={classes.factLabel}>{t("myReports.resolution")}</dt>
                     <dd className={classes.factValue}>
-                      {getModerationReportResolutionLabel(report.resolution_code)}
+                      {getModerationReportResolutionLabel(report.resolution_code, t)}
                     </dd>
                   </div>
                   <div>
-                    <dt className={classes.factLabel}>Resolved</dt>
-                    <dd className={classes.factValue}>{dateText(report.resolved_at)}</dd>
+                    <dt className={classes.factLabel}>{t("myReports.resolved")}</dt>
+                    <dd className={classes.factValue}>{dateText(report.resolved_at, locale)}</dd>
                   </div>
                 </dl>
 
                 {report.reason_details && (
                   <p className={classes.details}>
-                    <span className={classes.detailsLabel}>Your details:</span> {report.reason_details}
+                    <span className={classes.detailsLabel}>{t("myReports.yourDetails")}</span> {report.reason_details}
                   </p>
                 )}
 
                 {report.reporter_status_message && (
                   <div className={classes.update}>
-                    <strong>Moderator update:</strong> {report.reporter_status_message}
+                    <strong>{t("myReports.moderatorUpdate")}</strong> {report.reporter_status_message}
                     {report.reporter_status_updated_at && (
-                      <> <span>Updated {dateText(report.reporter_status_updated_at, true)}.</span></>
+                      <> <span>{t("myReports.updated", { date: dateText(report.reporter_status_updated_at, locale, true) })}</span></>
                     )}
                   </div>
                 )}

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { english, type Translate } from "../../lib/i18n/i18n";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -25,9 +26,10 @@ export const getCreatorPaymentAccountStatusLabel = (
     CreatorPaymentAccountRow,
     "charges_enabled" | "payouts_enabled" | "details_submitted"
   > | null,
+  t: Translate = english,
 ): string => {
   if (!account) {
-    return "Not connected";
+    return t("payoutStatus.none");
   }
 
   if (
@@ -35,14 +37,14 @@ export const getCreatorPaymentAccountStatusLabel = (
     account.charges_enabled &&
     account.payouts_enabled
   ) {
-    return "Ready for payouts";
+    return t("payoutStatus.ready");
   }
 
   if (!account.details_submitted) {
-    return "Onboarding incomplete";
+    return t("payoutStatus.incomplete");
   }
 
-  return "Stripe review pending";
+  return t("payoutStatus.pending");
 };
 
 export const getCreatorPaymentAccountIsReady = (

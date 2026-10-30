@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useT, type Translate } from "../../lib/i18n/i18n";
 import { useAuth } from "../../providers/AuthProvider";
 import { useMyAdminAccess } from "../admin/useMyAdminAccess";
 import { useMyProfile } from "../profile/useMyProfile";
@@ -31,25 +32,27 @@ const toError = (value: unknown): Error | null =>
       : null;
 
 const getCreatorStatusLabel = (
-  sellerApplication: SellerApplicationRow | null
+  sellerApplication: SellerApplicationRow | null,
+  t: Translate
 ): string =>
   !sellerApplication
-    ? "Not started"
+    ? t("apply.status.none")
     : sellerApplication.status === "approved"
-      ? "Approved creator"
+      ? t("creatorStatus.approved")
       : sellerApplication.status === "under_review"
-        ? "Under review"
+        ? t("apply.status.under_review")
         : sellerApplication.status === "submitted"
-          ? "Submitted"
+          ? t("apply.status.submitted")
           : sellerApplication.status === "needs_changes"
-            ? "Needs changes"
+            ? t("creatorStatus.needs_changes")
             : sellerApplication.status === "rejected"
-              ? "Rejected"
+              ? t("creatorStatus.rejected")
               : sellerApplication.status === "suspended"
-                ? "Suspended"
-                : "Draft";
+                ? t("apply.status.suspended")
+                : t("apply.status.draft");
 
 export const useSellerAccess = (): SellerAccess => {
+  const t = useT();
   const { user, loading: isAuthLoading } = useAuth();
 
   const {
@@ -106,7 +109,7 @@ export const useSellerAccess = (): SellerAccess => {
       (sellerApplication.status === "draft" ||
         sellerApplication.status === "needs_changes");
 
-    const creatorStatusLabel = getCreatorStatusLabel(sellerApplication);
+    const creatorStatusLabel = getCreatorStatusLabel(sellerApplication, t);
 
     const error =
       toError(profileError) ||
@@ -138,6 +141,7 @@ export const useSellerAccess = (): SellerAccess => {
       error,
     };
   }, [
+    t,
     user?.id,
     profile,
     platformAccounts,

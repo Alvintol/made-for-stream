@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export type AccountSetupStepKey = "profile" | "connections" | "creator" | "payouts";
 
 // optional: available but not expected of every member (e.g. applying to sell).
@@ -26,67 +28,75 @@ export type AccountSetupInput = {
   payoutsReady: boolean;
 };
 
-const creatorStep = (status: AccountSetupInput["applicationStatus"]): AccountSetupStep => {
-  const base = { key: "creator" as const, label: "Creator access" };
+const creatorStep = (
+  status: AccountSetupInput["applicationStatus"],
+  t: Translate
+): AccountSetupStep => {
+  const base = { key: "creator" as const, label: t("setup.creator") };
 
   switch (status) {
     case "approved":
-      return { ...base, state: "done", detail: "Approved creator", actionLabel: "View access" };
+      return { ...base, state: "done", detail: t("setup.creatorApproved"), actionLabel: t("setup.viewAccess") };
     case "submitted":
     case "under_review":
       return {
         ...base,
         state: "waiting",
-        detail: "Application is with Made for Stream review",
-        actionLabel: "View application",
+        detail: t("setup.creatorReview"),
+        actionLabel: t("setup.viewApplication"),
       };
     case "needs_changes":
-      return { ...base, state: "todo", detail: "Reviewers asked for changes", actionLabel: "Update application" };
+      return { ...base, state: "todo", detail: t("setup.creatorChanges"), actionLabel: t("setup.updateApplication") };
     case "draft":
-      return { ...base, state: "todo", detail: "Application in progress", actionLabel: "Continue application" };
+      return { ...base, state: "todo", detail: t("setup.creatorDraft"), actionLabel: t("setup.continueApplication") };
     case "rejected":
     case "suspended":
       return {
         ...base,
         state: "locked",
-        detail: status === "rejected" ? "Application was not approved" : "Creator access is suspended",
-        actionLabel: "View status",
+        detail: t(status === "rejected" ? "setup.creatorRejected" : "setup.creatorSuspended"),
+        actionLabel: t("setup.viewStatus"),
       };
     default:
-      return { ...base, state: "optional", detail: "Apply if you want to sell on Made for Stream", actionLabel: "Start application" };
+      return { ...base, state: "optional", detail: t("setup.creatorApply"), actionLabel: t("apply.start") };
   }
 };
 
 // Ordered setup steps for the settings checklist; later steps depend on earlier ones.
-export const getAccountSetupSteps = (input: AccountSetupInput): AccountSetupStep[] => {
+export const getAccountSetupSteps = (
+  input: AccountSetupInput,
+  t: Translate = english
+): AccountSetupStep[] => {
   const isCreator = input.applicationStatus === "approved";
 
   return [
     {
       key: "profile",
-      label: "Public profile",
+      label: t("setup.profile"),
       state: input.profileReady ? "done" : "todo",
-      detail: input.profileReady ? "Handle and display name set" : "Add a handle and display name",
-      actionLabel: "Edit profile",
+      detail: t(input.profileReady ? "setup.profileDone" : "setup.profileTodo"),
+      actionLabel: t("setup.editProfile"),
     },
     {
       key: "connections",
-      label: "Connected platforms",
+      label: t("setup.connections"),
       state: input.hasLinkedPlatform ? "done" : "todo",
-      detail: input.hasLinkedPlatform ? "Platform linked" : "Link Twitch to build trust",
-      actionLabel: "Connect",
+      detail: t(input.hasLinkedPlatform ? "setup.connectionsDone" : "setup.connectionsTodo"),
+      actionLabel: t("setup.connect"),
     },
-    creatorStep(input.applicationStatus),
+    creatorStep(input.applicationStatus, t),
     {
       key: "payouts",
-      label: "Payouts",
+      label: t("setup.payouts"),
       state: !isCreator ? "locked" : input.payoutsReady ? "done" : "todo",
-      detail: !isCreator
-        ? "Unlocks after creator approval"
-        : input.payoutsReady
-          ? "Stripe is ready for payouts"
-          : "Finish Stripe setup to get paid",
-      actionLabel: "Set up payouts",
+      detail: t(
+        !isCreator
+          ? "setup.payoutsLocked"
+          : input.payoutsReady
+            ? "setup.payoutsDone"
+            : "setup.payoutsTodo"
+      ),
+      actionLabel: t("setup.setUpPayouts"),
     },
   ];
 };
