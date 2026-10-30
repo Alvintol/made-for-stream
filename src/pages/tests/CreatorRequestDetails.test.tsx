@@ -2451,7 +2451,7 @@ describe("<CreatorRequestDetails />", () => {
 
     expect(
       screen.getByText(
-        /Milestone 1: Initial design direction has been approved by the buyer and is waiting for admin payment confirmation./
+        /Milestone 1: Initial design direction has been approved by the buyer. The next milestone will unlock after payment is confirmed./
       )
     ).toBeInTheDocument();
 

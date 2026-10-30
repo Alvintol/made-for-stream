@@ -13,8 +13,8 @@ import {
   getListingRequestDisplayTitle,
 } from "../../domain/listings/listings";
 import { useMyCreatorRequests } from "../../hooks/creatorRequests/useMyCreatorRequests";
+import { dateLocale, hasMessage, useLanguage, useT } from "../../lib/i18n/i18n";
 import { StaggerGroup } from "../../lib/motion";
-
 type CreatorRequestsProps = {
   view?: ListingRequestListView;
 };
@@ -62,38 +62,26 @@ const classes = {
 
 const pageSize = 12;
 
-const viewContent: Record<
-  ListingRequestListView,
-  {
-    title: string;
-    description: string;
-    emptyMessage: string;
-  }
-> = {
+// Translation keys (lib/i18n) for each tab.
+const viewContent = {
   active: {
-    title: "Creator commissions",
-    description:
-      "Review active commissions tied to your listings.",
-    emptyMessage:
-      "You do not have any active commissions.",
+    title: "creatorRequests.activeTitle",
+    description: "creatorRequests.activeText",
+    emptyMessage: "buyerRequests.activeEmpty",
   },
 
   completed: {
-    title: "Completed creator projects",
-    description:
-      "Review projects whose final delivery was approved by the buyer.",
-    emptyMessage:
-      "You do not have any completed creator projects.",
+    title: "creatorRequests.completedTitle",
+    description: "creatorRequests.completedText",
+    emptyMessage: "creatorRequests.completedEmpty",
   },
 
   archived: {
-    title: "Archived creator commissions",
-    description:
-      "Review declined, cancelled, and archived commissions.",
-    emptyMessage:
-      "You do not have any archived creator commissions.",
+    title: "creatorRequests.archivedTitle",
+    description: "buyerRequests.archivedText",
+    emptyMessage: "creatorRequests.archivedEmpty",
   },
-};
+} as const satisfies Record<ListingRequestListView, Record<string, string>>;
 
 // Prefers handle for buyer display, then display name, then user id.
 const buyerText = (
@@ -110,13 +98,13 @@ const buyerText = (
     fallbackUserId;
 
 // Formats timestamps for creator request cards.
-const dateText = (value: string) => {
+const dateText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(
-      undefined,
+      locale,
       {
         year: "numeric",
         month: "short",
@@ -143,6 +131,8 @@ const getStatusPillClass = (
 const CreatorRequests = ({
   view = "active",
 }: CreatorRequestsProps) => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const [page, setPage] = useState(1);
   const [pageView, setPageView] = useState(view);
   const content = viewContent[view];
@@ -173,11 +163,11 @@ const CreatorRequests = ({
     <div className={classes.page}>
       <div className={classes.header}>
         <h1 className={classes.h1}>
-          {content.title}
+          {t(content.title)}
         </h1>
 
         <p className={classes.sub}>
-          {content.description}
+          {t(content.description)}
         </p>
       </div>
 
@@ -190,7 +180,7 @@ const CreatorRequests = ({
           }
           to="/creator/requests"
         >
-          Active commissions
+          {t("buyerRequests.tabActive")}
         </Link>
 
         <Link
@@ -201,7 +191,7 @@ const CreatorRequests = ({
           }
           to="/creator/requests/completed"
         >
-          Completed projects
+          {t("buyerRequests.completedTitle")}
         </Link>
 
         <Link
@@ -212,32 +202,31 @@ const CreatorRequests = ({
           }
           to="/creator/requests/archived"
         >
-          Archived commissions
+          {t("buyerRequests.archivedTitle")}
         </Link>
 
         <div className={classes.pagerText}>
           {isLoading
-            ? "Loading…"
-            : `${totalCount} commission(s) found`}
+            ? t("common.loading")
+            : t("buyerRequests.found", { count: totalCount })}
         </div>
 
         {pageCount > 0 && (
           <div className={classes.pagerText}>
-            Page {page} of {pageCount}
+            {t("buyerRequests.page", { page, pageCount })}
           </div>
         )}
       </div>
 
       {error && (
         <div className={classes.errorCard}>
-          Commissions could not be loaded
-          right now.
+          {t("creatorRequests.loadFailed")}
         </div>
       )}
 
       {isLoading && (
         <div className={classes.loadingText}>
-          Loading commissions…
+          {t("buyerRequests.loading")}
         </div>
       )}
 
@@ -246,7 +235,7 @@ const CreatorRequests = ({
         items.length === 0 && (
           <div className={classes.card}>
             <p className={classes.text}>
-              {content.emptyMessage}
+              {t(content.emptyMessage)}
             </p>
           </div>
         )}
@@ -256,7 +245,13 @@ const CreatorRequests = ({
         items.length > 0 && (
           <>
             <StaggerGroup className={classes.grid} itemCount={items.length} resetKey={String(page)}>
-              {items.map((item) => (
+              {items.map((item) => {
+                const snapshot = item.request.listing_snapshot;
+                const fulfilmentKey = `fulfilment.${snapshot.fulfilment_mode}`;
+                const offeringKey = `offering.${snapshot.offering_type}`;
+                const categoryKey = `category.${snapshot.category}`;
+
+                return (
                 <div
                   className={classes.card}
                   key={item.request.id}
@@ -270,17 +265,13 @@ const CreatorRequests = ({
                       className={classes.title}
                     >
                       {getListingRequestDisplayTitle(
-                        item.request
+                        item.request,
+                        t
                       )}
                     </h2>
 
                     <p className={classes.text}>
-                      Listing:{" "}
-                      {
-                        item.request
-                          .listing_snapshot
-                          .title
-                      }
+                      {t("buyerRequests.listing", { title: snapshot.title })}
                     </p>
 
                     {getListingRequestDisplayPreview(
@@ -304,17 +295,18 @@ const CreatorRequests = ({
                             classes.unreadPill
                           }
                         >
-                          New message
+                          {t("buyerRequests.newMessage")}
                         </span>
                       )}
                   </div>
 
                   <p className={classes.text}>
-                    Buyer:{" "}
-                    {buyerText(
-                      item.buyer,
-                      item.request.buyer_user_id
-                    )}
+                    {t("creatorRequests.buyer", {
+                      name: buyerText(
+                        item.buyer,
+                        item.request.buyer_user_id
+                      ),
+                    })}
                   </p>
 
                   <div
@@ -332,7 +324,7 @@ const CreatorRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Status
+                        {t("buyerRequests.status")}
                       </div>
 
                       <div
@@ -343,7 +335,8 @@ const CreatorRequests = ({
                         {getListingRequestStatusLabel(
                           item.request.status,
                           item.request,
-                          item.request
+                          item.request,
+                          t
                         )}
                       </div>
                     </div>
@@ -358,9 +351,9 @@ const CreatorRequests = ({
                           classes.metaLabel
                         }
                       >
-                        {view === "completed"
-                          ? "Completed"
-                          : "Received"}
+                        {t(view === "completed"
+                          ? "buyerRequests.completedOn"
+                          : "creatorRequests.received")}
                       </div>
 
                       <div
@@ -376,7 +369,8 @@ const CreatorRequests = ({
                             item.request
                               .updated_at
                             : item.request
-                              .created_at
+                              .created_at,
+                          locale
                         )}
                       </div>
                     </div>
@@ -391,7 +385,7 @@ const CreatorRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Price snapshot
+                        {t("buyerRequests.priceSnapshot")}
                       </div>
 
                       <div
@@ -399,7 +393,7 @@ const CreatorRequests = ({
                           classes.metaValue
                         }
                       >
-                        {formatListingPrice(item.request.listing_snapshot)}
+                        {formatListingPrice(snapshot, t("price.from"))}
                       </div>
                     </div>
 
@@ -413,7 +407,7 @@ const CreatorRequests = ({
                           classes.metaLabel
                         }
                       >
-                        Category
+                        {t("snapshot.category")}
                       </div>
 
                       <div
@@ -421,11 +415,7 @@ const CreatorRequests = ({
                           classes.metaValue
                         }
                       >
-                        {
-                          item.request
-                            .listing_snapshot
-                            .category
-                        }
+                        {hasMessage(categoryKey) ? t(categoryKey) : snapshot.category}
                       </div>
                     </div>
                   </div>
@@ -434,21 +424,13 @@ const CreatorRequests = ({
                     <span
                       className={classes.pill}
                     >
-                      {
-                        item.request
-                          .listing_snapshot
-                          .fulfilment_mode
-                      }
+                      {hasMessage(fulfilmentKey) ? t(fulfilmentKey) : snapshot.fulfilment_mode}
                     </span>
 
                     <span
                       className={classes.pill}
                     >
-                      {
-                        item.request
-                          .listing_snapshot
-                          .offering_type
-                      }
+                      {hasMessage(offeringKey) ? t(offeringKey) : snapshot.offering_type}
                     </span>
                   </div>
 
@@ -459,11 +441,12 @@ const CreatorRequests = ({
                       }
                       to={`/creator/requests/${item.request.id}`}
                     >
-                      View commission
+                      {t("buyerRequests.view")}
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </StaggerGroup>
 
             <div className={classes.row}>
@@ -482,7 +465,7 @@ const CreatorRequests = ({
                   )
                 }
               >
-                Previous
+                {t("common.previous")}
               </button>
 
               <button
@@ -505,7 +488,7 @@ const CreatorRequests = ({
                   )
                 }
               >
-                Next
+                {t("common.next")}
               </button>
             </div>
           </>

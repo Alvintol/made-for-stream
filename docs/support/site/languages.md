@@ -69,6 +69,10 @@ browser. Emails are still in English.
   image sharing), the inbox and a single conversation. Report statuses follow
   the language wherever they are passed it. Dates in French follow French;
   English keeps the reader's own style (`dateLocale`).
+- 2026-10-30: the creator dashboard, the creator's commission list and
+  commission page, and the boxes for sending or withdrawing a draft. The
+  forms those boxes open (agreement, milestone, delivery, update, change
+  order) are still English.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -130,8 +134,10 @@ with "Your choice could not be saved. Please try again."
   agreement line, the early-start request (`consent.earlyStart*`, also
   used when accepting an agreement), the agreement's "I understand" boxes
   (`agreement.understand`, `agreementReview.progress`), what approving a
-  final delivery confirms (`deliveryReview.approveNote`) and what accepting
-  a change order agrees to (`changeOrderReview.acceptNote`) were translated
+  final delivery confirms (`deliveryReview.approveNote`), what accepting
+  a change order agrees to (`changeOrderReview.acceptNote`) and the creator's
+  notice and tick box about a buyer's right to cancel
+  (`consumerRights.notice`, `consumerRights.acknowledge`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
   them with the policies before French is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under

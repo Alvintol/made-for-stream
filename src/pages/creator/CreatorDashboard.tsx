@@ -8,7 +8,7 @@ import {
   getCreatorPaymentAccountIsReady,
   useCreatorPaymentAccount,
 } from "../../hooks/payments/useCreatorPaymentAccount";
-
+import { useT } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-4",
   header: "flex flex-wrap items-end justify-between gap-3",
@@ -54,12 +54,10 @@ const Stat = ({ to, label, value, note }: { to: string; label: string; value: Re
 );
 
 const count = (value: number | undefined) => (value === undefined ? "–" : value);
-
-const plural = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`;
-
 // The creator's home page: what is waiting on them, what is in progress,
 // and the way to everything else.
 const CreatorDashboard = () => {
+  const t = useT();
   const counts = useCreatorDashboardCounts().data;
   const activeRequests = useMyCreatorRequests({
     view: "active",
@@ -80,8 +78,8 @@ const CreatorDashboard = () => {
           {
             key: "payouts",
             to: "/settings/profile",
-            title: "Finish payout setup",
-            detail: "You cannot publish paid listings or be paid until Stripe is ready.",
+            title: t("dashboard.payoutsTitle"),
+            detail: t("dashboard.payoutsDetail"),
           },
         ]
       : []),
@@ -90,8 +88,8 @@ const CreatorDashboard = () => {
           {
             key: "new-requests",
             to: "/creator/requests",
-            title: plural(counts.newRequests, "new commission request", "new commission requests"),
-            detail: "Waiting for you to accept or decline.",
+            title: t("dashboard.newRequests", { count: counts.newRequests }),
+            detail: t("dashboard.newRequestsDetail"),
           },
         ]
       : []),
@@ -100,8 +98,8 @@ const CreatorDashboard = () => {
           {
             key: "unread",
             to: "/messages",
-            title: plural(unreadMessages, "unread message", "unread messages"),
-            detail: "Open your inbox to read them.",
+            title: t("dashboard.unread", { count: unreadMessages }),
+            detail: t("dashboard.unreadDetail"),
           },
         ]
       : []),
@@ -111,47 +109,47 @@ const CreatorDashboard = () => {
     <div className={classes.page}>
       <div className={classes.header}>
         <div>
-          <h1 className={classes.h1}>Creator dashboard</h1>
-          <p className={classes.sub}>What is waiting on you, and what is in progress.</p>
+          <h1 className={classes.h1}>{t("dashboard.title")}</h1>
+          <p className={classes.sub}>{t("dashboard.sub")}</p>
         </div>
 
         <Link className="btnPrimary" to="/creator/listings/new">
-          Create listing
+          {t("dashboard.create")}
         </Link>
       </div>
 
       <div className={classes.stats}>
         <Stat
           to="/creator/requests"
-          label="New requests"
+          label={t("dashboard.statNew")}
           value={count(counts?.newRequests)}
-          note="Waiting for your answer"
+          note={t("dashboard.statNewNote")}
         />
         <Stat
           to="/creator/requests"
-          label="In progress"
+          label={t("dashboard.statProgress")}
           value={count(counts?.inProgress)}
-          note={`${count(counts?.completed)} completed so far`}
+          note={t("dashboard.statProgressNote", { count: count(counts?.completed) })}
         />
         <Stat
           to="/messages"
-          label="Unread messages"
+          label={t("dashboard.statUnread")}
           value={count(inbox.data?.totalUnreadCount)}
-          note="Across all conversations"
+          note={t("dashboard.statUnreadNote")}
         />
         <Stat
           to="/creator/listings"
-          label="Live listings"
+          label={t("dashboard.statLive")}
           value={count(counts?.liveListings)}
-          note={plural(counts?.draftListings ?? 0, "draft", "drafts")}
+          note={t("dashboard.drafts", { count: counts?.draftListings ?? 0 })}
         />
       </div>
 
       <div className={classes.columns}>
         <div className="space-y-4">
-          <section className={classes.card} aria-label="Needs your attention">
+          <section className={classes.card} aria-label={t("dashboard.attention")}>
             <div className={classes.cardHead}>
-              <h2 className={classes.cardTitle}>Needs your attention</h2>
+              <h2 className={classes.cardTitle}>{t("dashboard.attention")}</h2>
             </div>
 
             {attention.length > 0 ? (
@@ -170,16 +168,16 @@ const CreatorDashboard = () => {
               </ul>
             ) : (
               <p className={classes.empty}>
-                {counts ? "Nothing is waiting on you." : "Checking…"}
+                {t(counts ? "dashboard.nothing" : "dashboard.checking")}
               </p>
             )}
           </section>
 
-          <section className={classes.card} aria-label="Active commissions">
+          <section className={classes.card} aria-label={t("buyerRequests.tabActive")}>
             <div className={classes.cardHead}>
-              <h2 className={classes.cardTitle}>Latest active commissions</h2>
+              <h2 className={classes.cardTitle}>{t("dashboard.latest")}</h2>
               <Link className={classes.cardLink} to="/creator/requests">
-                View all
+                {t("dashboard.viewAll")}
               </Link>
             </div>
 
@@ -193,14 +191,14 @@ const CreatorDashboard = () => {
                           {item.request.request_title || item.request.listing_snapshot.title}
                         </span>
                         <span className={`block ${classes.rowSub}`}>
-                          {item.buyer?.handle ? `@${item.buyer.handle}` : item.buyer?.display_name ?? "Buyer"}
+                          {item.buyer?.handle ? `@${item.buyer.handle}` : item.buyer?.display_name ?? t("dashboard.buyerFallback")}
                           {" · "}
                           {item.request.listing_snapshot.title}
                         </span>
                       </span>
-                      {item.conversation.has_unread && <span className={classes.pillNew}>New message</span>}
+                      {item.conversation.has_unread && <span className={classes.pillNew}>{t("buyerRequests.newMessage")}</span>}
                       <span className={classes.pill}>
-                        {getListingRequestStatusLabel(item.request.status)}
+                        {getListingRequestStatusLabel(item.request.status, undefined, undefined, t)}
                       </span>
                     </Link>
                   </li>
@@ -208,26 +206,24 @@ const CreatorDashboard = () => {
               </ul>
             ) : (
               <p className={classes.empty}>
-                {activeRequests.isLoading
-                  ? "Loading commissions…"
-                  : "No active commissions. New requests from buyers appear here."}
+                {t(activeRequests.isLoading ? "buyerRequests.loading" : "dashboard.noActive")}
               </p>
             )}
           </section>
         </div>
 
-        <nav className={classes.card} aria-label="Creator pages">
+        <nav className={classes.card} aria-label={t("dashboard.pages")}>
           <div className={classes.cardHead}>
-            <h2 className={classes.cardTitle}>Go to</h2>
+            <h2 className={classes.cardTitle}>{t("dashboard.goTo")}</h2>
           </div>
           <div className={classes.links}>
-            <Link className={classes.link} to="/creator/listings">My listings</Link>
-            <Link className={classes.link} to="/creator/requests">Commissions</Link>
-            <Link className={classes.link} to="/creator/requests/completed">Completed commissions</Link>
-            <Link className={classes.link} to="/messages">Inbox</Link>
-            <Link className={classes.link} to="/settings/profile">Profile and payouts</Link>
-            <Link className={classes.link} to="/apply/creator">Creator application</Link>
-            <Link className={classes.link} to="/market">Browse the market</Link>
+            <Link className={classes.link} to="/creator/listings">{t("dashboard.linkListings")}</Link>
+            <Link className={classes.link} to="/creator/requests">{t("dashboard.linkCommissions")}</Link>
+            <Link className={classes.link} to="/creator/requests/completed">{t("inbox.folder.completed_commissions")}</Link>
+            <Link className={classes.link} to="/messages">{t("inbox.title")}</Link>
+            <Link className={classes.link} to="/settings/profile">{t("dashboard.linkProfile")}</Link>
+            <Link className={classes.link} to="/apply/creator">{t("dashboard.linkApplication")}</Link>
+            <Link className={classes.link} to="/market">{t("dashboard.linkMarket")}</Link>
           </div>
         </nav>
       </div>

@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export type ListingOfferingType = "digital" | "commission" | "service";
 export type ListingPriceType = "fixed" | "starting_at" | "range";
 export type ListingVideoSubtype = "" | "long-form" | "short-form";
@@ -175,12 +177,13 @@ export type ListingRequestDisplayInput = {
 };
 
 export const getListingRequestDisplayTitle = (
-  request: ListingRequestDisplayInput
+  request: ListingRequestDisplayInput,
+  t: Translate = english
 ): string => {
   const requestTitle = request.request_title?.trim();
   const listingTitle = request.listing_snapshot?.title?.trim();
 
-  return requestTitle || listingTitle || "Untitled commission";
+  return requestTitle || listingTitle || t("commission.untitled");
 };
 
 export const getListingRequestDisplayPreview = (

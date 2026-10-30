@@ -1,7 +1,7 @@
 import { hasErrorMessage } from "../../../lib/errorMessage";
 import { canSendListingRequestAgreement } from "../../../domain/listings/listingRequestAgreements";
 import type { ListingRequestAgreementRow } from "../../../hooks/creatorRequests/useListingRequestAgreement";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestAgreementCreatorActionsProps = {
   agreement: Pick<ListingRequestAgreementRow, "id" | "status"> | null;
   isPending?: boolean;
@@ -22,10 +22,10 @@ const classes = {
     "notice noticeError",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project agreement could not be sent right now.";
+    : t("agreementActions.failed");
 
 const ListingRequestAgreementCreatorActions = ({
   agreement,
@@ -33,22 +33,21 @@ const ListingRequestAgreementCreatorActions = ({
   error,
   onSendAgreement,
 }: ListingRequestAgreementCreatorActionsProps) => {
+  const t = useT();
+
   if (!agreement || !canSendListingRequestAgreement(agreement.status)) {
     return null;
   }
 
-  const sendErrorMessage = error ? getErrorMessage(error) : null;
+  const sendErrorMessage = error ? getErrorMessage(error, t) : null;
 
   return (
     <div className={classes.card}>
       <div className={classes.section}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Project agreement actions</h2>
+          <h2 className={classes.title}>{t("agreementActions.title")}</h2>
 
-          <p className={classes.text}>
-            This agreement is saved as a draft. Send it to the buyer when it is
-            ready for review and acknowledgement.
-          </p>
+          <p className={classes.text}>{t("agreementActions.text")}</p>
         </div>
 
         {sendErrorMessage && (
@@ -62,7 +61,7 @@ const ListingRequestAgreementCreatorActions = ({
             disabled={isPending}
             onClick={() => void onSendAgreement(agreement.id)}
           >
-            {isPending ? "Sending agreement…" : "Send draft to buyer"}
+            {t(isPending ? "agreementActions.sending" : "creatorActions.send")}
           </button>
         </div>
       </div>
