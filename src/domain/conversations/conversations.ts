@@ -1,3 +1,5 @@
+import { english, hasMessage, type Translate } from "../../lib/i18n/i18n";
+
 export type ConversationType =
   | "creator_inquiry"
   | "listing_inquiry"
@@ -69,51 +71,41 @@ export const conversationInitiationReasonOptions: Array<{
   ];
 
 export const getConversationInitiationReasonLabel = (
-  reasonCode: ConversationInitiationReasonCode | null
-): string =>
-  reasonCode
-    ? conversationInitiationReasonOptions.find(
-      (option) => option.value === reasonCode
-    )?.label ?? "Unknown topic"
-    : "No topic";
+  reasonCode: ConversationInitiationReasonCode | null,
+  t: Translate = english
+): string => {
+  if (!reasonCode) return t("topic.none");
+
+  const key = `topic.${reasonCode}`;
+
+  return hasMessage(key) ? t(key) : t("topic.unknown");
+};
 
 export const getBuyerImageUploadStatusLabel = (
-  status: BuyerImageUploadStatus
-): string =>
-  status === "blocked"
-    ? "Image uploads blocked"
-    : status === "requested"
-      ? "Image upload access requested"
-      : status === "approved"
-        ? "Image uploads allowed"
-        : "Image uploads disabled";
+  status: BuyerImageUploadStatus,
+  t: Translate = english
+): string => t(`imageStatus.${status}`);
 
+// What a person can choose; project_completed is set by the site itself.
 export const conversationCloseReasonOptions: Array<{
   value: ConversationCloseReasonCode;
-  label: string;
 }> = [
-    { value: "question_answered", label: "My question was answered" },
-    { value: "not_moving_forward", label: "I am not moving forward" },
-    { value: "not_a_fit", label: "This is not a good fit" },
-    { value: "duplicate_conversation", label: "This is a duplicate conversation" },
-    { value: "unresponsive", label: "The other person is not responding" },
-    { value: "unwanted_messages", label: "I do not want more messages in this thread" },
-    { value: "other", label: "Other" },
+    { value: "question_answered" },
+    { value: "not_moving_forward" },
+    { value: "not_a_fit" },
+    { value: "duplicate_conversation" },
+    { value: "unresponsive" },
+    { value: "unwanted_messages" },
+    { value: "other" },
   ];
 
 export const getConversationCloseReasonLabel = (
-  reasonCode: ConversationCloseReasonCode | null
+  reasonCode: ConversationCloseReasonCode | null,
+  t: Translate = english
 ): string => {
-  if (reasonCode === "project_completed") {
-    return "Project completed";
-  }
+  const key = `closeReason.${reasonCode}`;
 
-  const option = conversationCloseReasonOptions.find(
-    (currentOption) =>
-      currentOption.value === reasonCode
-  );
-
-  return option?.label ?? "Unknown reason";
+  return hasMessage(key) ? t(key) : t("closeReason.unknown");
 };
 
 export const canSendConversationMessage = (

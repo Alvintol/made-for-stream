@@ -1,6 +1,6 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
-import { useLanguage, useT } from "../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
 import { Link, useParams } from "react-router-dom";
 import { useBuyerRequest } from "../../hooks/creatorRequests/useBuyerRequest";
 import {
@@ -103,7 +103,7 @@ const BuyerRequestDetails = () => {
 
   const { id } = useParams<{ id: string }>();
   const t = useT();
-  const language = useLanguage();
+  const language = dateLocale(useLanguage());
 
   const { data, isLoading, error } = useBuyerRequest(id ?? null);
   const archiveRequestMutation = useArchiveBuyerListingRequest();

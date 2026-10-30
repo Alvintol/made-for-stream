@@ -993,8 +993,10 @@ Build order (each its own branch):
       cancellation warnings, and non-response notices with early review.
       Then (`feat/i18n-commission-page`): the buyer's commission page itself,
       with its stages, next-step card, section summaries, brief, listing
-      snapshot, off-site confirmation and the page after checkout. Next: the
-      chat and inbox, then the creator's side, then the remaining screens a few at a time, then the policies by a
+      snapshot, off-site confirmation and the page after checkout. Then
+      (`feat/i18n-chat-inbox`): the chat box, the inbox and a single
+      conversation. Next: the creator's side, then the remaining screens a
+      few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

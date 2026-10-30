@@ -10,12 +10,12 @@ export type InboxFolder =
   | "completed_commissions"
   | "ended";
 
-export const inboxFolders: Array<{ key: InboxFolder; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "messages", label: "Messages" },
-  { key: "active_commissions", label: "Active commissions" },
-  { key: "completed_commissions", label: "Completed commissions" },
-  { key: "ended", label: "Ended conversations" },
+export const inboxFolders: Array<{ key: InboxFolder }> = [
+  { key: "all" },
+  { key: "messages" },
+  { key: "active_commissions" },
+  { key: "completed_commissions" },
+  { key: "ended" },
 ];
 
 export const isInboxFolder = (value: string | null): value is InboxFolder =>

@@ -7,7 +7,7 @@ import {
   useWithdrawListingRequestCancellationWarning,
   type CancellationWarningDays,
 } from "../../../hooks/creatorRequests/useListingRequestCancellationWarnings";
-import { useLanguage, useT } from "../../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../../lib/i18n/i18n";
 type CancellationWarningPanelProps = {
   requestId: string;
   currentUserId: string;
@@ -31,7 +31,7 @@ const classes = {
   hint: "formHint",
 } as const;
 
-const formatDeadline = (iso: string, language: string): string =>
+const formatDeadline = (iso: string, language: string | undefined): string =>
   new Date(iso).toLocaleString(language, { dateStyle: "long", timeStyle: "short" });
 
 // What happens to money already paid, in the sender's own terms.
@@ -49,7 +49,7 @@ const CancellationWarningPanel = ({
   currentUserRole,
 }: CancellationWarningPanelProps) => {
   const t = useT();
-  const language = useLanguage();
+  const language = dateLocale(useLanguage());
   const warningsQuery = useListingRequestCancellationWarnings(requestId);
   const sendWarning = useSendListingRequestCancellationWarning();
   const withdrawWarning = useWithdrawListingRequestCancellationWarning();

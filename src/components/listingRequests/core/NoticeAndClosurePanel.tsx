@@ -18,7 +18,7 @@ import {
   canSendFinalNotice,
   getListingRequestNoticeClockState,
 } from "../../../domain/listings/listingRequestNotices";
-import { useLanguage, useT } from "../../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../../lib/i18n/i18n";
 type NoticeAndClosurePanelProps = {
   requestId: string;
   currentUserId: string;
@@ -60,7 +60,7 @@ const NoticeAndClosurePanel = ({
   currentUserId,
 }: NoticeAndClosurePanelProps) => {
   const t = useT();
-  const language = useLanguage();
+  const language = dateLocale(useLanguage());
   const formatDateTime = (value: string) =>
     new Date(value).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" });
   const noticesQuery = useListingRequestNotices(requestId);

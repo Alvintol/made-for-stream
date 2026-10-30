@@ -37,6 +37,11 @@ export const translate = (
   );
 };
 
+// The locale for a date on the page. English keeps the reader's own style
+// (a.m. in Canada, 24-hour in the UK); other languages use their own.
+export const dateLocale = (language: LanguageCode): string | undefined =>
+  language === DEFAULT_LANGUAGE ? undefined : language;
+
 // A translator for code outside components. Shared helpers take one and
 // default to English, so callers that are not translated yet are unchanged.
 export type Translate = (key: MessageKey, values?: TranslationValues) => string;

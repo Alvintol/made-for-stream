@@ -20,6 +20,7 @@ import {
   type MessagesInboxItem,
 } from "../../hooks/conversations/useMessagesInbox";
 import { useMyModerationReports } from "../../hooks/moderation/useMyModerationReports";
+import { dateLocale, useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 import { useStaggerIn } from "../../lib/motion";
 
 const pill = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
@@ -74,14 +75,13 @@ const classes = {
   emptyCard: "card px-6 py-10 text-center",
 } as const;
 
-const dateTimeText = (value: string | null) => {
-  if (!value) return "No activity yet";
-
+const dateTimeText = (value: string | null, locale: string | undefined, t: Translate) => {
+  if (!value) return t("inbox.noActivity");
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -96,39 +96,40 @@ const profileText = (
     display_name: string | null;
     user_id: string;
   } | null,
-  fallback = "Unknown user"
+  fallback: string
 ) => (profile?.handle ? `@${profile.handle}` : profile?.display_name ?? fallback);
 
-const conversationTypeText = (value: string) =>
+const conversationTypeText = (value: string, t: Translate) =>
   value === "listing_request"
-    ? "Commission"
+    ? t("inbox.typeCommission")
     : value === "listing_inquiry"
-      ? "Listing inquiry"
-      : "Creator inquiry";
+      ? t("inbox.typeListing")
+      : t("inbox.typeCreator");
 
 // A commission shows where the commission stands; an inquiry shows whether
 // the chat is still open.
-const statusText = (item: MessagesInboxItem) =>
+const statusText = (item: MessagesInboxItem, t: Translate) =>
   item.requestStatus
-    ? getListingRequestStatusLabel(item.requestStatus)
+    ? getListingRequestStatusLabel(item.requestStatus, undefined, undefined, t)
     : item.conversation.status === "open"
-      ? "Open"
+      ? t("inbox.statusOpen")
       : item.conversation.status === "closed"
-        ? "Ended"
-        : "Admin locked";
+        ? t("inbox.statusEnded")
+        : t("inbox.statusLocked");
 
 const latestSenderText = (
   senderUserId: string | null,
   buyerUserId: string,
-  creatorUserId: string
+  creatorUserId: string,
+  t: Translate
 ) =>
   !senderUserId
-    ? "No messages yet"
+    ? t("inbox.noMessages")
     : senderUserId === buyerUserId
-      ? "Client"
+      ? t("chat.roleClient")
       : senderUserId === creatorUserId
-        ? "Creator"
-        : "System";
+        ? t("common.creator")
+        : t("chat.roleSystem");
 
 const getConversationHref = (item: {
   viewerRole: "buyer" | "creator";
@@ -150,6 +151,8 @@ type RoleFilter = "any" | "buyer" | "creator";
 const OLDER = "older";
 
 const MessagesInbox = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const { data, isLoading, error } = useMessagesInbox();
   const { data: myReports = [] } = useMyModerationReports();
 
@@ -229,20 +232,20 @@ const MessagesInbox = () => {
   return (
     <div className={classes.page}>
       <div className={classes.header}>
-        <h1 className={classes.h1}>Inbox</h1>
+        <h1 className={classes.h1}>{t("inbox.title")}</h1>
 
         {!isLoading && !error && (
           <div className={classes.summaryBox}>
-            <span className={classes.summaryStrong}>{totalUnreadCount}</span> unread{" "}
-            {totalUnreadCount === 1 ? "message" : "messages"} across{" "}
+            <span className={classes.summaryStrong}>{totalUnreadCount}</span>{" "}
+            {t("inbox.unreadAcross", { count: totalUnreadCount })}{" "}
             <span className={classes.summaryStrong}>{totalCount}</span>{" "}
-            {totalCount === 1 ? "conversation" : "conversations"}.
+            {t("inbox.conversations", { count: totalCount })}
           </div>
         )}
       </div>
 
       <div className={classes.body}>
-        <nav className={classes.folders} aria-label="Inbox folders">
+        <nav className={classes.folders} aria-label={t("inbox.folders")}>
           {inboxFolders.map((entry) => (
             <button
               key={entry.key}
@@ -253,7 +256,7 @@ const MessagesInbox = () => {
                 setSearchParams(entry.key === "all" ? {} : { folder: entry.key }, { replace: true })
               }
             >
-              {entry.label}
+              {t(`inbox.folder.${entry.key}`)}
               <span className={classes.folderCount}>{folderCounts[entry.key]}</span>
             </button>
           ))}
@@ -265,7 +268,7 @@ const MessagesInbox = () => {
               className={`${classes.folder} ${olderOpen ? classes.folderActive : classes.folderIdle}`}
               onClick={() => setSearchParams({ folder: OLDER }, { replace: true })}
             >
-              Older conversations
+              {t("inbox.older")}
               <span className={classes.folderCount}>{olderCount}</span>
             </button>
           )}
@@ -274,11 +277,15 @@ const MessagesInbox = () => {
           <Link
             className={`${classes.folder} ${classes.folderIdle}`}
             to="/settings/reports"
-            aria-label={`Reports, ${activeReportCount} active${unreadReportUpdateCount > 0 ? `, ${unreadReportUpdateCount} with new updates` : ""}`}
+            aria-label={
+              unreadReportUpdateCount > 0
+                ? t("inbox.reportsAriaNew", { count: activeReportCount, updates: unreadReportUpdateCount })
+                : t("inbox.reportsAria", { count: activeReportCount })
+            }
           >
-            Reports
+            {t("inbox.reports")}
             {unreadReportUpdateCount > 0 ? (
-              <span className={classes.folderNew}>{unreadReportUpdateCount} new</span>
+              <span className={classes.folderNew}>{t("inbox.newCount", { count: unreadReportUpdateCount })}</span>
             ) : (
               <span className={classes.folderCount}>{activeReportCount}</span>
             )}
@@ -290,21 +297,21 @@ const MessagesInbox = () => {
             <input
               type="search"
               className={classes.search}
-              aria-label="Search conversations and messages"
-              placeholder="Search people, commissions and message text…"
+              aria-label={t("inbox.searchLabel")}
+              placeholder={t("inbox.searchPlaceholder")}
               value={searchText}
               onChange={(event) => setSearchText(event.currentTarget.value)}
             />
 
             <select
               className={classes.filter}
-              aria-label="Show conversations where I am"
+              aria-label={t("inbox.roleLabel")}
               value={role}
               onChange={(event) => setRole(event.currentTarget.value as RoleFilter)}
             >
-              <option value="any">Buying and selling</option>
-              <option value="buyer">Buying</option>
-              <option value="creator">Selling</option>
+              <option value="any">{t("inbox.roleAny")}</option>
+              <option value="buyer">{t("inbox.roleBuyer")}</option>
+              <option value="creator">{t("inbox.roleCreator")}</option>
             </select>
 
             <label className={classes.unreadOnly}>
@@ -313,27 +320,22 @@ const MessagesInbox = () => {
                 checked={unreadOnly}
                 onChange={(event) => setUnreadOnly(event.currentTarget.checked)}
               />
-              Unread only
+              {t("inbox.unreadOnly")}
             </label>
           </div>
 
-          {error && <div className={classes.errorCard}>Messages could not be loaded right now.</div>}
+          {error && <div className={classes.errorCard}>{t("chat.loadFailed")}</div>}
 
-          {listLoading && <div className={classes.loadingText}>Loading messages…</div>}
+          {listLoading && <div className={classes.loadingText}>{t("chat.loading")}</div>}
 
           {!listLoading && !error && olderCount > 0 && !olderOpen && (
-            <p className={classes.text}>
-              Showing your {INBOX_PAGE_SIZE} most recent conversations. The rest are under
-              Older conversations.
-            </p>
+            <p className={classes.text}>{t("inbox.showing", { count: INBOX_PAGE_SIZE })}</p>
           )}
 
           {!listLoading && !error && visibleItems.length === 0 && (
             <div className={classes.emptyCard}>
               <p className={classes.text}>
-                {isFiltered
-                  ? "Nothing matches. Try another folder, or clear the search and filters."
-                  : "You do not have any conversations yet."}
+                {t(isFiltered ? "inbox.noMatch" : "inbox.none")}
               </p>
             </div>
           )}
@@ -345,7 +347,7 @@ const MessagesInbox = () => {
                   item.otherParticipant,
                   item.otherParticipantUserId
                 );
-                const displayContext = getConversationDisplayContext(item);
+                const displayContext = getConversationDisplayContext(item, t);
 
                 return (
                   <div
@@ -358,19 +360,19 @@ const MessagesInbox = () => {
 
                     <div className={classes.itemMain}>
                       <div className={classes.titleRow}>
-                        <h2 className={classes.title}>{getConversationDisplayTitle(item)}</h2>
+                        <h2 className={classes.title}>{getConversationDisplayTitle(item, t)}</h2>
 
                         {item.hasUnread && (
                           <span className={classes.unreadPill}>
-                            {item.unreadCount} new {item.unreadCount === 1 ? "message" : "messages"}
+                            {t("inbox.unreadPill", { count: item.unreadCount })}
                           </span>
                         )}
                       </div>
 
                       <div className={classes.metaLine}>
-                        <span>With: {otherParticipantText}</span>
+                        <span>{t("inbox.with", { name: otherParticipantText })}</span>
                         <span className={classes.metaDot} aria-hidden="true">•</span>
-                        <span>{conversationTypeText(item.conversation.conversation_type)}</span>
+                        <span>{conversationTypeText(item.conversation.conversation_type, t)}</span>
                         {displayContext && (
                           <>
                             <span className={classes.metaDot} aria-hidden="true">•</span>
@@ -381,24 +383,26 @@ const MessagesInbox = () => {
 
                       <div className={classes.preview}>
                         <span className={classes.previewFrom}>
-                          {latestSenderText(
-                            item.conversation.last_message_sender_user_id,
-                            item.conversation.buyer_user_id,
-                            item.conversation.creator_user_id
-                          )}
-                          :
+                          {t("inbox.previewFrom", {
+                            name: latestSenderText(
+                              item.conversation.last_message_sender_user_id,
+                              item.conversation.buyer_user_id,
+                              item.conversation.creator_user_id,
+                              t
+                            ),
+                          })}
                         </span>{" "}
-                        {item.conversation.last_message_preview || "No messages yet."}
+                        {item.conversation.last_message_preview || t("chat.empty")}
                       </div>
                     </div>
 
                     <div className={classes.itemSide}>
-                      <span className={classes.statusPill}>{statusText(item)}</span>
+                      <span className={classes.statusPill}>{statusText(item, t)}</span>
                       <span className={classes.updated}>
-                        {dateTimeText(item.conversation.updated_at)}
+                        {dateTimeText(item.conversation.updated_at, locale, t)}
                       </span>
                       <Link className={classes.open} to={getConversationHref(item)}>
-                        Open<span className="sr-only"> conversation</span>
+                        {t("inbox.open")}<span className="sr-only"> {t("inbox.openHidden")}</span>
                       </Link>
                     </div>
                   </div>
@@ -414,7 +418,9 @@ const MessagesInbox = () => {
               disabled={older.isFetchingNextPage}
               onClick={() => void older.fetchNextPage()}
             >
-              {older.isFetchingNextPage ? "Loading…" : `Load ${INBOX_PAGE_SIZE} more`}
+              {older.isFetchingNextPage
+                ? t("common.loading")
+                : t("inbox.loadMore", { count: INBOX_PAGE_SIZE })}
             </button>
           )}
         </div>

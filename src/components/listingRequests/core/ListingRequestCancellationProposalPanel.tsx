@@ -6,7 +6,7 @@ import type { ListingRequestPaymentRow } from "../../../hooks/payments/useListin
 import type { ListingRequestCancellationStatementItemInput } from "../../../hooks/creatorRequests/useProposeListingRequestCancellation";
 import type { ListingRequestCancellationProposalRow } from "../../../hooks/creatorRequests/useListingRequestCancellationProposal";
 import { getListingRequestPaymentTypeLabel } from "../../../domain/payments/listingRequestPaymentDisplay";
-import { useLanguage, useT } from "../../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../../lib/i18n/i18n";
 type Viewer = "buyer" | "creator";
 
 type ListingRequestCancellationProposalPanelProps = {
@@ -219,7 +219,7 @@ const ListingRequestCancellationProposalPanel = ({
   onDispute,
 }: ListingRequestCancellationProposalPanelProps) => {
   const t = useT();
-  const language = useLanguage();
+  const language = dateLocale(useLanguage());
   const [isOpening, setIsOpening] = useState(false);
   const [openReason, setOpenReason] = useState("");
   const [isDisputing, setIsDisputing] = useState(false);
