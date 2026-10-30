@@ -24,7 +24,7 @@ import {
   useSaveMarketingEmails,
 } from "../hooks/settings/useAccountDetails";
 import KeptPlaceholder from "../components/ui/KeptPlaceholder";
-
+import { useLanguage, useT } from "../lib/i18n/i18n";
 const classes = {
   card: "card space-y-4 p-5 hover:shadow-[var(--shadow-md)]",
   head: "flex flex-wrap items-start justify-between gap-3",
@@ -87,13 +87,13 @@ type FieldProps = {
 };
 
 const Field = ({ name, label, optional, hint, wide, error, children }: FieldProps) => {
+  const t = useT();
   const id = `account-${name}`;
-
   return (
     <div className={wide ? classes.wideField : classes.field}>
       <label className={classes.label} htmlFor={id}>
         {label}
-        {optional && <span className={classes.optional}> (optional)</span>}
+        {optional && <span className={classes.optional}> ({t("common.optional")})</span>}
       </label>
       {children({
         id,
@@ -118,6 +118,8 @@ const Field = ({ name, label, optional, hint, wide, error, children }: FieldProp
 // Saved details are hidden behind asterisks until the eye button is pressed,
 // so they stay off screen for someone who has their settings open on a stream.
 const AccountDetailsSettings = () => {
+  const t = useT();
+  const language = useLanguage();
   const navigate = useNavigate();
   const detailsQuery = useAccountDetails();
   const saveDetails = useSaveAccountDetails();
@@ -145,7 +147,7 @@ const AccountDetailsSettings = () => {
   const form = draft ?? toAccountDetailsForm(details);
   const showForm = editing || !details || needsDisplayName;
 
-  const countryOptions = useMemo(() => getBillingCountryOptions(), []);
+  const countryOptions = useMemo(() => getBillingCountryOptions(language), [language]);
   const regionOptions = getRegionOptions(form.country_code);
   const countryName = (code: string) =>
     countryOptions.find((option) => option.code === code)?.name ?? code;
@@ -180,8 +182,8 @@ const AccountDetailsSettings = () => {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    const result = validateAccountDetails(form);
-    const nameError = needsDisplayName ? getDisplayNameError(displayName) : null;
+    const result = validateAccountDetails(form, new Date(), t);
+    const nameError = needsDisplayName ? getDisplayNameError(displayName, t) : null;
 
     setErrors(result.errors);
     setDisplayNameError(nameError);
@@ -227,23 +229,23 @@ const AccountDetailsSettings = () => {
   if (detailsQuery.isLoading) {
     return (
       <div className={classes.card}>
-        <p className={classes.text}>Loading your details…</p>
+        <p className={classes.text}>{t("account.loading")}</p>
       </div>
     );
   }
 
   if (detailsQuery.isError) {
-    return <div className={classes.error}>We couldn’t load your details. Please try again.</div>;
+    return <div className={classes.error}>{t("account.loadFailed")}</div>;
   }
 
   const rows: Array<{ label: string; value: string | null }> = details
     ? [
-        { label: "Legal name", value: `${details.legal_first_name} ${details.legal_last_name}` },
-        { label: "Date of birth", value: details.date_of_birth },
-        { label: "Address", value: formatAddress(details, countryName(details.country_code)) },
-        { label: "Business legal name", value: details.business_legal_name },
-        { label: "Business registration number", value: details.business_registration_number },
-        { label: "Tax number", value: details.tax_number },
+        { label: t("account.legalName"), value: `${details.legal_first_name} ${details.legal_last_name}` },
+        { label: t("account.dob"), value: details.date_of_birth },
+        { label: t("account.address"), value: formatAddress(details, countryName(details.country_code)) },
+        { label: t("account.businessName"), value: details.business_legal_name },
+        { label: t("account.businessNumber"), value: details.business_registration_number },
+        { label: t("account.taxNumber"), value: details.tax_number },
       ]
     : [];
 
@@ -252,12 +254,11 @@ const AccountDetailsSettings = () => {
       <div className={classes.head}>
         <div>
           <h1 className={classes.title}>
-            {details && !needsDisplayName ? "Personal details" : "Finish setting up your account"}
+            {t(details && !needsDisplayName ? "settings.tabPersonal" : "account.finishTitle")}
           </h1>
           {(!details || needsDisplayName) && (
             <p className={classes.text}>
-              Add these details before you create a listing, send a commission request or pay.
-              It takes a minute and you only do it once.
+              {t("account.finishText")}
             </p>
           )}
         </div>
@@ -271,37 +272,34 @@ const AccountDetailsSettings = () => {
               onClick={() => setRevealed((current) => !current)}
             >
               <EyeIcon crossed={revealed} />
-              {revealed ? "Hide details" : "Show details"}
+              {t(revealed ? "account.hide" : "account.show")}
             </button>
             <button type="button" className={classes.iconButton} onClick={startEditing}>
-              Edit
+              {t("account.edit")}
             </button>
           </div>
         )}
       </div>
 
       <p className={classes.private}>
-        These details are private. They appear only on this page of your settings and are never
-        shown on your profile, your listings or to other members. We have to keep them for our
-        legal, tax and business records: to know who is making each sale or purchase, to work
-        out tax, and to deal with refunds and disputes.{" "}
+        {t("account.private")}{" "}
         <Link className={classes.link} to="/privacy">
-          Privacy Policy
+          {t("account.privacyLink")}
         </Link>
       </p>
 
       {justSaved && !showForm && (
         <div className={classes.success} role="status">
-          Your details are saved.
+          {t("account.saved")}
         </div>
       )}
 
       {details && !showForm && (
         <dl className={classes.rows}>
           <div className={classes.row}>
-            <dt className={classes.rowLabel}>Account type</dt>
+            <dt className={classes.rowLabel}>{t("account.type")}</dt>
             <dd className={classes.rowValue}>
-              {details.account_type === "business" ? "Business or legal entity" : "Individual"}
+              {t(details.account_type === "business" ? "account.typeBusiness" : "account.typeIndividual")}
             </dd>
           </div>
           {rows
@@ -311,7 +309,7 @@ const AccountDetailsSettings = () => {
                 <dt className={classes.rowLabel}>{row.label}</dt>
                 <dd className={revealed ? classes.rowValue : classes.masked}>
                   {revealed ? row.value : MASKED_VALUE}
-                  {!revealed && <span className="sr-only"> (hidden)</span>}
+                  {!revealed && <span className="sr-only"> {t("account.hidden")}</span>}
                 </dd>
               </div>
             ))}
@@ -321,15 +319,15 @@ const AccountDetailsSettings = () => {
       {showForm && (
         <form className={classes.form} onSubmit={(event) => void onSubmit(event)} noValidate>
           {details && (
-            <p className={classes.hint}>Your saved details are visible on screen while you edit.</p>
+            <p className={classes.hint}>{t("account.visibleWhileEditing")}</p>
           )}
 
           {needsDisplayName && (
             <div className={classes.group}>
-              <h2 className={classes.groupTitle}>Your public name</h2>
+              <h2 className={classes.groupTitle}>{t("account.publicName")}</h2>
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="account-display-name">
-                  Display name
+                  {t("profile.displayName")}
                 </label>
                 <KeptPlaceholder>
                 <input
@@ -338,7 +336,7 @@ const AccountDetailsSettings = () => {
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
                   autoComplete="nickname"
-                  placeholder="e.g. Pastel Fox"
+                  placeholder={t("account.namePlaceholder")}
                   aria-invalid={Boolean(displayNameError)}
                   aria-describedby={displayNameError ? "account-display-name-error" : undefined}
                   onChange={(event) => {
@@ -353,9 +351,7 @@ const AccountDetailsSettings = () => {
                   </span>
                 ) : (
                   <span className={classes.hint}>
-                    Unlike the details below, this is public: it is the name buyers and creators
-                    see on your profile, your listings and your commissions. You can change it
-                    later in Settings.
+                    {t("account.nameHint")}
                   </span>
                 )}
               </div>
@@ -363,12 +359,12 @@ const AccountDetailsSettings = () => {
           )}
 
           <fieldset className={classes.group}>
-            <legend className={classes.groupTitle}>This account belongs to</legend>
+            <legend className={classes.groupTitle}>{t("account.belongsTo")}</legend>
             <div className={classes.radios}>
               {(
                 [
-                  ["individual", "An individual"],
-                  ["business", "A business or other legal entity"],
+                  ["individual", t("account.anIndividual")],
+                  ["business", t("account.aBusiness")],
                 ] as const
               ).map(([value, label]) => (
                 <label key={value} className={classes.radio}>
@@ -386,19 +382,19 @@ const AccountDetailsSettings = () => {
 
           <div className={classes.group}>
             <h2 className={classes.groupTitle}>
-              {form.account_type === "business" ? "Person responsible for the account" : "You"}
+              {form.account_type === "business" ? t("account.responsible") : t("common.you")}
             </h2>
             <div className={classes.grid}>
-              <Field name="legal_first_name" label="Legal first name" error={errors.legal_first_name}>
+              <Field name="legal_first_name" label={t("account.firstName")} error={errors.legal_first_name}>
                 {(props) => <input {...props} {...text("legal_first_name", "given-name")} maxLength={100} />}
               </Field>
-              <Field name="legal_last_name" label="Legal last name" error={errors.legal_last_name}>
+              <Field name="legal_last_name" label={t("account.lastName")} error={errors.legal_last_name}>
                 {(props) => <input {...props} {...text("legal_last_name", "family-name")} maxLength={100} />}
               </Field>
               <Field
                 name="date_of_birth"
-                label="Date of birth"
-                hint={`You must be at least ${MINIMUM_AGE}.`}
+                label={t("account.dob")}
+                hint={t("account.dobHint", { age: MINIMUM_AGE })}
                 error={errors.date_of_birth}
               >
                 {(props) => (
@@ -415,13 +411,13 @@ const AccountDetailsSettings = () => {
           </div>
 
           <div className={classes.group}>
-            <h2 className={classes.groupTitle}>Address</h2>
+            <h2 className={classes.groupTitle}>{t("account.address")}</h2>
             <div className={classes.grid}>
               <Field
                 name="country_code"
-                label="Country"
+                label={t("account.country")}
                 wide
-                hint="This is your billing country when you pay."
+                hint={t("account.countryHint")}
                 error={errors.country_code}
               >
                 {(props) => (
@@ -435,7 +431,7 @@ const AccountDetailsSettings = () => {
                       setDraft({ ...form, country_code: event.currentTarget.value, region: "" })
                     }
                   >
-                    <option value="">Choose a country</option>
+                    <option value="">{t("account.chooseCountry")}</option>
                     {countryOptions.map((option) => (
                       <option key={option.code} value={option.code}>
                         {option.name}
@@ -444,18 +440,18 @@ const AccountDetailsSettings = () => {
                   </select>
                 )}
               </Field>
-              <Field name="address_line1" label="Street address" wide error={errors.address_line1}>
+              <Field name="address_line1" label={t("account.street")} wide error={errors.address_line1}>
                 {(props) => <input {...props} {...text("address_line1", "address-line1")} maxLength={200} />}
               </Field>
-              <Field name="address_line2" label="Apartment, suite or unit" optional wide>
+              <Field name="address_line2" label={t("account.unit")} optional wide>
                 {(props) => <input {...props} {...text("address_line2", "address-line2")} maxLength={200} />}
               </Field>
-              <Field name="city" label="City or town" error={errors.city}>
+              <Field name="city" label={t("account.city")} error={errors.city}>
                 {(props) => <input {...props} {...text("city", "address-level2")} maxLength={100} />}
               </Field>
               <Field
                 name="region"
-                label={regionOptions ? "Province or state" : "State, province or region"}
+                label={t(regionOptions ? "account.provinceState" : "account.stateRegion")}
                 optional={!regionOptions}
                 error={errors.region}
               >
@@ -468,7 +464,7 @@ const AccountDetailsSettings = () => {
                       autoComplete="address-level1"
                       onChange={(event) => set("region", event.currentTarget.value)}
                     >
-                      <option value="">Choose one</option>
+                      <option value="">{t("account.chooseOne")}</option>
                       {regionOptions.map((option) => (
                         <option key={option.code} value={option.code}>
                           {option.name}
@@ -482,7 +478,7 @@ const AccountDetailsSettings = () => {
               </Field>
               <Field
                 name="postal_code"
-                label="Postal or ZIP code"
+                label={t("account.postal")}
                 optional={!regionOptions}
                 error={errors.postal_code}
               >
@@ -492,15 +488,12 @@ const AccountDetailsSettings = () => {
           </div>
 
           <div className={classes.group}>
-            <h2 className={classes.groupTitle}>Business and tax details</h2>
-            <p className={classes.hint}>
-              Fill these in if you sell or buy as a business, or are registered for sales tax.
-              Leave them empty otherwise.
-            </p>
+            <h2 className={classes.groupTitle}>{t("account.businessTax")}</h2>
+            <p className={classes.hint}>{t("account.businessTaxHint")}</p>
             <div className={classes.grid}>
               <Field
                 name="business_legal_name"
-                label="Legal name of the business or entity"
+                label={t("account.businessNameLabel")}
                 optional={form.account_type !== "business"}
                 wide
                 error={errors.business_legal_name}
@@ -509,16 +502,16 @@ const AccountDetailsSettings = () => {
                   <input {...props} {...text("business_legal_name", "organization")} maxLength={200} />
                 )}
               </Field>
-              <Field name="business_registration_number" label="Business registration number" optional>
+              <Field name="business_registration_number" label={t("account.businessNumber")} optional>
                 {(props) => (
                   <input {...props} {...text("business_registration_number", "off")} maxLength={60} />
                 )}
               </Field>
               <Field
                 name="tax_number"
-                label="Tax number"
+                label={t("account.taxNumber")}
                 optional
-                hint="For example a GST/HST, VAT or EIN number."
+                hint={t("account.taxHint")}
               >
                 {(props) => <input {...props} {...text("tax_number", "off")} maxLength={60} />}
               </Field>
@@ -535,10 +528,10 @@ const AccountDetailsSettings = () => {
               />
               <span>
                 <span className="font-semibold text-zinc-900">
-                  Send me Made for Stream news, offers and monthly updates by email
+                  {t("preferences.marketing")}
                 </span>
                 <span className={`block ${classes.hint}`}>
-                  Optional. You can change this at any time in Settings, under Preferences.
+                  {t("account.marketingHint")}
                 </span>
               </span>
             </label>
@@ -562,7 +555,7 @@ const AccountDetailsSettings = () => {
                   setEditing(false);
                 }}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             )}
             <button
@@ -570,7 +563,7 @@ const AccountDetailsSettings = () => {
               className="btnPrimary btnSm"
               disabled={saveDetails.isPending || saveDisplayName.isPending}
             >
-              {saveDetails.isPending ? "Saving…" : "Save details"}
+              {t(saveDetails.isPending ? "listingForm.saving" : "account.save")}
             </button>
           </div>
         </form>

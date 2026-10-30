@@ -42,6 +42,7 @@ import {
 } from "../../hooks/payments/useCreatorPaymentAccount";
 import { useSyncStripeConnectAccount } from "../../hooks/payments/useStripeConnectOnboarding";
 import { getStripePublishableKey } from "../../lib/stripeClient";
+import { dateLocale, useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 import { useAuth } from "../../providers/AuthProvider";
 import CreatorRecoveryBalanceSection from "./CreatorRecoveryBalanceSection";
 
@@ -74,13 +75,13 @@ const classes = {
 const VERIFYING_POLL_MS = 10_000;
 const VERIFYING_POLL_TRIES = 30;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
-    : "Something went wrong.";
+    : t("apply.failed");
 
-const formatAcceptedDate = (value: string): string =>
-  new Date(value).toLocaleDateString(undefined, {
+const formatAcceptedDate = (value: string, locale: string | undefined): string =>
+  new Date(value).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -88,6 +89,8 @@ const formatAcceptedDate = (value: string): string =>
 
 // Stripe Connect onboarding, rendered inside the settings Payouts section.
 const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps) => {
+  const t = useT();
+  const language = useLanguage();
   const { session } = useAuth();
   const token = session?.access_token ?? null;
 
@@ -105,7 +108,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   // creator picks it, reads the warning and confirms before the Stripe
   // button is offered at all.
   const [chosenCountry, setCountry] = useState("");
-  const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(), []);
+  const payoutCountryOptions = useMemo(() => getPayoutCountryOptions(language), [language]);
   const [chosenCurrency, setDefaultCurrency] = useState("");
   const [isCountryConfirmed, setIsCountryConfirmed] = useState(false);
   const country = paymentAccount?.country || chosenCountry;
@@ -141,17 +144,17 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
   const startEmbeddedOnboarding = useCallback(async () => {
     if (!token) {
-      setErrMsg("You must be signed in to start Stripe setup.");
+      setErrMsg(t("payout.signIn"));
       return;
     }
 
     if (!hasAcceptedCreatorTerms && !creatorTermsAgreed) {
-      setErrMsg("Accept the Creator Terms and Stripe agreements to start Stripe setup.");
+      setErrMsg(t("payout.acceptFirst"));
       return;
     }
 
     if (!country || !defaultCurrency) {
-      setErrMsg("Choose and confirm your country before starting Stripe setup.");
+      setErrMsg(t("payout.chooseCountryFirst"));
       return;
     }
 
@@ -169,9 +172,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
         });
       } catch (error) {
         logPolicyAcceptanceFailure("creator terms acceptance", error);
-        setErrMsg(
-          "We couldn’t record your acceptance of the Creator Terms, so Stripe setup hasn’t started. Please try again.",
-        );
+        setErrMsg(t("payout.recordFailed"));
         setIsStarting(false);
         return;
       }
@@ -192,7 +193,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
         }),
       );
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     } finally {
       setIsStarting(false);
     }
@@ -202,6 +203,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
     defaultCurrency,
     hasAcceptedCreatorTerms,
     recordAcceptances,
+    t,
     token,
   ]);
 
@@ -211,20 +213,20 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
     try {
       await syncAccount.mutateAsync();
       await paymentAccountQuery.refetch();
-      setSuccessMsg("Payout status refreshed.");
+      setSuccessMsg(t("payout.refreshed"));
     } catch (error) {
       setSuccessMsg(null);
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
-  }, [paymentAccountQuery, syncAccount]);
+  }, [paymentAccountQuery, syncAccount, t]);
 
   const handleOnboardingExit = useCallback(async () => {
     // Stripe's form is finished and renders nothing more, so take it away
     // and let the status notice say what happens next.
     setConnectInstance(null);
-    setSuccessMsg("Stripe setup was saved. Refreshing payout status…");
+    setSuccessMsg(t("payout.savedRefreshing"));
     await refreshStatus();
-  }, [refreshStatus]);
+  }, [refreshStatus, t]);
 
   // While Stripe is checking the details, its account events update the row
   // in the background, so re-read it for a few minutes. It must stop by
@@ -264,7 +266,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
   if (!isCreatorApproved) {
     return (
       <p className={classes.text}>
-        Payout setup opens once your creator application is approved.
+        {t("payout.notApproved")}
       </p>
     );
   }
@@ -273,38 +275,35 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
     <>
       {setupState === "not_started" && (
         <div className={classes.warning}>
-          Finish Stripe setup before publishing active listings or receiving buyer payments.
+          {t("payout.notStarted")}
         </div>
       )}
 
       {setupState === "needs_information" && !connectInstance && (
         <div className={classes.warning}>
-          Stripe needs more information from you before you can publish active listings or
-          receive buyer payments. Choose Continue Stripe setup to pick up where you left off.
+          {t("payout.needsInfo")}
         </div>
       )}
 
       {setupState === "verifying" && !connectInstance && (
         <div className={classes.warning} role="status">
-          Stripe is checking your details. There is nothing more for you to do right now. This
-          usually takes a few minutes. This page checks for the next five minutes; after that,
-          press Refresh status. If Stripe needs anything else, it will ask for it here.
+          {t("payout.verifying")}
         </div>
       )}
 
       {setupState === "ready" && (
         <div className={classes.success}>
-          Your payout account is ready. You can publish listings and receive buyer payments.
+          {t("payout.ready")}
         </div>
       )}
 
       {hasAcceptedCreatorTerms && creatorTermsAcceptedAt ? (
         <p className={classes.acceptedText}>
-          You accepted the{" "}
+          {t("payout.acceptedStart")}{" "}
           <Link className={classes.policyLink} to="/terms/creator" target="_blank" rel="noopener">
-            Creator Terms
+            {t("apply.agreeTermsLink")}
           </Link>{" "}
-          and Stripe agreements on {formatAcceptedDate(creatorTermsAcceptedAt)}.
+          {t("payout.acceptedEnd", { date: formatAcceptedDate(creatorTermsAcceptedAt, dateLocale(language)) })}
         </p>
       ) : (
         <PolicyAcceptanceCheckbox
@@ -313,35 +312,35 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           onChange={setCreatorTermsAgreed}
           disabled={isStarting || creatorTermsQuery.isLoading}
         >
-          I accept the Made for Stream{" "}
+          {t("payout.acceptStart")}{" "}
           <Link className={classes.policyLink} to="/terms/creator" target="_blank" rel="noopener">
-            Creator Terms
+            {t("apply.agreeTermsLink")}
           </Link>{" "}
-          and the{" "}
+          {t("payout.acceptAnd")}{" "}
           <a
             className={classes.policyLink}
             href={stripeConnectedAccountAgreementUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Stripe Connected Account Agreement
+            {t("payout.connectedAgreement")}
           </a>
-          , including its incorporated{" "}
+          {t("payout.acceptIncluding")}{" "}
           <a
             className={classes.policyLink}
             href={stripeServicesAgreementUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Stripe Services Agreement
+            {t("payout.servicesAgreement")}
           </a>
-          .
+          {t("payout.acceptEnd")}
         </PolicyAcceptanceCheckbox>
       )}
 
       <div className={classes.form}>
         <label className={classes.field}>
-          <span className={classes.label}>Country</span>
+          <span className={classes.label}>{t("payout.country")}</span>
           <select
             className={classes.input}
             value={country}
@@ -362,11 +361,11 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           >
             {!country && (
               <option value="" disabled>
-                Choose your country
+                {t("payout.chooseYourCountry")}
               </option>
             )}
             {country && !isSupportedPayoutCountry(country) && (
-              <option value={country}>{country} (not supported)</option>
+              <option value={country}>{t("payout.notSupported", { value: country })}</option>
             )}
             {payoutCountryOptions.map((option) => (
               <option key={option.code} value={option.code}>
@@ -377,7 +376,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
         </label>
 
         <label className={classes.field}>
-          <span className={classes.label}>Currency</span>
+          <span className={classes.label}>{t("payout.currency")}</span>
           <select
             className={classes.input}
             value={defaultCurrency}
@@ -386,7 +385,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
           >
             {!defaultCurrency && <option value="">-</option>}
             {defaultCurrency && !isSupportedCurrency(defaultCurrency) && (
-              <option value={defaultCurrency}>{defaultCurrency.toUpperCase()} (not supported)</option>
+              <option value={defaultCurrency}>{t("payout.notSupported", { value: defaultCurrency.toUpperCase() })}</option>
             )}
             {SUPPORTED_CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -404,7 +403,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
               disabled={syncAccount.isPending}
               onClick={() => void refreshStatus()}
             >
-              {syncAccount.isPending ? "Refreshing…" : "Refresh status"}
+              {t(syncAccount.isPending ? "payout.refreshing" : "payout.refresh")}
             </button>
           )}
 
@@ -415,7 +414,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
               disabled={isStarting}
               onClick={() => setIsCountryConfirmed(false)}
             >
-              Change country
+              {t("payout.changeCountry")}
             </button>
           )}
 
@@ -426,15 +425,17 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
               disabled={isStarting || !canStartOnboarding || creatorTermsQuery.isLoading}
               onClick={() => void startEmbeddedOnboarding()}
             >
-              {isStarting
-                ? "Preparing…"
-                : connectInstance
-                  ? "Restart Stripe setup"
-                  : isReady
-                    ? "Review Stripe details"
-                    : paymentAccount
-                      ? "Continue Stripe setup"
-                      : "Start Stripe setup"}
+              {t(
+                isStarting
+                  ? "payout.preparing"
+                  : connectInstance
+                    ? "payout.restart"
+                    : isReady
+                      ? "payout.review"
+                      : paymentAccount
+                        ? "payout.continue"
+                        : "payout.start"
+              )}
             </button>
           )}
         </div>
@@ -443,20 +444,16 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
       {!hasPaymentAccount && !isCountryConfirmed && (
         <div className={classes.countryWarning} role="alert">
           <p className={classes.countryWarningTitle}>
-            You can't change your country after Stripe setup starts.
+            {t("payout.countryWarningTitle")}
           </p>
-          <p>
-            Stripe ties your payout account to this country permanently. Choose the country where
-            you live and where your bank account is. If it is wrong, you will not be able to get
-            paid and support will have to close the account and start again.
-          </p>
+          <p>{t("payout.countryWarning")}</p>
           {country && defaultCurrency && (
             <button
               className={classes.button}
               type="button"
               onClick={() => setIsCountryConfirmed(true)}
             >
-              Confirm {countryName} ({defaultCurrency.toUpperCase()})
+              {t("payout.confirmCountry", { country: countryName, currency: defaultCurrency.toUpperCase() })}
             </button>
           )}
         </div>
@@ -464,16 +461,14 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
       {!hasPaymentAccount && isCountryConfirmed && (
         <p className={classes.text}>
-          Locked in: <strong>{countryName}</strong>, paid in{" "}
-          <strong>{defaultCurrency.toUpperCase()}</strong>. This becomes permanent when you start
-          Stripe setup.
+          {t("payout.lockedIn")} <strong>{countryName}</strong>{t("payout.paidIn")}{" "}
+          <strong>{defaultCurrency.toUpperCase()}</strong>{t("payout.lockedEnd")}
         </p>
       )}
 
       {hasPaymentAccount && (
         <p className={classes.text}>
-          Country and currency were set when your Stripe account was created and can't be
-          changed here. Contact support if they are wrong.
+          {t("payout.fixedCountry")}
         </p>
       )}
 
@@ -482,7 +477,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
 
       {isStarting && !connectInstance && (
         <div className={classes.loadingShell}>
-          <p className={classes.loadingText}>Opening secure Stripe onboarding…</p>
+          <p className={classes.loadingText}>{t("payout.opening")}</p>
           <div className={classes.pulseRow} />
         </div>
       )}
@@ -500,9 +495,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
               }}
               onLoadError={() => {
                 setConnectInstance(null);
-                setErrMsg(
-                  "Stripe's setup form couldn't load. Please try again. If it keeps happening, contact support.",
-                );
+                setErrMsg(t("payout.loadError"));
               }}
             />
           </ConnectComponentsProvider>
