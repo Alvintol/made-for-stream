@@ -5,6 +5,7 @@ surfaces:
   - public.conversations
   - public.conversation_messages
   - public.conversation_events
+  - public.system_line_for
   - src/components/conversations/
 unmatched_tier: 2
 ---
@@ -28,6 +29,7 @@ gate is deliberate: it stops unsolicited image sending to creators.
 | Symptom the user reports | Likely issue |
 | --- | --- |
 | "I can't see this conversation" | [`MSG-001`](#msg-001--access-denied-to-a-conversation) |
+| An automatic message is in English on the French site, or the chat fails on `system_line` | [`MSG-006`](#msg-006--automatic-line-in-the-wrong-language-or-chat-will-not-load) |
 | "I can't send a message" | [`MSG-002`](#msg-002--message-rejected), [`MSG-003`](#msg-003--conversation-is-closed-or-locked) |
 | "The chat is locked" | [`MSG-003`](#msg-003--conversation-is-closed-or-locked) |
 | "I can't upload an image" | [`MSG-004`](#msg-004--image-upload-access-not-granted) |
@@ -172,6 +174,46 @@ behalf.** It is a consent gate protecting creators from unsolicited images, and
 overriding it defeats the purpose.
 
 **Money impact.** None. Can delay a brief.
+
+---
+
+## `MSG-006` — Automatic line in the wrong language, or chat will not load
+
+Every automatic line is saved as an English sentence in
+`conversation_messages.body`. That text is the evidence record and never
+changes. `system_line` beside it is worked out from the text by
+`public.system_line_for`: a translation key and the parts that vary. The
+latest one is copied to `conversations.last_message_system_line` for the inbox.
+
+**Signal 1.** The chat or inbox fails with
+`column conversation_messages.system_line does not exist` or
+`column conversations.last_message_system_line does not exist`. The website
+was merged before migration 174 was applied.
+
+**Fix.** Apply `20261030_174_add_system_line_codes.sql`. No data is at risk.
+
+**Signal 2.** A reader on the French site sees one automatic line in English,
+with no error. Its wording is not in `system_line_for`, usually because a new
+line was added to a function or an existing one was reworded.
+
+**Diagnose.** Lists the wordings with no code:
+
+```sql
+select left(body, 80), count(*) from public.conversation_messages
+where message_type = 'system' and system_line is null
+group by 1 order by 2 desc;
+```
+
+**Fix.** Tier 2. Add the wording to `system_line_for` in a new migration and
+to `en.ts` and `fr.ts`. Lines already saved keep no code until the same
+migration runs `update public.conversation_messages set body = body where
+message_type = 'system' and system_line is null;`, which leaves the text as
+it is and fills in the code. Never edit a body.
+
+If `system_line_for` itself hits an error it returns no code and the line
+reads in English: a payment or status change is never stopped by it.
+
+**Money impact.** None.
 
 ---
 

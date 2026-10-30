@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
-import type { ConversationMessageType } from "../../domain/conversations/conversations";
+import type { ConversationMessageType, SystemLine } from "../../domain/conversations/conversations";
 
 export type ConversationMessageRow = {
   id: string;
@@ -9,6 +9,7 @@ export type ConversationMessageRow = {
   sender_user_id: string;
   message_type: ConversationMessageType;
   body: string | null;
+  system_line?: SystemLine | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ const fetchConversationMessages = async (
       sender_user_id,
       message_type,
       body,
+      system_line,
       created_at
     `)
     .eq("conversation_id", conversationId)

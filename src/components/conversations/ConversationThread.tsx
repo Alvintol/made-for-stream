@@ -6,8 +6,8 @@ import {
   getConversationCloseReasonLabel,
   getConversationMessageSide,
   isConversationReadOnly,
-  nameSystemMessagePeople,
   startsNewConversationDay,
+  systemLineText,
   type ConversationCloseReasonCode,
 } from "../../domain/conversations/conversations";
 import {
@@ -932,10 +932,12 @@ const ConversationThread = ({
                     <div
                       className={`${classes.systemMessage} ${side === "neutral" ? classes.systemMessageNeutral : ""}`}
                     >
-                      {nameSystemMessagePeople(message.body ?? "", {
-                        buyerName,
-                        creatorName,
-                      })}
+                      {systemLineText(
+                        message.system_line,
+                        message.body ?? "",
+                        { buyerName, creatorName },
+                        t
+                      )}
                     </div>
                   </div>
                 );
