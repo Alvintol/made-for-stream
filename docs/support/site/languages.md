@@ -55,8 +55,12 @@ browser. Emails are still in English.
 - 2026-10-29: on the commission page, milestones (with the buyer's review
   box), the final delivery (with its files and the buyer's response box) and
   progress updates (with the update schedule). How work was sent off site
-  follows the language too. Change orders, cancellation and the page's own
-  headings are still English.
+  follows the language too.
+- 2026-10-29: on the commission page, change orders (with the buyer's
+  response box), cancelling before payment, the cancellation proposal and
+  statement, cancellation warnings, and non-response notices with early
+  review. The page's own headings, next-step card and section summaries are
+  still English.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -117,13 +121,17 @@ with "Your choice could not be saved. Please try again."
 - **The consent wording needs the policy translator's check.** The checkout
   agreement line, the early-start request (`consent.earlyStart*`, also
   used when accepting an agreement), the agreement's "I understand" boxes
-  (`agreement.understand`, `agreementReview.progress`) and what approving a
-  final delivery confirms (`deliveryReview.approveNote`) were translated
+  (`agreement.understand`, `agreementReview.progress`), what approving a
+  final delivery confirms (`deliveryReview.approveNote`) and what accepting
+  a change order agrees to (`changeOrderReview.acceptNote`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
   them with the policies before French is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under
   "Buyer confirmations" on an agreement are the wording saved when the buyer
-  accepted, so they are shown as saved.
+  accepted, so they are shown as saved. The same goes for the payment names
+  saved on a cancellation statement, and for the "I am requesting
+  administrative closure" message the closure button posts in the chat
+  (admins recognise it there).
 - **Messages from the server** (an error from checkout, for example) are
   still in English.
 - **Numbers and money** still use English formatting: French writes "5 %" and

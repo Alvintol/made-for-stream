@@ -1,3 +1,4 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
 import type { ListingRequestChangeOrderStatus } from "./listingRequestAgreements";
 
 export type ListingRequestChangeOrderTone =
@@ -16,34 +17,14 @@ export type ListingRequestChangeOrderImpact = {
 };
 
 export const getListingRequestChangeOrderStatusLabel = (
-  status: ListingRequestChangeOrderStatus
-): string =>
-  status === "draft"
-    ? "Draft"
-    : status === "sent"
-      ? "Awaiting buyer review"
-      : status === "buyer_accepted"
-        ? "Accepted by buyer"
-        : status === "buyer_declined"
-          ? "Declined by buyer"
-          : status === "cancelled"
-            ? "Cancelled"
-            : "Superseded";
+  status: ListingRequestChangeOrderStatus,
+  t: Translate = english
+): string => t(`changeOrderStatus.${status}`);
 
 export const getListingRequestChangeOrderStatusSummary = (
-  status: ListingRequestChangeOrderStatus
-): string =>
-  status === "draft"
-    ? "The creator is preparing this change order."
-    : status === "sent"
-      ? "The buyer must review and respond before these project changes become enforceable."
-      : status === "buyer_accepted"
-        ? "The buyer accepted these project changes."
-        : status === "buyer_declined"
-          ? "The buyer declined these proposed project changes."
-          : status === "cancelled"
-            ? "This change order was cancelled."
-            : "This change order was replaced by a newer proposal.";
+  status: ListingRequestChangeOrderStatus,
+  t: Translate = english
+): string => t(`changeOrderSummary.${status}`);
 
 export const getListingRequestChangeOrderStatusTone = (
   status: ListingRequestChangeOrderStatus
@@ -90,32 +71,33 @@ export const hasListingRequestChangeOrderImpact = (
   );
 
 export const getListingRequestChangeOrderImpactLabels = (
-  impact: ListingRequestChangeOrderImpact
+  impact: ListingRequestChangeOrderImpact,
+  t: Translate = english
 ): string[] => {
   const labels: string[] = [];
 
   if (impact.changesScope) {
-    labels.push("Scope");
+    labels.push(t("changeOrderImpact.scope"));
   }
 
   if (impact.changesPrice) {
-    labels.push("Price");
+    labels.push(t("changeOrderImpact.price"));
   }
 
   if (impact.changesTimeline) {
-    labels.push("Timeline");
+    labels.push(t("changeOrderImpact.timeline"));
   }
 
   if (impact.changesDeliverables) {
-    labels.push("Deliverables");
+    labels.push(t("changeOrderImpact.deliverables"));
   }
 
   if (impact.changesPaymentSchedule) {
-    labels.push("Payment schedule");
+    labels.push(t("changeOrderImpact.paymentSchedule"));
   }
 
   if (impact.changesMilestones) {
-    labels.push("Milestones");
+    labels.push(t("changeOrderImpact.milestones"));
   }
 
   return labels;

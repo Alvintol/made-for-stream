@@ -987,8 +987,12 @@ Build order (each its own branch):
       project agreement, its accept-or-decline box, the work-readiness card
       and the payments card. Then
       (`feat/i18n-commission-milestones-deliveries`): milestones, the final
-      delivery with its files, and progress updates. Next: change orders and
-      cancellation, then the commission page itself, then the remaining screens a few at a time, then the policies by a
+      delivery with its files, and progress updates. Then
+      (`feat/i18n-commission-changes-cancellation`): change orders,
+      cancelling before payment, the cancellation proposal and statement,
+      cancellation warnings, and non-response notices with early review.
+      Next: the commission page itself (headings, next-step card, section
+      summaries), then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

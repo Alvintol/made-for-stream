@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.15";
+export const siteVersion = "V0.7.16";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.16",
+    date: "2026-10-29",
+    title: "Clearer cancellation steps",
+    changes: [
+      "A cancellation statement now says that unearned amounts are refunded to the buyer once the cancellation is accepted.",
+      "A final notice now says that, after it runs out, you may request administrative closure, fixing a mistyped word.",
+      "The cancellation statement form names each payment the way the rest of the site does, such as \"Starting payment\".",
+      "Dates and times on notices and cancellation proposals read like the rest of the site, such as \"Jun 7, 2026, 6:00 PM\".",
+    ],
+  },
   {
     version: "V0.7.15",
     date: "2026-10-29",

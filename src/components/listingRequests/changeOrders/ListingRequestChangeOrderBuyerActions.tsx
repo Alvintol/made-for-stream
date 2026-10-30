@@ -5,7 +5,7 @@ import { useState } from "react";
 import { canBuyerRespondToListingRequestChangeOrder } from "../../../domain/listings/listingRequestChangeOrders";
 import type { ListingRequestChangeOrderRow } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type BuyerChangeOrder = Pick<
   ListingRequestChangeOrderRow,
   "id" | "status" | "title"
@@ -50,10 +50,10 @@ const classes = {
     "btnDangerOutline",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project change order response could not be saved.";
+    : t("changeOrderReview.saveFailed");
 
 const ListingRequestChangeOrderBuyerActions = ({
   changeOrder,
@@ -62,6 +62,7 @@ const ListingRequestChangeOrderBuyerActions = ({
   onAccept,
   onDecline,
 }: ListingRequestChangeOrderBuyerActionsProps) => {
+  const t = useT();
   const [isAcceptConfirming, setIsAcceptConfirming] =
     useState(false);
 
@@ -79,7 +80,7 @@ const ListingRequestChangeOrderBuyerActions = ({
 
   const trimmedDeclineReason = declineReason.trim();
   const errorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   const handleStartAccept = () => {
@@ -108,12 +109,11 @@ const ListingRequestChangeOrderBuyerActions = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Respond to change order
+            {t("changeOrderReview.title")}
           </h2>
 
           <p className={classes.text}>
-            Review the proposed changes carefully. They do
-            not become enforceable until you accept them.
+            {t("changeOrderReview.text")}
           </p>
         </div>
 
@@ -129,9 +129,7 @@ const ListingRequestChangeOrderBuyerActions = ({
 
         <Collapse open={isAcceptConfirming}>
           <div className={classes.warning}>
-            By accepting, you agree that the proposed
-            project changes replace the affected terms of
-            the currently accepted agreement.
+            {t("changeOrderReview.acceptNote")}
           </div>
         </Collapse>
 
@@ -141,7 +139,7 @@ const ListingRequestChangeOrderBuyerActions = ({
               className={classes.label}
               htmlFor="change-order-decline-reason"
             >
-              Decline reason
+              {t("changeOrderReview.declineReason")}
             </label>
 
             <KeptPlaceholder>
@@ -155,13 +153,12 @@ const ListingRequestChangeOrderBuyerActions = ({
                   event.currentTarget.value
                 )
               }
-              placeholder="Optionally explain why you are declining these changes."
+              placeholder={t("changeOrderReview.declinePlaceholder")}
             />
             </KeptPlaceholder>
 
             <p className={classes.help}>
-              {declineReason.length}/2000 characters.
-              Providing a reason is optional.
+              {t("changeOrderReview.declineHelp", { count: declineReason.length })}
             </p>
           </div>
         </Collapse>
@@ -175,7 +172,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                 type="button"
                 onClick={handleStartAccept}
               >
-                Accept change order
+                {t("changeOrderReview.accept")}
               </button>
 
               <button
@@ -184,7 +181,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                 type="button"
                 onClick={handleStartDecline}
               >
-                Decline change order
+                {t("changeOrderReview.decline")}
               </button>
             </>
           )}
@@ -199,9 +196,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                   void handleConfirmAccept()
                 }
               >
-                {isPending
-                  ? "Saving response…"
-                  : "Confirm change order acceptance"}
+                {t(isPending ? "agreementReview.saving" : "changeOrderReview.confirmAccept")}
               </button>
 
               <button
@@ -212,7 +207,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                   setIsAcceptConfirming(false)
                 }
               >
-                Keep reviewing
+                {t("deliveryReview.keepReviewing")}
               </button>
             </>
           )}
@@ -227,9 +222,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                   void handleConfirmDecline()
                 }
               >
-                {isPending
-                  ? "Saving response…"
-                  : "Confirm change order decline"}
+                {t(isPending ? "agreementReview.saving" : "changeOrderReview.confirmDecline")}
               </button>
 
               <button
@@ -241,7 +234,7 @@ const ListingRequestChangeOrderBuyerActions = ({
                   setDeclineReason("");
                 }}
               >
-                Keep reviewing
+                {t("deliveryReview.keepReviewing")}
               </button>
             </>
           )}

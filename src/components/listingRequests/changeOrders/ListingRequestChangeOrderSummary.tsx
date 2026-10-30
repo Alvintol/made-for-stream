@@ -10,7 +10,7 @@ import {
 import type {
   ListingRequestChangeOrderRow,
 } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
-
+import { useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestChangeOrderViewer =
   | "buyer"
   | "creator"
@@ -63,17 +63,17 @@ const classes = {
     "notice noticeError mt-4",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "Project change orders could not be loaded.";
+    : t("changeOrders.loadFailed");
 
-const formatDate = (value?: string | null): string =>
+const formatDate = (value: string | null | undefined, language: string, t: Translate): string =>
   value
-    ? new Intl.DateTimeFormat("en-CA", {
+    ? new Intl.DateTimeFormat(language, {
         dateStyle: "medium",
       }).format(new Date(value))
-    : "Not set";
+    : t("agreement.notSet");
 
 type RevisedPayment = {
   payment_schedule_item_id: string;
@@ -145,12 +145,13 @@ const formatMoney = (
     : `-${formattedAmount}`;
 };
 
-const formatTimelineDelta = (days: number): string =>
+const formatTimelineDelta = (days: number, t: Translate): string =>
   days === 0
-    ? "No date change"
-    : `${days > 0 ? "+" : ""}${days} calendar ${
-        Math.abs(days) === 1 ? "day" : "days"
-      }`;
+    ? t("changeOrders.noDateChange")
+    : t("changeOrders.days", {
+        count: Math.abs(days),
+        days: `${days > 0 ? "+" : ""}${days}`,
+      });
 
 const getStatusClass = (
   changeOrder: ListingRequestChangeOrderRow
@@ -195,6 +196,8 @@ const ListingRequestChangeOrderSummary = ({
   isLoading = false,
   error,
 }: ListingRequestChangeOrderSummaryProps) => {
+  const t = useT();
+  const language = useLanguage();
   const hasError = Boolean(error);
   const visibleChangeOrders = getVisibleChangeOrders(
     changeOrders,
@@ -207,13 +210,13 @@ const ListingRequestChangeOrderSummary = ({
 
         {isLoading && (
           <div className={classes.loading}>
-            Loading project change orders…
+            {t("changeOrders.loading")}
           </div>
         )}
 
         {!isLoading && hasError && (
           <div className={classes.error}>
-            {getErrorMessage(error)}
+            {getErrorMessage(error, t)}
           </div>
         )}
 
@@ -221,8 +224,7 @@ const ListingRequestChangeOrderSummary = ({
           !hasError &&
           visibleChangeOrders.length === 0 && (
             <div className={classes.empty}>
-              No project change orders have been created for
-              this commission yet.
+              {t("changeOrders.empty")}
             </div>
           )}
 
@@ -248,7 +250,7 @@ const ListingRequestChangeOrderSummary = ({
                       changeOrder.changes_payment_schedule,
                     changesMilestones:
                       changeOrder.changes_milestones,
-                  });
+                  }, t);
 
                 return (
                   <article
@@ -262,8 +264,9 @@ const ListingRequestChangeOrderSummary = ({
                         </h3>
 
                         <div className={classes.itemVersion}>
-                          Change order version{" "}
-                          {changeOrder.version_number}
+                          {t("changeOrders.version", {
+                            version: changeOrder.version_number,
+                          })}
                         </div>
                       </div>
 
@@ -273,14 +276,16 @@ const ListingRequestChangeOrderSummary = ({
                         )}
                       >
                         {getListingRequestChangeOrderStatusLabel(
-                          changeOrder.status
+                          changeOrder.status,
+                          t
                         )}
                       </span>
                     </div>
 
                     <p className={classes.statusSummary}>
                       {getListingRequestChangeOrderStatusSummary(
-                        changeOrder.status
+                        changeOrder.status,
+                        t
                       )}
                     </p>
 
@@ -312,7 +317,7 @@ const ListingRequestChangeOrderSummary = ({
                                   classes.metaLabel
                                 }
                               >
-                                Price change
+                                {t("changeOrders.priceChange")}
                               </div>
 
                               <div
@@ -336,7 +341,7 @@ const ListingRequestChangeOrderSummary = ({
                                   classes.metaLabel
                                 }
                               >
-                                Revised total
+                                {t("changeOrders.revisedTotal")}
                               </div>
 
                               <div
@@ -350,7 +355,7 @@ const ListingRequestChangeOrderSummary = ({
                                       changeOrder.revised_total_amount,
                                       currency
                                     )
-                                  : "Not set"}
+                                  : t("agreement.notSet")}
                               </div>
                             </div>
 
@@ -365,21 +370,22 @@ const ListingRequestChangeOrderSummary = ({
                                   <div
                                     className={classes.metaLabel}
                                   >
-                                    Payment: {payment.title}
+                                    {t("changeOrders.payment", { title: payment.title })}
                                   </div>
 
                                   <div
                                     className={classes.metaValue}
                                   >
-                                    {formatMoney(
-                                      payment.current_amount,
-                                      currency
-                                    )}{" "}
-                                    becomes{" "}
-                                    {formatMoney(
-                                      payment.amount,
-                                      currency
-                                    )}
+                                    {t("changeOrders.becomes", {
+                                      from: formatMoney(
+                                        payment.current_amount,
+                                        currency
+                                      ),
+                                      to: formatMoney(
+                                        payment.amount,
+                                        currency
+                                      ),
+                                    })}
                                   </div>
                                 </div>
                               )
@@ -397,7 +403,7 @@ const ListingRequestChangeOrderSummary = ({
                                   classes.metaLabel
                                 }
                               >
-                                Timeline change
+                                {t("changeOrders.timelineChange")}
                               </div>
 
                               <div
@@ -406,7 +412,8 @@ const ListingRequestChangeOrderSummary = ({
                                 }
                               >
                                 {formatTimelineDelta(
-                                  changeOrder.timeline_delta_days
+                                  changeOrder.timeline_delta_days,
+                                  t
                                 )}
                               </div>
                             </div>
@@ -419,7 +426,7 @@ const ListingRequestChangeOrderSummary = ({
                                   classes.metaLabel
                                 }
                               >
-                                Revised completion
+                                {t("changeOrders.revisedCompletion")}
                               </div>
 
                               <div
@@ -428,7 +435,9 @@ const ListingRequestChangeOrderSummary = ({
                                 }
                               >
                                 {formatDate(
-                                  changeOrder.revised_completion_at
+                                  changeOrder.revised_completion_at,
+                                  language,
+                                  t
                                 )}
                               </div>
                             </div>
@@ -439,7 +448,7 @@ const ListingRequestChangeOrderSummary = ({
 
                     {changeOrder.buyer_response_reason && (
                       <div className={classes.response}>
-                        <strong>Buyer response:</strong>{" "}
+                        <strong>{t("changeOrders.buyerResponse")}</strong>{" "}
                         {changeOrder.buyer_response_reason}
                       </div>
                     )}
