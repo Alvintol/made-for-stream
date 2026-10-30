@@ -5,7 +5,8 @@ import { FadeIn } from "../../../lib/motion";
 import type { ListingRequestPaymentRow } from "../../../hooks/payments/useListingRequestPayments";
 import type { ListingRequestCancellationStatementItemInput } from "../../../hooks/creatorRequests/useProposeListingRequestCancellation";
 import type { ListingRequestCancellationProposalRow } from "../../../hooks/creatorRequests/useListingRequestCancellationProposal";
-
+import { getListingRequestPaymentTypeLabel } from "../../../domain/payments/listingRequestPaymentDisplay";
+import { useLanguage, useT } from "../../../lib/i18n/i18n";
 type Viewer = "buyer" | "creator";
 
 type ListingRequestCancellationProposalPanelProps = {
@@ -82,6 +83,7 @@ const StatementForm = ({
   submitLabel,
   onSubmit,
 }: StatementFormProps) => {
+  const t = useT();
   const [earnedByPaymentId, setEarnedByPaymentId] = useState<
     Record<string, string>
   >({});
@@ -123,6 +125,7 @@ const StatementForm = ({
     await onSubmit(
       items.map(({ payment, earnedCents }) => ({
         paymentId: payment.id,
+        // Saved with the statement and shown as saved, so it stays English.
         label: `${payment.payment_type.replace(/_/g, " ")} (${formatCents(
           payment.base_amount_cents,
           payment.currency
@@ -136,24 +139,24 @@ const StatementForm = ({
     <div className="space-y-3">
       {Boolean(error) && (
         <div className={classes.errorBox}>
-          {getErrorMessage(error, "The statement could not be saved.")}
+          {getErrorMessage(error, t("cancelProposal.statementFailed"))}
         </div>
       )}
 
       <table className={classes.table}>
         <thead>
           <tr>
-            <th className={classes.th}>Payment</th>
-            <th className={classes.th}>Paid</th>
-            <th className={classes.th}>Earned</th>
-            <th className={classes.th}>Unearned (refundable)</th>
+            <th className={classes.th}>{t("cancelProposal.payment")}</th>
+            <th className={classes.th}>{t("cancelProposal.paid")}</th>
+            <th className={classes.th}>{t("cancelProposal.earned")}</th>
+            <th className={classes.th}>{t("cancelProposal.unearned")}</th>
           </tr>
         </thead>
         <tbody>
           {items.map(({ payment, earnedCents, valid }) => (
             <tr key={payment.id}>
               <td className={classes.td}>
-                {payment.payment_type.replace(/_/g, " ")}
+                {getListingRequestPaymentTypeLabel(payment.payment_type, t)}
               </td>
               <td className={classes.td}>
                 {formatCents(payment.base_amount_cents, payment.currency)}
@@ -185,8 +188,7 @@ const StatementForm = ({
       </table>
 
       <p className={classes.hint}>
-        Earned amounts stay with the creator. Unearned amounts are flagged for
-        refund -- this sprint does not issue the refund itself.
+        {t("cancelProposal.statementHint")}
       </p>
 
       <button
@@ -195,7 +197,7 @@ const StatementForm = ({
         disabled={isPending || !allValid}
         onClick={() => void handleSubmit()}
       >
-        {isPending ? "Saving…" : submitLabel}
+        {isPending ? t("common.saving") : submitLabel}
       </button>
     </div>
   );
@@ -216,6 +218,8 @@ const ListingRequestCancellationProposalPanel = ({
   onAccept,
   onDispute,
 }: ListingRequestCancellationProposalPanelProps) => {
+  const t = useT();
+  const language = useLanguage();
   const [isOpening, setIsOpening] = useState(false);
   const [openReason, setOpenReason] = useState("");
   const [isDisputing, setIsDisputing] = useState(false);
@@ -251,18 +255,13 @@ const ListingRequestCancellationProposalPanel = ({
     return (
       <div className={classes.card}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Propose a cancellation</h2>
-          <p className={classes.text}>
-            A payment has already been collected, so cancelling from here is a
-            proposal with a settlement, not a unilateral act. The creator
-            provides an itemised earned-value statement and the buyer accepts
-            or disputes it.
-          </p>
+          <h2 className={classes.title}>{t("cancelProposal.title")}</h2>
+          <p className={classes.text}>{t("cancelProposal.intro")}</p>
         </div>
 
         {Boolean(proposeError) && (
           <div className={classes.errorBox}>
-            {getErrorMessage(proposeError, "The cancellation could not be proposed.")}
+            {getErrorMessage(proposeError, t("cancelProposal.proposeFailed"))}
           </div>
         )}
 
@@ -270,7 +269,7 @@ const ListingRequestCancellationProposalPanel = ({
           isOpening ? (
             <FadeIn className="space-y-3">
               <label htmlFor="cancellation-open-reason" className={classes.hint}>
-                Reason (10-1000 characters, shown to the buyer)
+                {t("cancelProposal.reasonToBuyer")}
               </label>
               <textarea
                 id="cancellation-open-reason"
@@ -281,13 +280,13 @@ const ListingRequestCancellationProposalPanel = ({
                 onChange={(event) => setOpenReason(event.target.value)}
               />
               <p className={classes.hint}>
-                Next, itemise the earned value for each paid payment below.
+                {t("cancelProposal.itemiseNext")}
               </p>
               <StatementForm
                 paidPayments={paidPayments}
                 isPending={isProposePending}
                 error={null}
-                submitLabel="Propose cancellation with this statement"
+                submitLabel={t("cancelProposal.proposeWithStatement")}
                 onSubmit={async (items) => {
                   if (!isReasonValid) {
                     return;
@@ -307,7 +306,7 @@ const ListingRequestCancellationProposalPanel = ({
                   setOpenReason("");
                 }}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </FadeIn>
           ) : (
@@ -316,13 +315,13 @@ const ListingRequestCancellationProposalPanel = ({
               type="button"
               onClick={() => setIsOpening(true)}
             >
-              Propose cancellation
+              {t("cancelProposal.propose")}
             </button>
           )
         ) : isOpening ? (
           <FadeIn className="space-y-3">
             <label htmlFor="cancellation-open-reason" className={classes.hint}>
-              Reason (10-1000 characters, shown to the creator)
+              {t("cancelProposal.reasonToCreator")}
             </label>
             <textarea
               id="cancellation-open-reason"
@@ -339,7 +338,7 @@ const ListingRequestCancellationProposalPanel = ({
                 disabled={isProposePending || !isReasonValid}
                 onClick={() => void handleBuyerOpen()}
               >
-                {isProposePending ? "Proposing…" : "Propose cancellation"}
+                {t(isProposePending ? "cancelProposal.proposing" : "cancelProposal.propose")}
               </button>
               <button
                 className={classes.btnOutline}
@@ -350,7 +349,7 @@ const ListingRequestCancellationProposalPanel = ({
                   setOpenReason("");
                 }}
               >
-                Never mind
+                {t("cancelProposal.neverMind")}
               </button>
             </div>
           </FadeIn>
@@ -360,7 +359,7 @@ const ListingRequestCancellationProposalPanel = ({
             type="button"
             onClick={() => setIsOpening(true)}
           >
-            Propose cancellation
+            {t("cancelProposal.propose")}
           </button>
         )}
       </div>
@@ -371,15 +370,12 @@ const ListingRequestCancellationProposalPanel = ({
     return (
       <div className={classes.card}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Cancellation under review</h2>
-          <p className={classes.text}>
-            The buyer disputed the cancellation statement. Made for Stream
-            will review the evidence and decide.
-          </p>
+          <h2 className={classes.title}>{t("cancelProposal.reviewTitle")}</h2>
+          <p className={classes.text}>{t("cancelProposal.reviewText")}</p>
         </div>
         {proposal.buyer_response_reason && (
           <p className={classes.text}>
-            Dispute reason: {proposal.buyer_response_reason}
+            {t("cancelProposal.disputeReason", { reason: proposal.buyer_response_reason })}
           </p>
         )}
       </div>
@@ -390,7 +386,7 @@ const ListingRequestCancellationProposalPanel = ({
     return (
       <div className={classes.card}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Cancellation proposed</h2>
+          <h2 className={classes.title}>{t("cancelProposal.proposedTitle")}</h2>
           <p className={classes.text}>{proposal.reason}</p>
         </div>
 
@@ -399,13 +395,17 @@ const ListingRequestCancellationProposalPanel = ({
             paidPayments={paidPayments}
             isPending={isSubmitStatementPending}
             error={submitStatementError}
-            submitLabel="Submit cancellation statement"
+            submitLabel={t("cancelProposal.submitStatement")}
             onSubmit={onSubmitStatement}
           />
         ) : (
           <p className={classes.text}>
-            Waiting for the creator's itemised earned-value statement, due by{" "}
-            {new Date(proposal.statement_due_at).toLocaleString()}.
+            {t("cancelProposal.waitingStatement", {
+              date: new Date(proposal.statement_due_at).toLocaleString(language, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }),
+            })}
           </p>
         )}
       </div>
@@ -427,17 +427,17 @@ const ListingRequestCancellationProposalPanel = ({
   return (
     <div className={classes.card}>
       <div className={classes.header}>
-        <h2 className={classes.title}>Cancellation statement</h2>
+        <h2 className={classes.title}>{t("cancelProposal.statementTitle")}</h2>
         <p className={classes.text}>{proposal?.reason}</p>
       </div>
 
       <table className={classes.table}>
         <thead>
           <tr>
-            <th className={classes.th}>Payment</th>
-            <th className={classes.th}>Paid</th>
-            <th className={classes.th}>Earned</th>
-            <th className={classes.th}>Unearned (refundable)</th>
+            <th className={classes.th}>{t("cancelProposal.payment")}</th>
+            <th className={classes.th}>{t("cancelProposal.paid")}</th>
+            <th className={classes.th}>{t("cancelProposal.earned")}</th>
+            <th className={classes.th}>{t("cancelProposal.unearned")}</th>
           </tr>
         </thead>
         <tbody>
@@ -462,14 +462,14 @@ const ListingRequestCancellationProposalPanel = ({
         <>
           {Boolean(respondError) && (
             <div className={classes.errorBox}>
-              {getErrorMessage(respondError, "The response could not be saved.")}
+              {getErrorMessage(respondError, t("cancelProposal.respondFailed"))}
             </div>
           )}
 
           {isDisputing ? (
             <FadeIn className="space-y-3">
               <label htmlFor="cancellation-dispute-reason" className={classes.hint}>
-                Dispute reason (at least 10 characters)
+                {t("cancelProposal.disputeLabel")}
               </label>
               <textarea
                 id="cancellation-dispute-reason"
@@ -486,7 +486,7 @@ const ListingRequestCancellationProposalPanel = ({
                   disabled={isRespondPending || disputeReason.trim().length < 10}
                   onClick={() => void onDispute(disputeReason.trim())}
                 >
-                  {isRespondPending ? "Saving…" : "Submit dispute"}
+                  {isRespondPending ? t("common.saving") : t("cancelProposal.submitDispute")}
                 </button>
                 <button
                   className={classes.btnOutline}
@@ -494,7 +494,7 @@ const ListingRequestCancellationProposalPanel = ({
                   disabled={isRespondPending}
                   onClick={() => setIsDisputing(false)}
                 >
-                  Back
+                  {t("common.back")}
                 </button>
               </div>
             </FadeIn>
@@ -506,7 +506,7 @@ const ListingRequestCancellationProposalPanel = ({
                 disabled={isRespondPending}
                 onClick={() => void onAccept()}
               >
-                {isRespondPending ? "Saving…" : "Accept and cancel the commission"}
+                {isRespondPending ? t("common.saving") : t("cancelProposal.accept")}
               </button>
               <button
                 className={classes.btnOutline}
@@ -514,14 +514,14 @@ const ListingRequestCancellationProposalPanel = ({
                 disabled={isRespondPending}
                 onClick={() => setIsDisputing(true)}
               >
-                Dispute
+                {t("cancelProposal.dispute")}
               </button>
             </div>
           )}
         </>
       ) : (
         <p className={classes.text}>
-          Waiting for the buyer to accept or dispute this statement.
+          {t("cancelProposal.waitingBuyer")}
         </p>
       )}
     </div>

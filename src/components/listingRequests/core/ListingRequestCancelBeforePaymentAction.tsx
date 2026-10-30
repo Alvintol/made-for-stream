@@ -2,7 +2,7 @@ import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useState } from "react";
 
 import { FadeIn } from "../../../lib/motion";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestCancelBeforePaymentActionProps = {
   isPending: boolean;
   error: unknown;
@@ -24,8 +24,8 @@ const classes = {
 const MIN_REASON_LENGTH = 10;
 const MAX_REASON_LENGTH = 1000;
 
-const getErrorMessage = (error: unknown): string =>
-  hasErrorMessage(error) ? error.message : "This commission could not be cancelled.";
+const getErrorMessage = (error: unknown, t: Translate): string =>
+  hasErrorMessage(error) ? error.message : t("cancelEarly.failed");
 
 // Sprint 4 (launch-scope.md section 5.1): either party may cancel an
 // accepted request unilaterally before any payment has been collected. No
@@ -35,6 +35,7 @@ const ListingRequestCancelBeforePaymentAction = ({
   error,
   onCancel,
 }: ListingRequestCancelBeforePaymentActionProps) => {
+  const t = useT();
   const [isConfirming, setIsConfirming] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -56,23 +57,19 @@ const ListingRequestCancelBeforePaymentAction = ({
   return (
     <div className="space-y-3">
       <p className={classes.text}>
-        Cancel this commission if the project should not go ahead. Nothing has
-        been paid yet, so this is unilateral -- no review, no settlement.
+        {t("cancelEarly.text")}
       </p>
 
       {Boolean(error) && (
-        <div className={classes.errorBox}>{getErrorMessage(error)}</div>
+        <div className={classes.errorBox}>{getErrorMessage(error, t)}</div>
       )}
 
       {isConfirming ? (
         <FadeIn className={classes.warningBox}>
-          <p>
-            Are you sure? This cancels the agreement and everything scheduled
-            under it, and cannot be undone.
-          </p>
+          <p>{t("cancelEarly.sure")}</p>
 
           <label htmlFor="cancel-before-payment-reason" className={classes.hint}>
-            Reason (10-1000 characters, shown to the other party)
+            {t("cancelEarly.reason")}
           </label>
 
           <textarea
@@ -91,7 +88,7 @@ const ListingRequestCancelBeforePaymentAction = ({
               disabled={isPending || !isReasonValid}
               onClick={() => void handleConfirm()}
             >
-              {isPending ? "Cancelling commission…" : "Confirm cancellation"}
+              {t(isPending ? "cancelEarly.cancelling" : "cancelEarly.confirm")}
             </button>
 
             <button
@@ -103,7 +100,7 @@ const ListingRequestCancelBeforePaymentAction = ({
                 setReason("");
               }}
             >
-              Keep commission
+              {t("cancelEarly.keep")}
             </button>
           </div>
         </FadeIn>
@@ -114,7 +111,7 @@ const ListingRequestCancelBeforePaymentAction = ({
           disabled={isPending}
           onClick={() => setIsConfirming(true)}
         >
-          Cancel commission
+          {t("cancelEarly.cancel")}
         </button>
       )}
     </div>

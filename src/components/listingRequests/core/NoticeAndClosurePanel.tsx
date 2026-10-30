@@ -18,7 +18,7 @@ import {
   canSendFinalNotice,
   getListingRequestNoticeClockState,
 } from "../../../domain/listings/listingRequestNotices";
-
+import { useLanguage, useT } from "../../../lib/i18n/i18n";
 type NoticeAndClosurePanelProps = {
   requestId: string;
   currentUserId: string;
@@ -41,11 +41,11 @@ const classes = {
   hint: "text-xs text-zinc-500",
 } as const;
 
-const EARLY_REVIEW_LABELS: Record<ListingRequestEarlyReviewCategory, string> = {
-  missed_essential_deadline: "A promised essential deadline was missed",
-  credible_fraud: "There is credible fraud",
-  creator_cannot_complete: "The creator says they cannot complete the project",
-};
+const EARLY_REVIEW_CATEGORIES: ListingRequestEarlyReviewCategory[] = [
+  "missed_essential_deadline",
+  "credible_fraud",
+  "creator_cannot_complete",
+];
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   hasErrorMessage(error) ? error.message : fallback;
@@ -59,6 +59,10 @@ const NoticeAndClosurePanel = ({
   requestId,
   currentUserId,
 }: NoticeAndClosurePanelProps) => {
+  const t = useT();
+  const language = useLanguage();
+  const formatDateTime = (value: string) =>
+    new Date(value).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" });
   const noticesQuery = useListingRequestNotices(requestId);
   const flagsQuery = useListingRequestEarlyReviewFlags(requestId);
 
@@ -129,10 +133,12 @@ const NoticeAndClosurePanel = ({
       .maybeSingle();
 
     if (conversationError || !conversation) {
-      setClosureRequestError("This commission's conversation could not be found.");
+      setClosureRequestError(t("notices.conversationMissing"));
       return;
     }
 
+    // The message goes into the chat as written, so it stays English: the
+    // admin reading the conversation recognises it.
     const { error } = await supabase.from("conversation_messages").insert({
       conversation_id: conversation.id,
       sender_user_id: currentUserId,
@@ -155,22 +161,18 @@ const NoticeAndClosurePanel = ({
 
   return (
     <div className={classes.card}>
-      <div className={classes.title}>Non-response notices</div>
+      <div className={classes.title}>{t("notices.title")}</div>
 
       {clock.state === "no_notice" && !showNoticeForm && (
-        <p className={classes.text}>
-          If the other party has stopped responding, send a notice stating
-          what you need. They'll have 7 days to reply before a final notice
-          can follow.
-        </p>
+        <p className={classes.text}>{t("notices.intro")}</p>
       )}
 
       {clock.state === "first_notice_waiting" && (
         <div className={classes.infoBox}>
           <p>
-            {isSenderOfLatestNotice ? "You sent" : "You received"} a first
-            notice. A reply is needed by{" "}
-            {new Date(clock.expiresAt).toLocaleString()}.
+            {t(isSenderOfLatestNotice ? "notices.firstSent" : "notices.firstReceived", {
+              date: formatDateTime(clock.expiresAt),
+            })}
           </p>
         </div>
       )}
@@ -178,11 +180,8 @@ const NoticeAndClosurePanel = ({
       {clock.state === "first_notice_expired" && (
         <div className={classes.infoBox}>
           <p>
-            The first notice expired on{" "}
-            {new Date(clock.expiresAt).toLocaleString()} with no reply.
-            {isSenderOfLatestNotice
-              ? " You may send a final notice."
-              : " The other party may send a final notice."}
+            {t("notices.firstExpired", { date: formatDateTime(clock.expiresAt) })}{" "}
+            {t(isSenderOfLatestNotice ? "notices.youMayFinal" : "notices.otherMayFinal")}
           </p>
 
           {isSenderOfLatestNotice && latestNotice && (
@@ -191,7 +190,7 @@ const NoticeAndClosurePanel = ({
                 <div className={classes.errorBox}>
                   {getErrorMessage(
                     sendFinalNotice.error,
-                    "The final notice could not be sent."
+                    t("notices.finalFailed")
                   )}
                 </div>
               )}
@@ -205,9 +204,7 @@ const NoticeAndClosurePanel = ({
                 }
                 onClick={() => void handleSendFinalNotice()}
               >
-                {sendFinalNotice.isPending
-                  ? "Sending final notice…"
-                  : "Send final notice"}
+                {t(sendFinalNotice.isPending ? "notices.sendingFinal" : "notices.sendFinal")}
               </button>
             </div>
           )}
@@ -217,11 +214,9 @@ const NoticeAndClosurePanel = ({
       {clock.state === "final_notice_waiting" && (
         <div className={classes.infoBox}>
           <p>
-            {isSenderOfLatestNotice ? "You sent" : "You received"} a final
-            notice, granting until{" "}
-            {new Date(clock.expiresAt).toLocaleString()}. After that,{" "}
-            {isSenderOfLatestNotice ? "you" : "the other party"} may commission
-            administrative closure.
+            {t(isSenderOfLatestNotice ? "notices.finalSent" : "notices.finalReceived", {
+              date: formatDateTime(clock.expiresAt),
+            })}
           </p>
         </div>
       )}
@@ -229,11 +224,8 @@ const NoticeAndClosurePanel = ({
       {clock.state === "final_notice_expired" && (
         <div className={classes.infoBox}>
           <p>
-            The final notice expired on{" "}
-            {new Date(clock.expiresAt).toLocaleString()} with no reply.
-            {isSenderOfLatestNotice
-              ? " You may request administrative closure. An admin decides -- this is not automatic."
-              : ""}
+            {t("notices.finalExpired", { date: formatDateTime(clock.expiresAt) })}
+            {isSenderOfLatestNotice && ` ${t("notices.youMayClose")}`}
           </p>
 
           {isSenderOfLatestNotice && latestNotice && (
@@ -250,9 +242,7 @@ const NoticeAndClosurePanel = ({
                 }
                 onClick={() => void handleRequestClosure()}
               >
-                {closureRequested
-                  ? "Closure requested"
-                  : "Request administrative closure"}
+                {t(closureRequested ? "notices.closureRequested" : "notices.requestClosure")}
               </button>
             </div>
           )}
@@ -261,8 +251,7 @@ const NoticeAndClosurePanel = ({
 
       {clock.state === "answered" && (
         <p className={classes.text}>
-          The last notice was answered on{" "}
-          {new Date(clock.answeredAt).toLocaleString()}.
+          {t("notices.answered", { date: formatDateTime(clock.answeredAt) })}
         </p>
       )}
 
@@ -274,13 +263,13 @@ const NoticeAndClosurePanel = ({
                 <div className={classes.errorBox}>
                   {getErrorMessage(
                     sendFirstNotice.error,
-                    "The notice could not be sent."
+                    t("notices.sendFailed")
                   )}
                 </div>
               )}
 
               <label htmlFor="notice-requested-action" className={classes.hint}>
-                What do you need from the other party? (10-1000 characters)
+                {t("notices.needLabel")}
               </label>
 
               <textarea
@@ -302,7 +291,7 @@ const NoticeAndClosurePanel = ({
                   }
                   onClick={() => void handleSendFirstNotice()}
                 >
-                  {sendFirstNotice.isPending ? "Sending…" : "Send notice"}
+                  {t(sendFirstNotice.isPending ? "common.sending" : "notices.send")}
                 </button>
 
                 <button
@@ -314,7 +303,7 @@ const NoticeAndClosurePanel = ({
                     setRequestedAction("");
                   }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </FadeIn>
@@ -324,33 +313,27 @@ const NoticeAndClosurePanel = ({
               type="button"
               onClick={() => setShowNoticeForm(true)}
             >
-              Send a notice
+              {t("notices.sendOne")}
             </button>
           )}
         </>
       )}
 
       <div className="border-t border-zinc-100 pt-4 space-y-2">
-        <div className={classes.title}>Early review</div>
-        <p className={classes.text}>
-          Skip the waiting period if an essential deadline was missed, there
-          is credible fraud, or the creator says they cannot complete. An
-          admin reviews and decides -- this does not close anything by
-          itself.
-        </p>
+        <div className={classes.title}>{t("earlyReview.title")}</div>
+        <p className={classes.text}>{t("earlyReview.text")}</p>
 
         {pendingEarlyReviewFlag && (
-          <p className={classes.hint}>
-            An early review request is pending admin decision.
-          </p>
+          <p className={classes.hint}>{t("earlyReview.pending")}</p>
         )}
 
         {approvedEarlyReviewFlag && (
           <p className={classes.hint}>
-            An early review request was approved on{" "}
-            {approvedEarlyReviewFlag.reviewed_at &&
-              new Date(approvedEarlyReviewFlag.reviewed_at).toLocaleString()}
-            .
+            {t("earlyReview.approved", {
+              date: approvedEarlyReviewFlag.reviewed_at
+                ? formatDateTime(approvedEarlyReviewFlag.reviewed_at)
+                : "",
+            })}
           </p>
         )}
 
@@ -361,13 +344,13 @@ const NoticeAndClosurePanel = ({
                 <div className={classes.errorBox}>
                   {getErrorMessage(
                     flagEarlyReview.error,
-                    "The early review request could not be sent."
+                    t("earlyReview.failed")
                   )}
                 </div>
               )}
 
               <label htmlFor="early-review-category" className={classes.hint}>
-                Reason
+                {t("earlyReview.reason")}
               </label>
 
               <select
@@ -381,15 +364,15 @@ const NoticeAndClosurePanel = ({
                   )
                 }
               >
-                {Object.entries(EARLY_REVIEW_LABELS).map(([value, label]) => (
+                {EARLY_REVIEW_CATEGORIES.map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {t(`earlyReview.${value}`)}
                   </option>
                 ))}
               </select>
 
               <label htmlFor="early-review-note" className={classes.hint}>
-                Explain what happened (10-2000 characters)
+                {t("earlyReview.explain")}
               </label>
 
               <textarea
@@ -408,7 +391,7 @@ const NoticeAndClosurePanel = ({
                   disabled={flagEarlyReview.isPending || note.trim().length < 10}
                   onClick={() => void handleFlagEarlyReview()}
                 >
-                  {flagEarlyReview.isPending ? "Sending…" : "Request early review"}
+                  {t(flagEarlyReview.isPending ? "common.sending" : "earlyReview.request")}
                 </button>
 
                 <button
@@ -420,7 +403,7 @@ const NoticeAndClosurePanel = ({
                     setNote("");
                   }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </FadeIn>
@@ -430,7 +413,7 @@ const NoticeAndClosurePanel = ({
               type="button"
               onClick={() => setShowEarlyReviewForm(true)}
             >
-              Request early review
+              {t("earlyReview.request")}
             </button>
           ))}
       </div>

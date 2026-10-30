@@ -7,7 +7,7 @@ import {
   useWithdrawListingRequestCancellationWarning,
   type CancellationWarningDays,
 } from "../../../hooks/creatorRequests/useListingRequestCancellationWarnings";
-
+import { useLanguage, useT } from "../../../lib/i18n/i18n";
 type CancellationWarningPanelProps = {
   requestId: string;
   currentUserId: string;
@@ -31,15 +31,13 @@ const classes = {
   hint: "formHint",
 } as const;
 
-const formatDeadline = (iso: string): string =>
-  new Date(iso).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
+const formatDeadline = (iso: string, language: string): string =>
+  new Date(iso).toLocaleString(language, { dateStyle: "long", timeStyle: "short" });
 
 // What happens to money already paid, in the sender's own terms.
 const MONEY_NOTE = {
-  buyer:
-    "If the creator does not reply, payments for milestones you approved stay with the creator, and other amounts you paid (such as a deposit) are refunded for the work not reached.",
-  creator:
-    "If the buyer does not reply, payments already made stay with you, including a deposit. Unpaid payments are cancelled.",
+  buyer: "cancelWarning.moneyBuyer",
+  creator: "cancelWarning.moneyCreator",
 } as const;
 
 // The cancellation warning: a timer one side starts when the other has gone
@@ -50,6 +48,8 @@ const CancellationWarningPanel = ({
   currentUserId,
   currentUserRole,
 }: CancellationWarningPanelProps) => {
+  const t = useT();
+  const language = useLanguage();
   const warningsQuery = useListingRequestCancellationWarnings(requestId);
   const sendWarning = useSendListingRequestCancellationWarning();
   const withdrawWarning = useWithdrawListingRequestCancellationWarning();
@@ -80,17 +80,17 @@ const CancellationWarningPanel = ({
 
   return (
     <div className={classes.card}>
-      <div className={classes.title}>Cancellation warning</div>
+      <div className={classes.title}>{t("cancelWarning.title")}</div>
 
       {openWarning && openWarning.sender_user_id === currentUserId && (
         <div className={classes.infoBox} role="status">
           <p>
-            You sent a cancellation warning. Unless the other person does what you asked or
-            replies in the chat by <strong>{formatDeadline(openWarning.expires_at)}</strong>, this
-            commission is cancelled automatically.
+            {t("cancelWarning.sentStart")}{" "}
+            <strong>{formatDeadline(openWarning.expires_at, language)}</strong>
+            {t("cancelWarning.sentEnd")}
           </p>
-          <p>What you asked for: {openWarning.requested_action}</p>
-          <p>{MONEY_NOTE[currentUserRole]}</p>
+          <p>{t("cancelWarning.asked", { action: openWarning.requested_action })}</p>
+          <p>{t(MONEY_NOTE[currentUserRole])}</p>
 
           {withdrawWarning.error && (
             <div className={classes.errorBox} role="alert">
@@ -105,7 +105,7 @@ const CancellationWarningPanel = ({
               disabled={withdrawWarning.isPending}
               onClick={() => withdrawWarning.mutate(openWarning.id)}
             >
-              {withdrawWarning.isPending ? "Withdrawing…" : "Withdraw warning"}
+              {t(withdrawWarning.isPending ? "cancelWarning.withdrawing" : "cancelWarning.withdraw")}
             </button>
           </div>
         </div>
@@ -114,36 +114,26 @@ const CancellationWarningPanel = ({
       {openWarning && openWarning.recipient_user_id === currentUserId && (
         <div className={classes.infoBox} role="alert">
           <p>
-            The other person sent you a cancellation warning. Respond by{" "}
-            <strong>{formatDeadline(openWarning.expires_at)}</strong> or this commission is
-            cancelled automatically. Doing what is asked (paying, accepting, approving) stops the
-            timer at once, and so does any reply in the chat. You do not need to do both.
+            {t("cancelWarning.receivedStart")}{" "}
+            <strong>{formatDeadline(openWarning.expires_at, language)}</strong>{" "}
+            {t("cancelWarning.receivedEnd")}
           </p>
-          <p>What they need: {openWarning.requested_action}</p>
+          <p>{t("cancelWarning.need", { action: openWarning.requested_action })}</p>
         </div>
       )}
 
       {!openWarning && (
         <>
-          <p className={classes.text}>
-            If the other person has gone quiet, for example past an agreed update or with a payment
-            left unpaid, you can start a cancellation timer. They are emailed. Doing what you asked,
-            or any reply in the chat, stops it. If they do neither in time, the commission is
-            cancelled automatically.
-            Nothing is ever cancelled unless one of you starts this.
-          </p>
+          <p className={classes.text}>{t("cancelWarning.intro")}</p>
 
           {lastWasAnswered && (
-            <p className={classes.text}>
-              The last warning was answered, with a reply or by taking the next step, so its timer
-              stopped.
-            </p>
+            <p className={classes.text}>{t("cancelWarning.lastAnswered")}</p>
           )}
 
           {!showForm && (
             <div className={classes.row}>
               <button type="button" className={classes.btnDanger} onClick={() => setShowForm(true)}>
-                Send cancellation warning
+                {t("cancelWarning.send")}
               </button>
             </div>
           )}
@@ -151,7 +141,7 @@ const CancellationWarningPanel = ({
           {showForm && (
             <div className={classes.form}>
               <label className={classes.field}>
-                <span className={classes.label}>What do you need from them?</span>
+                <span className={classes.label}>{t("cancelWarning.needLabel")}</span>
                 <textarea
                   className={classes.control}
                   rows={3}
@@ -159,11 +149,11 @@ const CancellationWarningPanel = ({
                   value={requestedAction}
                   onChange={(event) => setRequestedAction(event.currentTarget.value)}
                 />
-                <span className={classes.hint}>10 to 1000 characters. They will see this.</span>
+                <span className={classes.hint}>{t("cancelWarning.needHint")}</span>
               </label>
 
               <label className={classes.field}>
-                <span className={classes.label}>How long do they have to reply?</span>
+                <span className={classes.label}>{t("cancelWarning.daysLabel")}</span>
                 <select
                   className={classes.control}
                   value={responseDays}
@@ -173,13 +163,13 @@ const CancellationWarningPanel = ({
                 >
                   {CANCELLATION_WARNING_DAYS.map((days) => (
                     <option key={days} value={days}>
-                      {days} days
+                      {t("cancelWarning.days", { count: days })}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <p className={classes.hint}>{MONEY_NOTE[currentUserRole]}</p>
+              <p className={classes.hint}>{t(MONEY_NOTE[currentUserRole])}</p>
 
               {sendWarning.error && (
                 <div className={classes.errorBox} role="alert">
@@ -194,14 +184,16 @@ const CancellationWarningPanel = ({
                   disabled={!canSend || sendWarning.isPending}
                   onClick={() => void send()}
                 >
-                  {sendWarning.isPending ? "Sending…" : `Start the ${responseDays}-day timer`}
+                  {sendWarning.isPending
+                    ? t("common.sending")
+                    : t("cancelWarning.start", { count: responseDays })}
                 </button>
                 <button
                   type="button"
                   className={classes.btnOutline}
                   onClick={() => setShowForm(false)}
                 >
-                  Not now
+                  {t("cancelWarning.notNow")}
                 </button>
               </div>
             </div>
