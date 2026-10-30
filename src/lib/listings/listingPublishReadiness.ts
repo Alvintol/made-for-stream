@@ -1,3 +1,5 @@
+import { english, type Translate } from "../i18n/i18n";
+
 type ListingPriceType = "fixed" | "starting_at" | "range";
 type ListingVideoSubtype = "long-form" | "short-form" | null;
 
@@ -28,29 +30,30 @@ export type ListingPublishReadiness = {
 const hasTrimmedText = (value: string) => value.trim().length > 0;
 
 export const getListingPublishReadiness = (
-  listing: ListingPublishReadinessInput
+  listing: ListingPublishReadinessInput,
+  t: Translate = english
 ): ListingPublishReadiness => {
   const checks: ListingPublishCheck[] = [
     {
       key: "title",
-      label: "Title is present and between 3 and 80 characters",
+      label: t("publishCheck.title"),
       passed:
         listing.title.trim().length >= 3 && listing.title.trim().length <= 80,
     },
     {
       key: "short",
-      label: "Short description is between 10 and 280 characters",
+      label: t("publishCheck.short"),
       passed:
         listing.short.trim().length >= 10 && listing.short.trim().length <= 280,
     },
     {
       key: "category",
-      label: "Category is set",
+      label: t("publishCheck.category"),
       passed: hasTrimmedText(listing.category),
     },
     {
       key: "price",
-      label: "Pricing is valid",
+      label: t("publishCheck.price"),
       passed:
         listing.price_min >= 0 &&
         (
@@ -63,17 +66,17 @@ export const getListingPublishReadiness = (
     },
     {
       key: "deliverables",
-      label: "At least one deliverable is listed",
+      label: t("publishCheck.deliverables"),
       passed: listing.deliverables.length > 0,
     },
     {
       key: "preview",
-      label: "Preview image is added",
+      label: t("publishCheck.preview"),
       passed: hasTrimmedText(listing.preview_url ?? ""),
     },
     {
       key: "tags",
-      label: "At least one tag is added",
+      label: t("publishCheck.tags"),
       passed: listing.tags.length > 0,
     },
   ];

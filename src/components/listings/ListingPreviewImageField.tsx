@@ -5,7 +5,7 @@ import {
   renderListingPreviewImage,
   validateListingPreviewSource,
 } from "../../lib/listings/listingPreviewImage";
-
+import { useT } from "../../lib/i18n/i18n";
 export type ListingPreviewSelection = {
   // The prepared copy, ready to upload when the listing is saved.
   blob: Blob;
@@ -46,6 +46,7 @@ const ListingPreviewImageField = ({
   disabled = false,
   onChange,
 }: ListingPreviewImageFieldProps) => {
+  const t = useT();
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [watermark, setWatermark] = useState(true);
   const [preparedUrl, setPreparedUrl] = useState<string | null>(null);
@@ -81,7 +82,7 @@ const ListingPreviewImageField = ({
         if (cancelled) return;
 
         setPreparedUrl(null);
-        setError("That image could not be read. Try a different file.");
+        setError(t("milestoneSubmit.imageUnreadable"));
         onChange(null);
       })
       .finally(() => {
@@ -92,15 +93,15 @@ const ListingPreviewImageField = ({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-    // onChange is the parent's setter; re-running for a new function
-    // identity would re-prepare the image on every parent render.
+    // onChange is the parent's setter and t only words the error; re-running
+    // for a new identity would re-prepare the image on every parent render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceFile, watermark, watermarkText]);
 
   const handleFile = (file: File | null) => {
     if (!file) return;
 
-    const sourceError = validateListingPreviewSource(file);
+    const sourceError = validateListingPreviewSource(file, t);
 
     if (sourceError) {
       setError(sourceError);
@@ -116,7 +117,7 @@ const ListingPreviewImageField = ({
     <div className={classes.wrap}>
       <div className={classes.field}>
         <label className={classes.label} htmlFor="previewImage">
-          Preview image
+          {t("previewField.label")}
         </label>
 
         <input
@@ -129,7 +130,7 @@ const ListingPreviewImageField = ({
         />
 
         <p className={classes.hint}>
-          JPEG, PNG or WebP, up to 20 MB. A listing needs an image before it can be published.
+          {t("previewField.hint")}
         </p>
 
         {error && (
@@ -139,31 +140,31 @@ const ListingPreviewImageField = ({
         )}
 
         {isPreparing ? (
-          <div className={classes.empty}>Preparing your image…</div>
+          <div className={classes.empty}>{t("previewField.preparing")}</div>
         ) : shownUrl ? (
           <img
             className={classes.preview}
             src={shownUrl}
-            alt={sourceFile ? "Your preview image as buyers will see it" : "Current preview image"}
+            alt={t(sourceFile ? "previewField.altNew" : "previewField.altCurrent")}
           />
         ) : (
-          <div className={classes.empty}>No preview image yet</div>
+          <div className={classes.empty}>{t("previewField.empty")}</div>
         )}
 
         {!sourceFile && existingUrl && (
           <p className={classes.hint}>
-            This is the current image. Choose a file to replace it.
+            {t("previewField.current")}
           </p>
         )}
       </div>
 
       <div className={classes.panel}>
-        <div className={classes.panelTitle}>How your image is protected</div>
+        <div className={classes.panelTitle}>{t("previewField.protected")}</div>
 
         <ul className={classes.list}>
-          <li>We upload a smaller copy, at most 1200 pixels on its longest side.</li>
-          <li>Your original file stays on your device. Buyers cannot download it from the page.</li>
-          <li>Hidden details in the file, such as where a photo was taken, are removed.</li>
+          <li>{t("previewField.point1")}</li>
+          <li>{t("previewField.point2")}</li>
+          <li>{t("previewField.point3")}</li>
         </ul>
 
         <label className={classes.option} htmlFor="previewWatermark">
@@ -174,15 +175,14 @@ const ListingPreviewImageField = ({
             disabled={disabled}
             onChange={(event) => setWatermark(event.target.checked)}
           />
-          <span>Add a watermark</span>
+          <span>{t("previewField.watermark")}</span>
         </label>
 
         <p className={classes.panelText}>
-          Repeats “{watermarkText}” faintly across the image, so a copied picture is clearly
-          yours. A watermark discourages copying; it cannot fully prevent it.
+          {t("previewField.watermarkText", { watermark: watermarkText })}
         </p>
 
-        <p className={classes.panelText}>Watermarks are free during early access.</p>
+        <p className={classes.panelText}>{t("previewField.earlyAccess")}</p>
       </div>
     </div>
   );
