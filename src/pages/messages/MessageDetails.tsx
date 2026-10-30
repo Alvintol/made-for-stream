@@ -7,8 +7,8 @@ import {
   useConversationDetails,
   type ConversationDetailsProfile,
 } from "../../hooks/conversations/useConversationDetails";
+import { useT } from "../../lib/i18n/i18n";
 import { useAuth } from "../../providers/AuthProvider";
-
 const classes = {
   page: "space-y-5",
   backLink: "backLink",
@@ -25,6 +25,7 @@ const profileText = (
 ) => (profile?.handle ? `@${profile.handle}` : profile?.display_name ?? fallbackUserId);
 
 const MessageDetails = () => {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { data, isLoading, error } = useConversationDetails(id ?? null);
@@ -34,7 +35,7 @@ const MessageDetails = () => {
   if (isLoading) {
     return (
       <div className={classes.stateCard}>
-        <div className={classes.loadingText}>Loading conversation…</div>
+        <div className={classes.loadingText}>{t("requestChat.loading")}</div>
       </div>
     );
   }
@@ -42,9 +43,9 @@ const MessageDetails = () => {
   if (error || !conversation) {
     return (
       <div className={classes.stateCard}>
-        <h1 className={classes.h1}>Conversation</h1>
+        <h1 className={classes.h1}>{t("messages.conversation")}</h1>
         <div className={classes.errorNotice}>
-          Conversation could not be loaded right now.
+          {t("requestChat.loadFailed")}
         </div>
       </div>
     );
@@ -63,7 +64,7 @@ const MessageDetails = () => {
   return (
     <div className={classes.page}>
       <Link to="/messages" className={classes.backLink}>
-        ← Back to messages
+        ← {t("messages.back")}
       </Link>
 
       <ConversationThread
@@ -74,16 +75,17 @@ const MessageDetails = () => {
         header={
           <>
             <h1 className={classes.h1}>
-              {data?.listing?.title ?? conversation.subject ?? "Conversation"}
+              {data?.listing?.title ?? conversation.subject ?? t("messages.conversation")}
             </h1>
 
             <p className={classes.sub}>
-              Topic:{" "}
-              {getConversationInitiationReasonLabel(conversation.initiation_reason_code)}
+              {t("messages.topic", {
+                topic: getConversationInitiationReasonLabel(conversation.initiation_reason_code, t),
+              })}
             </p>
 
             <p className={classes.sub}>
-              Client: {buyerLabel} · Creator: {creatorLabel}
+              {t("messages.people", { buyer: buyerLabel, creator: creatorLabel })}
             </p>
           </>
         }

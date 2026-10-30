@@ -16,7 +16,7 @@ import {
   getModerationReportStatusSummary,
   type ModerationReportReasonCode,
 } from "../../domain/moderation/moderationReports";
-import { useT } from "../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
 import { useCloseConversation } from "../../hooks/conversations/useCloseConversation";
 import {
   useApproveBuyerImageUpload,
@@ -169,12 +169,12 @@ const classes = {
   btnDanger: "btnDanger",
 } as const;
 
-const dateText = (value: string) => {
+const dateText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -185,23 +185,23 @@ const dateText = (value: string) => {
 
 // Inside the thread a line shows only its time; the day is shown once, above
 // the first line of that day.
-const timeText = (value: string) => {
+const timeText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleTimeString(undefined, {
+    : date.toLocaleTimeString(locale, {
       hour: "numeric",
       minute: "2-digit",
     });
 };
 
-const dayText = (value: string) => {
+const dayText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleDateString(undefined, {
+    : date.toLocaleDateString(locale, {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -228,26 +228,30 @@ type ReportStatusProps = {
   className: string;
 };
 
-const ReportStatus = ({ report, title, className }: ReportStatusProps) => (
-  <div className={className}>
-    <div className={classes.reportStatusTitle}>{title}</div>
+const ReportStatus = ({ report, title, className }: ReportStatusProps) => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
+  return (
+    <div className={className}>
+      <div className={classes.reportStatusTitle}>{title}</div>
 
-    <div className={classes.reportStatusText}>
-      Status: {getModerationReportStatusLabel(report.status)}
-    </div>
-
-    <div className={classes.reportStatusText}>
-      {report.reporter_status_message ||
-        getModerationReportStatusSummary(report.status)}
-    </div>
-
-    {report.reporter_status_updated_at && (
       <div className={classes.reportStatusText}>
-        Last update: {dateText(report.reporter_status_updated_at)}
+        {t("chat.reportStatus", { status: getModerationReportStatusLabel(report.status, t) })}
       </div>
-    )}
-  </div>
-);
+
+      <div className={classes.reportStatusText}>
+        {report.reporter_status_message ||
+          getModerationReportStatusSummary(report.status, t)}
+      </div>
+
+      {report.reporter_status_updated_at && (
+        <div className={classes.reportStatusText}>
+          {t("chat.lastUpdate", { date: dateText(report.reporter_status_updated_at, locale) })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ConversationThread = ({
   conversation,
@@ -258,9 +262,11 @@ const ConversationThread = ({
   creatorName = creatorLabel,
   header,
   readOnlyNotice = null,
-  emptyText = "No messages yet.",
-  composerPlaceholder = "Write a message…",
+  emptyText,
+  composerPlaceholder,
 }: ConversationThreadProps) => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const [body, setBody] = useState("");
   const [showCloseForm, setShowCloseForm] = useState(false);
   const [closeReasonCode, setCloseReasonCode] =
@@ -297,7 +303,6 @@ const ConversationThread = ({
   const approveBuyerImageUploadMutation = useApproveBuyerImageUpload();
   const revokeBuyerImageUploadMutation = useRevokeBuyerImageUpload();
   const reportConversationMutation = useSubmitModerationReport();
-  const t = useT();
   const markConversationReadMutation = useMarkConversationRead();
   const { data: myReports = [] } = useMyModerationReports();
   const { data: participants = [] } = useConversationParticipants(conversation.id);
@@ -321,21 +326,21 @@ const ConversationThread = ({
 
   const closeReasonDetailsError =
     isOtherCloseReason && closeReasonDetailsTrimmed.length < 10
-      ? "Please give more detail."
+      ? t("chat.moreDetail")
       : closeReasonDetailsTrimmed.length > 1000
-        ? "Additional details must be 1000 characters or less."
+        ? t("chat.detailsTooLong")
         : null;
 
   const reportReasonDetailsError =
     isOtherReportReason && reportReasonDetailsTrimmed.length < 10
-      ? "Please provide a reason for the report."
+      ? t("chat.reportReasonNeeded")
       : reportReasonDetailsTrimmed.length > 1000
-        ? "Additional details must be 1000 characters or less."
+        ? t("chat.detailsTooLong")
         : null;
 
   const imageRequestNoteError =
     imageRequestNoteTrimmed.length > 1000
-      ? "Request note must be 1000 characters or less."
+      ? t("chat.noteTooLong")
       : null;
 
   const conversationReport =
@@ -357,23 +362,23 @@ const ConversationThread = ({
   const hasReportedMessage = (messageId: string) => Boolean(getMessageReport(messageId));
 
   const reportConversationButtonText = conversationReport
-    ? `Conversation reported · ${getModerationReportStatusLabel(conversationReport.status)}`
-    : "Report conversation";
+    ? t("chat.conversationReported", { status: getModerationReportStatusLabel(conversationReport.status, t) })
+    : t("chat.reportConversation");
 
   const getReportMessageButtonText = (messageId: string) => {
     const report = getMessageReport(messageId);
 
     return report
-      ? `Message reported · ${getModerationReportStatusLabel(report.status)}`
-      : "Report message";
+      ? t("chat.messageReported", { status: getModerationReportStatusLabel(report.status, t) })
+      : t("chat.reportMessage");
   };
 
   const senderRoleText = (senderUserId: string) =>
     senderUserId === conversation.buyer_user_id
-      ? "Client"
+      ? t("chat.roleClient")
       : senderUserId === conversation.creator_user_id
-        ? "Creator"
-        : "System";
+        ? t("common.creator")
+        : t("chat.roleSystem");
 
   const senderLabelText = (senderUserId: string) =>
     senderUserId === conversation.buyer_user_id
@@ -390,7 +395,7 @@ const ConversationThread = ({
         : null;
 
   const otherParticipantLabel =
-    viewer === "buyer" ? "Creator" : viewer === "creator" ? "Client" : null;
+    viewer === "buyer" ? t("common.creator") : viewer === "creator" ? t("chat.roleClient") : null;
 
   const otherParticipantLastReadAt = otherParticipantUserId
     ? participants.find((participant) => participant.user_id === otherParticipantUserId)
@@ -459,8 +464,8 @@ const ConversationThread = ({
 
   const approveImageUploadButtonText =
     buyerImageUploadStatus === "requested"
-      ? "Allow client images"
-      : "Enable client images";
+      ? t("chat.allowImages")
+      : t("chat.enableImages");
 
   useEffect(() => {
     if (!reportTarget) return undefined;
@@ -614,7 +619,7 @@ const ConversationThread = ({
         {!isAdmin && (
           <ActionMenu
             label={<span aria-hidden="true">⋯</span>}
-            ariaLabel="Conversation options"
+            ariaLabel={t("chat.options")}
             showCaret={false}
             triggerClassName={classes.optionsTrigger}
             panelClassName={actionMenuItemClasses.list}
@@ -642,7 +647,7 @@ const ConversationThread = ({
                       setShowCloseForm((current) => !current);
                     }}
                   >
-                    {showCloseForm ? "Cancel ending conversation" : "End conversation"}
+                    {t(showCloseForm ? "chat.cancelEnd" : "chat.end")}
                   </button>
                 )}
               </>
@@ -654,28 +659,28 @@ const ConversationThread = ({
       <div className={classes.body}>
         {conversation.status === "closed" && (
           <div className={classes.statusNotice}>
-            <div className={classes.closedStatusTitle}>Conversation ended</div>
+            <div className={classes.closedStatusTitle}>{t("chat.ended")}</div>
 
             <div className={classes.closedStatusList}>
               <div>
-                <span className={classes.closedStatusLabel}>Status:</span> This
-                conversation has been ended and is now read-only for both parties.
+                <span className={classes.closedStatusLabel}>{t("chat.statusLabel")}</span>{" "}
+                {t("chat.endedStatus")}
               </div>
 
               <div>
-                <span className={classes.closedStatusLabel}>Reason:</span>{" "}
-                {getConversationCloseReasonLabel(conversation.closed_reason_code)}
+                <span className={classes.closedStatusLabel}>{t("chat.reasonLabel")}</span>{" "}
+                {getConversationCloseReasonLabel(conversation.closed_reason_code, t)}
               </div>
 
               <div>
-                <span className={classes.closedStatusLabel}>Additional details:</span>{" "}
-                {conversation.closed_reason_details || "No additional details provided."}
+                <span className={classes.closedStatusLabel}>{t("chat.detailsLabel")}</span>{" "}
+                {conversation.closed_reason_details || t("chat.noDetails")}
               </div>
 
               {conversation.closed_at && (
                 <div>
-                  <span className={classes.closedStatusLabel}>Ended on:</span>{" "}
-                  {dateText(conversation.closed_at)}
+                  <span className={classes.closedStatusLabel}>{t("chat.endedOn")}</span>{" "}
+                  {dateText(conversation.closed_at, locale)}
                 </div>
               )}
             </div>
@@ -684,7 +689,7 @@ const ConversationThread = ({
 
         {conversation.status === "admin_locked" && (
           <div className={classes.warningNotice}>
-            This conversation has been locked by an admin and is read-only.
+            {t("chat.locked")}
           </div>
         )}
 
@@ -695,16 +700,15 @@ const ConversationThread = ({
         <div ref={closePanelRef} className={classes.panelAnchor}>
           <Collapse open={canCloseConversation && showCloseForm}>
             <div className={classes.dangerPanel}>
-              <div className={classes.panelTitle}>End conversation</div>
+              <div className={classes.panelTitle}>{t("chat.end")}</div>
 
               <div className={classes.warningNotice}>
-                Ending this conversation will make the thread read-only for both
-                parties. The message history and reason will remain visible.
+                {t("chat.endWarning")}
               </div>
 
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="closeReason">
-                  Reason for ending conversation
+                  {t("chat.endReason")}
                 </label>
 
                 <select
@@ -715,11 +719,11 @@ const ConversationThread = ({
                     setCloseReasonCode(event.target.value as ConversationCloseReasonCode | "")
                   }
                 >
-                  <option value="">Choose a reason</option>
+                  <option value="">{t("chat.chooseReason")}</option>
 
                   {conversationCloseReasonOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {getConversationCloseReasonLabel(option.value, t)}
                     </option>
                   ))}
                 </select>
@@ -727,7 +731,7 @@ const ConversationThread = ({
 
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="closeDetails">
-                  Additional details{isOtherCloseReason ? " *" : ""}
+                  {t("chat.additionalDetails")}{isOtherCloseReason ? " *" : ""}
                 </label>
 
                 <KeptPlaceholder>
@@ -738,18 +742,16 @@ const ConversationThread = ({
                   onChange={(event) => setCloseReasonDetails(event.target.value)}
                   placeholder={
                     isOtherCloseReason
-                      ? "Required. Explain why this conversation is being ended."
-                      : "Optional. Add context for both parties and admins."
+                      ? t("chat.endRequiredPlaceholder")
+                      : t("chat.endOptionalPlaceholder")
                   }
                   maxLength={1000}
                 />
                 </KeptPlaceholder>
 
                 <div className={classes.hint}>
-                  {closeReasonDetailsTrimmed.length}/1000 characters.
-                  {isOtherCloseReason
-                    ? " Mandatory. Please explain why this conversation is being ended."
-                    : " Optional, but helpful for both parties and admins."}
+                  {t("report.characters", { count: closeReasonDetailsTrimmed.length, max: 1000 })}{" "}
+                  {t(isOtherCloseReason ? "chat.endRequiredHint" : "chat.endOptionalHint")}
                 </div>
 
                 {closeReasonDetailsError && (
@@ -764,9 +766,7 @@ const ConversationThread = ({
                   onClick={() => void handleCloseConversation()}
                   disabled={!canConfirmCloseConversation}
                 >
-                  {closeConversationMutation.isPending
-                    ? "Ending conversation…"
-                    : "Confirm end conversation"}
+                  {t(closeConversationMutation.isPending ? "chat.ending" : "chat.confirmEnd")}
                 </button>
               </div>
             </div>
@@ -775,7 +775,7 @@ const ConversationThread = ({
 
         {closeConversationMutation.error && (
           <FadeIn className={classes.errorNotice}>
-            Conversation could not be ended right now.
+            {t("chat.endFailed")}
           </FadeIn>
         )}
 
@@ -783,12 +783,12 @@ const ConversationThread = ({
           <Collapse open={Boolean(reportTarget)}>
             <div className={classes.dangerPanel}>
               <div className={classes.panelTitle}>
-                {reportPanelType === "message" ? "Report message" : "Report conversation"}
+                {t(reportPanelType === "message" ? "chat.reportMessage" : "chat.reportConversation")}
               </div>
 
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="reportReason">
-                  Reason
+                  {t("report.reason")}
                 </label>
 
                 <select
@@ -799,11 +799,11 @@ const ConversationThread = ({
                     setReportReasonCode(event.target.value as ModerationReportReasonCode | "")
                   }
                 >
-                  <option value="">Choose a reason</option>
+                  <option value="">{t("chat.chooseReason")}</option>
 
                   {conversationModerationReportReasonOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(`report.reason.${option.value}`)}
                     </option>
                   ))}
                 </select>
@@ -811,7 +811,7 @@ const ConversationThread = ({
 
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="reportDetails">
-                  Additional details{isOtherReportReason ? " *" : ""}
+                  {t("chat.additionalDetails")}{isOtherReportReason ? " *" : ""}
                 </label>
 
                 <KeptPlaceholder>
@@ -822,18 +822,16 @@ const ConversationThread = ({
                   onChange={(event) => setReportReasonDetails(event.target.value)}
                   placeholder={
                     isOtherReportReason
-                      ? "Required. Explain why this should be reviewed."
-                      : "Optional. Add context for the admin reviewing this report."
+                      ? t("chat.reportRequiredPlaceholder")
+                      : t("chat.reportOptionalPlaceholder")
                   }
                   maxLength={1000}
                 />
                 </KeptPlaceholder>
 
                 <div className={classes.hint}>
-                  {reportReasonDetailsTrimmed.length}/1000 characters.
-                  {isOtherReportReason
-                    ? " Please provide a reason for the report."
-                    : " Optional unless you choose Other."}
+                  {t("report.characters", { count: reportReasonDetailsTrimmed.length, max: 1000 })}{" "}
+                  {t(isOtherReportReason ? "chat.reportReasonNeeded" : "chat.reportOptionalHint")}
                 </div>
 
                 {reportReasonDetailsError && (
@@ -850,7 +848,7 @@ const ConversationThread = ({
                   onClick={() => void handleSubmitReport()}
                   disabled={!canSubmitReport}
                 >
-                  {reportConversationMutation.isPending ? "Submitting report…" : "Submit report"}
+                  {t(reportConversationMutation.isPending ? "chat.submittingReport" : "report.submit")}
                 </button>
 
                 <button
@@ -859,7 +857,7 @@ const ConversationThread = ({
                   onClick={closeReportForm}
                   disabled={reportConversationMutation.isPending}
                 >
-                  Cancel
+                  {t("report.cancel")}
                 </button>
               </div>
             </div>
@@ -868,28 +866,28 @@ const ConversationThread = ({
 
         {reportSubmitted && (
           <FadeIn className={classes.successNotice}>
-            Report submitted. An admin can review it.
+            {t("chat.reportSent")}
           </FadeIn>
         )}
 
         {reportConversationMutation.error && (
           <FadeIn className={classes.errorNotice}>
-            Report could not be submitted right now.
+            {t("chat.reportFailed")}
           </FadeIn>
         )}
 
         {conversationReport && !isAdmin && (
           <ReportStatus
             report={conversationReport}
-            title="Conversation report status"
+            title={t("chat.conversationReportStatus")}
             className={classes.reportStatusBox}
           />
         )}
 
         {areMessagesLoading ? (
-          <div className={classes.empty}>Loading messages…</div>
+          <div className={classes.empty}>{t("chat.loading")}</div>
         ) : messagesError ? (
-          <div className={classes.errorNotice}>Messages could not be loaded right now.</div>
+          <div className={classes.errorNotice}>{t("chat.loadFailed")}</div>
         ) : messages.length > 0 ? (
           <div ref={threadRef} className={classes.thread}>
             {messages.map((message, index) => {
@@ -898,7 +896,7 @@ const ConversationThread = ({
                 message.created_at
               ) && (
                 <div className={classes.daySeparator}>
-                  {dayText(message.created_at)}
+                  {dayText(message.created_at, locale)}
                 </div>
               );
 
@@ -929,7 +927,7 @@ const ConversationThread = ({
                     {daySeparator}
 
                     <div className={classes.systemMeta}>
-                      System · {timeText(message.created_at)}
+                      {t("chat.systemMeta", { time: timeText(message.created_at, locale) })}
                     </div>
                     <div
                       className={`${classes.systemMessage} ${side === "neutral" ? classes.systemMessageNeutral : ""}`}
@@ -967,7 +965,7 @@ const ConversationThread = ({
 
                     <span aria-hidden="true">·</span>
 
-                    <span>{timeText(message.created_at)}</span>
+                    <span>{timeText(message.created_at, locale)}</span>
                   </div>
 
                   <div
@@ -980,7 +978,10 @@ const ConversationThread = ({
                     otherParticipantLabel &&
                     otherParticipantLastReadAt && (
                       <div className={classes.readReceipt}>
-                        Read by {otherParticipantLabel} · {dateText(otherParticipantLastReadAt)}
+                        {t("chat.readBy", {
+                          name: otherParticipantLabel,
+                          date: dateText(otherParticipantLastReadAt, locale),
+                        })}
                       </div>
                     )}
 
@@ -1007,7 +1008,7 @@ const ConversationThread = ({
                   {messageReport && !isAdmin && (
                     <ReportStatus
                       report={messageReport}
-                      title="Message report status"
+                      title={t("chat.messageReportStatus")}
                       className={classes.messageReportStatusBox}
                     />
                   )}
@@ -1016,13 +1017,12 @@ const ConversationThread = ({
             })}
           </div>
         ) : (
-          <div className={classes.empty}>{emptyText}</div>
+          <div className={classes.empty}>{emptyText ?? t("chat.empty")}</div>
         )}
 
         {sendMessageMutation.error && (
           <FadeIn className={classes.errorNotice}>
-            Message could not be sent. Please check the conversation status and try
-            again.
+            {t("chat.sendFailed")}
           </FadeIn>
         )}
 
@@ -1032,7 +1032,7 @@ const ConversationThread = ({
               approveBuyerImageUploadMutation.error ||
               revokeBuyerImageUploadMutation.error) && (
                 <FadeIn className={classes.errorNotice}>
-                  Image sharing permissions could not be updated right now.
+                  {t("chat.imagesFailed")}
                 </FadeIn>
               )}
 
@@ -1040,7 +1040,7 @@ const ConversationThread = ({
               <div className={classes.panel}>
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="imageRequestNote">
-                    Why do you need to send images?
+                    {t("chat.whyImages")}
                   </label>
 
                   <KeptPlaceholder>
@@ -1049,13 +1049,13 @@ const ConversationThread = ({
                     className={classes.textarea}
                     value={imageRequestNote}
                     onChange={(event) => setImageRequestNote(event.target.value)}
-                    placeholder="Optional. Explain what kind of reference images you want to send."
+                    placeholder={t("chat.imagesPlaceholder")}
                     maxLength={1000}
                   />
                   </KeptPlaceholder>
 
                   <div className={classes.hint}>
-                    {imageRequestNoteTrimmed.length}/1000 characters.
+                    {t("report.characters", { count: imageRequestNoteTrimmed.length, max: 1000 })}
                   </div>
 
                   {imageRequestNoteError && (
@@ -1070,9 +1070,7 @@ const ConversationThread = ({
                     onClick={() => void handleRequestImageUpload()}
                     disabled={Boolean(imageRequestNoteError) || isImageActionPending}
                   >
-                    {requestBuyerImageUploadMutation.isPending
-                      ? "Sending request…"
-                      : "Send image request"}
+                    {t(requestBuyerImageUploadMutation.isPending ? "chat.sendingRequest" : "chat.sendImageRequest")}
                   </button>
                 </div>
               </div>
@@ -1081,17 +1079,17 @@ const ConversationThread = ({
             {conversation.buyer_image_upload_status === "requested" &&
               conversation.buyer_image_upload_request_note && (
                 <div className={classes.imageNote}>
-                  Client note: {conversation.buyer_image_upload_request_note}
+                  {t("chat.clientNote", { note: conversation.buyer_image_upload_request_note })}
                 </div>
               )}
 
             <div className={classes.composer}>
               <textarea
-                aria-label="Message"
+                aria-label={t("chat.message")}
                 className={classes.composerTextarea}
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
-                placeholder={composerPlaceholder}
+                placeholder={composerPlaceholder ?? t("chat.placeholder")}
                 maxLength={2000}
                 disabled={sendMessageMutation.isPending}
               />
@@ -1099,8 +1097,8 @@ const ConversationThread = ({
               <div className={classes.composerFooter}>
                 <div className={classes.composerTools}>
                   <span className={classes.imageStatus}>
-                    <span className={classes.imageStatusLabel}>Image sharing</span>
-                    {getBuyerImageUploadStatusLabel(buyerImageUploadStatus)}
+                    <span className={classes.imageStatusLabel}>{t("chat.imageSharing")}</span>
+                    {getBuyerImageUploadStatusLabel(buyerImageUploadStatus, t)}
                   </span>
 
                   {canRequestImageUpload && (
@@ -1110,7 +1108,7 @@ const ConversationThread = ({
                       onClick={() => setShowImageRequestForm((current) => !current)}
                       disabled={isImageActionPending}
                     >
-                      {showImageRequestForm ? "Cancel image request" : "Request images"}
+                      {t(showImageRequestForm ? "chat.cancelImageRequest" : "chat.requestImages")}
                     </button>
                   )}
 
@@ -1122,7 +1120,7 @@ const ConversationThread = ({
                       disabled={isImageActionPending}
                     >
                       {approveBuyerImageUploadMutation.isPending
-                        ? "Allowing…"
+                        ? t("chat.allowing")
                         : approveImageUploadButtonText}
                     </button>
                   )}
@@ -1134,15 +1132,15 @@ const ConversationThread = ({
                       onClick={() => void handleRevokeImageUpload()}
                       disabled={isImageActionPending}
                     >
-                      {revokeBuyerImageUploadMutation.isPending
-                        ? "Disabling…"
-                        : "Disable images"}
+                      {t(revokeBuyerImageUploadMutation.isPending ? "chat.disabling" : "chat.disableImages")}
                     </button>
                   )}
                 </div>
 
                 <div className={classes.composerSend}>
-                  <span className={classes.counter}>{trimmedBody.length}/2000 characters</span>
+                  <span className={classes.counter}>
+                    {t("chat.counter", { count: trimmedBody.length })}
+                  </span>
 
                   <button
                     className={classes.btnSend}
@@ -1150,7 +1148,7 @@ const ConversationThread = ({
                     onClick={() => void handleSubmitMessage()}
                     disabled={!canSubmit}
                   >
-                    {sendMessageMutation.isPending ? "Sending…" : "Send message"}
+                    {t(sendMessageMutation.isPending ? "common.sending" : "chat.send")}
                   </button>
                 </div>
               </div>
@@ -1160,7 +1158,7 @@ const ConversationThread = ({
 
         {isAdmin && (
           <div className={classes.adminNote}>
-            Admins can review commission messages, but cannot send replies.
+            {t("chat.adminNote")}
           </div>
         )}
       </div>

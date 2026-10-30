@@ -65,6 +65,10 @@ browser. Emails are still in English.
   off-site confirmation, plus the page shown after checkout. The next-step
   wording, stages and summaries follow the language for creators and admins
   too once their pages pass it on; those pages are still English.
+- 2026-10-30: the chat box (including ending a conversation, reports and
+  image sharing), the inbox and a single conversation. Report statuses follow
+  the language wherever they are passed it. Dates in French follow French;
+  English keeps the reader's own style (`dateLocale`).
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -138,8 +142,11 @@ with "Your choice could not be saved. Please try again."
   (admins recognise it there). The subject inside an off-site confirmation
   ("the final delivery (title)") is saved in English by the database, so it
   appears in English inside the French sentence.
-- **The chat box is still English,** apart from its report notes: the
-  buttons, the message form and the reasons for ending a conversation.
+- **Automatic chat lines stay in English** ("… sent a project change order"),
+  in the chat and in the inbox preview. The database saves them as English
+  text, and they name people by matching English words
+  (`nameSystemMessagePeople`). Translating them means saving a code with
+  each line instead.
 - **Messages from the server** (an error from checkout, for example) are
   still in English.
 - **Numbers and money** still use English formatting: French writes "5 %" and

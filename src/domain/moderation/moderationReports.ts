@@ -1,3 +1,5 @@
+import { english, hasMessage, type Translate } from "../../lib/i18n/i18n";
+
 export type ModerationReportTargetType =
   | "conversation"
   | "conversation_message"
@@ -53,12 +55,12 @@ export const moderationReportStatusOptions: Array<{
   value: ModerationReportStatus;
   label: string;
 }> = [
-    { value: "submitted", label: "Submitted" },
-    { value: "reviewing", label: "Under review" },
-    { value: "needs_more_info", label: "Needs more info" },
-    { value: "action_taken", label: "Action taken" },
-    { value: "resolved", label: "Resolved" },
-    { value: "dismissed", label: "Dismissed" },
+    { value: "submitted", label: english("modReport.status.submitted") },
+    { value: "reviewing", label: english("modReport.status.reviewing") },
+    { value: "needs_more_info", label: english("modReport.status.needs_more_info") },
+    { value: "action_taken", label: english("modReport.status.action_taken") },
+    { value: "resolved", label: english("modReport.status.resolved") },
+    { value: "dismissed", label: english("modReport.status.dismissed") },
   ];
 
 export const moderationReportResolutionOptions: Array<{
@@ -111,25 +113,29 @@ export const getModerationReportTargetTypeLabel = (
         : "Profile report";
 
 export const getModerationReportStatusLabel = (
-  status: ModerationReportStatus
-): string =>
-  moderationReportStatusOptions.find((option) => option.value === status)
-    ?.label ?? "Unknown status";
+  status: ModerationReportStatus,
+  t: Translate = english
+): string => {
+  const key = `modReport.status.${status}`;
+
+  return hasMessage(key) ? t(key) : t("modReport.status.unknown");
+};
 
 export const getModerationReportStatusSummary = (
-  status: ModerationReportStatus
+  status: ModerationReportStatus,
+  t: Translate = english
 ): string =>
   status === "submitted"
-    ? "Your report has been received."
+    ? t("modReport.summary.submitted")
     : status === "reviewing"
-      ? "An admin is reviewing this report."
+      ? t("modReport.summary.reviewing")
       : status === "needs_more_info"
-        ? "An admin needs more information from you."
+        ? t("modReport.summary.needs_more_info")
         : status === "action_taken"
-          ? "An admin reviewed this report and took appropriate action."
+          ? t("modReport.summary.action_taken")
           : status === "resolved"
-            ? "This report has been reviewed and resolved."
-            : "This report was reviewed and dismissed.";
+            ? t("modReport.summary.resolved")
+            : t("modReport.summary.dismissed");
 
 export const getModerationReportReasonLabel = (
   reasonCode: ModerationReportReasonCode

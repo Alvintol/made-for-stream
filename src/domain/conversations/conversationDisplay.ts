@@ -1,5 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
 import { ConversationInitiationReasonCode, getConversationInitiationReasonLabel } from "./conversations";
-
 type ConversationDisplayInput = {
   conversation: {
     conversation_type: string;
@@ -12,24 +12,26 @@ type ConversationDisplayInput = {
 };
 
 export const getConversationDisplayTitle = (
-  item: ConversationDisplayInput
+  item: ConversationDisplayInput,
+  t: Translate = english
 ): string => {
   const subject = item.conversation.subject?.trim();
   const listingTitle = item.listing?.title?.trim();
 
   if (item.conversation.conversation_type === "listing_request") {
-    return subject || listingTitle || "Commission request";
+    return subject || listingTitle || t("fulfilment.request");
   }
 
   if (item.conversation.conversation_type === "listing_inquiry") {
-    return listingTitle || subject || "Listing inquiry";
+    return listingTitle || subject || t("inbox.typeListing");
   }
 
-  return subject || "Creator inquiry";
+  return subject || t("inbox.typeCreator");
 };
 
 export const getConversationDisplayContext = (
-  item: ConversationDisplayInput
+  item: ConversationDisplayInput,
+  t: Translate = english
 ): string | null => {
   const subject = item.conversation.subject?.trim();
   const listingTitle = item.listing?.title?.trim();
@@ -40,7 +42,7 @@ export const getConversationDisplayContext = (
     subject &&
     listingTitle !== subject
   ) {
-    return `Listing: ${listingTitle}`;
+    return t("buyerRequests.listing", { title: listingTitle });
   }
 
   if (
@@ -48,7 +50,8 @@ export const getConversationDisplayContext = (
     item.conversation.initiation_reason_code
   ) {
     return getConversationInitiationReasonLabel(
-      item.conversation.initiation_reason_code
+      item.conversation.initiation_reason_code,
+      t
     );
   }
 

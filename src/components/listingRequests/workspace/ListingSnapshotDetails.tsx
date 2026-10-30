@@ -1,6 +1,6 @@
 import type { ListingRequestSnapshot } from "../../../lib/listings/listingRequestSnapshot";
 import { formatListingPrice } from "../../../lib/money/displayCurrency";
-import { hasMessage, useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
+import { dateLocale, hasMessage, useLanguage, useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingSnapshotDetailsProps = {
   snapshot: ListingRequestSnapshot;
   extraRows?: { label: string; value: string }[];
@@ -18,7 +18,7 @@ const classes = {
   none: "text-xs text-zinc-500",
 } as const;
 
-const dateText = (value: string, language: string) => {
+const dateText = (value: string, language: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
@@ -40,7 +40,7 @@ const wordFor = (prefix: string, value: string, t: Translate) => {
 };
 const ListingSnapshotDetails = ({ snapshot, extraRows = [] }: ListingSnapshotDetailsProps) => {
   const t = useT();
-  const language = useLanguage();
+  const language = dateLocale(useLanguage());
   const rows = [
     { label: t("snapshot.title"), value: snapshot.title },
     { label: t("snapshot.price"), value: formatListingPrice(snapshot, t("price.from")) },
