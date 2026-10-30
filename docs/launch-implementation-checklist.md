@@ -991,8 +991,10 @@ Build order (each its own branch):
       (`feat/i18n-commission-changes-cancellation`): change orders,
       cancelling before payment, the cancellation proposal and statement,
       cancellation warnings, and non-response notices with early review.
-      Next: the commission page itself (headings, next-step card, section
-      summaries), then the remaining screens a few at a time, then the policies by a
+      Then (`feat/i18n-commission-page`): the buyer's commission page itself,
+      with its stages, next-step card, section summaries, brief, listing
+      snapshot, off-site confirmation and the page after checkout. Next: the
+      chat and inbox, then the creator's side, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

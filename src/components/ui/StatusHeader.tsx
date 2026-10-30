@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-
+import { useT } from "../../lib/i18n/i18n";
 export type StatusHeaderStage = {
   key: string;
   label: string;
@@ -77,6 +77,7 @@ const StatusHeader = ({
   actions,
   notice,
 }: StatusHeaderProps) => {
+  const t = useT();
   const currentIndex = stages.findIndex((stage) => stage.state === "current");
   const doneCount = stages.filter((stage) => stage.state === "done").length;
   const position = currentIndex >= 0 ? currentIndex + 1 : doneCount;
@@ -114,7 +115,7 @@ const StatusHeader = ({
 
       {stages.length > 0 && (
         <>
-          <ol className={classes.track} aria-label="Project progress">
+          <ol className={classes.track} aria-label={t("statusHeader.progress")}>
             {stages.map((stage) => (
               <li
                 key={stage.key}

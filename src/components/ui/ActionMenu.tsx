@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useT } from "../../lib/i18n/i18n";
 import { Disclosure } from "../../lib/motion";
-
 type ActionMenuProps = {
   // A function child receives `close`, so an item can dismiss the menu when chosen.
   children: ReactNode | ((close: () => void) => ReactNode);
@@ -31,12 +31,13 @@ export const actionMenuItemClasses = {
 
 const ActionMenu = ({
   children,
-  label = "Manage",
+  label,
   ariaLabel,
   triggerClassName = classes.trigger,
   panelClassName,
   showCaret = true,
 }: ActionMenuProps) => {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
@@ -72,7 +73,7 @@ const ActionMenu = ({
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
       >
-        {label}
+        {label ?? t("common.manage")}
         {showCaret && <span aria-hidden="true">▾</span>}
       </button>
 

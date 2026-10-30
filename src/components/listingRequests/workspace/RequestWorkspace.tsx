@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { useT } from "../../../lib/i18n/i18n";
 import { useWorkspace, WorkspaceProvider, type WorkspaceMobileTab } from "./WorkspaceContext";
-
 type RequestWorkspaceProps = {
   header: ReactNode;
   nextStep: ReactNode;
@@ -24,14 +24,14 @@ const classes = {
     "card min-w-0 divide-y divide-[var(--hairline)] overflow-hidden hover:shadow-[var(--shadow-md)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block",
 } as const;
 
-const tabs: { id: WorkspaceMobileTab; label: string }[] = [
-  { id: "messages", label: "Messages" },
-  { id: "project", label: "Project" },
-];
+const tabs = [
+  { id: "messages", label: "workspace.messages" },
+  { id: "project", label: "workspace.project" },
+] as const satisfies readonly { id: WorkspaceMobileTab; label: string }[];
 
 const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: RequestWorkspaceProps) => {
+  const t = useT();
   const { mobileTab, setMobileTab } = useWorkspace();
-
   return (
     <div className={classes.page}>
       {header}
@@ -39,7 +39,7 @@ const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: Req
       <div className={classes.grid}>
         <div className={classes.next}>{nextStep}</div>
 
-        <div className={classes.tabs} role="tablist" aria-label="Commission views">
+        <div className={classes.tabs} role="tablist" aria-label={t("workspace.views")}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -49,7 +49,7 @@ const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: Req
               className={`${classes.tab} ${mobileTab === tab.id ? classes.tabActive : classes.tabIdle}`}
               onClick={() => setMobileTab(tab.id)}
             >
-              {tab.label}
+              {t(tab.label)}
             </button>
           ))}
         </div>
@@ -60,7 +60,7 @@ const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: Req
         </div>
 
         <aside
-          aria-label="Project details"
+          aria-label={t("workspace.details")}
           className={`${classes.side} ${mobileTab === "project" ? "" : "max-lg:hidden"}`}
         >
           {sections}

@@ -2,6 +2,7 @@ import type {
   RequestNextStep,
   RequestWorkspaceViewer,
 } from "../../../domain/listings/requestWorkspace";
+import { useT } from "../../../lib/i18n/i18n";
 import { FadeIn } from "../../../lib/motion";
 import { useWorkspace } from "./WorkspaceContext";
 
@@ -36,12 +37,12 @@ const RequestNextStepCard = ({
   creatorLabel,
   isLoading = false,
 }: RequestNextStepCardProps) => {
+  const t = useT();
   const { focusSection } = useWorkspace();
-
   if (isLoading) {
     return (
-      <section aria-label="Next step" aria-busy="true" className={`${classes.base} ${classes.waiting}`}>
-        <div className={classes.eyebrow}>Checking what's next…</div>
+      <section aria-label={t("nextCard.label")} aria-busy="true" className={`${classes.base} ${classes.waiting}`}>
+        <div className={classes.eyebrow}>{t("nextCard.checking")}</div>
         <div className={classes.skeleton} />
       </section>
     );
@@ -49,24 +50,24 @@ const RequestNextStepCard = ({
 
   const isMine = step.owner !== null && step.owner === viewer;
   const ownerLabel = step.owner === "buyer" ? buyerLabel : creatorLabel;
-  const ownerRole = step.owner === "buyer" ? "Buyer" : "Creator";
-
   const tone = step.tone !== "action" ? step.tone : isMine ? "action" : "waiting";
 
   const eyebrow =
     step.tone === "done"
-      ? "All done"
+      ? t("nextCard.allDone")
       : step.tone === "closed"
-        ? "Closed"
+        ? t("nextCard.closed")
         : isMine
-          ? "Next step for you"
-          : `Waiting on ${ownerLabel}`;
+          ? t("nextCard.mine")
+          : t("nextCard.waitingOn", { name: ownerLabel });
 
   const title =
     step.tone !== "action" || isMine
       ? step.actionTitle
       : viewer === "admin"
-        ? `${ownerRole}: ${step.actionTitle}`
+        ? t(step.owner === "buyer" ? "nextCard.buyerStep" : "nextCard.creatorStep", {
+            title: step.actionTitle,
+          })
         : step.waitingTitle;
 
   const description =
@@ -78,7 +79,7 @@ const RequestNextStepCard = ({
 
   return (
     <FadeIn key={step.key}>
-      <section aria-label="Next step" className={`${classes.base} ${classes[tone]}`}>
+      <section aria-label={t("nextCard.label")} className={`${classes.base} ${classes[tone]}`}>
         <div className={classes.row}>
           <div className="min-w-0">
             <div className={classes.eyebrow}>
@@ -95,7 +96,7 @@ const RequestNextStepCard = ({
               className={classes.button}
               onClick={() => step.sectionId && focusSection(step.sectionId)}
             >
-              {isMine ? step.actionLabel ?? "Open" : "View details"}
+              {isMine ? step.actionLabel ?? t("nextCard.open") : t("nextCard.viewDetails")}
             </button>
           )}
         </div>

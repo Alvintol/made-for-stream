@@ -1,6 +1,6 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
-import { useT } from "../../lib/i18n/i18n";
+import { useLanguage, useT } from "../../lib/i18n/i18n";
 import { Link, useParams } from "react-router-dom";
 import { useBuyerRequest } from "../../hooks/creatorRequests/useBuyerRequest";
 import {
@@ -103,6 +103,7 @@ const BuyerRequestDetails = () => {
 
   const { id } = useParams<{ id: string }>();
   const t = useT();
+  const language = useLanguage();
 
   const { data, isLoading, error } = useBuyerRequest(id ?? null);
   const archiveRequestMutation = useArchiveBuyerListingRequest();
@@ -115,7 +116,7 @@ const BuyerRequestDetails = () => {
   // The buyer's own name, for the lines of an agreement that are theirs to do.
   const { data: myProfile } = useMyProfile();
   const { data: offSiteReceipts = [] } = useOffSiteReceipts(id ?? "");
-  const buyerName = getAgreementPersonName(myProfile, "The buyer");
+  const buyerName = getAgreementPersonName(myProfile, t("commission.buyerFallback"));
   const respondChangeOrderMutation =
     useRespondListingRequestChangeOrder();
   const respondFinalDeliveryMutation =
@@ -322,21 +323,19 @@ const BuyerRequestDetails = () => {
   };
 
   if (isLoading) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   if (error || !request) {
     return (
       <div className={classes.page}>
         <Link to="/requests" className={classes.backLink}>
-          ← Back to my commissions
+          ← {t("commission.back")}
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Commission not found</h1>
-          <p className={classes.sub}>
-            This commission could not be loaded from your account.
-          </p>
+          <h1 className={classes.h1}>{t("commission.notFound")}</h1>
+          <p className={classes.sub}>{t("commission.notFoundText")}</p>
         </div>
       </div>
     );
@@ -386,13 +385,13 @@ const BuyerRequestDetails = () => {
 
   const requestReadOnlyMessage =
     request.status === "archived"
-      ? "Archived commissions are read-only."
+      ? t("commission.readOnlyArchived")
       : request.status === "declined"
-        ? "Declined commission requests are read-only because the conversation has been ended."
+        ? t("commission.readOnlyDeclined")
         : request.status === "completed"
-          ? "Completed projects are read-only because the buyer approved the final delivery."
+          ? t("commission.readOnlyCompleted")
           : request.status === "cancelled"
-            ? "Cancelled commissions are read-only."
+            ? t("commission.readOnlyCancelled")
             : undefined;
 
   const creatorLabel = creatorText(creator, request.creator_user_id);
@@ -411,7 +410,7 @@ const BuyerRequestDetails = () => {
       : null,
   };
 
-  const nextStep = getRequestNextStep(workspaceInput);
+  const nextStep = getRequestNextStep(workspaceInput, t, language);
   const workspaceLoading =
     agreementQuery.isLoading ||
     milestonesAreLoading ||
@@ -430,8 +429,8 @@ const BuyerRequestDetails = () => {
   const sections: WorkspaceSectionSpec[] = [
     {
       id: "request",
-      title: "Your commission",
-      summary: "Brief, timeline, budget and references",
+      title: t("section.yourCommission"),
+      summary: t("section.yourCommissionSummary"),
       ...flags("request"),
       defaultOpen: request.status === "submitted" || isCancellationProposalOpen,
       content: (
@@ -484,8 +483,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "agreement",
-      title: "Project agreement",
-      summary: summarizeAgreement(buyerVisibleAgreement, "Not created yet"),
+      title: t("section.agreement"),
+      summary: summarizeAgreement(buyerVisibleAgreement, t("section.agreementEmpty"), t),
       ...flags("agreement"),
       content: (
         <>
@@ -512,8 +511,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "payments",
-      title: "Payments",
-      summary: summarizeSchedule(buyerVisibleAgreement),
+      title: t("section.payments"),
+      summary: summarizeSchedule(buyerVisibleAgreement, t),
       ...flags("payments"),
       visible: request.status === "accepted" || Boolean(buyerVisibleAgreement),
       content: (
@@ -536,8 +535,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "milestones",
-      title: "Milestones",
-      summary: summarizeMilestones(milestones),
+      title: t("section.milestones"),
+      summary: summarizeMilestones(milestones, t),
       ...flags("milestones"),
       visible: usesMilestones,
       content: (
@@ -563,8 +562,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "delivery",
-      title: "Final delivery",
-      summary: summarizeDeliveries(finalDeliveries),
+      title: t("section.delivery"),
+      summary: summarizeDeliveries(finalDeliveries, t),
       ...flags("delivery"),
       visible: agreementAccepted,
       content: (
@@ -602,8 +601,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "changeOrders",
-      title: "Change orders",
-      summary: summarizeChangeOrders(changeOrders),
+      title: t("section.changeOrders"),
+      summary: summarizeChangeOrders(changeOrders, t),
       ...flags("changeOrders"),
       visible: agreementAccepted,
       content: (
@@ -641,8 +640,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "progress",
-      title: "Progress updates",
-      summary: summarizeProgress(progressUpdates),
+      title: t("section.progress"),
+      summary: summarizeProgress(progressUpdates, t, language),
       ...flags("progress"),
       visible: agreementAccepted,
       content: (
@@ -662,8 +661,8 @@ const BuyerRequestDetails = () => {
     },
     {
       id: "snapshot",
-      title: "Listing snapshot",
-      summary: "As it was when you submitted",
+      title: t("section.snapshot"),
+      summary: t("section.snapshotSummary"),
       ...flags("snapshot"),
       content: <ListingSnapshotDetails snapshot={snapshot} />,
     },
@@ -671,38 +670,38 @@ const BuyerRequestDetails = () => {
 
   const meta = [
     <span key="creator">
-      With <span className="font-semibold text-zinc-900">{creatorLabel}</span>
+      {t("commission.with")} <span className="font-semibold text-zinc-900">{creatorLabel}</span>
     </span>,
-    <span key="submitted">Submitted {workspaceDate(request.created_at)}</span>,
+    <span key="submitted">
+      {t("commission.submitted", { date: workspaceDate(request.created_at, language) })}
+    </span>,
     request.status === "completed" && request.completed_at ? (
-      <span key="completed">Completed {workspaceDate(request.completed_at)}</span>
+      <span key="completed">
+        {t("commission.completed", { date: workspaceDate(request.completed_at, language) })}
+      </span>
     ) : (
-      <span key="updated">Updated {workspaceDate(request.updated_at)}</span>
+      <span key="updated">
+        {t("commission.updated", { date: workspaceDate(request.updated_at, language) })}
+      </span>
     ),
   ];
 
   const manageMenu =
     request.status === "submitted" ? (
       <ActionMenu>
-        <p className={classes.text}>
-          Archive this commission if you no longer want the creator to review it. You can
-          send a new commission request for this listing after archiving.
-        </p>
+        <p className={classes.text}>{t("archive.text")}</p>
 
         {archiveRequestMutation.error && (
           <div className={classes.errorBox}>
             {hasErrorMessage(archiveRequestMutation.error)
               ? archiveRequestMutation.error.message
-              : "This commission could not be archived."}
+              : t("archive.failed")}
           </div>
         )}
 
         {isArchiveConfirming ? (
           <FadeIn className={classes.warningBox}>
-            <p>
-              Are you sure you want to archive this commission? The creator will no longer
-              see it as an active commission.
-            </p>
+            <p>{t("archive.sure")}</p>
 
             <div className={classes.row}>
               <button
@@ -711,7 +710,7 @@ const BuyerRequestDetails = () => {
                 disabled={archiveRequestMutation.isPending}
                 onClick={() => void handleArchiveRequest()}
               >
-                {archiveRequestMutation.isPending ? "Archiving commission…" : "Confirm archive"}
+                {t(archiveRequestMutation.isPending ? "archive.archiving" : "archive.confirm")}
               </button>
 
               <button
@@ -720,7 +719,7 @@ const BuyerRequestDetails = () => {
                 disabled={archiveRequestMutation.isPending}
                 onClick={() => setIsArchiveConfirming(false)}
               >
-                Keep commission
+                {t("cancelEarly.keep")}
               </button>
             </div>
           </FadeIn>
@@ -731,7 +730,7 @@ const BuyerRequestDetails = () => {
             disabled={archiveRequestMutation.isPending}
             onClick={() => setIsArchiveConfirming(true)}
           >
-            Archive commission
+            {t("archive.button")}
           </button>
         )}
       </ActionMenu>
@@ -751,13 +750,13 @@ const BuyerRequestDetails = () => {
       header={
         <StatusHeader
           backTo={backTo}
-          backLabel="Back to my commissions"
-          eyebrow="My commission"
+          backLabel={t("commission.back")}
+          eyebrow={t("commission.eyebrow")}
           title={snapshot.title}
           meta={meta}
-          statusLabel={getListingRequestStatusLabel(request.status, request, request)}
+          statusLabel={getListingRequestStatusLabel(request.status, request, request, t)}
           statusTone={getListingRequestStatusTone(request.status)}
-          stages={getRequestStages(workspaceInput)}
+          stages={getRequestStages(workspaceInput, t)}
           actions={manageMenu}
           notice={
             (request.status === "declined" ||
@@ -777,14 +776,14 @@ const BuyerRequestDetails = () => {
           step={nextStep}
           viewer="buyer"
           isLoading={workspaceLoading}
-          buyerLabel="You"
+          buyerLabel={t("common.you")}
           creatorLabel={creatorLabel}
         />
       }
       conversation={
         <RequestConversationThread
           requestId={request.id}
-          buyerLabel="You"
+          buyerLabel={t("common.you")}
           buyerName={
             myProfile
               ? creatorText(

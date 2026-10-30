@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useT } from "../../lib/i18n/i18n";
 import { Disclosure, prefersReducedMotion } from "../../lib/motion";
-
 type CollapsibleSectionProps = {
   // DOM id, so other controls can link or scroll to the section.
   id?: string;
@@ -53,13 +53,14 @@ const CollapsibleSection = ({
   summary,
   badge,
   attention = false,
-  attentionLabel = "Needs attention",
+  attentionLabel,
   defaultOpen = false,
   focusKey = null,
   headingLevel: Heading = "h2",
   panelClassName = classes.panel,
   children,
 }: CollapsibleSectionProps) => {
+  const t = useT();
   const panelId = useId();
   const sectionRef = useRef<HTMLElement>(null);
   // null follows defaultOpen (which can flip once data loads); a click pins the viewer's choice.
@@ -103,7 +104,7 @@ const CollapsibleSection = ({
           </span>
 
           <span className={classes.aside}>
-            {attention && <span className={classes.attention}>{attentionLabel}</span>}
+            {attention && <span className={classes.attention}>{attentionLabel ?? t("common.needsAttention")}</span>}
             {badge}
             <Chevron open={isOpen} />
           </span>

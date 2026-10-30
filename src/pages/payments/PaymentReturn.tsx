@@ -1,7 +1,7 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { Link, useSearchParams } from "react-router-dom";
 import { useListingRequestPaymentCheckoutStatus } from "../../hooks/payments/useListingRequestPaymentCheckoutStatus";
-
+import { useT, type Translate } from "../../lib/i18n/i18n";
 const classes = {
   shell: "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8",
   card: "card p-6",
@@ -21,34 +21,32 @@ const getPaymentMessage = ({
 }: {
   paymentStatus?: string;
   appStatus?: string;
-}) => {
+}, t: Translate) => {
   if (paymentStatus === "paid" || appStatus === "paid") {
     return {
       className: classes.success,
-      title: "Payment received",
-      text:
-        "Stripe confirmed the payment. Made for Stream will unlock the next workflow step shortly.",
+      title: t("paymentReturn.paidTitle"),
+      text: t("paymentReturn.paidText"),
     };
   }
 
   if (paymentStatus === "unpaid" || appStatus === "checkout_opened") {
     return {
       className: classes.info,
-      title: "Payment not completed",
-      text:
-        "The checkout session is still open or was not completed. You can return to the commission and try again.",
+      title: t("paymentReturn.unpaidTitle"),
+      text: t("paymentReturn.unpaidText"),
     };
   }
 
   return {
     className: classes.info,
-    title: "Checking payment",
-    text:
-      "Made for Stream is checking the latest payment status from Stripe. Webhooks remain the source of truth for paid status.",
+    title: t("paymentReturn.pendingTitle"),
+    text: t("paymentReturn.pendingText"),
   };
 };
 
 const PaymentReturn = () => {
+  const t = useT();
   const [searchParams] = useSearchParams();
   const paymentId = searchParams.get("payment_id");
   const sessionId = searchParams.get("session_id");
@@ -61,30 +59,26 @@ const PaymentReturn = () => {
   const message = getPaymentMessage({
     paymentStatus: data?.checkout.paymentStatus,
     appStatus: data?.payment.status,
-  });
+  }, t);
 
   return (
     <main className={classes.shell}>
       <section className={classes.card}>
-        <h1 className={classes.title}>Payment status</h1>
-        <p className={classes.text}>
-          Thanks for returning to Made for Stream. Stripe confirms payment status
-          through webhooks, so this page may update slightly before the commission
-          page does.
-        </p>
+        <h1 className={classes.title}>{t("paymentReturn.title")}</h1>
+        <p className={classes.text}>{t("paymentReturn.intro")}</p>
       </section>
 
       {(!paymentId || !sessionId) && (
         <div className={classes.error}>
-          This return link is missing payment details.
+          {t("paymentReturn.missing")}
         </div>
       )}
 
-      {isLoading && <div className={classes.info}>Checking Stripe status…</div>}
+      {isLoading && <div className={classes.info}>{t("paymentReturn.checking")}</div>}
 
       {error && (
         <div className={classes.error}>
-          {hasErrorMessage(error) ? error.message : "Unable to check payment."}
+          {hasErrorMessage(error) ? error.message : t("paymentReturn.failed")}
         </div>
       )}
 
@@ -97,10 +91,10 @@ const PaymentReturn = () => {
 
       <div className={classes.actions}>
         <Link className={classes.btn} to="/requests">
-          Back to commissions
+          {t("checkout.back")}
         </Link>
         <Link className={classes.btn} to="/messages">
-          Open inbox
+          {t("paymentReturn.inbox")}
         </Link>
       </div>
     </main>

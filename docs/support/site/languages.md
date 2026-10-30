@@ -59,8 +59,12 @@ browser. Emails are still in English.
 - 2026-10-29: on the commission page, change orders (with the buyer's
   response box), cancelling before payment, the cancellation proposal and
   statement, cancellation warnings, and non-response notices with early
-  review. The page's own headings, next-step card and section summaries are
-  still English.
+  review.
+- 2026-10-30: the rest of the buyer's commission page: its headings, stages,
+  next-step card, section summaries, the brief, the listing snapshot and the
+  off-site confirmation, plus the page shown after checkout. The next-step
+  wording, stages and summaries follow the language for creators and admins
+  too once their pages pass it on; those pages are still English.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -131,7 +135,11 @@ with "Your choice could not be saved. Please try again."
   accepted, so they are shown as saved. The same goes for the payment names
   saved on a cancellation statement, and for the "I am requesting
   administrative closure" message the closure button posts in the chat
-  (admins recognise it there).
+  (admins recognise it there). The subject inside an off-site confirmation
+  ("the final delivery (title)") is saved in English by the database, so it
+  appears in English inside the French sentence.
+- **The chat box is still English,** apart from its report notes: the
+  buttons, the message form and the reasons for ending a conversation.
 - **Messages from the server** (an error from checkout, for example) are
   still in English.
 - **Numbers and money** still use English formatting: French writes "5 %" and

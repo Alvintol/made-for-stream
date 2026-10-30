@@ -15,6 +15,7 @@ import {
   getRequestMilestoneProgress,
   type RequestWorkspaceSectionId,
 } from "../../../domain/listings/requestWorkspace";
+import { english, type Translate } from "../../../lib/i18n/i18n";
 
 // Summaries are secondary UI, so malformed amounts or currencies degrade instead of throwing.
 const money = (amount: number | null | undefined, currency: string | null | undefined) => {
@@ -32,12 +33,12 @@ const money = (amount: number | null | undefined, currency: string | null | unde
   }
 };
 
-const shortDate = (value: string | null | undefined): string | null => {
+const shortDate = (value: string | null | undefined, language: string): string | null => {
   const date = new Date(value ?? "");
 
   return Number.isNaN(date.getTime())
     ? null
-    : new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric" }).format(date);
+    : new Intl.DateTimeFormat(language, { month: "short", day: "numeric" }).format(date);
 };
 
 export const summarizeAgreement = (
@@ -47,23 +48,25 @@ export const summarizeAgreement = (
     total_amount: number;
     currency: string;
   } | null,
-  emptyText: string
+  emptyText: string,
+  t: Translate = english
 ): string =>
   agreement
-    ? `v${agreement.version_number} · ${getListingRequestAgreementStatusLabel(agreement.status)} · ${money(agreement.total_amount, agreement.currency)}`
+    ? `v${agreement.version_number} · ${getListingRequestAgreementStatusLabel(agreement.status, t)} · ${money(agreement.total_amount, agreement.currency)}`
     : emptyText;
 
 export const summarizeSchedule = (
   agreement: {
     currency: string;
     listing_request_payment_schedule_items: Array<{ amount: number; status: string }>;
-  } | null
+  } | null,
+  t: Translate = english
 ): string => {
   const items = (agreement?.listing_request_payment_schedule_items ?? []).filter(
     (item) => item.status !== "cancelled"
   );
 
-  if (!agreement || items.length === 0) return "No payments scheduled";
+  if (!agreement || items.length === 0) return t("summary.noPayments");
 
   const total = items.reduce((sum, item) => sum + item.amount, 0);
   const paid = items
@@ -71,49 +74,65 @@ export const summarizeSchedule = (
     .reduce((sum, item) => sum + item.amount, 0);
   const dueNow = items.some((item) => item.status === "payment_required");
 
-  return `${money(paid, agreement.currency)} of ${money(total, agreement.currency)} paid${dueNow ? " · payment due" : ""}`;
+  const paidText = t("summary.paid", {
+    paid: money(paid, agreement.currency),
+    total: money(total, agreement.currency),
+  });
+
+  return dueNow ? `${paidText} · ${t("summary.paymentDue")}` : paidText;
 };
 
 export const summarizeMilestones = (
-  milestones: Array<{ status: ListingRequestMilestoneStatus; sort_order: number; title: string }>
+  milestones: Array<{ status: ListingRequestMilestoneStatus; sort_order: number; title: string }>,
+  t: Translate = english
 ): string => {
-  if (milestones.length === 0) return "No milestones yet";
+  if (milestones.length === 0) return t("milestones.emptyTitle");
 
   const { done, total } = getRequestMilestoneProgress(milestones);
   const active = getActiveListingRequestMilestone(milestones);
 
-  return active ? `${done} of ${total} complete · Now: ${active.title}` : `All ${total} complete`;
+  return active
+    ? t("summary.milestonesNow", { done, total, title: active.title })
+    : t("summary.milestonesAll", { total });
 };
 
-export const summarizeChangeOrders = (changeOrders: Array<{ status: string }>): string => {
+export const summarizeChangeOrders = (
+  changeOrders: Array<{ status: string }>,
+  t: Translate = english
+): string => {
   const pending = changeOrders.filter((order) => order.status === "sent" || order.status === "draft");
 
-  if (pending.length > 0) return `${pending.length} awaiting a response`;
-  if (changeOrders.length === 0) return "None proposed";
+  if (pending.length > 0) return t("summary.changeOrdersPending", { count: pending.length });
+  if (changeOrders.length === 0) return t("summary.changeOrdersNone");
 
-  return `${changeOrders.length} on record`;
+  return t("summary.changeOrdersOnRecord", { count: changeOrders.length });
 };
 
 export const summarizeDeliveries = (
-  finalDeliveries: Array<{ status: ListingRequestFinalDeliveryStatus; version_number: number }>
+  finalDeliveries: Array<{ status: ListingRequestFinalDeliveryStatus; version_number: number }>,
+  t: Translate = english
 ): string => {
   const latest = [...finalDeliveries].sort((a, b) => b.version_number - a.version_number)[0];
 
   return latest
-    ? `v${latest.version_number} · ${getListingRequestFinalDeliveryStatusLabel(latest.status)}`
-    : "Not submitted yet";
+    ? `v${latest.version_number} · ${getListingRequestFinalDeliveryStatusLabel(latest.status, t)}`
+    : t("summary.deliveryNone");
 };
 
-export const summarizeProgress = (updates: Array<{ created_at?: string | null }>): string => {
-  if (updates.length === 0) return "No updates yet";
+export const summarizeProgress = (
+  updates: Array<{ created_at?: string | null }>,
+  t: Translate = english,
+  language = "en-CA"
+): string => {
+  if (updates.length === 0) return t("summary.updatesNone");
 
   const latest = [...updates].sort((a, b) =>
     (b.created_at ?? "").localeCompare(a.created_at ?? "")
   )[0];
-  const latestDate = shortDate(latest.created_at);
-  const count = `${updates.length} update${updates.length === 1 ? "" : "s"}`;
+  const latestDate = shortDate(latest.created_at, language);
+  const count = t("summary.updates", { count: updates.length });
 
-  return latestDate ? `${count} · latest ${latestDate}` : count;
+  return latestDate ? t("summary.updatesLatest", { updates: count, date: latestDate }) : count;
 };
 
 export type WorkspaceSectionSpec = {
@@ -146,12 +165,12 @@ export const getSectionOrder = (requestStatus: string): RequestWorkspaceSectionI
       ? ["delivery", "milestones", "payments", "changeOrders", "progress", "agreement", "request", "snapshot"]
       : ["milestones", "delivery", "payments", "changeOrders", "progress", "agreement", "request", "snapshot"];
 
-export const workspaceDate = (value: string): string => {
+export const workspaceDate = (value: string, language?: string): string => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    : date.toLocaleDateString(language, { year: "numeric", month: "short", day: "numeric" });
 };
 
 // Sections open for everyone when the next step lives there; only the owner sees the attention flag.
