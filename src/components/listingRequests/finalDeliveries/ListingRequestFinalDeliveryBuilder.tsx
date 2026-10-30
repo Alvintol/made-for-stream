@@ -16,7 +16,7 @@ import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 import DeliveryFilesField from "./DeliveryFilesField";
 import type { CommissionStorageUsage } from "../../../hooks/creatorRequests/useCommissionStorageUsage";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type FinalDeliveryAgreement = Pick<
   ListingRequestAgreementRow,
   "id" | "status" | "starting_payment_status"
@@ -86,10 +86,10 @@ const defaultFormState: BuilderFormState = {
   submitNow: true,
 };
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The final project delivery could not be created.";
+    : t("deliveryForm.failed");
 
 const splitDeliveryLinks = (value: string): string[] =>
   value
@@ -99,7 +99,8 @@ const splitDeliveryLinks = (value: string): string[] =>
 
 const validateForm = (
   form: BuilderFormState,
-  offSite: OffSiteDeliveryFormState
+  offSite: OffSiteDeliveryFormState,
+  t: Translate
 ): BuilderValidationErrors => {
   const errors: BuilderValidationErrors = {};
   const cleanTitle = form.title.trim();
@@ -112,31 +113,27 @@ const validateForm = (
     cleanTitle.length < 3 ||
     cleanTitle.length > 160
   ) {
-    errors.title =
-      "Final delivery title must be between 3 and 160 characters.";
+    errors.title = t("deliveryForm.titleLength");
   }
 
   if (
     cleanSummary.length < 10 ||
     cleanSummary.length > 4000
   ) {
-    errors.summary =
-      "Final delivery summary must be between 10 and 4000 characters.";
+    errors.summary = t("deliveryForm.summaryLength");
   }
 
   if (deliveryLinks.length > 20) {
-    errors.deliveryLinksText =
-      "A final delivery can contain no more than 20 delivery links.";
+    errors.deliveryLinksText = t("deliveryForm.tooManyLinks");
   } else if (
     deliveryLinks.some(
       (deliveryLink) => deliveryLink.length > 2000
     )
   ) {
-    errors.deliveryLinksText =
-      "Each final delivery link must be 2000 characters or fewer.";
+    errors.deliveryLinksText = t("deliveryForm.linkTooLong");
   }
 
-  const offSiteError = validateOffSiteDelivery(offSite);
+  const offSiteError = validateOffSiteDelivery(offSite, t);
 
   if (offSiteError) {
     errors.offSite = offSiteError;
@@ -154,6 +151,7 @@ const ListingRequestFinalDeliveryBuilder = ({
   error,
   onCreateFinalDelivery,
 }: ListingRequestFinalDeliveryBuilderProps) => {
+  const t = useT();
   const [form, setForm] =
     useState<BuilderFormState>(defaultFormState);
 
@@ -210,7 +208,7 @@ const ListingRequestFinalDeliveryBuilder = ({
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form, offSite);
+    const nextErrors = validateForm(form, offSite, t);
     setValidationErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -237,6 +235,7 @@ const ListingRequestFinalDeliveryBuilder = ({
         ? {
             deliveryFiles,
             onUploadProgress: setUploadStatus,
+            t,
           }
         : {}),
     };
@@ -251,7 +250,7 @@ const ListingRequestFinalDeliveryBuilder = ({
   };
 
   const createErrorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   return (
@@ -262,12 +261,11 @@ const ListingRequestFinalDeliveryBuilder = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Create final project delivery
+            {t("deliveryForm.title")}
           </h2>
 
           <p className={classes.text}>
-            Provide the completed work and supporting
-            delivery links for buyer review.
+            {t("deliveryForm.text")}
           </p>
         </div>
 
@@ -278,9 +276,7 @@ const ListingRequestFinalDeliveryBuilder = ({
         )}
 
         <div className={classes.notice}>
-          Submitting the final delivery may activate any
-          remaining balance payment that is due before
-          final release.
+          {t("deliveryForm.notice")}
         </div>
 
         <div className={classes.field}>
@@ -288,7 +284,7 @@ const ListingRequestFinalDeliveryBuilder = ({
             className={classes.label}
             htmlFor="final-delivery-title"
           >
-            Delivery title
+            {t("deliveryForm.titleLabel")}
           </label>
 
           <input
@@ -316,7 +312,7 @@ const ListingRequestFinalDeliveryBuilder = ({
             className={classes.label}
             htmlFor="final-delivery-summary"
           >
-            Delivery summary
+            {t("deliveryForm.summaryLabel")}
           </label>
 
           <textarea
@@ -333,9 +329,7 @@ const ListingRequestFinalDeliveryBuilder = ({
           />
 
           <p className={classes.help}>
-            Explain what is included, where the completed
-            work can be found, and any important usage or
-            handoff notes.
+            {t("deliveryForm.summaryHint")}
           </p>
 
           {validationErrors.summary && (
@@ -350,7 +344,7 @@ const ListingRequestFinalDeliveryBuilder = ({
             className={classes.label}
             htmlFor="final-delivery-links"
           >
-            Delivery links
+            {t("deliveryForm.linksLabel")}
           </label>
 
           <KeptPlaceholder>
@@ -371,8 +365,7 @@ const ListingRequestFinalDeliveryBuilder = ({
           </KeptPlaceholder>
 
           <p className={classes.help}>
-            Add one link per line. Up to 20 links may be
-            included.
+            {t("deliveryForm.linksHint")}
           </p>
 
           {validationErrors.deliveryLinksText && (
@@ -418,8 +411,7 @@ const ListingRequestFinalDeliveryBuilder = ({
           />
 
           <span className={classes.checkboxLabel}>
-            Submit to the buyer now. Uncheck to save as a
-            private draft.
+            {t("deliveryForm.submitNow")}
           </span>
         </label>
 
@@ -430,10 +422,8 @@ const ListingRequestFinalDeliveryBuilder = ({
             type="submit"
           >
             {isPending
-              ? uploadStatus ?? "Saving final delivery…"
-              : form.submitNow
-                ? "Create and submit final delivery"
-                : "Save final delivery draft"}
+              ? uploadStatus ?? t("deliveryForm.saving")
+              : t(form.submitNow ? "deliveryForm.createSubmit" : "deliveryForm.saveDraft")}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
+import { english, type Translate } from "../i18n/i18n";
 import { supabase } from "../supabaseClient";
-
 // Listing thumbnails are processed in the browser before upload: shrunk,
 // optionally watermarked, and re-saved. Only that copy is uploaded, so the
 // creator's original never reaches our storage and cannot be pulled off the
@@ -18,11 +18,11 @@ const ACCEPTED_TYPES = new Set(LISTING_PREVIEW_ACCEPT.split(","));
 export const validateListingPreviewSource = (file: {
   type: string;
   size: number;
-}): string | null =>
+}, t: Translate = english): string | null =>
   !ACCEPTED_TYPES.has(file.type)
-    ? "Choose a JPEG, PNG or WebP image."
+    ? t("preview.imageType")
     : file.size > LISTING_PREVIEW_MAX_SOURCE_BYTES
-      ? "That image is over 20 MB. Choose a smaller one."
+      ? t("preview.imageTooBig")
       : null;
 
 // Fits the image inside a square of maxEdge, never enlarging it.

@@ -71,8 +71,9 @@ browser. Emails are still in English.
   English keeps the reader's own style (`dateLocale`).
 - 2026-10-30: the creator dashboard, the creator's commission list and
   commission page, and the boxes for sending or withdrawing a draft. The
-  forms those boxes open (milestone, delivery, update, change order) are
-  still English.
+  change order form is still English.
+- 2026-10-30: the milestone, final delivery and progress update forms, with
+  file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their
   error messages. The two default policies, the payment titles ("Project
   deposit", "Remaining balance") and the update-rule sentence start in the
@@ -172,5 +173,7 @@ with "Your choice could not be saved. Please try again."
   follow the language.
 - **Listings and messages are not translated.** They stay in the language they
   were written in.
+- **The storage plan name is English.** The commission storage bar shows
+  `plan_label` from the database as it is written ("Standard").
 - **The French has not been checked by a French speaker.** Do that before
   French is marked ready.

@@ -4,6 +4,7 @@
 // public.create_listing_request_final_delivery_v2; the per-commission limit
 // comes from the database (get_commission_storage_usage).
 
+import { english, type Translate } from "../i18n/i18n";
 import { supabase } from "../supabaseClient";
 import { createZip } from "../zip";
 
@@ -15,11 +16,11 @@ export const DELIVERY_FILES_MAX_TOTAL_BYTES = 10 * 1024 ** 3; // 10 GB a deliver
 // computer instead.
 export const FOLDER_ZIP_MAX_BYTES = 2 * 1024 ** 3;
 
-export const formatFileSize = (bytes: number): string => {
-  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
-  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${bytes} bytes`;
+export const formatFileSize = (bytes: number, t: Translate = english): string => {
+  if (bytes >= 1024 ** 3) return t("fileSize.gb", { size: (bytes / 1024 ** 3).toFixed(1) });
+  if (bytes >= 1024 ** 2) return t("fileSize.mb", { size: (bytes / 1024 ** 2).toFixed(1) });
+  if (bytes >= 1024) return t("fileSize.kb", { size: Math.round(bytes / 1024) });
+  return t("fileSize.bytes", { size: bytes });
 };
 
 export const isZipFile = (file: { name: string }) => /\.zip$/i.test(file.name);
@@ -29,25 +30,26 @@ export const isZipFile = (file: { name: string }) => /\.zip$/i.test(file.name);
 export const validateDeliveryFiles = (
   files: readonly File[],
   remainingBytes?: number | null,
+  t: Translate = english,
 ): string | null => {
   if (files.length > DELIVERY_FILES_MAX_COUNT) {
-    return `A final delivery can contain no more than ${DELIVERY_FILES_MAX_COUNT} files. Zip them into one.`;
+    return t("deliveryFiles.tooMany", { count: DELIVERY_FILES_MAX_COUNT });
   }
 
   const tooBig = files.find((file) => file.size > DELIVERY_FILE_MAX_BYTES);
 
   if (tooBig) {
-    return `${tooBig.name} is larger than 2 GB. Send it as a link instead.`;
+    return t("deliveryFiles.fileTooBig", { name: tooBig.name });
   }
 
   const total = files.reduce((sum, file) => sum + file.size, 0);
 
   if (total > DELIVERY_FILES_MAX_TOTAL_BYTES) {
-    return "The files in one final delivery can add up to 10 GB at most.";
+    return t("deliveryFiles.totalTooBig");
   }
 
   if (remainingBytes != null && total > remainingBytes) {
-    return `This commission has ${formatFileSize(Math.max(0, remainingBytes))} of storage left. Remove a file, or send the largest as a link.`;
+    return t("deliveryFiles.noStorage", { size: formatFileSize(Math.max(0, remainingBytes), t) });
   }
 
   return null;

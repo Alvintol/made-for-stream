@@ -10,7 +10,7 @@ import type {
   CreateListingRequestProgressUpdateInput,
   ListingRequestProgressUpdateKind,
 } from "../../../hooks/creatorRequests/useCreateListingRequestProgressUpdate";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ProgressUpdateAgreement = Pick<
   ListingRequestAgreementRow,
   "id" | "status" | "starting_payment_status"
@@ -59,27 +59,27 @@ const classes = {
     "btnPrimary",
 } as const;
 
-const updateKindOptions: Array<{
-  value: ListingRequestProgressUpdateKind;
-  label: string;
-}> = [
+const updateKindOptions = [
     {
       value: "progress",
-      label: "General progress",
+      label: "progressForm.kindProgress",
     },
     {
       value: "milestone",
-      label: "Milestone reached",
+      label: "progressForm.kindMilestone",
     },
     {
       value: "delay",
-      label: "Schedule or delay update",
+      label: "progressForm.kindDelay",
     },
     {
       value: "final_preview",
-      label: "Final preview",
+      label: "updateKind.final_preview",
     },
-  ];
+  ] as const satisfies ReadonlyArray<{
+    value: ListingRequestProgressUpdateKind;
+    label: string;
+  }>;
 
 const defaultFormState: ProgressUpdateFormState = {
   updateKind: "progress",
@@ -88,10 +88,10 @@ const defaultFormState: ProgressUpdateFormState = {
   progressPercent: "",
 };
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project progress update could not be posted.";
+    : t("progressForm.failed");
 
 const parseProgressPercent = (
   value: string
@@ -104,7 +104,8 @@ const parseProgressPercent = (
 };
 
 const validateForm = (
-  form: ProgressUpdateFormState
+  form: ProgressUpdateFormState,
+  t: Translate
 ): ProgressUpdateFormErrors => {
   const errors: ProgressUpdateFormErrors = {};
   const title = form.title.trim();
@@ -114,13 +115,11 @@ const validateForm = (
   );
 
   if (title.length < 3 || title.length > 160) {
-    errors.title =
-      "Update title must be between 3 and 160 characters.";
+    errors.title = t("progressForm.titleLength");
   }
 
   if (body.length < 10 || body.length > 4000) {
-    errors.body =
-      "Update details must be between 10 and 4000 characters.";
+    errors.body = t("progressForm.bodyLength");
   }
 
   if (
@@ -131,8 +130,7 @@ const validateForm = (
       progressPercent > 100
     )
   ) {
-    errors.progressPercent =
-      "Progress percentage must be a whole number between 0 and 100.";
+    errors.progressPercent = t("progressForm.percentRange");
   }
 
   return errors;
@@ -145,6 +143,7 @@ const ListingRequestProgressUpdateForm = ({
   error,
   onCreateProgressUpdate,
 }: ListingRequestProgressUpdateFormProps) => {
+  const t = useT();
   const [form, setForm] =
     useState<ProgressUpdateFormState>(
       defaultFormState
@@ -188,7 +187,7 @@ const ListingRequestProgressUpdateForm = ({
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form);
+    const nextErrors = validateForm(form, t);
 
     setValidationErrors(nextErrors);
 
@@ -228,18 +227,17 @@ const ListingRequestProgressUpdateForm = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Post project progress update
+            {t("progressForm.title")}
           </h2>
 
           <p className={classes.text}>
-            Record a project update for the buyer and
-            project audit history.
+            {t("progressForm.text")}
           </p>
         </div>
 
         {hasError && (
           <div className={classes.errorBox}>
-            {getErrorMessage(error)}
+            {getErrorMessage(error, t)}
           </div>
         )}
 
@@ -249,7 +247,7 @@ const ListingRequestProgressUpdateForm = ({
               className={classes.label}
               htmlFor="progress-update-kind"
             >
-              Update type
+              {t("progressForm.typeLabel")}
             </label>
 
             <select
@@ -269,7 +267,7 @@ const ListingRequestProgressUpdateForm = ({
                   key={option.value}
                   value={option.value}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </option>
               ))}
             </select>
@@ -280,7 +278,7 @@ const ListingRequestProgressUpdateForm = ({
               className={classes.label}
               htmlFor="progress-update-percent"
             >
-              Progress percentage
+              {t("progressForm.percentLabel")}
             </label>
 
             <input
@@ -300,8 +298,7 @@ const ListingRequestProgressUpdateForm = ({
             />
 
             <p className={classes.hint}>
-              Optional. Enter a whole number from 0 to
-              100.
+              {t("progressForm.percentHint")}
             </p>
 
             {validationErrors.progressPercent && (
@@ -317,7 +314,7 @@ const ListingRequestProgressUpdateForm = ({
             className={classes.label}
             htmlFor="progress-update-title"
           >
-            Update title
+            {t("progressForm.titleLabel")}
           </label>
 
           <input
@@ -334,7 +331,7 @@ const ListingRequestProgressUpdateForm = ({
           />
 
           <p className={classes.hint}>
-            {form.title.trim().length}/160 characters.
+            {t("report.characters", { count: form.title.trim().length, max: 160 })}
           </p>
 
           {validationErrors.title && (
@@ -349,7 +346,7 @@ const ListingRequestProgressUpdateForm = ({
             className={classes.label}
             htmlFor="progress-update-body"
           >
-            Update details
+            {t("progressForm.detailsLabel")}
           </label>
 
           <textarea
@@ -366,7 +363,7 @@ const ListingRequestProgressUpdateForm = ({
           />
 
           <p className={classes.hint}>
-            {form.body.trim().length}/4000 characters.
+            {t("report.characters", { count: form.body.trim().length, max: 4000 })}
           </p>
 
           {validationErrors.body && (
@@ -382,9 +379,7 @@ const ListingRequestProgressUpdateForm = ({
             disabled={isPending}
             type="submit"
           >
-            {isPending
-              ? "Posting progress update…"
-              : "Post progress update"}
+            {t(isPending ? "progressForm.posting" : "progressForm.post")}
           </button>
         </div>
       </div>

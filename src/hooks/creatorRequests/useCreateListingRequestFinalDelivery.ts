@@ -7,6 +7,7 @@ import type {
   ListingRequestFinalDeliveryStatus,
 } from "../../domain/listings/listingRequestFinalDeliveries";
 import type { OffSiteDeliveryInput } from "../../domain/listings/offSiteDelivery";
+import { english, type Translate } from "../../lib/i18n/i18n";
 import { uploadDeliveryFile } from "../../lib/listings/deliveryFiles";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
@@ -28,6 +29,8 @@ export type CreateListingRequestFinalDeliveryInput = {
   // Uploaded here, one after another, just before the delivery is saved.
   deliveryFiles?: File[];
   onUploadProgress?: (message: string) => void;
+  // The language of the progress messages.
+  t?: Translate;
 };
 
 export type CreatedListingRequestFinalDeliveryRow = {
@@ -64,10 +67,14 @@ export const useCreateListingRequestFinalDelivery =
         const offSite = input.offSiteDelivery;
         const files = input.deliveryFiles ?? [];
         const filePaths: string[] = [];
-
+        const t = input.t ?? english;
         for (const [index, file] of files.entries()) {
           input.onUploadProgress?.(
-            `Uploading file ${index + 1} of ${files.length}: ${file.name}…`
+            t("deliveryForm.uploading", {
+              number: index + 1,
+              total: files.length,
+              name: file.name,
+            })
           );
 
           filePaths.push(
@@ -79,7 +86,7 @@ export const useCreateListingRequestFinalDelivery =
         }
 
         if (files.length > 0) {
-          input.onUploadProgress?.("Saving final delivery…");
+          input.onUploadProgress?.(t("deliveryForm.saving"));
         }
 
         // Files and the off-site record are saved with the delivery in one

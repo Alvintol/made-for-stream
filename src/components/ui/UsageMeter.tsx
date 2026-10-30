@@ -1,5 +1,5 @@
+import { useT } from "../../lib/i18n/i18n";
 import { formatFileSize } from "../../lib/listings/deliveryFiles";
-
 type UsageMeterProps = {
   label: string;
   usedBytes: number;
@@ -27,6 +27,7 @@ const share = (value: number, limit: number) =>
 // How much of an allowance is used: a thin bar with the figures beside it,
 // so the number never depends on reading the bar. Says so in words from 80%.
 const UsageMeter = ({ label, usedBytes, limitBytes, pendingBytes = 0, detail }: UsageMeterProps) => {
+  const t = useT();
   const total = usedBytes + pendingBytes;
   const percent = Math.round(share(total, limitBytes));
 
@@ -35,12 +36,16 @@ const UsageMeter = ({ label, usedBytes, limitBytes, pendingBytes = 0, detail }: 
       <div className={classes.head}>
         <span className={classes.label}>{label}</span>
         <span className={classes.figure}>
-          {formatFileSize(total)} of {formatFileSize(limitBytes)} ({percent}%)
+          {t("usage.figure", {
+            used: formatFileSize(total, t),
+            limit: formatFileSize(limitBytes, t),
+            percent,
+          })}
         </span>
       </div>
 
       <div
-        aria-label={`${label}: ${percent}% used`}
+        aria-label={t("usage.aria", { label, percent })}
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={percent}
@@ -56,9 +61,9 @@ const UsageMeter = ({ label, usedBytes, limitBytes, pendingBytes = 0, detail }: 
       </div>
 
       {total >= limitBytes ? (
-        <p className={classes.warning}>Full.</p>
+        <p className={classes.warning}>{t("usage.full")}</p>
       ) : percent >= 80 ? (
-        <p className={classes.warning}>{formatFileSize(limitBytes - total)} left.</p>
+        <p className={classes.warning}>{t("usage.left", { size: formatFileSize(limitBytes - total, t) })}</p>
       ) : null}
 
       {detail && <p className={classes.detail}>{detail}</p>}
