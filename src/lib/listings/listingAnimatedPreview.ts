@@ -1,5 +1,5 @@
+import { english, type Translate } from "../i18n/i18n";
 import { supabase } from "../supabaseClient";
-
 // A listing's optional animated preview: a GIF or a short video shown on the
 // listing's own page, where it plays once. Unlike the static image
 // (listingPreviewImage.ts) it is uploaded exactly as the creator made it,
@@ -110,20 +110,23 @@ export type ListingAnimationCheck =
   | { kind: null; error: string };
 
 // Says what the file is, or what to tell the creator if it cannot be used.
-export const checkListingAnimationFile = async (file: File): Promise<ListingAnimationCheck> => {
+export const checkListingAnimationFile = async (
+  file: File,
+  t: Translate = english,
+): Promise<ListingAnimationCheck> => {
   if (file.size > LISTING_ANIMATION_MAX_BYTES) {
-    return { kind: null, error: "That file is over 8 MB. Use a shorter or smaller clip." };
+    return { kind: null, error: t("animationField.tooBig") };
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const kind = getListingAnimationKind(bytes);
 
   if (kind === null) {
-    return { kind: null, error: "Choose an animated GIF, or an MP4 or WebM video." };
+    return { kind: null, error: t("animationField.wrongType") };
   }
 
   if (kind === "gif" && getGifPlayOnceMs(bytes) === null) {
-    return { kind: null, error: "That GIF does not move. Choose an animated one." };
+    return { kind: null, error: t("animationField.still") };
   }
 
   return { kind, error: null };

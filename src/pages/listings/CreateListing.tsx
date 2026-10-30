@@ -27,7 +27,7 @@ import ListingAnimatedPreviewField, {
 } from "../../components/listings/ListingAnimatedPreviewField";
 import { uploadListingAnimation } from "../../lib/listings/listingAnimatedPreview";
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../lib/i18n/i18n";
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
 type ListingVideoSubtype = "" | "long-form" | "short-form";
@@ -103,32 +103,23 @@ const classes = {
     "btnOutline",
 } as const;
 
-const offeringTypeOptions: Array<{
-  value: ListingOfferingType;
-  label: string;
-}> = [
-    { value: "digital", label: "Digital" },
-    { value: "commission", label: "Commission" },
-    { value: "service", label: "Service" },
-  ];
+const offeringTypeOptions = [
+    { value: "digital", label: "offering.digital" },
+    { value: "commission", label: "offering.commission" },
+    { value: "service", label: "offering.service" },
+  ] as const satisfies ReadonlyArray<{ value: ListingOfferingType; label: string }>;
 
-const priceTypeOptions: Array<{
-  value: ListingPriceType;
-  label: string;
-}> = [
-    { value: "fixed", label: "Fixed price" },
-    { value: "starting_at", label: "Starting at" },
-    { value: "range", label: "Price range" },
-  ];
+const priceTypeOptions = [
+    { value: "fixed", label: "listingForm.priceFixed" },
+    { value: "starting_at", label: "listingForm.priceStarting" },
+    { value: "range", label: "listingForm.priceRange" },
+  ] as const satisfies ReadonlyArray<{ value: ListingPriceType; label: string }>;
 
-const videoSubtypeOptions: Array<{
-  value: ListingVideoSubtype;
-  label: string;
-}> = [
-    { value: "", label: "None" },
-    { value: "long-form", label: "Long-form" },
-    { value: "short-form", label: "Short-form" },
-  ];
+const videoSubtypeOptions = [
+    { value: "", label: "listingForm.videoNone" },
+    { value: "long-form", label: "listingForm.videoLong" },
+    { value: "short-form", label: "listingForm.videoShort" },
+  ] as const satisfies ReadonlyArray<{ value: ListingVideoSubtype; label: string }>;
 
 const initialState: FormState = {
   title: "",
@@ -148,8 +139,8 @@ const initialState: FormState = {
 };
 
 // Keeps the free-listing file input's error text short and readable
-const formatFileSize = (bytes: number): string =>
-  `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+const formatFileSize = (bytes: number, t: Translate): string =>
+  t("listingForm.fileMb", { size: (bytes / (1024 * 1024)).toFixed(1) });
 
 // Splits newline-separated deliverables into a clean array
 const parseDeliverables = (value: string) =>
@@ -178,6 +169,7 @@ const parseInteger = (value: string) => {
 
 
 const CreateListing = () => {
+  const t = useT();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -233,8 +225,8 @@ const CreateListing = () => {
       tags: tagPreview,
       // Not uploaded yet, but chosen: that is what the checklist asks for.
       preview_url: previewSelection ? "chosen" : "",
-    });
-  }, [deliverablePreview, form, isFreeListing, previewSelection, tagPreview]);
+    }, t);
+  }, [deliverablePreview, form, isFreeListing, previewSelection, t, tagPreview]);
 
   const setField = <Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -298,15 +290,15 @@ const CreateListing = () => {
       form.priceType === "range" ? parseInteger(form.priceMax) : null;
 
     if (title.length < 3 || title.length > 80) {
-      nextErrors.title = "Title must be between 3 and 80 characters.";
+      nextErrors.title = t("listingForm.errorTitle");
     }
 
     if (short.length < 10 || short.length > 280) {
-      nextErrors.short = "Short description must be between 10 and 280 characters.";
+      nextErrors.short = t("listingForm.errorShort");
     }
 
     if (!category) {
-      nextErrors.category = "Category is required.";
+      nextErrors.category = t("listingForm.errorCategory");
     }
 
     if (isFreeListing) {
@@ -316,30 +308,29 @@ const CreateListing = () => {
         externalUrl: form.freeExternalUrl,
         hasFile: Boolean(freeFile),
         fileSizeBytes: freeFile?.size ?? null,
-      });
+      }, t);
 
       if (freeError) nextErrors.free = freeError;
     } else {
       if (priceMin === null || priceMin < 0) {
-        nextErrors.priceMin = "Price min must be 0 or greater.";
+        nextErrors.priceMin = t("listingForm.errorPriceMin");
       }
 
       if (form.priceType === "range") {
         if (rawPriceMax === null) {
-          nextErrors.priceMax = "Price max is required for a range listing.";
+          nextErrors.priceMax = t("listingForm.errorPriceMaxNeeded");
         } else if (priceMin !== null && rawPriceMax < priceMin) {
-          nextErrors.priceMax = "Price max must be greater than or equal to price min.";
+          nextErrors.priceMax = t("listingForm.errorPriceMax");
         }
       } else if (rawPriceMax !== null && priceMin !== null && rawPriceMax < priceMin) {
-        nextErrors.priceMax = "Price max must be greater than or equal to price min.";
+        nextErrors.priceMax = t("listingForm.errorPriceMax");
       }
     }
 
     if (
       !getAllowedFulfilmentModes(form.offeringType).includes(form.fulfilmentMode)
     ) {
-      nextErrors.fulfilmentMode =
-        "This purchase flow is not allowed for the selected offering type.";
+      nextErrors.fulfilmentMode = t("listingForm.errorFlow");
     }
 
     if (
@@ -347,7 +338,7 @@ const CreateListing = () => {
       form.videoSubtype !== "long-form" &&
       form.videoSubtype !== "short-form"
     ) {
-      nextErrors.videoSubtype = "Video subtype must be long-form or short-form.";
+      nextErrors.videoSubtype = t("listingForm.errorVideo");
     }
 
     setErrors(nextErrors);
@@ -483,7 +474,7 @@ const CreateListing = () => {
         navigate(detailsPath, {
           state: {
             publishError:
-              hasErrorMessage(publishError) ? publishError.message : "please try again.",
+              hasErrorMessage(publishError) ? publishError.message : t("listingForm.tryAgain"),
           },
         });
       }
@@ -491,7 +482,7 @@ const CreateListing = () => {
       const message =
         hasErrorMessage(error)
           ? error.message
-          : "The listing draft could not be saved.";
+          : t("listingForm.saveFailed");
 
       setErrors((current) => ({
         ...current,
@@ -505,24 +496,21 @@ const CreateListing = () => {
   return (
     <div className={classes.page}>
       <Link to="/creator/listings" className={classes.backLink}>
-        ← Back to creator listings
+        ← {t("listingForm.backCreate")}
       </Link>
 
       <div className={classes.header}>
-        <h1 className={classes.h1}>Create listing</h1>
+        <h1 className={classes.h1}>{t("listingForm.createTitle")}</h1>
 
-        <p className={classes.sub}>
-          Fill this in, then publish it straight away or save it as a private draft to finish
-          later. Buyers only see a listing once it is published.
-        </p>
+        <p className={classes.sub}>{t("listingForm.createText")}</p>
       </div>
 
       <div className={classes.layout}>
-      <aside className={classes.aside} aria-label="Publish checklist">
-        <h2 className={classes.asideTitle}>Publish checklist</h2>
+      <aside className={classes.aside} aria-label={t("listingForm.checklist")}>
+        <h2 className={classes.asideTitle}>{t("listingForm.checklist")}</h2>
 
         <div className={classes.asideStatus} role="status">
-          <strong>Not saved yet.</strong> Nothing is visible to buyers until you publish.
+          <strong>{t("listingForm.notSaved")}</strong> {t("listingForm.notSavedText")}
         </div>
 
         <ListingPublishChecklist readiness={publishReadiness} />
@@ -537,7 +525,7 @@ const CreateListing = () => {
               publishAfterSaveRef.current = true;
             }}
           >
-            {isSaving ? "Saving…" : "Publish now"}
+            {t(isSaving ? "listingForm.saving" : "listingForm.publishNow")}
           </button>
 
           <button
@@ -549,13 +537,13 @@ const CreateListing = () => {
               publishAfterSaveRef.current = false;
             }}
           >
-            {isSaving ? "Saving…" : "Save as draft"}
+            {t(isSaving ? "listingForm.saving" : "listingForm.saveDraft")}
           </button>
         </div>
 
         {!publishReadiness.isReady && (
           <p className={classes.sectionText}>
-            Finish the checklist to publish now. You can save a draft at any point.
+            {t("listingForm.finishChecklist")}
           </p>
         )}
 
@@ -565,17 +553,16 @@ const CreateListing = () => {
       <form id="create-listing-form" className={classes.card} onSubmit={handleSubmit}>
         <div className={classes.section}>
           <div>
-            <h2 className={classes.sectionTitle}>Basics</h2>
+            <h2 className={classes.sectionTitle}>{t("listingForm.basics")}</h2>
             <p className={classes.sectionText}>
-              Add the core details buyers will eventually see when publishing is
-              added.
+              {t("listingForm.basicsText")}
             </p>
           </div>
 
           <div className={classes.grid}>
             <div className={`${classes.field} ${classes.full}`}>
               <label className={classes.label} htmlFor="title">
-                Title
+                {t("listingForm.titleLabel")}
               </label>
 
               <KeptPlaceholder>
@@ -585,19 +572,19 @@ const CreateListing = () => {
                 type="text"
                 value={form.title}
                 onChange={(event) => setField("title", event.target.value)}
-                placeholder="Cozy Emote Pack (12)"
+                placeholder={t("listingForm.titlePlaceholder")}
                 maxLength={80}
               />
               </KeptPlaceholder>
 
-              <div className={classes.hint}>3 to 80 characters.</div>
+              <div className={classes.hint}>{t("listingForm.titleHint")}</div>
 
               {errors.title && <div className={classes.error}>{errors.title}</div>}
             </div>
 
             <div className={`${classes.field} ${classes.full}`}>
               <label className={classes.label} htmlFor="short">
-                Short description
+                {t("listingForm.shortLabel")}
               </label>
 
               <KeptPlaceholder>
@@ -606,19 +593,19 @@ const CreateListing = () => {
                 className={classes.textarea}
                 value={form.short}
                 onChange={(event) => setField("short", event.target.value)}
-                placeholder="12 emotes + variants. Includes PNG + licence notes."
+                placeholder={t("listingForm.shortPlaceholder")}
                 maxLength={280}
               />
               </KeptPlaceholder>
 
-              <div className={classes.hint}>10 to 280 characters.</div>
+              <div className={classes.hint}>{t("listingForm.shortHint")}</div>
 
               {errors.short && <div className={classes.error}>{errors.short}</div>}
             </div>
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="offeringType">
-                Offering type
+                {t("listingForm.offeringLabel")}
               </label>
 
               <select
@@ -631,7 +618,7 @@ const CreateListing = () => {
               >
                 {offeringTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </option>
                 ))}
               </select>
@@ -639,7 +626,7 @@ const CreateListing = () => {
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="fulfilmentMode">
-                Purchase flow
+                {t("buyerRequests.purchaseFlow")}
               </label>
 
               <select
@@ -659,14 +646,13 @@ const CreateListing = () => {
                   )
                   .map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </option>
                   ))}
               </select>
 
               <div className={classes.hint}>
-                Digital listings can be request-based or instant later. Commissions and
-                services stay request-only in this first pass.
+                {t("listingForm.flowHint")}
               </div>
 
               {errors.fulfilmentMode && (
@@ -676,7 +662,7 @@ const CreateListing = () => {
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="category">
-                Category
+                {t("snapshot.category")}
               </label>
 
               <KeptPlaceholder>
@@ -691,7 +677,7 @@ const CreateListing = () => {
               </KeptPlaceholder>
 
               <div className={classes.hint}>
-                Keep this aligned with your existing marketplace category values.
+                {t("listingForm.categoryHint")}
               </div>
 
               {errors.category && (
@@ -701,7 +687,7 @@ const CreateListing = () => {
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="videoSubtype">
-                Video subtype
+                {t("listingForm.videoLabel")}
               </label>
 
               <select
@@ -714,13 +700,13 @@ const CreateListing = () => {
               >
                 {videoSubtypeOptions.map((option) => (
                   <option key={option.label} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </option>
                 ))}
               </select>
 
               <div className={classes.hint}>
-                Leave empty unless this listing is for video work.
+                {t("listingForm.videoHint")}
               </div>
 
               {errors.videoSubtype && (
@@ -737,12 +723,11 @@ const CreateListing = () => {
                     checked={form.isFree}
                     onChange={(event) => setIsFree(event.target.checked)}
                   />{" "}
-                  Give this away for free
+                  {t("listingForm.free")}
                 </label>
 
                 <div className={classes.hint}>
-                  Free listings skip pricing and Stripe entirely. Buyers get it
-                  through a direct download or a link you provide, no payment step.
+                  {t("listingForm.freeHint")}
                 </div>
               </div>
             )}
@@ -752,18 +737,16 @@ const CreateListing = () => {
         {isFreeListing ? (
           <div className={classes.section}>
             <div>
-              <h2 className={classes.sectionTitle}>Free delivery</h2>
+              <h2 className={classes.sectionTitle}>{t("listingForm.freeDelivery")}</h2>
               <p className={classes.sectionText}>
-                Choose how buyers get this listing. Downloadable assets are
-                uploaded and hosted here; games or anything not downloadable
-                should link out to wherever it&apos;s hosted.
+                {t("listingForm.freeDeliveryText")}
               </p>
             </div>
 
             <div className={classes.grid}>
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="freeDeliveryType">
-                  Delivery method
+                  {t("listingForm.deliveryMethod")}
                 </label>
 
                 <select
@@ -777,10 +760,10 @@ const CreateListing = () => {
                     )
                   }
                 >
-                  <option value="">Choose one…</option>
+                  <option value="">{t("listingForm.chooseOne")}</option>
                   {freeDeliveryTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(`listingForm.freeOption.${option.value}`)}
                     </option>
                   ))}
                 </select>
@@ -789,7 +772,7 @@ const CreateListing = () => {
               {form.freeDeliveryType === "download" && (
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="freeFile">
-                    File
+                    {t("listingForm.file")}
                   </label>
 
                   <input
@@ -803,8 +786,8 @@ const CreateListing = () => {
 
                   <div className={classes.hint}>
                     {freeFile
-                      ? `${freeFile.name} (${formatFileSize(freeFile.size)})`
-                      : `Up to ${formatFileSize(FREE_ASSET_MAX_BYTES)} per file.`}
+                      ? `${freeFile.name} (${formatFileSize(freeFile.size, t)})`
+                      : t("listingForm.fileLimit", { size: formatFileSize(FREE_ASSET_MAX_BYTES, t) })}
                   </div>
                 </div>
               )}
@@ -812,7 +795,7 @@ const CreateListing = () => {
               {form.freeDeliveryType === "external_link" && (
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="freeExternalUrl">
-                    Link
+                    {t("listingForm.link")}
                   </label>
 
                   <KeptPlaceholder>
@@ -829,8 +812,7 @@ const CreateListing = () => {
                   </KeptPlaceholder>
 
                   <div className={classes.hint}>
-                    Buyers are sent here directly — itch.io, Steam, GitHub, a
-                    playable build, wherever it lives.
+                    {t("listingForm.linkHint")}
                   </div>
                 </div>
               )}
@@ -845,16 +827,16 @@ const CreateListing = () => {
         ) : (
         <div className={classes.section}>
           <div>
-            <h2 className={classes.sectionTitle}>Pricing</h2>
+            <h2 className={classes.sectionTitle}>{t("listingForm.pricing")}</h2>
             <p className={classes.sectionText}>
-              Draft listings stay private and inactive even after saving.
+              {t("listingForm.pricingText")}
             </p>
           </div>
 
           <div className={classes.grid}>
             <div className={classes.field}>
               <label className={classes.label} htmlFor="priceType">
-                Price type
+                {t("listingForm.priceTypeLabel")}
               </label>
 
               <select
@@ -867,7 +849,7 @@ const CreateListing = () => {
               >
                 {priceTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </option>
                 ))}
               </select>
@@ -875,7 +857,7 @@ const CreateListing = () => {
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="priceMin">
-                {isRangePrice ? "Price min" : "Price"}
+                {t(isRangePrice ? "listingForm.priceMin" : "snapshot.price")}
               </label>
 
               <KeptPlaceholder>
@@ -901,7 +883,7 @@ const CreateListing = () => {
             {isRangePrice && (
               <div className={classes.field}>
                 <label className={classes.label} htmlFor="priceMax">
-                  Price max
+                  {t("listingForm.priceMax")}
                 </label>
 
                 <KeptPlaceholder>
@@ -920,7 +902,7 @@ const CreateListing = () => {
                 </KeptPlaceholder>
 
                 <div className={classes.hint}>
-                  Required only when price type is set to range.
+                  {t("listingForm.priceMaxHint")}
                 </div>
 
                 {errors.priceMax && (
@@ -934,16 +916,16 @@ const CreateListing = () => {
 
         <div className={classes.section}>
           <div>
-            <h2 className={classes.sectionTitle}>Deliverables and tags</h2>
+            <h2 className={classes.sectionTitle}>{t("listingForm.deliverablesTags")}</h2>
             <p className={classes.sectionText}>
-              These are optional in the first pass and can stay empty.
+              {t("listingForm.deliverablesTagsText")}
             </p>
           </div>
 
           <div className={classes.grid}>
             <div className={classes.field}>
               <label className={classes.label} htmlFor="deliverablesText">
-                Deliverables
+                {t("snapshot.deliverables")}
               </label>
 
               <KeptPlaceholder>
@@ -954,16 +936,16 @@ const CreateListing = () => {
                 onChange={(event) =>
                   setField("deliverablesText", event.target.value)
                 }
-                placeholder={"png\npsd\nsource files"}
+                placeholder={t("listingForm.deliverablesPlaceholder")}
               />
               </KeptPlaceholder>
 
-              <div className={classes.hint}>Enter one deliverable per line.</div>
+              <div className={classes.hint}>{t("listingForm.deliverablesHint")}</div>
             </div>
 
             <div className={classes.field}>
               <label className={classes.label} htmlFor="tagsText">
-                Tags
+                {t("snapshot.tags")}
               </label>
 
               <KeptPlaceholder>
@@ -972,25 +954,29 @@ const CreateListing = () => {
                 className={classes.textarea}
                 value={form.tagsText}
                 onChange={(event) => setField("tagsText", event.target.value)}
-                placeholder="emotes, png, cozy"
+                placeholder={t("listingForm.tagsPlaceholder")}
               />
               </KeptPlaceholder>
 
-              <div className={classes.hint}>Separate tags with commas.</div>
+              <div className={classes.hint}>{t("listingForm.tagsHint")}</div>
             </div>
 
             <div className={`${classes.infoBox} ${classes.full}`}>
-              <div className={classes.infoTitle}>Parsed preview</div>
+              <div className={classes.infoTitle}>{t("listingForm.parsedPreview")}</div>
 
               <div className={classes.infoText}>
-                Deliverables:{" "}
-                {deliverablePreview.length > 0
-                  ? deliverablePreview.join(", ")
-                  : "None"}
+                {t("listingForm.parsedDeliverables", {
+                  value:
+                    deliverablePreview.length > 0
+                      ? deliverablePreview.join(", ")
+                      : t("listingForm.videoNone"),
+                })}
               </div>
 
               <div className={classes.infoText}>
-                Tags: {tagPreview.length > 0 ? tagPreview.join(", ") : "None"}
+                {t("listingForm.parsedTags", {
+                  value: tagPreview.length > 0 ? tagPreview.join(", ") : t("listingForm.videoNone"),
+                })}
               </div>
             </div>
           </div>
@@ -998,10 +984,9 @@ const CreateListing = () => {
 
         <div className={classes.section}>
           <div>
-            <h2 className={classes.sectionTitle}>Preview</h2>
+            <h2 className={classes.sectionTitle}>{t("listingForm.preview")}</h2>
             <p className={classes.sectionText}>
-              An image that shows your work. A draft can be saved without one, but a listing
-              needs one before it can be published.
+              {t("listingForm.previewTextCreate")}
             </p>
           </div>
 
@@ -1021,12 +1006,11 @@ const CreateListing = () => {
 
         <div className={classes.section}>
           <div className={classes.infoBox}>
-            <div className={classes.infoTitle}>What happens next</div>
+            <div className={classes.infoTitle}>{t("listingForm.whatNext")}</div>
 
             <div className={classes.infoText}>
-              <strong>Publish now</strong> saves the listing and puts it in the market.{" "}
-              <strong>Save as draft</strong> keeps it private. Either way you land on the
-              listing's page, which shows its status.
+              <strong>{t("listingForm.publishNow")}</strong> {t("listingForm.whatNextPublish")}{" "}
+              <strong>{t("listingForm.saveDraft")}</strong> {t("listingForm.whatNextDraft")}
             </div>
           </div>
 
@@ -1043,7 +1027,7 @@ const CreateListing = () => {
                 publishAfterSaveRef.current = true;
               }}
             >
-              {isSaving ? "Saving…" : "Publish now"}
+              {t(isSaving ? "listingForm.saving" : "listingForm.publishNow")}
             </button>
 
             <button
@@ -1054,11 +1038,11 @@ const CreateListing = () => {
                 publishAfterSaveRef.current = false;
               }}
             >
-              {isSaving ? "Saving…" : "Save as draft"}
+              {t(isSaving ? "listingForm.saving" : "listingForm.saveDraft")}
             </button>
 
             <Link className={classes.btnOutline} to="/creator/listings">
-              Cancel
+              {t("common.cancel")}
             </Link>
           </div>
         </div>

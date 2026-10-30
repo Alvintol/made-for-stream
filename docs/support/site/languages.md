@@ -73,6 +73,9 @@ browser. Emails are still in English.
   commission page, and the boxes for sending or withdrawing a draft.
 - 2026-10-30: the change order form, which finishes the creator's commission
   tools.
+- 2026-10-30: creating and editing a listing, with the publish checklist and
+  the preview image and animated preview fields. The category is typed the
+  way the market writes it (`emotes`), in either language.
 - 2026-10-30: the milestone, final delivery and progress update forms, with
   file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their

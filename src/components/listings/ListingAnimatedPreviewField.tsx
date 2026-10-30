@@ -4,7 +4,7 @@ import {
   LISTING_ANIMATION_ACCEPT,
   type ListingAnimationKind,
 } from "../../lib/listings/listingAnimatedPreview";
-
+import { useT, type Translate } from "../../lib/i18n/i18n";
 // What the page should do with the animated preview when the listing is
 // saved: upload a new file, remove the current one, or leave it alone.
 export type ListingAnimationChoice =
@@ -32,7 +32,8 @@ const classes = {
   warningText: "text-sm",
 } as const;
 
-const formatMegabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+const formatMegabytes = (bytes: number, t: Translate) =>
+  t("fileSize.mb", { size: (bytes / (1024 * 1024)).toFixed(1) });
 
 // The optional GIF or short video shown on the listing's own page. Nothing is uploaded
 // here; the page uploads it when the listing is saved.
@@ -41,6 +42,7 @@ const ListingAnimatedPreviewField = ({
   disabled = false,
   onChange,
 }: ListingAnimatedPreviewFieldProps) => {
+  const t = useT();
   const [chosen, setChosen] = useState<File | null>(null);
   const [remove, setRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ const ListingAnimatedPreviewField = ({
   const handleFile = async (file: File | null) => {
     if (!file) return;
 
-    const check = await checkListingAnimationFile(file);
+    const check = await checkListingAnimationFile(file, t);
 
     if (check.error !== null) {
       setError(check.error);
@@ -71,7 +73,7 @@ const ListingAnimatedPreviewField = ({
     <div className={classes.wrap}>
       <div className={classes.field}>
         <label className={classes.label} htmlFor="animatedPreview">
-          Animated preview (optional)
+          {t("animationField.label")}
         </label>
 
         <input
@@ -84,10 +86,7 @@ const ListingAnimatedPreviewField = ({
         />
 
         <p className={classes.hint}>
-          An animated GIF, or an MP4 or WebM video, up to 8 MB. It shows only on your listing's
-          page, plays once, and then offers a Play again button. Videos play without sound. MP4
-          plays on every device; WebM may not play on older iPhones. Cards and search always
-          show the still image above.
+          {t("animationField.hint")}
         </p>
 
         {error && (
@@ -98,14 +97,14 @@ const ListingAnimatedPreviewField = ({
 
         {chosen && (
           <p className={classes.hint} role="status">
-            Ready to upload when you save: {chosen.name} ({formatMegabytes(chosen.size)}).
+            {t("animationField.ready", { name: chosen.name, size: formatMegabytes(chosen.size, t) })}
           </p>
         )}
 
         {hasExisting && !chosen && (
           <>
             <p className={classes.hint}>
-              This listing already has an animated preview. Choose a file to replace it.
+              {t("animationField.existing")}
             </p>
 
             <label className={classes.option} htmlFor="removeAnimatedPreview">
@@ -116,26 +115,25 @@ const ListingAnimatedPreviewField = ({
                 disabled={disabled}
                 onChange={(event) => handleRemove(event.target.checked)}
               />
-              <span>Remove the animated preview</span>
+              <span>{t("animationField.remove")}</span>
             </label>
           </>
         )}
       </div>
 
       <div className={classes.warning}>
-        <div className={classes.warningTitle}>Animated previews are not copy-protected</div>
+        <div className={classes.warningTitle}>{t("animationField.warningTitle")}</div>
 
         <p className={classes.warningText}>
-          Your file is uploaded exactly as you made it. It is not shrunk and not watermarked.
+          {t("animationField.warning1")}
         </p>
 
         <p className={classes.warningText}>
-          We hide the file's address on the page and block right-click saving, but someone
-          determined can still copy it.
+          {t("animationField.warning2")}
         </p>
 
         <p className={classes.warningText}>
-          Upload a short, low-resolution clip. Never upload the finished work.
+          {t("animationField.warning3")}
         </p>
       </div>
     </div>

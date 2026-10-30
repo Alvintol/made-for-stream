@@ -1000,8 +1000,9 @@ Build order (each its own branch):
       Then (`feat/i18n-agreement-builder`): the agreement form and milestone
       plan. Then (`feat/i18n-creator-forms`): the milestone, final delivery
       and progress update forms. Then (`feat/i18n-change-order-builder`): the
-      change order form, which finishes the creator's commission tools. Next:
-      listing management and the creator application, then the remaining screens a few at a time, then the policies by a
+      change order form, which finishes the creator's commission tools. Then
+      (`feat/i18n-listing-forms`): creating and editing a listing. Next: the
+      creator's listing pages and the creator application, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

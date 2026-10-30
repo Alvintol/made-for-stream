@@ -5,13 +5,13 @@ export type ListingPriceType = "fixed" | "starting_at" | "range";
 export type ListingVideoSubtype = "" | "long-form" | "short-form";
 export type ListingFulfilmentMode = "request" | "instant";
 
-export const listingFulfilmentModeOptions: Array<{
-  value: ListingFulfilmentMode;
-  label: string;
-}> = [
-    { value: "request", label: "Request approval" },
-    { value: "instant", label: "Instant purchase" },
-  ];
+export const listingFulfilmentModeOptions = [
+    { value: "request", label: "listingForm.flowRequest" },
+    { value: "instant", label: "fulfilment.instant" },
+  ] as const satisfies ReadonlyArray<{
+    value: ListingFulfilmentMode;
+    label: string;
+  }>;
 
 // Only digital listings can be sold instantly in this first pass
 export const allowsInstantFulfilment = (
@@ -56,10 +56,9 @@ export type FreeDeliveryType = "download" | "external_link";
 
 export const freeDeliveryTypeOptions: Array<{
   value: FreeDeliveryType;
-  label: string;
 }> = [
-    { value: "download", label: "Direct download (upload a file)" },
-    { value: "external_link", label: "External link (itch.io, Steam, GitHub, etc.)" },
+    { value: "download" },
+    { value: "external_link" },
   ];
 
 // Only digital listings can be marked free in this first pass — commissions
@@ -91,30 +90,31 @@ export type FreeListingInput = {
 // Validates the free-listing fields of the create-listing form. Returns
 // null when valid, or a single user-facing error message otherwise.
 export const validateFreeListingInput = (
-  input: FreeListingInput
+  input: FreeListingInput,
+  t: Translate = english
 ): string | null => {
   if (!input.isFree) return null;
 
   if (!input.deliveryType) {
-    return "Choose how buyers will get this free listing.";
+    return t("listingForm.freeErrorType");
   }
 
   if (input.deliveryType === "external_link") {
     if (!isValidFreeExternalUrl(input.externalUrl.trim())) {
-      return "Enter a valid link starting with http:// or https://.";
+      return t("listingForm.freeErrorLink");
     }
   }
 
   if (input.deliveryType === "download") {
     if (!input.hasFile) {
-      return "Upload a file for buyers to download.";
+      return t("listingForm.freeErrorFile");
     }
 
     if (
       typeof input.fileSizeBytes === "number" &&
       input.fileSizeBytes > FREE_ASSET_MAX_BYTES
     ) {
-      return "That file is larger than the 200MB limit for free downloads.";
+      return t("listingForm.freeErrorSize");
     }
   }
 

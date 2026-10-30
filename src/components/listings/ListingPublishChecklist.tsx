@@ -2,7 +2,7 @@ import {
   getMissingPublishCheckCount,
   type ListingPublishReadiness,
 } from "../../lib/listings/listingPublishReadiness";
-
+import { useT } from "../../lib/i18n/i18n";
 const classes = {
   wrap: "space-y-3",
   readyBox:
@@ -22,15 +22,16 @@ const classes = {
 // The publish checklist, shared by the create page's side panel and the
 // listing details page so both always show the same rules.
 const ListingPublishChecklist = ({ readiness }: { readiness: ListingPublishReadiness }) => {
+  const t = useT();
   const missing = getMissingPublishCheckCount(readiness);
 
   return (
     <div className={classes.wrap}>
       {readiness.isReady ? (
-        <div className={classes.readyBox}>Everything on the checklist is done.</div>
+        <div className={classes.readyBox}>{t("publishCheck.ready")}</div>
       ) : (
         <div className={classes.notReadyBox}>
-          {missing} {missing === 1 ? "item" : "items"} left before this can be published.
+          {t("publishCheck.left", { count: missing })}
         </div>
       )}
 
@@ -45,7 +46,7 @@ const ListingPublishChecklist = ({ readiness }: { readiness: ListingPublishReadi
             </span>
 
             <span className={classes.checkText}>
-              <span className="sr-only">{check.passed ? "Done: " : "Missing: "}</span>
+              <span className="sr-only">{t(check.passed ? "publishCheck.done" : "publishCheck.missing")} </span>
               {check.label}
             </span>
           </li>
