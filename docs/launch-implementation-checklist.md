@@ -997,9 +997,9 @@ Build order (each its own branch):
       (`feat/i18n-chat-inbox`): the chat box, the inbox and a single
       conversation. Then (`feat/i18n-creator-commissions`): the creator
       dashboard, commission list, commission page and short action boxes.
-      Next: the creator's forms (agreement and milestone plan; milestone,
-      delivery and update forms; change orders), listing management and the
-      creator application, then the remaining screens a few at a time, then the policies by a
+      Then (`feat/i18n-agreement-builder`): the agreement form and milestone
+      plan. Next: the milestone, delivery and update forms, change orders,
+      listing management and the creator application, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

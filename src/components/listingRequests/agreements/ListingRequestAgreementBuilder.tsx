@@ -2,6 +2,7 @@ import { hasErrorMessage } from "../../../lib/errorMessage";
 import { useMemo, useState, type SubmitEventHandler } from "react";
 
 import {
+  getListingRequestPaymentStructureLabel,
   getMinimumCreatorUpdateRule,
   listingRequestPaymentStructureOptions,
   type ListingRequestPaymentStructure,
@@ -20,6 +21,7 @@ import { getInstalmentFloorMessage } from '../../../domain/payments/supportedCur
 
 import ListingRequestMilestonePlanEditor from '../milestones/ListingRequestMilestonePlanEditor';
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestAgreementBuilderProps = {
   request: Pick<ListingRequestRow, "id" | "status"> | null;
   // The buyer's handle or display name, for the two "what … needs to" boxes.
@@ -104,7 +106,8 @@ const createDefaultMilestones =
     },
   ];
 
-const defaultFormState: BuilderFormState = {
+// The two policies start in the creator's language and are saved as written.
+const createDefaultFormState = (t: Translate): BuilderFormState => ({
   scopeSummary: "",
   includedDeliverablesText: "",
   checklistText: "",
@@ -116,18 +119,16 @@ const defaultFormState: BuilderFormState = {
   estimatedWorkDays: "14",
   estimatedCompletionDate: "",
   includedRevisionCount: "2",
-  additionalCostPolicy:
-    "Any additional scope, deliverables, timeline, price, payment schedule, or milestone changes require an accepted change order before work continues.",
-  revisionPolicy:
-    "This agreement includes the listed revision rounds. Extra revisions require an accepted change order before additional work continues.",
+  additionalCostPolicy: t("agreementBuilder.defaultCostPolicy"),
+  revisionPolicy: t("agreementBuilder.defaultRevisionPolicy"),
   sendNow: true,
   milestones: createDefaultMilestones(),
-};
+});
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The project agreement could not be created.";
+    : t("agreementBuilder.failed");
 
 const splitTextareaLines = (value: string): string[] =>
   value
@@ -147,6 +148,7 @@ const getIsoFromDateInput = (dateInput: string): string =>
 const validateForm = (
   form: BuilderFormState,
   currency: string,
+  t: Translate,
 ): BuilderValidationErrors => {
   const errors: BuilderValidationErrors = {};
   const totalAmount = parsePositiveNumber(form.totalAmount);
@@ -155,11 +157,11 @@ const validateForm = (
   const includedRevisionCount = parseWholeNumber(form.includedRevisionCount);
 
   if (!form.scopeSummary.trim()) {
-    errors.scopeSummary = "Add a scope summary.";
+    errors.scopeSummary = t("agreementBuilder.errorScope");
   }
 
   if (splitTextareaLines(form.includedDeliverablesText).length === 0) {
-    errors.includedDeliverablesText = "Add at least one included deliverable.";
+    errors.includedDeliverablesText = t("agreementBuilder.errorDeliverables");
   }
 
   if (
@@ -168,23 +170,23 @@ const validateForm = (
       splitTextareaLines(form.buyerApprovesText).length ===
     0
   ) {
-    errors.checklistText = "Add at least one required checklist item.";
+    errors.checklistText = t("agreementBuilder.errorChecklist");
   }
 
   if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
-    errors.totalAmount = "Enter a total amount greater than 0.";
+    errors.totalAmount = t("agreementBuilder.errorTotal");
   }
 
   if (form.paymentStructure === "deposit_balance") {
     if (!Number.isFinite(depositAmount) || depositAmount <= 0) {
-      errors.depositAmount = "Enter a deposit amount greater than 0.";
+      errors.depositAmount = t("agreementBuilder.errorDeposit");
     } else if (Number.isFinite(totalAmount) && depositAmount >= totalAmount) {
-      errors.depositAmount = "Deposit must be less than the total amount.";
+      errors.depositAmount = t("agreementBuilder.errorDepositTotal");
     }
   }
 
   if (!Number.isFinite(estimatedWorkDays) || estimatedWorkDays <= 0) {
-    errors.estimatedWorkDays = "Enter estimated work days greater than 0.";
+    errors.estimatedWorkDays = t("agreementBuilder.errorDays");
   }
 
   if (form.paymentStructure === "milestone_payments") {
@@ -193,7 +195,7 @@ const validateForm = (
         estimatedWorkDays,
         agreementTotal: totalAmount,
         milestones: form.milestones,
-      });
+      }, t);
 
     if (!milestoneValidation.isValid) {
       errors.milestones =
@@ -204,7 +206,7 @@ const validateForm = (
   // The instalment floor and supported currencies are enforced by the
   // database (20260923_138); checking here says so before sending.
   if (!errors.totalAmount && form.paymentStructure === "full_prepayment") {
-    const floorMessage = getInstalmentFloorMessage(totalAmount, currency);
+    const floorMessage = getInstalmentFloorMessage(totalAmount, currency, t);
     if (floorMessage) errors.totalAmount = floorMessage;
   }
 
@@ -213,25 +215,29 @@ const validateForm = (
     !errors.depositAmount &&
     form.paymentStructure === "deposit_balance"
   ) {
-    const depositMessage = getInstalmentFloorMessage(depositAmount, currency);
+    const depositMessage = getInstalmentFloorMessage(depositAmount, currency, t);
     const balanceMessage = getInstalmentFloorMessage(
       totalAmount - depositAmount,
       currency,
+      t,
     );
 
     if (depositMessage) {
-      errors.depositAmount = `Deposit: ${depositMessage}`;
+      errors.depositAmount = t("agreementBuilder.depositError", { message: depositMessage });
     } else if (balanceMessage) {
-      errors.depositAmount = `Remaining balance: ${balanceMessage}`;
+      errors.depositAmount = t("agreementBuilder.balanceError", { message: balanceMessage });
     }
   }
 
   if (!errors.milestones && form.paymentStructure === "milestone_payments") {
     const milestoneFloorErrors = form.milestones
       .map((milestone) => {
-        const floorMessage = getInstalmentFloorMessage(milestone.amount, currency);
+        const floorMessage = getInstalmentFloorMessage(milestone.amount, currency, t);
         return floorMessage
-          ? `${milestone.title.trim() || "Milestone"}: ${floorMessage}`
+          ? t("agreementBuilder.milestoneError", {
+              title: milestone.title.trim() || t("agreementBuilder.milestoneFallback"),
+              message: floorMessage,
+            })
           : null;
       })
       .filter((message): message is string => message !== null);
@@ -242,36 +248,38 @@ const validateForm = (
   }
 
   if (!form.estimatedCompletionDate) {
-    errors.estimatedCompletionDate = "Choose an estimated completion date.";
+    errors.estimatedCompletionDate = t("agreementBuilder.errorDate");
   }
 
   if (!Number.isFinite(includedRevisionCount) || includedRevisionCount < 0) {
-    errors.includedRevisionCount = "Enter 0 or more included revisions.";
+    errors.includedRevisionCount = t("agreementBuilder.errorRevisions");
   }
 
   if (!form.additionalCostPolicy.trim()) {
-    errors.additionalCostPolicy = "Add an additional cost policy.";
+    errors.additionalCostPolicy = t("agreementBuilder.errorCostPolicy");
   }
 
   if (!form.revisionPolicy.trim()) {
-    errors.revisionPolicy = "Add a revision policy.";
+    errors.revisionPolicy = t("agreementBuilder.errorRevisionPolicy");
   }
 
   return errors;
 };
 
+// Titles and descriptions are saved in the creator's language, like the rest
+// of what they write in the agreement. Nothing matches on them.
 const buildPaymentScheduleItems = (input: {
   paymentStructure: ListingRequestPaymentStructure;
   totalAmount: number;
   depositAmount: number | null;
   currency: string;
   milestones: ListingRequestMilestonePlanItem[];
-}): CreateListingRequestAgreementInput["paymentScheduleItems"] => {
+}, t: Translate): CreateListingRequestAgreementInput["paymentScheduleItems"] => {
   if (input.paymentStructure === "full_prepayment") {
     return [
       {
-        title: "Full project payment",
-        description: "Due before work starts.",
+        title: t("agreementBuilder.paymentFull"),
+        description: t("agreementBuilder.dueBeforeWork"),
         amount: input.totalAmount,
         currency: input.currency,
         payment_timing: "due_before_work_starts",
@@ -287,8 +295,8 @@ const buildPaymentScheduleItems = (input: {
 
     return [
       {
-        title: "Project deposit",
-        description: "Due before work starts.",
+        title: t("agreementBuilder.paymentDeposit"),
+        description: t("agreementBuilder.dueBeforeWork"),
         amount: safeDepositAmount,
         currency: input.currency,
         payment_timing: "due_before_work_starts",
@@ -297,8 +305,8 @@ const buildPaymentScheduleItems = (input: {
         sort_order: 0,
       },
       {
-        title: "Remaining balance",
-        description: "Due before final deliverables are released.",
+        title: t("agreementBuilder.paymentBalance"),
+        description: t("agreementBuilder.dueBeforeRelease"),
         amount: Math.max(0, input.totalAmount - safeDepositAmount),
         currency: input.currency,
         payment_timing: "due_before_final_release",
@@ -315,7 +323,7 @@ const buildPaymentScheduleItems = (input: {
     title: milestone.title.trim(),
     description:
       milestone.description?.trim() ||
-      "Payment becomes due after the buyer approves this milestone.",
+      t("agreementBuilder.dueAfterMilestone"),
     amount: milestone.amount,
     currency: input.currency,
     payment_timing:
@@ -331,10 +339,12 @@ const ListingRequestAgreementBuilder = ({
   isPending = false,
   error,
   currency = "cad",
-  buyerName = "the buyer",
+  buyerName,
   onCreateAgreement,
 }: ListingRequestAgreementBuilderProps) => {
-  const [form, setForm] = useState<BuilderFormState>(defaultFormState);
+  const t = useT();
+  const buyer = buyerName ?? t("agreementBuilder.theBuyer");
+  const [form, setForm] = useState<BuilderFormState>(() => createDefaultFormState(t));
   const [validationErrors, setValidationErrors] =
     useState<BuilderValidationErrors>({});
 
@@ -354,8 +364,8 @@ const ListingRequestAgreementBuilder = ({
 
 
   const updateRule = useMemo(
-    () => getMinimumCreatorUpdateRule(safeEstimatedWorkDays),
-    [safeEstimatedWorkDays]
+    () => getMinimumCreatorUpdateRule(safeEstimatedWorkDays, t),
+    [safeEstimatedWorkDays, t]
   );
 
   if (!request || request.status !== "accepted") {
@@ -394,7 +404,7 @@ const ListingRequestAgreementBuilder = ({
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form, currency);
+    const nextErrors = validateForm(form, currency, t);
     setValidationErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -492,23 +502,20 @@ const ListingRequestAgreementBuilder = ({
           depositAmount,
           currency,
           milestones: form.milestones,
-        }),
+        }, t),
     };
 
     await onCreateAgreement(input);
   };
 
-  const createErrorMessage = error ? getErrorMessage(error) : null;
+  const createErrorMessage = error ? getErrorMessage(error, t) : null;
 
   return (
     <form className={classes.card} onSubmit={handleSubmit}>
       <div className={classes.section}>
         <div className={classes.header}>
-          <h2 className={classes.title}>Create project agreement</h2>
-          <p className={classes.text}>
-            Turn the accepted commission request into a formal agreement the buyer must
-            review and accept before payment or work begins.
-          </p>
+          <h2 className={classes.title}>{t("creatorCommission.agreementPanelTitle")}</h2>
+          <p className={classes.text}>{t("agreementBuilder.intro")}</p>
         </div>
 
         {createErrorMessage && (
@@ -517,13 +524,13 @@ const ListingRequestAgreementBuilder = ({
 
         <div className={classes.field}>
           <label className={classes.label} htmlFor="agreement-scope-summary">
-            Scope summary
+            {t("agreementBuilder.scopeLabel")}
           </label>
           <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-scope-summary"
-            placeholder="e.g. Six custom emotes of the buyer's fox character in my chibi style, drawn from the reference sheet they sent. Flat colour, no animation."
+            placeholder={t("agreementBuilder.scopePlaceholder")}
             value={form.scopeSummary}
             onChange={(event) =>
               updateField("scopeSummary", event.currentTarget.value)
@@ -543,13 +550,13 @@ const ListingRequestAgreementBuilder = ({
               className={classes.label}
               htmlFor="agreement-included-deliverables"
             >
-              Included deliverables
+              {t("agreementBuilder.deliverablesLabel")}
             </label>
             <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-included-deliverables"
-              placeholder={"e.g.\n6 emotes as PNG files (112, 56 and 28 px)\n1 preview sheet\nLayered source file"}
+              placeholder={t("agreementBuilder.deliverablesPlaceholder")}
               value={form.includedDeliverablesText}
               onChange={(event) =>
                 updateField(
@@ -559,7 +566,7 @@ const ListingRequestAgreementBuilder = ({
               }
             />
             </KeptPlaceholder>
-            <p className={classes.help}>Add one deliverable per line.</p>
+            <p className={classes.help}>{t("agreementBuilder.deliverablesHint")}</p>
             {validationErrors.includedDeliverablesText && (
               <p className={classes.errorText}>
                 {validationErrors.includedDeliverablesText}
@@ -569,13 +576,13 @@ const ListingRequestAgreementBuilder = ({
 
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-checklist">
-              Required checklist items
+              {t("agreementBuilder.checklistLabel")}
             </label>
             <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-checklist"
-              placeholder={"e.g.\nUse on Twitch, YouTube and Discord is included\nFlat colour, no animation"}
+              placeholder={t("agreementBuilder.checklistPlaceholder")}
               value={form.checklistText}
               onChange={(event) =>
                 updateField("checklistText", event.currentTarget.value)
@@ -583,8 +590,7 @@ const ListingRequestAgreementBuilder = ({
             />
             </KeptPlaceholder>
             <p className={classes.help}>
-              Add one required scope item per line. The agreement shows these as
-              &ldquo;Included&rdquo;.
+              {t("agreementBuilder.checklistHint")}
             </p>
             {validationErrors.checklistText && (
               <p className={classes.errorText}>
@@ -595,13 +601,13 @@ const ListingRequestAgreementBuilder = ({
 
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-buyer-provides">
-              What {buyerName} needs to provide
+              {t("agreementBuilder.providesLabel", { name: buyer })}
             </label>
             <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-buyer-provides"
-              placeholder={"e.g.\nCharacter reference sheet before work starts"}
+              placeholder={t("agreementBuilder.providesPlaceholder")}
               value={form.buyerProvidesText}
               onChange={(event) =>
                 updateField("buyerProvidesText", event.currentTarget.value)
@@ -609,19 +615,19 @@ const ListingRequestAgreementBuilder = ({
             />
             </KeptPlaceholder>
             <p className={classes.help}>
-              Optional, one per line. Shown as &ldquo;{buyerName} provides&rdquo;.
+              {t("agreementBuilder.providesHint", { name: buyer })}
             </p>
           </div>
 
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-buyer-approves">
-              What {buyerName} needs to approve
+              {t("agreementBuilder.approvesLabel", { name: buyer })}
             </label>
             <KeptPlaceholder>
             <textarea
               className={classes.textarea}
               id="agreement-buyer-approves"
-              placeholder={"e.g.\nSketches, before colouring starts"}
+              placeholder={t("agreementBuilder.approvesPlaceholder")}
               value={form.buyerApprovesText}
               onChange={(event) =>
                 updateField("buyerApprovesText", event.currentTarget.value)
@@ -629,7 +635,7 @@ const ListingRequestAgreementBuilder = ({
             />
             </KeptPlaceholder>
             <p className={classes.help}>
-              Optional, one per line. Shown as &ldquo;{buyerName} approves&rdquo;.
+              {t("agreementBuilder.approvesHint", { name: buyer })}
             </p>
           </div>
         </div>
@@ -637,13 +643,13 @@ const ListingRequestAgreementBuilder = ({
         <div className={classes.grid}>
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-total-amount">
-              Total amount
+              {t("agreementBuilder.totalLabel")}
             </label>
             <KeptPlaceholder>
             <input
               className={classes.input}
               id="agreement-total-amount"
-              placeholder="e.g. 100.00"
+              placeholder={t("agreementBuilder.totalPlaceholder")}
               min="0"
               step="0.01"
               type="number"
@@ -665,7 +671,7 @@ const ListingRequestAgreementBuilder = ({
               className={classes.label}
               htmlFor="agreement-payment-structure"
             >
-              Payment structure
+              {t("agreement.paymentStructure")}
             </label>
             <select
               className={classes.input}
@@ -680,7 +686,7 @@ const ListingRequestAgreementBuilder = ({
             >
               {listingRequestPaymentStructureOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {getListingRequestPaymentStructureLabel(option.value, t)}
                 </option>
               ))}
             </select>
@@ -709,13 +715,13 @@ const ListingRequestAgreementBuilder = ({
                 className={classes.label}
                 htmlFor="agreement-deposit-amount"
               >
-                Deposit amount
+                {t("agreementBuilder.depositLabel")}
               </label>
               <KeptPlaceholder>
               <input
                 className={classes.input}
                 id="agreement-deposit-amount"
-                placeholder="e.g. 30.00"
+                placeholder={t("agreementBuilder.depositPlaceholder")}
                 min="0"
                 step="0.01"
                 type="number"
@@ -735,7 +741,7 @@ const ListingRequestAgreementBuilder = ({
 
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-work-days">
-              Estimated work days
+              {t("agreementBuilder.daysLabel")}
             </label>
             <input
               className={classes.input}
@@ -759,7 +765,7 @@ const ListingRequestAgreementBuilder = ({
               className={classes.label}
               htmlFor="agreement-estimated-completion"
             >
-              Estimated completion date
+              {t("agreementBuilder.dateLabel")}
             </label>
             <input
               className={classes.input}
@@ -779,7 +785,7 @@ const ListingRequestAgreementBuilder = ({
 
           <div className={classes.field}>
             <label className={classes.label} htmlFor="agreement-revision-count">
-              Included revision count
+              {t("agreementBuilder.revisionsLabel")}
             </label>
             <input
               className={classes.input}
@@ -806,13 +812,13 @@ const ListingRequestAgreementBuilder = ({
 
         <div className={classes.field}>
           <label className={classes.label} htmlFor="agreement-additional-cost">
-            Additional cost policy
+            {t("agreementBuilder.costLabel")}
           </label>
           <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-additional-cost"
-            placeholder="e.g. Extra emotes are 15.00 each. Any change to scope, price or timeline needs an accepted change order before I continue."
+            placeholder={t("agreementBuilder.costPlaceholder")}
             value={form.additionalCostPolicy}
             onChange={(event) =>
               updateField("additionalCostPolicy", event.currentTarget.value)
@@ -828,13 +834,13 @@ const ListingRequestAgreementBuilder = ({
 
         <div className={classes.field}>
           <label className={classes.label} htmlFor="agreement-revision-policy">
-            Revision policy
+            {t("agreementBuilder.revisionLabel")}
           </label>
           <KeptPlaceholder>
           <textarea
             className={classes.textarea}
             id="agreement-revision-policy"
-            placeholder="e.g. Two rounds of changes are included at the sketch stage. Changes after colouring, or further rounds, are 10.00 each through a change order."
+            placeholder={t("agreementBuilder.revisionPlaceholder")}
             value={form.revisionPolicy}
             onChange={(event) =>
               updateField("revisionPolicy", event.currentTarget.value)
@@ -858,7 +864,7 @@ const ListingRequestAgreementBuilder = ({
             }
           />
           <span className={classes.checkboxLabel}>
-            Send to buyer now. Uncheck to save as a draft.
+            {t("agreementBuilder.sendNow")}
           </span>
         </label>
 
@@ -868,11 +874,13 @@ const ListingRequestAgreementBuilder = ({
             disabled={isPending}
             type="submit"
           >
-            {isPending
-              ? "Saving agreement…"
-              : form.sendNow
-                ? "Create and send agreement"
-                : "Save agreement draft"}
+            {t(
+              isPending
+                ? "agreementBuilder.saving"
+                : form.sendNow
+                  ? "agreementBuilder.createAndSend"
+                  : "agreementBuilder.saveDraft"
+            )}
           </button>
         </div>
       </div>

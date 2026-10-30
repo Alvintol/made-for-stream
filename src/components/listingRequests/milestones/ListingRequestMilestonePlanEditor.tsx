@@ -8,7 +8,7 @@ import {
   type ListingRequestMilestonePlanItem,
 } from '../../../domain/listings/listingRequestMilestones';
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT } from "../../../lib/i18n/i18n";
 type ListingRequestMilestonePlanEditorProps = {
   milestones: ListingRequestMilestonePlanItem[];
   agreementTotal: number;
@@ -102,6 +102,7 @@ const ListingRequestMilestonePlanEditor = ({
   disabled: disabledByParent = false,
   onChange,
 }: ListingRequestMilestonePlanEditorProps) => {
+  const t = useT();
   const isEligible =
     allowsMilestonePayments(estimatedWorkDays);
 
@@ -182,12 +183,11 @@ const ListingRequestMilestonePlanEditor = ({
       <div className={classes.header}>
         <div className={classes.heading}>
           <h3 className={classes.title}>
-            Milestone payment plan
+            {t("milestonePlan.title")}
           </h3>
 
           <p className={classes.text}>
-            Define each buyer approval checkpoint and the
-            payment that becomes due after approval.
+            {t("milestonePlan.text")}
           </p>
         </div>
 
@@ -197,20 +197,17 @@ const ListingRequestMilestonePlanEditor = ({
           type="button"
           onClick={addMilestone}
         >
-          Add milestone
+          {t("milestonePlan.add")}
         </button>
       </div>
 
       {isEligible ? (
         <div className={classes.eligibleNotice}>
-          This project is eligible for milestone payments
-          because it is estimated to take at least 7 days.
+          {t("milestonePlan.eligible")}
         </div>
       ) : (
         <div className={classes.notice}>
-          Milestone payments need an estimated project length
-          of at least 7 days. Raise the estimated work days to
-          edit this plan.
+          {t("milestonePlan.notEligible")}
         </div>
       )}
 
@@ -222,13 +219,12 @@ const ListingRequestMilestonePlanEditor = ({
           >
             <div className={classes.itemHeader}>
               <div className={classes.itemTitle}>
-                Milestone {index + 1}
+                {t("milestones.position", { number: index + 1 })}
               </div>
 
               <div className={classes.itemActions}>
                 <button
-                  aria-label={`Move milestone ${index + 1
-                    } up`}
+                  aria-label={t("milestonePlan.moveUpLabel", { number: index + 1 })}
                   className={classes.btnOutline}
                   disabled={disabled || index === 0}
                   type="button"
@@ -236,12 +232,11 @@ const ListingRequestMilestonePlanEditor = ({
                     moveMilestone(index, -1)
                   }
                 >
-                  Move up
+                  {t("milestonePlan.moveUp")}
                 </button>
 
                 <button
-                  aria-label={`Move milestone ${index + 1
-                    } down`}
+                  aria-label={t("milestonePlan.moveDownLabel", { number: index + 1 })}
                   className={classes.btnOutline}
                   disabled={
                     disabled ||
@@ -252,12 +247,11 @@ const ListingRequestMilestonePlanEditor = ({
                     moveMilestone(index, 1)
                   }
                 >
-                  Move down
+                  {t("milestonePlan.moveDown")}
                 </button>
 
                 <button
-                  aria-label={`Remove milestone ${index + 1
-                    }`}
+                  aria-label={t("milestonePlan.removeLabel", { number: index + 1 })}
                   className={classes.btnDanger}
                   disabled={disabled}
                   type="button"
@@ -265,7 +259,7 @@ const ListingRequestMilestonePlanEditor = ({
                     removeMilestone(index)
                   }
                 >
-                  Remove
+                  {t("milestonePlan.remove")}
                 </button>
               </div>
             </div>
@@ -276,7 +270,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.label}
                   htmlFor={`milestone-${index}-title`}
                 >
-                  Milestone {index + 1} title
+                  {t("milestonePlan.titleLabel", { number: index + 1 })}
                 </label>
 
                 <KeptPlaceholder>
@@ -284,7 +278,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.input}
                   disabled={disabled}
                   id={`milestone-${index}-title`}
-                  placeholder="e.g. Sketches approved"
+                  placeholder={t("milestonePlan.titlePlaceholder")}
                   maxLength={160}
                   value={milestone.title}
                   onChange={(event) =>
@@ -302,7 +296,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.label}
                   htmlFor={`milestone-${index}-amount`}
                 >
-                  Milestone {index + 1} amount
+                  {t("milestonePlan.amountLabel", { number: index + 1 })}
                 </label>
 
                 <KeptPlaceholder>
@@ -310,7 +304,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.input}
                   disabled={disabled}
                   id={`milestone-${index}-amount`}
-                  placeholder="e.g. 50.00"
+                  placeholder={t("milestonePlan.amountPlaceholder")}
                   min="0"
                   step="0.01"
                   type="number"
@@ -339,7 +333,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.label}
                   htmlFor={`milestone-${index}-description`}
                 >
-                  Milestone {index + 1} description
+                  {t("milestonePlan.descriptionLabel", { number: index + 1 })}
                 </label>
 
                 <KeptPlaceholder>
@@ -347,7 +341,7 @@ const ListingRequestMilestonePlanEditor = ({
                   className={classes.textarea}
                   disabled={disabled}
                   id={`milestone-${index}-description`}
-                  placeholder="e.g. Rough sketches of all six emotes, sent for the buyer to approve before colouring starts."
+                  placeholder={t("milestonePlan.descriptionPlaceholder")}
                   maxLength={2000}
                   value={
                     milestone.description ?? ""
@@ -369,7 +363,7 @@ const ListingRequestMilestonePlanEditor = ({
       <div className={classes.summaryGrid}>
         <div className={classes.summaryItem}>
           <div className={classes.summaryLabel}>
-            Agreement total
+            {t("milestonePlan.agreementTotal")}
           </div>
 
           <div className={classes.summaryValue}>
@@ -382,7 +376,7 @@ const ListingRequestMilestonePlanEditor = ({
 
         <div className={classes.summaryItem}>
           <div className={classes.summaryLabel}>
-            Milestone total
+            {t("milestonePlan.milestoneTotal")}
           </div>
 
           <div className={classes.summaryValue}>
@@ -395,7 +389,7 @@ const ListingRequestMilestonePlanEditor = ({
 
         <div className={classes.summaryItem}>
           <div className={classes.summaryLabel}>
-            Milestones
+            {t("section.milestones")}
           </div>
 
           <div className={classes.summaryValue}>
@@ -406,29 +400,27 @@ const ListingRequestMilestonePlanEditor = ({
 
       {difference === 0 ? (
         <div className={classes.match}>
-          Milestone amounts match the agreement total.
+          {t("milestonePlan.match")}
         </div>
       ) : difference > 0 ? (
         <div className={classes.mismatch}>
-          {formatMoney(difference, currency)} remains
-          unallocated.
+          {t("milestonePlan.unallocated", { amount: formatMoney(difference, currency) })}
         </div>
       ) : (
         <div className={classes.mismatch}>
-          The milestone plan exceeds the agreement total
-          by{" "}
-          {formatMoney(
-            Math.abs(difference),
-            currency
-          )}
-          .
+          {t("milestonePlan.exceeds", {
+            amount: formatMoney(
+              Math.abs(difference),
+              currency
+            ),
+          })}
         </div>
       )}
 
       {validationErrors.length > 0 && (
         <div className={classes.errors}>
           <strong>
-            Review the milestone payment plan:
+            {t("milestonePlan.review")}
           </strong>
 
           <ul>

@@ -7,6 +7,8 @@
 // All two-decimal: the payment bridge still converts with `* 100`
 // (launch-scope.md section 1.1).
 
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export const MINIMUM_INSTALMENT_MINOR_UNITS = 1000;
 
 export const SUPPORTED_CURRENCY_CODES = [
@@ -37,15 +39,23 @@ export const minimumInstalmentAmount = MINIMUM_INSTALMENT_MINOR_UNITS / 100;
 
 // Same wording as public.assert_listing_request_instalment_allowed, so a
 // form's message and the database's refusal read alike.
-export const getInstalmentFloorMessage = (amount: number, currency: string): string | null => {
+export const getInstalmentFloorMessage = (
+  amount: number,
+  currency: string,
+  t: Translate = english,
+): string | null => {
   const code = currency.trim().toUpperCase();
 
   if (!isSupportedCurrency(currency)) {
-    return `Payments in ${code || "(none)"} are not supported yet. Price the project in a currency listed in the Fee Schedule.`;
+    return t("instalment.unsupported", { code: code || "(none)" });
   }
 
   if (Math.round(amount * 100) < MINIMUM_INSTALMENT_MINOR_UNITS) {
-    return `Each payment in a project must be at least ${minimumInstalmentAmount.toFixed(2)} ${code}, and this one is ${amount.toFixed(2)} ${code}. Combine it with another payment or raise its amount.`;
+    return t("instalment.floor", {
+      minimum: minimumInstalmentAmount.toFixed(2),
+      amount: amount.toFixed(2),
+      code,
+    });
   }
 
   return null;

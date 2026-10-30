@@ -90,7 +90,8 @@ export const validateListingRequestMilestonePlan = (
     estimatedWorkDays: number;
     agreementTotal: number;
     milestones: ListingRequestMilestonePlanItem[];
-  }
+  },
+  t: Translate = english
 ): ListingRequestMilestonePlanValidation => {
   const errors: string[] = [];
 
@@ -108,15 +109,11 @@ export const validateListingRequestMilestonePlan = (
       input.estimatedWorkDays
     )
   ) {
-    errors.push(
-      "Milestone payments need an estimated project length of at least 7 days."
-    );
+    errors.push(t("milestonePlan.errorLength"));
   }
 
   if (input.milestones.length < 2) {
-    errors.push(
-      "Add at least two milestones to use milestone payments."
-    );
+    errors.push(t("milestonePlan.errorCount"));
   }
 
   const sortOrders = new Set<number>();
@@ -131,39 +128,29 @@ export const validateListingRequestMilestonePlan = (
         cleanTitle.length < 3 ||
         cleanTitle.length > 160
       ) {
-        errors.push(
-          `Milestone ${index + 1} title must be between 3 and 160 characters.`
-        );
+        errors.push(t("milestonePlan.errorTitle", { number: index + 1 }));
       }
 
       if (cleanDescription.length > 2000) {
-        errors.push(
-          `Milestone ${index + 1} description cannot exceed 2000 characters.`
-        );
+        errors.push(t("milestonePlan.errorDescription", { number: index + 1 }));
       }
 
       if (
         !Number.isFinite(milestone.amount) ||
         milestone.amount <= 0
       ) {
-        errors.push(
-          `Milestone ${index + 1} amount must be greater than 0.`
-        );
+        errors.push(t("milestonePlan.errorAmount", { number: index + 1 }));
       }
 
       if (
         !Number.isInteger(milestone.sortOrder) ||
         milestone.sortOrder < 0
       ) {
-        errors.push(
-          `Milestone ${index + 1} has an invalid order.`
-        );
+        errors.push(t("milestonePlan.errorOrder", { number: index + 1 }));
       }
 
       if (sortOrders.has(milestone.sortOrder)) {
-        errors.push(
-          "Milestone order values must be unique."
-        );
+        errors.push(t("milestonePlan.errorUnique"));
       }
 
       sortOrders.add(milestone.sortOrder);
@@ -175,9 +162,7 @@ export const validateListingRequestMilestonePlan = (
     agreementTotal > 0 &&
     milestoneTotal !== agreementTotal
   ) {
-    errors.push(
-      "Milestone amounts must equal the total agreement amount."
-    );
+    errors.push(t("milestonePlan.errorTotal"));
   }
 
   return {

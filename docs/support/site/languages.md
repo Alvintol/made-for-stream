@@ -71,8 +71,15 @@ browser. Emails are still in English.
   English keeps the reader's own style (`dateLocale`).
 - 2026-10-30: the creator dashboard, the creator's commission list and
   commission page, and the boxes for sending or withdrawing a draft. The
-  forms those boxes open (agreement, milestone, delivery, update, change
-  order) are still English.
+  forms those boxes open (milestone, delivery, update, change order) are
+  still English.
+- 2026-10-30: the agreement form and the milestone payment plan, with their
+  error messages. The two default policies, the payment titles ("Project
+  deposit", "Remaining balance") and the update-rule sentence start in the
+  creator's language and are saved into the agreement as written, like
+  everything else the creator types, so a buyer reading another language
+  sees them in the creator's. Nothing in the database or API matches on
+  them.
 A category, listing type or video type the lists do not know (an old value
 on a listing) is shown as it is written, never as an error (`hasMessage`).
 
@@ -153,8 +160,13 @@ with "Your choice could not be saved. Please try again."
   text, and they name people by matching English words
   (`nameSystemMessagePeople`). Translating them means saving a code with
   each line instead.
-- **Messages from the server** (an error from checkout, for example) are
-  still in English.
+- **Messages from the server** (an error from checkout, or the database
+  refusing an agreement) are still in English. The instalment-floor message
+  has a French form-side version, but the same refusal from the database is
+  English.
+- **Default agreement policies need the policy translator's check.**
+  `agreementBuilder.defaultCostPolicy` and `defaultRevisionPolicy` become
+  agreement terms unless the creator changes them.
 - **Numbers and money** still use English formatting: French writes "5 %" and
   "105 € EUR", the site shows "5%" and "€105 EUR". Dates and currency names
   follow the language.
