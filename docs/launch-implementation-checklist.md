@@ -1007,9 +1007,11 @@ Build order (each its own branch):
       (`feat/i18n-settings-reports`): My reports, Preferences, the settings
       frame, the profile page, What's new, About and the failed-action notice.
       Then (`feat/i18n-personal-payouts`): Personal details and Payouts, which
-      finishes the pages every member and creator uses. Next: the admin pages only if the owner wants them, then the
-      policies by a translator, then a French speaker's review, then mark
-      French ready and lift the Quebec block.
+      finishes the pages every member and creator uses. The admin pages stay in English (owner's decision, 2026-10-30).
+      Then (`feat/i18n-automatic-chat-lines`, migration 174): the automatic
+      chat lines and their inbox previews. Next: the policies by a translator,
+      then a French speaker's review, then mark French ready and lift the
+      Quebec block.
 
 Owner's steps, outside the code:
 

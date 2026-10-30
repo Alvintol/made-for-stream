@@ -5,6 +5,7 @@ import type {
   ConversationInitiationReasonCode,
   ConversationStatus,
   ConversationType,
+  SystemLine,
 } from "../../domain/conversations/conversations";
 import type { ListingRequestStatus } from "../../domain/listings/listingRequests";
 
@@ -37,6 +38,7 @@ export type MessagesInboxConversation = {
   last_message_at: string | null;
   last_message_sender_user_id: string | null;
   last_message_preview: string | null;
+  last_message_system_line?: SystemLine | null;
   updated_at: string;
   created_at: string;
 };
@@ -104,6 +106,7 @@ const fetchMessagesInbox = async (
       last_message_at,
       last_message_sender_user_id,
       last_message_preview,
+      last_message_system_line,
       updated_at,
       created_at
     `, { count: "exact" })

@@ -83,6 +83,11 @@ browser. Emails are still in English.
 - 2026-10-30: My reports, Preferences, the settings frame, the profile page,
   the What's new page and window, the About page and the "That did not go
   through" notice.
+- 2026-10-30: automatic chat lines and their inbox previews (migration 174).
+  The saved English text does not change; a code beside it picks the wording.
+  See `MSG-006` in the conversations playbook. The subject inside an off-site
+  confirmation now follows the language too. The admin pages stay in English
+  (owner's decision).
 - 2026-10-30: Personal details and Payouts, with the recovery balance. The
   Quebec and sanctions messages are the database's own English wording
   (`blocked_location_message()`), so the form's French only shows before
@@ -173,14 +178,11 @@ with "Your choice could not be saved. Please try again."
   accepted, so they are shown as saved. The same goes for the payment names
   saved on a cancellation statement, and for the "I am requesting
   administrative closure" message the closure button posts in the chat
-  (admins recognise it there). The subject inside an off-site confirmation
-  ("the final delivery (title)") is saved in English by the database, so it
-  appears in English inside the French sentence.
-- **Automatic chat lines stay in English** ("… sent a project change order"),
-  in the chat and in the inbox preview. The database saves them as English
-  text, and they name people by matching English words
-  (`nameSystemMessagePeople`). Translating them means saving a code with
-  each line instead.
+  (admins recognise it there).
+- **Typed parts of automatic chat lines stay as written**: a title, a reason,
+  a note, and a payment name saved on a schedule ("Change order: …").
+- **Searching the inbox in French** does not find automatic lines. Search
+  reads the saved English text.
 - **Messages from the server** (an error from checkout, or the database
   refusing an agreement) are still in English. The instalment-floor message
   has a French form-side version, but the same refusal from the database is

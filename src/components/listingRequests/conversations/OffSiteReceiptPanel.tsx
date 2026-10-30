@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { offSiteSubjectText } from "../../../domain/conversations/conversations";
 import { describeOffSiteDelivery } from "../../../domain/listings/offSiteDelivery";
 import {
   useAdminRecordOffSiteReceipt,
@@ -54,7 +55,7 @@ const OffSiteReceiptPanel = ({ requestId, viewer, buyerName, creatorName }: OffS
   const describe = (receipt: OffSiteReceiptRow) =>
     t("offSiteReceipt.says", {
       creator: creatorName,
-      subject: receipt.subject,
+      subject: offSiteSubjectText(receipt.subject, t),
       methods: describeOffSiteDelivery(receipt.methods, receipt.other, t) ?? t("offSiteReceipt.anotherWay"),
     });
 

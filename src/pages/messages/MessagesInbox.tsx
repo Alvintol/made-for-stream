@@ -4,6 +4,7 @@ import {
   getConversationDisplayContext,
   getConversationDisplayTitle,
 } from "../../domain/conversations/conversationDisplay";
+import { inboxPreviewText } from "../../domain/conversations/conversations";
 import {
   getInboxFolder,
   inboxFolders,
@@ -392,7 +393,11 @@ const MessagesInbox = () => {
                             ),
                           })}
                         </span>{" "}
-                        {item.conversation.last_message_preview || t("chat.empty")}
+                        {inboxPreviewText(
+                          item.conversation.last_message_system_line,
+                          item.conversation.last_message_preview,
+                          t
+                        ) || t("chat.empty")}
                       </div>
                     </div>
 
