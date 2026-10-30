@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.23";
+export const siteVersion = "V0.7.24";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.24",
+    date: "2026-10-30",
+    title: "Clearer listing pages",
+    changes: [
+      "My listings and a listing's own page show the type, purchase flow, category and video type as words, such as Commission request, instead of codes.",
+      "A listing's revision history shows the same values as words.",
+      "My listings now describes itself as your drafts and published listings.",
+    ],
+  },
   {
     version: "V0.7.23",
     date: "2026-10-30",

@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export type CreatorApplicationStatus =
   | "draft"
   | "submitted"
@@ -14,6 +16,8 @@ export const MIN_WORK_SAMPLES = 3;
 export const MAX_WORK_SAMPLES = 10;
 export const MAX_VIDEO_SAMPLES = 1;
 
+// Saved with the sample and matched on, so it stays English; the page shows
+// apply.recentSampleTitle.
 export const REQUIRED_RECENT_UPLOAD_TITLE = "Most Recent Upload/Vod";
 export const REQUIRED_RECENT_UPLOAD_DESCRIPTION =
   "Link to your most recent public upload, VOD, or equivalent recent creator work.";
@@ -45,25 +49,20 @@ export const getCreatorApplicationPhase = (
 };
 
 export const getCreatorApplicationStatusLabel = (
-  status: CreatorApplicationStatus | null | undefined
+  status: CreatorApplicationStatus | null | undefined,
+  t: Translate = english
 ): string => {
   switch (status) {
     case "draft":
-      return "Draft";
     case "needs_changes":
-      return "Changes requested";
     case "submitted":
-      return "Submitted";
     case "under_review":
-      return "Under review";
     case "approved":
-      return "Approved";
     case "rejected":
-      return "Not approved";
     case "suspended":
-      return "Suspended";
+      return t(`apply.status.${status}`);
     default:
-      return "Not started";
+      return t("apply.status.none");
   }
 };
 
@@ -93,12 +92,12 @@ export const isValidPublicUrl = (value: string): boolean => {
   }
 };
 
-export const getUrlValidationError = (value: string): string | null => {
+export const getUrlValidationError = (value: string, t: Translate = english): string | null => {
   if (!value.trim()) return null;
 
   return isValidPublicUrl(normaliseUrlInput(value))
     ? null
-    : "Enter a valid public link, e.g. youtube.com/watch?v=…";
+    : t("apply.urlError");
 };
 
 export const isRequiredRecentUploadSample = (sample: WorkSample): boolean =>
@@ -136,7 +135,8 @@ export const getWorkSampleCounts = (samples: WorkSample[]) => ({
 });
 
 export const getCreatorApplicationRequirements = (
-  input: CreatorApplicationReadinessInput
+  input: CreatorApplicationReadinessInput,
+  t: Translate = english
 ): CreatorApplicationRequirement[] => {
   const counts = getWorkSampleCounts(input.samples);
   const samplesOk =
@@ -147,38 +147,42 @@ export const getCreatorApplicationRequirements = (
   return [
     {
       key: "profile",
-      label: "Handle and display name set",
+      label: t("apply.reqProfile"),
       done: input.profileReady,
-      blocker: "Add a handle and display name in settings.",
+      blocker: t("apply.reqProfileBlock"),
     },
     {
       key: "platform",
-      label: "Creator platform linked",
+      label: t("apply.reqPlatform"),
       done: input.hasLinkedPlatform,
-      blocker: "Link Twitch or YouTube in settings.",
+      blocker: t("apply.reqPlatformBlock"),
     },
     {
       key: "recentUpload",
-      label: "Most recent upload or VOD added",
+      label: t("apply.reqRecent"),
       done: counts.hasRecentUpload,
-      blocker: "Add your most recent upload or VOD link.",
+      blocker: t("apply.reqRecentBlock"),
     },
     {
       key: "samples",
-      label: `${MIN_WORK_SAMPLES}–${MAX_WORK_SAMPLES} work samples (max ${MAX_VIDEO_SAMPLES} video)`,
+      label: t("apply.reqSamples", {
+        min: MIN_WORK_SAMPLES,
+        max: MAX_WORK_SAMPLES,
+        videos: MAX_VIDEO_SAMPLES,
+      }),
       done: samplesOk,
       blocker:
         counts.videos > MAX_VIDEO_SAMPLES
-          ? `Only ${MAX_VIDEO_SAMPLES} video sample is allowed.`
+          ? t("apply.reqSamplesVideos", { count: MAX_VIDEO_SAMPLES })
           : counts.total > MAX_WORK_SAMPLES
-            ? `Remove samples to stay within ${MAX_WORK_SAMPLES}.`
-            : `Add at least ${MIN_WORK_SAMPLES} work samples (${counts.total} so far).`,
+            ? t("apply.reqSamplesMax", { max: MAX_WORK_SAMPLES })
+            : t("apply.reqSamplesMin", { min: MIN_WORK_SAMPLES, count: counts.total }),
     },
     {
       key: "agreements",
-      label: "Terms and acknowledgements accepted",
+      label: t("apply.reqAgreements"),
       done: input.agreementsAccepted,
-      blocker: "Accept the creator terms and acknowledgements.",
+      blocker: t("apply.reqAgreementsBlock"),
     },
   ];
 };

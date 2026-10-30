@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useT } from "../../lib/i18n/i18n";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 import { requireCreatorPaymentAccountReadyForPublishing } from "./listingPaymentAccountGuards";
 
 export const usePublishListing = () => {
+  const t = useT();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-
   return useMutation({
     mutationFn: async (listingId: string) => {
       if (!user?.id) {
@@ -35,9 +36,7 @@ export const usePublishListing = () => {
       }
 
       if (!data?.id) {
-        throw new Error(
-          "This listing could not be published. It may no longer be an editable draft or it may be locked by moderation.",
-        );
+        throw new Error(t("listingDetails.publishRefused"));
       }
 
       return data.id as string;

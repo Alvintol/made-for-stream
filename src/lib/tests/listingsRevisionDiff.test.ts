@@ -97,8 +97,8 @@ describe("getListingRevisionChanges", () => {
     expect(getListingRevisionChanges(current, previous)).toContainEqual({
       key: "fulfilment_mode",
       label: "Fulfilment mode changed",
-      from: "request",
-      to: "instant",
+      from: "Commission request",
+      to: "Instant purchase",
     });
   });
 

@@ -5,7 +5,12 @@ import {
   type ListingRevisionRow,
 } from "../../hooks/listings/useListingRevisions";
 import { useMyListing } from "../../hooks/listings/useMyListing";
-import { getListingRevisionChanges } from '../../lib/listings/listingRevisionDiff';
+import {
+  getListingRevisionChanges,
+  revisionPriceText,
+  revisionStatusText,
+} from '../../lib/listings/listingRevisionDiff';
+import { dateLocale, useLanguage, useT, wordFor } from "../../lib/i18n/i18n";
 import ListingRevisionChangeText from "../../components/listings/ListingRevisionChangeText";
 
 const classes = {
@@ -45,25 +50,25 @@ const classes = {
     "rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700",
 } as const;
 
-const revisionEventLabel = (eventType: ListingRevisionRow["event_type"]) =>
+const revisionEventKey = (eventType: ListingRevisionRow["event_type"]) =>
   eventType === "created"
-    ? "Created"
+    ? "revision.event.created"
     : eventType === "updated"
-      ? "Updated"
+      ? "revision.event.updated"
       : eventType === "published"
-        ? "Published"
+        ? "revision.event.published"
         : eventType === "deactivated"
-          ? "Deactivated"
+          ? "revision.event.deactivated"
           : eventType === "reactivated"
-            ? "Reactivated"
-            : "Moved to draft";
+            ? "revision.event.reactivated"
+            : "revision.event.moved";
 
-const revisionDateText = (value: string) => {
+const revisionDateText = (value: string, locale: string | undefined) => {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(undefined, {
+    : date.toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -72,18 +77,9 @@ const revisionDateText = (value: string) => {
     });
 };
 
-const revisionPriceText = (
-  priceType: "fixed" | "starting_at" | "range",
-  priceMin: number,
-  priceMax: number | null
-) =>
-  priceType === "fixed"
-    ? `$${priceMin}`
-    : priceType === "starting_at"
-      ? `From $${priceMin}`
-      : `$${priceMin}–$${priceMax ?? priceMin}`;
-
 const CreatorListingRevisions = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const { id } = useParams<{ id: string }>();
 
   const { data: listing, isLoading: isLoadingListing, error: listingError } =
@@ -104,21 +100,19 @@ const CreatorListingRevisions = () => {
   );
 
   if (isLoadingListing) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   if (listingError || !listing) {
     return (
       <div className={classes.page}>
         <Link to="/creator/listings" className={classes.backLink}>
-          ← Back to my listings
+          ← {t("listingForm.back")}
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Listing not found</h1>
-          <p className={classes.sub}>
-            This listing could not be loaded from your creator account.
-          </p>
+          <h1 className={classes.h1}>{t("listingForm.notFound")}</h1>
+          <p className={classes.sub}>{t("listingForm.notFoundText")}</p>
         </div>
       </div>
     );
@@ -127,30 +121,28 @@ const CreatorListingRevisions = () => {
   return (
     <div className={classes.page}>
       <Link to={`/creator/listings/${listing.id}`} className={classes.backLink}>
-        ← Back to listing details
+        ← {t("revision.back")}
       </Link>
 
       <div className={classes.header}>
-        <h1 className={classes.h1}>Revision history</h1>
+        <h1 className={classes.h1}>{t("revision.title")}</h1>
 
-        <p className={classes.sub}>
-          Private creator-side revision history for {listing.title}.
-        </p>
+        <p className={classes.sub}>{t("revision.sub", { title: listing.title })}</p>
       </div>
 
       <div className={classes.card}>
         {revisionsError && (
           <div className={classes.errorCard}>
-            Revision history could not be loaded right now.
+            {t("revision.loadFailed")}
           </div>
         )}
 
         {isLoadingRevisions && revisionRows.length === 0 && (
-          <div className={classes.loadingText}>Loading revision history…</div>
+          <div className={classes.loadingText}>{t("revision.loading")}</div>
         )}
 
         {!isLoadingRevisions && !revisionsError && revisionRows.length === 0 && (
-          <p className={classes.text}>No revisions have been recorded yet.</p>
+          <p className={classes.text}>{t("revision.none")}</p>
         )}
 
         {revisionRows.length > 0 && (
@@ -158,41 +150,42 @@ const CreatorListingRevisions = () => {
             <div className={classes.revisionList}>
               {revisionRows.map((revision, index) => {
                 const previousRevision = revisionRows[index + 1] ?? null;
-                const changes = getListingRevisionChanges(revision, previousRevision);
+                const changes = getListingRevisionChanges(revision, previousRevision, t);
 
                 return (
                   <div key={revision.id} className={classes.revisionItem}>
                     <div className={classes.revisionTop}>
                       <div className={classes.revisionTitle}>
-                        {revisionEventLabel(revision.event_type)}
+                        {t(revisionEventKey(revision.event_type))}
                       </div>
 
                       <div className={classes.revisionMeta}>
-                        {revisionDateText(revision.created_at)}
+                        {revisionDateText(revision.created_at, locale)}
                       </div>
                     </div>
 
                     <div className={classes.revisionBody}>
                       <div className={classes.revisionText}>
-                        <strong>Title:</strong> {revision.snapshot.title}
+                        <strong>{t("revision.titleLabel")}</strong> {revision.snapshot.title}
                       </div>
 
                       <div className={classes.revisionText}>
-                        <strong>Price:</strong>{" "}
+                        <strong>{t("revision.priceLabel")}</strong>{" "}
                         {revisionPriceText(
                           revision.snapshot.price_type,
                           revision.snapshot.price_min,
-                          revision.snapshot.price_max
+                          revision.snapshot.price_max,
+                          t
                         )}
                       </div>
 
                       <div className={classes.revisionText}>
-                        <strong>Status:</strong> {revision.snapshot.status}
-                        {revision.snapshot.is_active ? " • Active" : " • Inactive"}
+                        <strong>{t("chat.statusLabel")}</strong>{" "}
+                        {revisionStatusText(revision.snapshot.status, revision.snapshot.is_active, t)}
                       </div>
 
                       <div className={classes.revisionText}>
-                        <strong>Category:</strong> {revision.snapshot.category}
+                        <strong>{t("revision.categoryLabel")}</strong> {wordFor("category", revision.snapshot.category, t)}
                       </div>
 
                       <div className={classes.changeList}>
@@ -219,7 +212,7 @@ const CreatorListingRevisions = () => {
                   onClick={() => void fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
-                  {isFetchingNextPage ? "Loading…" : "Load 3 more"}
+                  {isFetchingNextPage ? t("common.loading") : t("inbox.loadMore", { count: 3 })}
                 </button>
               )}
 
@@ -227,7 +220,7 @@ const CreatorListingRevisions = () => {
                 className={classes.btnOutline}
                 to={`/creator/listings/${listing.id}`}
               >
-                Back to listing details
+                {t("revision.back")}
               </Link>
             </div>
           </div>
