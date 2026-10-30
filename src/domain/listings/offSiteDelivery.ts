@@ -39,11 +39,12 @@ export const emptyOffSiteDelivery: OffSiteDeliveryFormState = {
 
 export const validateOffSiteDelivery = (
   state: OffSiteDeliveryFormState,
+  t: Translate = english,
 ): string | undefined => {
   if (!state.provided) return undefined;
 
   if (state.methods.length === 0) {
-    return "Choose at least one way the work was sent off site.";
+    return t("offSiteFields.errorMethod");
   }
 
   const other = state.other.trim();
@@ -52,7 +53,10 @@ export const validateOffSiteDelivery = (
     state.methods.includes("other") &&
     (other.length < OFF_SITE_OTHER_MIN_LENGTH || other.length > OFF_SITE_OTHER_MAX_LENGTH)
   ) {
-    return `Say how the work was sent off site, in ${OFF_SITE_OTHER_MIN_LENGTH} to ${OFF_SITE_OTHER_MAX_LENGTH} characters.`;
+    return t("offSiteFields.errorOther", {
+      min: OFF_SITE_OTHER_MIN_LENGTH,
+      max: OFF_SITE_OTHER_MAX_LENGTH,
+    });
   }
 
   return undefined;

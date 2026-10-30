@@ -33,7 +33,7 @@ import {
 import type { SubmitListingRequestMilestoneInput } from "../../../hooks/creatorRequests/useSubmitListingRequestMilestone";
 import OffSiteDeliveryFields from "../OffSiteDeliveryFields";
 import KeptPlaceholder from "../../ui/KeptPlaceholder";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type SubmittableMilestone = Pick<
   ListingRequestMilestoneRow,
   "id" | "status" | "title" | "sort_order"
@@ -67,12 +67,12 @@ const PREVIEW_ACCEPT = `${LISTING_PREVIEW_ACCEPT},${MILESTONE_PREVIEW_VIDEO_ACCE
 
 // Images and videos are checked by their own rules; anything else gets one
 // message naming both.
-const validatePreviewSource = (file: File): string | null =>
+const validatePreviewSource = (file: File, t: Translate): string | null =>
   isMilestonePreviewVideoSource(file)
-    ? validateMilestonePreviewVideoSource(file)
+    ? validateMilestonePreviewVideoSource(file, t)
     : LISTING_PREVIEW_ACCEPT.split(",").includes(file.type)
-      ? validateListingPreviewSource(file)
-      : "Choose a JPEG, PNG or WebP image, an MP4, WebM or MOV video, or an animated GIF.";
+      ? validateListingPreviewSource(file, t)
+      : t("milestoneSubmit.fileType");
 
 type MilestoneSubmissionValidationErrors = {
   summary?: string;
@@ -126,11 +126,12 @@ const defaultFormState: MilestoneSubmissionFormState = {
 };
 
 const getErrorMessage = (
-  error: unknown
+  error: unknown,
+  t: Translate
 ): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The milestone submission could not be saved.";
+    : t("milestoneSubmit.failed");
 
 const splitDeliveryLinks = (
   value: string
@@ -144,7 +145,8 @@ const splitDeliveryLinks = (
 
 const validateForm = (
   form: MilestoneSubmissionFormState,
-  offSite: OffSiteDeliveryFormState
+  offSite: OffSiteDeliveryFormState,
+  t: Translate
 ): MilestoneSubmissionValidationErrors => {
   const errors: MilestoneSubmissionValidationErrors =
     {};
@@ -159,24 +161,21 @@ const validateForm = (
     cleanSummary.length < 10 ||
     cleanSummary.length > 4000
   ) {
-    errors.summary =
-      "Milestone submission summary must be between 10 and 4000 characters.";
+    errors.summary = t("milestoneSubmit.summaryLength");
   }
 
   if (deliveryLinks.length > 20) {
-    errors.deliveryLinksText =
-      "A milestone submission can contain no more than 20 delivery links.";
+    errors.deliveryLinksText = t("milestoneSubmit.tooManyLinks");
   } else if (
     deliveryLinks.some(
       (deliveryLink) =>
         deliveryLink.length > 2000
     )
   ) {
-    errors.deliveryLinksText =
-      "Each milestone delivery link must be 2000 characters or fewer.";
+    errors.deliveryLinksText = t("milestoneSubmit.linkTooLong");
   }
 
-  const offSiteError = validateOffSiteDelivery(offSite);
+  const offSiteError = validateOffSiteDelivery(offSite, t);
 
   if (offSiteError) {
     errors.offSite = offSiteError;
@@ -192,6 +191,7 @@ const ListingRequestMilestoneSubmissionForm = ({
   error,
   onSubmitMilestone,
 }: ListingRequestMilestoneSubmissionFormProps) => {
+  const t = useT();
   const [form, setForm] =
     useState<MilestoneSubmissionFormState>(
       defaultFormState
@@ -270,7 +270,7 @@ const ListingRequestMilestoneSubmissionForm = ({
     }
 
     const sourceError = files
-      .map(validatePreviewSource)
+      .map((file) => validatePreviewSource(file, t))
       .find(Boolean);
 
     if (sourceError) {
@@ -283,7 +283,7 @@ const ListingRequestMilestoneSubmissionForm = ({
       MILESTONE_PREVIEW_MAX_IMAGES
     ) {
       setPreviewImageError(
-        `A milestone submission can contain no more than ${MILESTONE_PREVIEW_MAX_IMAGES} preview images and videos.`
+        t("milestoneSubmit.tooManyPreviews", { count: MILESTONE_PREVIEW_MAX_IMAGES })
       );
       return;
     }
@@ -319,10 +319,10 @@ const ListingRequestMilestoneSubmissionForm = ({
     } catch (renderError) {
       setPreviewImageError(
         renderError instanceof MilestonePreviewVideoError
-          ? renderError.message
-          : isVideo
-            ? "That video could not be read. Try an MP4 or WebM file."
-            : "That image could not be read. Try a different file."
+          ? renderError.key
+            ? t(renderError.key)
+            : renderError.message
+          : t(isVideo ? "preview.videoUnreadable" : "milestoneSubmit.imageUnreadable")
       );
     } finally {
       setIsPreparingImages(false);
@@ -346,7 +346,7 @@ const ListingRequestMilestoneSubmissionForm = ({
   > = async (event) => {
     event.preventDefault();
 
-    const nextErrors = validateForm(form, offSite);
+    const nextErrors = validateForm(form, offSite, t);
 
     setValidationErrors(nextErrors);
 
@@ -388,7 +388,7 @@ const ListingRequestMilestoneSubmissionForm = ({
   };
 
   const errorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   return (
@@ -399,14 +399,13 @@ const ListingRequestMilestoneSubmissionForm = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            {isRevisionSubmission
-              ? "Resubmit milestone"
-              : "Submit milestone"}
+            {t(isRevisionSubmission
+              ? "creatorCommission.milestonePanelResubmit"
+              : "creatorCommission.milestonePanelButton")}
           </h2>
 
           <p className={classes.text}>
-            Provide the completed milestone work and
-            supporting links for buyer review.
+            {t("milestoneSubmit.text")}
           </p>
         </div>
 
@@ -414,8 +413,7 @@ const ListingRequestMilestoneSubmissionForm = ({
           <div
             className={classes.milestoneLabel}
           >
-            Milestone{" "}
-            {milestone.sort_order + 1}
+            {t("milestones.position", { number: milestone.sort_order + 1 })}
           </div>
 
           <div
@@ -429,15 +427,11 @@ const ListingRequestMilestoneSubmissionForm = ({
           <div
             className={classes.revisionNotice}
           >
-            The buyer requested revisions. Submit an
-            updated version after completing the
-            requested changes.
+            {t("milestoneSubmit.revisionNotice")}
           </div>
         ) : (
           <div className={classes.notice}>
-            Submitting starts the buyer-review period.
-            Payment becomes due only after the buyer
-            approves this milestone.
+            {t("milestoneSubmit.submitNotice")}
           </div>
         )}
 
@@ -452,7 +446,7 @@ const ListingRequestMilestoneSubmissionForm = ({
             className={classes.label}
             htmlFor="milestone-submission-summary"
           >
-            Milestone submission summary
+            {t("milestoneSubmit.summaryLabel")}
           </label>
 
           <textarea
@@ -470,9 +464,7 @@ const ListingRequestMilestoneSubmissionForm = ({
           />
 
           <p className={classes.help}>
-            {form.summary.trim().length}/4000
-            characters. Explain what was completed
-            and any details the buyer should review.
+            {t("milestoneSubmit.summaryHint", { count: form.summary.trim().length })}
           </p>
 
           {validationErrors.summary && (
@@ -487,7 +479,7 @@ const ListingRequestMilestoneSubmissionForm = ({
             className={classes.label}
             htmlFor="milestone-delivery-links"
           >
-            Milestone delivery links
+            {t("milestoneSubmit.linksLabel")}
           </label>
 
           <KeptPlaceholder>
@@ -509,8 +501,7 @@ const ListingRequestMilestoneSubmissionForm = ({
           </KeptPlaceholder>
 
           <p className={classes.help}>
-            Optional. Add one link per line, up to
-            20 links.
+            {t("milestoneSubmit.linksHint")}
           </p>
 
           {validationErrors.deliveryLinksText && (
@@ -527,7 +518,7 @@ const ListingRequestMilestoneSubmissionForm = ({
             className={classes.label}
             htmlFor="milestone-preview-images"
           >
-            Preview images and videos
+            {t("milestoneSubmit.previewsLabel")}
           </label>
 
           <input
@@ -551,26 +542,14 @@ const ListingRequestMilestoneSubmissionForm = ({
           />
 
           <p className={classes.help}>
-            Optional. Up to{" "}
-            {MILESTONE_PREVIEW_MAX_IMAGES} JPEG, PNG
-            or WebP images, MP4, WebM or MOV videos,
-            or animated GIFs. We upload a smaller copy
-            of each, at most 1200 pixels on its
-            longest side, with “{watermarkText}”
-            repeated across it. Your originals stay
-            on your device, and only you and the
-            buyer can see the copies. A watermark
-            discourages copying; it cannot fully
-            prevent it.
+            {t("milestoneSubmit.previewHint", {
+              count: MILESTONE_PREVIEW_MAX_IMAGES,
+              watermark: watermarkText,
+            })}
           </p>
 
           <p className={classes.help}>
-            Videos and GIFs show movement: we record
-            the first{" "}
-            {MILESTONE_PREVIEW_VIDEO_MAX_SECONDS}{" "}
-            seconds, without sound, as it plays, so a
-            clip takes about as long as it lasts to
-            prepare. Keep this tab open meanwhile.
+            {t("milestoneSubmit.videoHint", { seconds: MILESTONE_PREVIEW_VIDEO_MAX_SECONDS })}
           </p>
 
           {previewImageError && (
@@ -584,7 +563,7 @@ const ListingRequestMilestoneSubmissionForm = ({
 
           {isPreparingImages && (
             <p className={classes.help}>
-              Preparing your previews…
+              {t("milestoneSubmit.preparing")}
             </p>
           )}
 
@@ -597,7 +576,7 @@ const ListingRequestMilestoneSubmissionForm = ({
                 >
                   {image.isVideo ? (
                     <video
-                      aria-label={`Preview video ${index + 1} as the buyer will see it`}
+                      aria-label={t("milestoneSubmit.videoAlt", { number: index + 1 })}
                       className={classes.image}
                       controls
                       loop
@@ -607,7 +586,7 @@ const ListingRequestMilestoneSubmissionForm = ({
                     />
                   ) : (
                     <img
-                      alt={`Preview image ${index + 1} as the buyer will see it`}
+                      alt={t("milestoneSubmit.imageAlt", { number: index + 1 })}
                       className={classes.image}
                       src={image.url}
                     />
@@ -621,8 +600,9 @@ const ListingRequestMilestoneSubmissionForm = ({
                       removePreviewImage(image)
                     }
                   >
-                    Remove {image.isVideo ? "video" : "image"}{" "}
-                    {index + 1}
+                    {t(image.isVideo ? "milestoneSubmit.removeVideo" : "milestoneSubmit.removeImage", {
+                      number: index + 1,
+                    })}
                   </button>
                 </li>
               ))}
@@ -652,11 +632,13 @@ const ListingRequestMilestoneSubmissionForm = ({
             disabled={isPending || isPreparingImages}
             type="submit"
           >
-            {isPending
-              ? "Submitting milestone…"
-              : isRevisionSubmission
-                ? "Resubmit milestone for review"
-                : "Submit milestone for review"}
+            {t(
+              isPending
+                ? "milestoneSubmit.submitting"
+                : isRevisionSubmission
+                  ? "milestoneSubmit.resubmit"
+                  : "milestoneSubmit.submit"
+            )}
           </button>
         </div>
       </div>

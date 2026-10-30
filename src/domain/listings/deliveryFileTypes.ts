@@ -6,21 +6,23 @@
 // The database holds the same list (public.delivery_file_extensions,
 // 20261016_165) and refuses anything else; a test keeps the two equal.
 
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 export const deliveryFileTypeGroups = [
-  { label: "images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg", "tif", "tiff", "bmp"] },
+  { key: "images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg", "tif", "tiff", "bmp"] },
   {
-    label: "artwork",
+    key: "artwork",
     extensions: ["psd", "psb", "clip", "kra", "procreate", "xcf", "ai", "eps", "afphoto", "afdesign"],
   },
-  { label: "video", extensions: ["mp4", "mov", "webm", "mkv"] },
-  { label: "audio", extensions: ["mp3", "wav", "ogg", "m4a", "flac"] },
+  { key: "video", extensions: ["mp4", "mov", "webm", "mkv"] },
+  { key: "audio", extensions: ["mp3", "wav", "ogg", "m4a", "flac"] },
   {
-    label: "models and Live2D",
+    key: "models",
     extensions: ["vrm", "fbx", "glb", "gltf", "obj", "blend", "moc3", "cmo3", "can3", "json"],
   },
-  { label: "fonts", extensions: ["ttf", "otf", "woff", "woff2"] },
-  { label: "documents", extensions: ["pdf", "txt"] },
-  { label: "archives", extensions: ["zip"] },
+  { key: "fonts", extensions: ["ttf", "otf", "woff", "woff2"] },
+  { key: "documents", extensions: ["pdf", "txt"] },
+  { key: "archives", extensions: ["zip"] },
 ] as const;
 
 export const deliveryFileExtensions: readonly string[] = deliveryFileTypeGroups.flatMap(
@@ -52,22 +54,29 @@ export const isSystemJunkFile = (path: string): boolean => {
 };
 
 // The sentence shown when something is refused, naming what was refused.
-export const deliveryFileTypesMessage = (refused: readonly string[]): string => {
+export const deliveryFileTypesMessage = (
+  refused: readonly string[],
+  t: Translate = english,
+): string => {
   const groups = deliveryFileTypeGroups
-    .map((group) => `${group.label} (${group.extensions.map((e) => e.toUpperCase()).join(", ")})`)
+    .map((group) => `${t(`fileGroup.${group.key}`)} (${group.extensions.map((e) => e.toUpperCase()).join(", ")})`)
     .join("; ");
 
   const shown = refused.slice(0, 5).join(", ");
-  const more = refused.length > 5 ? ` and ${refused.length - 5} more` : "";
-
   // Unity packages can carry scripts, so they wait for a safe way to accept
   // them; until then they go off site (decided 2026-10-28).
   const unity = refused.some((name) => extensionOf(name) === "unitypackage")
-    ? ` ${unityPackageNote}`
+    ? ` ${t("fileTypes.unityNote")}`
     : "";
 
-  return `For safety, only these file types can be uploaded: ${groups}. Not allowed: ${shown}${more}.${unity}`;
+  const message = t("fileTypes.message", {
+    groups,
+    refused: refused.length > 5
+      ? t("fileTypes.more", { shown, count: refused.length - 5 })
+      : shown,
+  });
+
+  return `${message}${unity}`;
 };
 
-export const unityPackageNote =
-  "We are working on a safe way to accept Unity packages (.unitypackage) in a future update. For now, send them outside Made for Stream and tick “Provided off site” so the buyer can confirm they arrived.";
+export const unityPackageNote = english("fileTypes.unityNote");

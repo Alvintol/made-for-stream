@@ -1,3 +1,5 @@
+import { english, type Translate } from "../i18n/i18n";
+import type { MessageKey } from "../i18n/messages/en";
 import { getGifPlayOnceMs } from "./listingAnimatedPreview";
 import { drawWatermark, getListingPreviewSize } from "./listingPreviewImage";
 
@@ -32,11 +34,11 @@ export const isMilestonePreviewVideoSource = (file: { type: string }): boolean =
 export const validateMilestonePreviewVideoSource = (file: {
   type: string;
   size: number;
-}): string | null =>
+}, t: Translate = english): string | null =>
   !ACCEPTED_TYPES.has(file.type)
-    ? "Choose an MP4, WebM or MOV video, or an animated GIF."
+    ? t("preview.videoType")
     : file.size > MILESTONE_PREVIEW_VIDEO_MAX_SOURCE_BYTES
-      ? "That video is over 500 MB. Trim it to the part you want to show."
+      ? t("preview.videoTooBig")
       : null;
 
 // The image size rule, rounded down to even numbers, which video needs.
@@ -49,12 +51,18 @@ export const getRecordingSize = (width: number, height: number) => {
   };
 };
 
-// A problem the creator can act on; its message is shown as it is.
-export class MilestonePreviewVideoError extends Error {}
+// A problem the creator can act on. The message is the English wording; the
+// form shows the key in the page's language.
+export class MilestonePreviewVideoError extends Error {
+  readonly key?: MessageKey;
 
-const CANNOT_RECORD =
-  "This browser cannot prepare videos. Try the latest Chrome, Edge, Firefox or Safari.";
+  constructor(message: string, key?: MessageKey) {
+    super(message);
+    this.key = key;
+  }
+}
 
+const videoError = (key: MessageKey) => new MilestonePreviewVideoError(english(key), key);
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type Draw = (frame: CanvasImageSource) => void;
@@ -77,7 +85,7 @@ const record = async (
   const context = canvas.getContext("2d");
 
   if (!type || !context) {
-    throw new MilestonePreviewVideoError(CANNOT_RECORD);
+    throw videoError("preview.cannotRecord");
   }
 
   const recorder = new MediaRecorder(canvas.captureStream(FRAMES_PER_SECOND), {
@@ -120,7 +128,7 @@ const recordVideo = async (file: Blob, watermarkText: string): Promise<Blob> => 
   try {
     await new Promise<void>((resolve, reject) => {
       video.onloadedmetadata = () => resolve();
-      video.onerror = () => reject(new MilestonePreviewVideoError("That video could not be read. Try an MP4 or WebM file."));
+      video.onerror = () => reject(videoError("preview.videoUnreadable"));
       video.src = url;
     });
 
@@ -162,13 +170,11 @@ const recordGif = async (file: Blob, watermarkText: string): Promise<Blob> => {
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (getGifPlayOnceMs(bytes) === null) {
-    throw new MilestonePreviewVideoError("That GIF does not move. Add it as an image instead, or choose an animated one.");
+    throw videoError("preview.gifStill");
   }
 
   if (typeof ImageDecoder === "undefined") {
-    throw new MilestonePreviewVideoError(
-      "This browser cannot prepare GIFs. Save the animation as an MP4 or WebM video, or try Chrome or Edge.",
-    );
+    throw videoError("preview.gifBrowser");
   }
 
   const decoder = new ImageDecoder({ data: bytes, type: "image/gif" });

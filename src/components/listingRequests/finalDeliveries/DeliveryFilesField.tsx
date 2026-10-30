@@ -8,6 +8,7 @@ import {
   isAllowedDeliveryFileName,
   isSystemJunkFile,
 } from "../../../domain/listings/deliveryFileTypes";
+import { useT } from "../../../lib/i18n/i18n";
 import { listZipEntryNames } from "../../../lib/zip";
 import type { CommissionStorageUsage } from "../../../hooks/creatorRequests/useCommissionStorageUsage";
 import {
@@ -61,6 +62,7 @@ const DeliveryFilesField = ({
   disabled = false,
   onChange,
 }: DeliveryFilesFieldProps) => {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
 
@@ -71,7 +73,7 @@ const DeliveryFilesField = ({
   const selectedBytes = files.reduce((sum, file) => sum + file.size, 0);
 
   const apply = (next: File[]) => {
-    const problem = validateDeliveryFiles(next, remainingBytes);
+    const problem = validateDeliveryFiles(next, remainingBytes, t);
     setError(problem);
     if (!problem) onChange(next);
   };
@@ -87,9 +89,7 @@ const DeliveryFilesField = ({
       const listing = await listZipEntryNames(zip).catch(() => null);
 
       if (!listing || listing.encrypted) {
-        setError(
-          `For safety, we look inside every zip before it is uploaded, and ${zip.name} could not be opened. Zip it again without a password and add it again.`
-        );
+        setError(t("deliveryFiles.zipUnreadable", { name: zip.name }));
         return;
       }
 
@@ -102,7 +102,7 @@ const DeliveryFilesField = ({
     }
 
     if (refused.length > 0) {
-      setError(deliveryFileTypesMessage(refused));
+      setError(deliveryFileTypesMessage(refused, t));
       return;
     }
 
@@ -118,7 +118,7 @@ const DeliveryFilesField = ({
       .map((file) => file.webkitRelativePath || file.name);
 
     if (refused.length > 0) {
-      setError(deliveryFileTypesMessage(refused));
+      setError(deliveryFileTypesMessage(refused, t));
       return;
     }
 
@@ -129,9 +129,7 @@ const DeliveryFilesField = ({
 
   const zipInto = async (chosen: File[], zipName: string, keep: File[]) => {
     if (chosen.reduce((sum, file) => sum + file.size, 0) > FOLDER_ZIP_MAX_BYTES) {
-      setError(
-        "That is more than 2 GB to zip, which is too much for the browser. Zip it on your computer (on Windows: right-click, Send to, Compressed folder; on a Mac: right-click, Compress), then add the .zip, or send it as a link."
-      );
+      setError(t("deliveryFiles.tooBigToZip"));
       return;
     }
 
@@ -141,7 +139,7 @@ const DeliveryFilesField = ({
     try {
       apply([...keep, await zipFiles(chosen, zipName)]);
     } catch {
-      setError("Those files could not be zipped here. Zip them on your computer and add the .zip.");
+      setError(t("deliveryFiles.zipFailed"));
     } finally {
       setIsZipping(false);
     }
@@ -149,22 +147,19 @@ const DeliveryFilesField = ({
 
   return (
     <div className={classes.field}>
-      <span className={classes.label}>Files</span>
+      <span className={classes.label}>{t("files.title")}</span>
 
       <div className={classes.tip}>
         <p>
-          <span className={classes.tipTitle}>Recommended: one .zip file.</span> A zip keeps
-          folders together, downloads in one go and takes less space for files such as
-          PSDs, project files and fonts. Choose a folder below and it is zipped for you,
-          here in your browser. Images and video that are already compressed barely
-          shrink, but are still easier to receive as one zip.
+          <span className={classes.tipTitle}>{t("deliveryFiles.tipTitle")}</span>{" "}
+          {t("deliveryFiles.tip")}
         </p>
       </div>
 
       {usage && (
         <UsageMeter
-          detail={`Storage for this commission (${usage.planLabel} plan). Every file uploaded to it counts, including earlier deliveries.`}
-          label="Commission storage"
+          detail={t("deliveryFiles.storageDetail", { plan: usage.planLabel })}
+          label={t("deliveryFiles.storageLabel")}
           limitBytes={usage.limitBytes}
           pendingBytes={selectedBytes}
           usedBytes={usage.usedBytes}
@@ -173,7 +168,7 @@ const DeliveryFilesField = ({
 
       <div className={classes.inputs}>
         <label className={classes.inputLabel}>
-          <span>Upload a folder (zipped for you)</span>
+          <span>{t("deliveryFiles.uploadFolder")}</span>
           <input
             className={classes.input}
             disabled={busy}
@@ -189,7 +184,7 @@ const DeliveryFilesField = ({
         </label>
 
         <label className={classes.inputLabel}>
-          <span>Add files</span>
+          <span>{t("deliveryFiles.addFiles")}</span>
           <input
             accept={deliveryFileExtensions.map((extension) => `.${extension}`).join(",")}
             className={classes.input}
@@ -206,24 +201,20 @@ const DeliveryFilesField = ({
       </div>
 
       <p className={classes.help}>
-        Optional. Up to {DELIVERY_FILES_MAX_COUNT} files, 2 GB each and 10 GB in all, within
-        the commission&rsquo;s storage; anything bigger can go in a link. A folder over 2 GB
-        is best zipped on your computer. For safety, only these file types can be uploaded,
-        inside a zip too:{" "}
-        {deliveryFileTypeGroups.map((group) => group.label).join(", ")}. Program and
-        script files cannot. Files are private: the buyer can download them once nothing
-        is owed for the final release. They are deleted 180 days after the commission
-        closes, so the buyer should keep their own copy.
+        {t("deliveryFiles.help", {
+          count: DELIVERY_FILES_MAX_COUNT,
+          groups: deliveryFileTypeGroups.map((group) => t(`fileGroup.${group.key}`)).join(", "),
+        })}
       </p>
 
-      {isZipping && <p className={classes.help}>Zipping your files…</p>}
+      {isZipping && <p className={classes.help}>{t("deliveryFiles.zipping")}</p>}
 
       {files.length > 0 && (
         <ul className={classes.list}>
           {files.map((file, index) => (
             <li className={classes.item} key={`${file.name}-${index}`}>
               <span className={classes.name}>
-                {file.name} <span className={classes.size}>{formatFileSize(file.size)}</span>
+                {file.name} <span className={classes.size}>{formatFileSize(file.size, t)}</span>
               </span>
 
               <button
@@ -232,7 +223,7 @@ const DeliveryFilesField = ({
                 type="button"
                 onClick={() => apply(files.filter((_, current) => current !== index))}
               >
-                Remove {file.name}
+                {t("deliveryFiles.remove", { name: file.name })}
               </button>
             </li>
           ))}
@@ -253,7 +244,7 @@ const DeliveryFilesField = ({
               )
             }
           >
-            Zip these {looseFiles.length} files into one
+            {t("deliveryFiles.zipThese", { count: looseFiles.length })}
           </button>
         </div>
       )}
