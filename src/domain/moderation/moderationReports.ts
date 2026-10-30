@@ -67,14 +67,14 @@ export const moderationReportResolutionOptions: Array<{
   value: ModerationReportResolutionCode;
   label: string;
 }> = [
-    { value: "warning_issued", label: "Warning issued" },
-    { value: "content_removed", label: "Content removed" },
-    { value: "conversation_locked", label: "Conversation locked" },
-    { value: "account_restricted", label: "Account restricted" },
-    { value: "no_violation_found", label: "No violation found" },
-    { value: "insufficient_information", label: "Insufficient information" },
-    { value: "duplicate_report", label: "Duplicate report" },
-    { value: "other", label: "Other" },
+    { value: "warning_issued", label: english("modReport.resolution.warning_issued") },
+    { value: "content_removed", label: english("modReport.resolution.content_removed") },
+    { value: "conversation_locked", label: english("modReport.resolution.conversation_locked") },
+    { value: "account_restricted", label: english("modReport.resolution.account_restricted") },
+    { value: "no_violation_found", label: english("modReport.resolution.no_violation_found") },
+    { value: "insufficient_information", label: english("modReport.resolution.insufficient_information") },
+    { value: "duplicate_report", label: english("modReport.resolution.duplicate_report") },
+    { value: "other", label: english("modReport.resolution.other") },
   ];
 
 
@@ -102,15 +102,9 @@ export const moderationReportReasonOptions: Array<{
 // can report by email (Terms section 10).
 
 export const getModerationReportTargetTypeLabel = (
-  targetType: ModerationReportTargetType
-): string =>
-  targetType === "conversation"
-    ? "Conversation report"
-    : targetType === "conversation_message"
-      ? "Message report"
-      : targetType === "listing"
-        ? "Listing report"
-        : "Profile report";
+  targetType: ModerationReportTargetType,
+  t: Translate = english
+): string => t(`modReport.target.${targetType}`);
 
 export const getModerationReportStatusLabel = (
   status: ModerationReportStatus,
@@ -138,17 +132,21 @@ export const getModerationReportStatusSummary = (
             : t("modReport.summary.dismissed");
 
 export const getModerationReportReasonLabel = (
-  reasonCode: ModerationReportReasonCode
-): string =>
-  moderationReportReasonOptions.find(
-    (option) => option.value === reasonCode
-  )?.label ?? "Unknown reason";
+  reasonCode: ModerationReportReasonCode,
+  t: Translate = english
+): string => {
+  const key = `report.reason.${reasonCode}`;
+
+  return hasMessage(key) ? t(key) : t("modReport.reasonUnknown");
+};
 
 export const getModerationReportResolutionLabel = (
-  resolutionCode: ModerationReportResolutionCode | null
-): string =>
-  resolutionCode
-    ? moderationReportResolutionOptions.find(
-      (option) => option.value === resolutionCode
-    )?.label ?? "Unknown resolution"
-    : "No resolution selected";
+  resolutionCode: ModerationReportResolutionCode | null,
+  t: Translate = english
+): string => {
+  if (!resolutionCode) return t("modReport.resolutionNone");
+
+  const key = `modReport.resolution.${resolutionCode}`;
+
+  return hasMessage(key) ? t(key) : t("modReport.resolutionUnknown");
+};

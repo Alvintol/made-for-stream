@@ -1,3 +1,5 @@
+import { useT } from "../../lib/i18n/i18n";
+
 type ActionFailedNoticeProps = {
   onDismiss: () => void;
 };
@@ -15,29 +17,30 @@ const classes = {
 // the page is out of date: the other person on a commission acted first. The
 // page is not reloaded for them, because that would throw away anything they
 // were typing; they choose when.
-const ActionFailedNotice = ({ onDismiss }: ActionFailedNoticeProps) => (
-  <div className={classes.wrap}>
-    <div className={classes.card} role="status">
-      <p className={classes.text}>
-        That did not go through. If something here has changed since you opened the page,
-        reload it to see the latest. Anything you have typed and not saved will be lost.
-      </p>
+const ActionFailedNotice = ({ onDismiss }: ActionFailedNoticeProps) => {
+  const t = useT();
 
-      <div className={classes.actions}>
-        <button
-          className={classes.btnPrimary}
-          type="button"
-          onClick={() => window.location.reload()}
-        >
-          Reload page
-        </button>
+  return (
+    <div className={classes.wrap}>
+      <div className={classes.card} role="status">
+        <p className={classes.text}>{t("actionFailed.text")}</p>
 
-        <button className={classes.btnOutline} type="button" onClick={onDismiss}>
-          Dismiss
-        </button>
+        <div className={classes.actions}>
+          <button
+            className={classes.btnPrimary}
+            type="button"
+            onClick={() => window.location.reload()}
+          >
+            {t("actionFailed.reload")}
+          </button>
+
+          <button className={classes.btnOutline} type="button" onClick={onDismiss}>
+            {t("actionFailed.dismiss")}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default ActionFailedNotice;

@@ -80,6 +80,9 @@ browser. Emails are still in English.
   history, and the creator application. The required sample keeps its saved
   English title ("Most Recent Upload/Vod"), which is matched on; the page
   shows it in the page's language.
+- 2026-10-30: My reports, Preferences, the settings frame, the profile page,
+  the What's new page and window, the About page and the "That did not go
+  through" notice. Personal details and Payouts are still English.
 - 2026-10-30: the milestone, final delivery and progress update forms, with
   file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their
@@ -182,6 +185,9 @@ with "Your choice could not be saved. Please try again."
   follow the language.
 - **Listings and messages are not translated.** They stay in the language they
   were written in.
+- **Site update entries are English.** The What's new list is a public log
+  written once per version, so its titles and lines stay English; the French
+  page says so.
 - **The storage plan name is English.** The commission storage bar shows
   `plan_label` from the database as it is written ("Standard").
 - **The French has not been checked by a French speaker.** Do that before

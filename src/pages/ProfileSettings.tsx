@@ -21,6 +21,7 @@ import {
 } from "../domain/settings/accountSetup";
 import CollapsibleSection from "../components/ui/CollapsibleSection";
 import CreatorPayoutSettings from "../components/settings/CreatorPayoutSettings";
+import { useT, type Translate } from "../lib/i18n/i18n";
 import { FadeIn } from "../lib/motion";
 import KeptPlaceholder from "../components/ui/KeptPlaceholder";
 
@@ -114,18 +115,18 @@ const classes = {
 } as const;
 
 const creatorRequirements = [
-  "Complete your public profile",
-  "Link at least one creator platform",
-  "Link your most recent upload or VOD from the last 30 days",
-  "Add work samples in the creator application",
-  "Pass manual Made for Stream review",
-];
+  "profile.reqProfile",
+  "profile.reqPlatform",
+  "profile.reqRecent",
+  "profile.reqSamples",
+  "profile.reqReview",
+] as const;
 
 // Pulls a readable error message from an unknown thrown value
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
-    : "Something went wrong.";
+    : t("apply.failed");
 
 // Validates a public handle
 const isValidHandle = (value: string): boolean =>
@@ -139,18 +140,22 @@ const stepIcon: Record<AccountSetupStep["state"], { className: string; glyph: st
   optional: { className: classes.iconLocked, glyph: "+" },
 };
 
-const StepBadge = ({ step }: { step: AccountSetupStep }): ReactNode =>
-  step.state === "done" ? (
-    <span className={`${classes.badge} ${classes.badgeDone}`}>Done</span>
+const StepBadge = ({ step }: { step: AccountSetupStep }): ReactNode => {
+  const t = useT();
+
+  return step.state === "done" ? (
+    <span className={`${classes.badge} ${classes.badgeDone}`}>{t("apply.done")}</span>
   ) : step.state === "waiting" ? (
-    <span className={`${classes.badge} ${classes.badgeWaiting}`}>In review</span>
+    <span className={`${classes.badge} ${classes.badgeWaiting}`}>{t("stage.inReview")}</span>
   ) : step.state === "locked" || step.state === "optional" ? (
     <span className={`${classes.badge} ${classes.badgeMuted}`}>
-      {step.state === "locked" ? "Locked" : "Optional"}
+      {t(step.state === "locked" ? "profile.locked" : "agreement.optionalBadge")}
     </span>
   ) : null;
+};
 
 const ProfileSettings = () => {
+  const t = useT();
   const navigate = useNavigate();
   const { search } = useLocation();
 
@@ -198,13 +203,13 @@ const ProfileSettings = () => {
     if (!twitch) return;
 
     if (twitch === "connected") {
-      setOkMsg("Twitch connected successfully.");
+      setOkMsg(t("profile.twitchConnected"));
       setErrMsg(null);
       void Promise.all([refetch(), refetchPlatformAccounts()]);
     }
 
     if (twitch === "error") {
-      setErrMsg(params.get("msg") ?? "Twitch connect failed.");
+      setErrMsg(params.get("msg") ?? t("profile.twitchFailed"));
       setOkMsg(null);
     }
 
@@ -212,7 +217,7 @@ const ProfileSettings = () => {
 
     // Removes the query params so the message does not reappear on refresh
     navigate({ pathname: "/settings/profile", search: "" }, { replace: true });
-  }, [search, navigate, refetch, refetchPlatformAccounts]);
+  }, [search, navigate, refetch, refetchPlatformAccounts, t]);
 
   // Syncs form state from the latest profile response
   useEffect(() => {
@@ -234,24 +239,22 @@ const ProfileSettings = () => {
         .eq("user_id", user.id);
 
       if (!updateError) {
-        setInfoMsg(
-          "Welcome to Made for Stream. Work through the checklist at your own pace — only your profile is needed to get started."
-        );
+        setInfoMsg(t("profile.welcome"));
         await refetch();
       }
     };
 
     void markProfileSetupSeen();
-  }, [user?.id, profile, refetch]);
+  }, [user?.id, profile, refetch, t]);
 
   const loadError = useMemo(() => {
     const messages = [
-      error ? getErrorMessage(error) : null,
-      platformAccountsError ? getErrorMessage(platformAccountsError) : null,
+      error ? getErrorMessage(error, t) : null,
+      platformAccountsError ? getErrorMessage(platformAccountsError, t) : null,
     ].filter(Boolean);
 
     return messages.length ? messages.join(" ") : null;
-  }, [error, platformAccountsError]);
+  }, [error, platformAccountsError, t]);
 
   const twitchAccount = platformAccounts.find((account) => account.platform === "twitch") ?? null;
   const youtubeAccount = platformAccounts.find((account) => account.platform === "youtube") ?? null;
@@ -267,8 +270,8 @@ const ProfileSettings = () => {
         hasLinkedPlatform: hasLinkedCreatorPlatform,
         applicationStatus: sellerApplication?.status ?? null,
         payoutsReady,
-      }),
-    [profileReady, hasLinkedCreatorPlatform, sellerApplication?.status, payoutsReady]
+      }, t),
+    [profileReady, hasLinkedCreatorPlatform, sellerApplication?.status, payoutsReady, t]
   );
 
   const stepByKey = Object.fromEntries(steps.map((step) => [step.key, step])) as Record<
@@ -284,7 +287,7 @@ const ProfileSettings = () => {
   const sectionFlags = (key: AccountSetupStepKey) => ({
     attention: nextStep?.key === key,
     // Linking a platform helps but is not required.
-    attentionLabel: key === "connections" ? "Recommended" : "Needs attention",
+    attentionLabel: t(key === "connections" ? "profile.recommended" : "common.needsAttention"),
     defaultOpen: isSettled && !nextStep && key === "profile",
     focusKey: focus?.key === key ? focus.nonce : null,
   });
@@ -302,11 +305,11 @@ const ProfileSettings = () => {
     const nextBio = bio.trim();
 
     if (nextHandle && !isValidHandle(nextHandle)) {
-      setErrMsg("Handle must be 3–25 chars (letters, numbers, _ or -).");
+      setErrMsg(t("profile.handleError"));
       return;
     }
 
-    const displayNameError = getDisplayNameError(nextDisplayName);
+    const displayNameError = getDisplayNameError(nextDisplayName, t);
 
     if (displayNameError) {
       setErrMsg(displayNameError);
@@ -340,7 +343,7 @@ const ProfileSettings = () => {
       setSavedAt(Date.now());
       await refetch();
     } catch (saveError) {
-      setErrMsg(getErrorMessage(saveError));
+      setErrMsg(getErrorMessage(saveError, t));
     } finally {
       setBusy(false);
     }
@@ -353,14 +356,14 @@ const ProfileSettings = () => {
     setInfoMsg(null);
 
     if (isTwitchConnected) {
-      setInfoMsg("Your Twitch account is already connected.");
+      setInfoMsg(t("profile.alreadyConnected"));
       return;
     }
 
     const token = session?.access_token;
 
     if (!token) {
-      setErrMsg("You must be signed in to connect Twitch.");
+      setErrMsg(t("profile.mustSignIn"));
       return;
     }
 
@@ -386,26 +389,26 @@ const ProfileSettings = () => {
 
       window.location.assign(json.url);
     } catch (connectError) {
-      setErrMsg(getErrorMessage(connectError));
+      setErrMsg(getErrorMessage(connectError, t));
       setBusy(false);
     }
   };
 
   const creatorApplicationCtaLabel = !sellerApplication
-    ? "Start application"
+    ? t("apply.start")
     : stepByKey.creator.actionLabel;
 
   if (!loading && !user) {
     return (
       <div className={classes.signedOut}>
-        <div className={classes.signedOutTitle}>You’re not signed in</div>
-        <p className={classes.statusText}>Sign in to edit your profile and connected platforms.</p>
+        <div className={classes.signedOutTitle}>{t("apply.signedOutTitle")}</div>
+        <p className={classes.statusText}>{t("profile.signedOutText")}</p>
         <div className={classes.signedOutActions}>
           <Link className="btnPrimary btnSm" to="/signin">
-            Sign in
+            {t("apply.signIn")}
           </Link>
           <Link className="btnOutline btnSm" to="/">
-            Back home
+            {t("apply.home")}
           </Link>
         </div>
       </div>
@@ -414,17 +417,17 @@ const ProfileSettings = () => {
 
   const profileSummary = profileReady
     ? `@${profile?.handle} · ${profile?.display_name}`
-    : "Add a handle and display name";
+    : t("setup.profileTodo");
 
   const platformSummary = isTwitchConnected
     ? `Twitch${twitchAccount?.platform_login ? ` · @${twitchAccount.platform_login}` : ""}`
     : isLoadingPlatforms
-      ? "Checking…"
-      : "No platforms linked";
+      ? t("dashboard.checking")
+      : t("profile.noPlatforms");
 
   const payoutSummary = isCreatorApproved
-    ? getCreatorPaymentAccountStatusLabel(paymentAccount)
-    : "Available after creator approval";
+    ? getCreatorPaymentAccountStatusLabel(paymentAccount, t)
+    : t("profile.payoutsLocked");
 
   return (
     <div className={classes.page}>
@@ -435,11 +438,11 @@ const ProfileSettings = () => {
       )}
 
       <div className={classes.layout}>
-        <aside className={`${classes.aside} xl:order-last`} aria-label="Account setup">
+        <aside className={`${classes.aside} xl:order-last`} aria-label={t("profile.setup")}>
           <div className={classes.asideHead}>
-            <span className={classes.asideTitle}>Account setup</span>
+            <span className={classes.asideTitle}>{t("profile.setup")}</span>
             <span className={classes.asideCount}>
-              {progress.done} of {progress.total} done
+              {t("profile.progress", { done: progress.done, total: progress.total })}
             </span>
           </div>
 
@@ -480,7 +483,7 @@ const ProfileSettings = () => {
           {nextStep ? (
             <div className={classes.next}>
               <span className={classes.nextText}>
-                Next: <strong className="text-zinc-900">{nextStep.label}</strong> — {nextStep.detail}
+                {t("profile.next")} <strong className="text-zinc-900">{nextStep.label}</strong> — {nextStep.detail}
               </span>
               <button
                 type="button"
@@ -491,14 +494,14 @@ const ProfileSettings = () => {
               </button>
             </div>
           ) : (
-            isSettled && <p className={`${classes.allDone} xl:hidden`}>Nothing needs your attention.</p>
+            isSettled && <p className={`${classes.allDone} xl:hidden`}>{t("profile.nothing")}</p>
           )}
         </aside>
 
         <div className={classes.sections}>
           <CollapsibleSection
             id="settings-profile"
-            title="Public profile"
+            title={t("setup.profile")}
             summary={profileSummary}
             badge={<StepBadge step={stepByKey.profile} />}
             {...sectionFlags("profile")}
@@ -508,53 +511,53 @@ const ProfileSettings = () => {
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className={classes.avatarImage} />
                 ) : (
-                  <div className={classes.avatarFallback}>None</div>
+                  <div className={classes.avatarFallback}>{t("profile.none")}</div>
                 )}
               </div>
               <div className={classes.avatarText}>
-                <div className={classes.avatarTitle}>Profile image and banner</div>
-                Uses your linked Twitch image for now. Custom uploads are coming soon.
+                <div className={classes.avatarTitle}>{t("profile.imageTitle")}</div>
+                {t("profile.imageText")}
               </div>
             </div>
 
             <div className={classes.grid}>
               <label className={classes.field}>
-                <span className={classes.label}>Handle</span>
+                <span className={classes.label}>{t("profile.handle")}</span>
                 <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={handle}
                   onChange={(event) => setHandle(event.currentTarget.value)}
-                  placeholder="your-handle"
+                  placeholder={t("profile.handlePlaceholder")}
                   autoComplete="off"
                 />
                 </KeptPlaceholder>
-                <span className={classes.fieldHelp}>3–25 characters: letters, numbers, _ or -</span>
+                <span className={classes.fieldHelp}>{t("profile.handleHint")}</span>
               </label>
 
               <label className={classes.field}>
-                <span className={classes.label}>Display name</span>
+                <span className={classes.label}>{t("profile.displayName")}</span>
                 <KeptPlaceholder>
                 <input
                   className={classes.input}
                   value={displayName}
                   onChange={(event) => setDisplayName(event.currentTarget.value)}
-                  placeholder="Your name"
+                  placeholder={t("profile.displayNamePlaceholder")}
                   autoComplete="name"
                 />
                 </KeptPlaceholder>
-                <span className={classes.fieldHelp}>Required. Shown publicly, 2–50 characters.</span>
+                <span className={classes.fieldHelp}>{t("profile.displayNameHint")}</span>
               </label>
 
               <label className={classes.fieldWide}>
-                <span className={classes.label}>Bio</span>
+                <span className={classes.label}>{t("profile.bio")}</span>
                 <KeptPlaceholder>
                 <textarea
                   className={classes.textarea}
                   rows={3}
                   value={bio}
                   onChange={(event) => setBio(event.currentTarget.value)}
-                  placeholder="What do you make, what do you stream, and what are you looking for on Made for Stream?"
+                  placeholder={t("profile.bioPlaceholder")}
                 />
                 </KeptPlaceholder>
               </label>
@@ -563,7 +566,7 @@ const ProfileSettings = () => {
             <div className={classes.footer}>
               {savedAt && (
                 <FadeIn key={savedAt} className={classes.saved}>
-                  Profile saved.
+                  {t("profile.saved")}
                 </FadeIn>
               )}
               <button
@@ -572,20 +575,20 @@ const ProfileSettings = () => {
                 onClick={() => void onSave()}
                 disabled={busy || isLoading}
               >
-                {busy ? "Saving…" : "Save profile"}
+                {t(busy ? "listingForm.saving" : "profile.save")}
               </button>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection
             id="settings-connections"
-            title="Connected platforms"
+            title={t("setup.connections")}
             summary={platformSummary}
             badge={<StepBadge step={stepByKey.connections} />}
             {...sectionFlags("connections")}
           >
             <p className={classes.statusText}>
-              Optional, but linking helps with trust, live status and creator review.
+              {t("profile.connectionsText")}
             </p>
 
             <div className={classes.rows}>
@@ -598,7 +601,9 @@ const ProfileSettings = () => {
                   <div className={classes.rowSub}>
                     {isTwitchConnected ? (
                       <>
-                        Connected{twitchAccount?.platform_login && ` as @${twitchAccount.platform_login}`}
+                        {twitchAccount?.platform_login
+                          ? t("profile.connectedAs", { login: twitchAccount.platform_login })
+                          : t("profile.connected")}
                         {twitchAccount?.profile_url && (
                           <>
                             {" · "}
@@ -608,13 +613,13 @@ const ProfileSettings = () => {
                               rel="noreferrer"
                               className={classes.rowLink}
                             >
-                              View channel
+                              {t("profile.viewChannel")}
                             </a>
                           </>
                         )}
                       </>
                     ) : (
-                      "Live status, community trust and creator review"
+                      t("profile.twitchText")
                     )}
                   </div>
                 </div>
@@ -624,7 +629,7 @@ const ProfileSettings = () => {
                   onClick={() => void onConnectTwitch()}
                   disabled={busy || isLoading || isLoadingPlatforms || isTwitchConnected}
                 >
-                  {isLoadingPlatforms ? "Checking…" : isTwitchConnected ? "Connected" : "Connect"}
+                  {t(isLoadingPlatforms ? "dashboard.checking" : isTwitchConnected ? "profile.connected" : "setup.connect")}
                 </button>
               </div>
 
@@ -636,26 +641,26 @@ const ProfileSettings = () => {
                   <div className={classes.rowTitle}>YouTube</div>
                   <div className={classes.rowSub}>
                     {youtubeAccount?.platform_login
-                      ? `Connected as @${youtubeAccount.platform_login}`
-                      : "Show creator activity outside Twitch"}
+                      ? t("profile.connectedAs", { login: youtubeAccount.platform_login })
+                      : t("profile.youtubeText")}
                   </div>
                 </div>
-                <span className={classes.soon}>Coming soon</span>
+                <span className={classes.soon}>{t("profile.soon")}</span>
               </div>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection
             id="settings-creator"
-            title="Creator access"
+            title={t("setup.creator")}
             summary={creatorStatusLabel}
             badge={<StepBadge step={stepByKey.creator} />}
             {...sectionFlags("creator")}
           >
             <div className={classes.statusRow}>
               <p className={classes.statusText}>
-                Status: <span className={classes.statusStrong}>{creatorStatusLabel}</span>
-                {sellerApplication?.reviewer_notes && " · Reviewer notes are on the application page."}
+                {t("chat.statusLabel")} <span className={classes.statusStrong}>{creatorStatusLabel}</span>
+                {sellerApplication?.reviewer_notes && ` · ${t("profile.notesOnPage")}`}
               </p>
               <Link className={classes.btnPrimary} to="/apply/creator">
                 {creatorApplicationCtaLabel}
@@ -664,11 +669,11 @@ const ProfileSettings = () => {
 
             {!canStartApplication && !sellerApplication && (
               <p className={classes.fieldHelp}>
-                Add a display name and handle before starting your application.
+                {t("profile.startHint")}
               </p>
             )}
 
-            <ul className={classes.checklist} aria-label="Creator requirements">
+            <ul className={classes.checklist} aria-label={t("profile.requirements")}>
               {creatorRequirements.map((requirement, index) => {
                 const met =
                   isCreatorApproved ||
@@ -684,8 +689,8 @@ const ProfileSettings = () => {
                       ✓
                     </span>
                     <span>
-                      {requirement}
-                      {met && <span className="sr-only"> (done)</span>}
+                      {t(requirement)}
+                      {met && <span className="sr-only"> {t("profile.doneHidden")}</span>}
                     </span>
                   </li>
                 );
@@ -693,15 +698,15 @@ const ProfileSettings = () => {
             </ul>
 
             <div className={classes.pills}>
-              <span className={classes.pill}>Human-made only</span>
-              <span className={classes.pill}>Manual review</span>
-              <span className={classes.pill}>No instant activation</span>
+              <span className={classes.pill}>{t("profile.pillHuman")}</span>
+              <span className={classes.pill}>{t("profile.pillReview")}</span>
+              <span className={classes.pill}>{t("profile.pillNoInstant")}</span>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection
             id="settings-payouts"
-            title="Payouts"
+            title={t("setup.payouts")}
             summary={payoutSummary}
             badge={<StepBadge step={stepByKey.payouts} />}
             {...sectionFlags("payouts")}

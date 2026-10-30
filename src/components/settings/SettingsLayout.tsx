@@ -6,7 +6,7 @@ import { useMyProfile } from "../../hooks/profile/useMyProfile";
 import { useAccountDetails } from "../../hooks/settings/useAccountDetails";
 import { hasChosenDisplayName } from "../../domain/settings/displayName";
 import { useProfilePlatformAccounts } from "../../hooks/profile/useProfilePlatformAccounts";
-
+import { useT } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-4",
   header: "card px-4 py-3 hover:shadow-[var(--shadow-md)] sm:px-5",
@@ -41,10 +41,10 @@ const classes = {
 } as const;
 
 const tabs = [
-  { to: "/settings/profile", label: "Profile and setup" },
-  { to: "/settings/personal", label: "Personal details" },
-  { to: "/settings/preferences", label: "Preferences" },
-  { to: "/settings/reports", label: "My reports" },
+  { to: "/settings/profile", label: "settings.tabProfile" },
+  { to: "/settings/personal", label: "settings.tabPersonal" },
+  { to: "/settings/preferences", label: "settings.tabPreferences" },
+  { to: "/settings/reports", label: "settings.tabReports" },
 ] as const;
 
 const initials = (name: string) =>
@@ -58,6 +58,7 @@ const initials = (name: string) =>
 // Shared frame for settings pages: a compact identity card, then the list of
 // settings pages beside whichever one is open.
 const SettingsLayout = () => {
+  const t = useT();
   const { data: profile } = useMyProfile();
   const { data: platformAccounts = [] } = useProfilePlatformAccounts();
   const { data: reports = [] } = useMyModerationReports();
@@ -70,7 +71,7 @@ const SettingsLayout = () => {
   const twitchAccount = platformAccounts.find((account) => account.platform === "twitch") ?? null;
   const avatarUrl = getProfileAvatarUrl(profile, twitchAccount);
   const handle = profile?.handle?.trim() ?? "";
-  const displayName = profile?.display_name?.trim() || handle || "Your account";
+  const displayName = profile?.display_name?.trim() || handle || t("settings.yourAccount");
   const unreadReports = reports.filter((report) => report.has_unread_update).length;
 
   return (
@@ -88,13 +89,13 @@ const SettingsLayout = () => {
           </div>
 
           <div className={classes.names}>
-            <div className={classes.eyebrow}>Settings</div>
+            <div className={classes.eyebrow}>{t("settings.eyebrow")}</div>
             <div className={classes.nameRow}>
               <span className={classes.name}>{displayName}</span>
               <span
                 className={`${classes.status} ${isCreatorApproved ? classes.statusCreator : classes.statusMember}`}
               >
-                {isCreatorApproved ? "Creator" : "Member"}
+                {t(isCreatorApproved ? "common.creator" : "settings.member")}
               </span>
             </div>
             {handle && (
@@ -106,14 +107,14 @@ const SettingsLayout = () => {
 
           {handle && (
             <Link className={classes.profileLink} to={`/creator/${handle}`}>
-              View profile
+              {t("settings.viewProfile")}
             </Link>
           )}
         </div>
       </header>
 
       <div className={classes.body}>
-        <nav className={classes.tabs} aria-label="Settings pages">
+        <nav className={classes.tabs} aria-label={t("settings.pages")}>
           {tabs.map((tab) => (
             <NavLink
               key={tab.to}
@@ -122,14 +123,14 @@ const SettingsLayout = () => {
                 `${classes.tab} ${isActive ? classes.tabActive : classes.tabIdle}`
               }
             >
-              {tab.label}
+              {t(tab.label)}
               {tab.to === "/settings/personal" && needsAccountDetails && (
-                <span className={classes.count}>Required</span>
+                <span className={classes.count}>{t("settings.required")}</span>
               )}
               {tab.to === "/settings/reports" && unreadReports > 0 && (
                 <span className={classes.count}>
                   {unreadReports}
-                  <span className="sr-only"> new updates</span>
+                  <span className="sr-only"> {t("settings.newUpdates")}</span>
                 </span>
               )}
             </NavLink>

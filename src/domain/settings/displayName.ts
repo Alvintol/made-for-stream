@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 // The public display name every account must choose for itself
 // (20261008_152). The database enforces the length and refuses listings,
 // commission requests and agreements from an account still on the
@@ -19,10 +21,10 @@ export const hasChosenDisplayName = (profile: DisplayNameProfile | null | undefi
   Boolean(profile && !profile.display_name_auto && profile.display_name?.trim());
 
 // Null when the name is acceptable.
-export const getDisplayNameError = (value: string): string | null => {
+export const getDisplayNameError = (value: string, t: Translate = english): string | null => {
   const length = value.trim().length;
 
   return length < DISPLAY_NAME_MIN || length > DISPLAY_NAME_MAX
-    ? `Enter a display name of ${DISPLAY_NAME_MIN} to ${DISPLAY_NAME_MAX} characters.`
+    ? t("displayName.error", { min: DISPLAY_NAME_MIN, max: DISPLAY_NAME_MAX })
     : null;
 };

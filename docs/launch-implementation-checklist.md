@@ -1003,8 +1003,10 @@ Build order (each its own branch):
       change order form, which finishes the creator's commission tools. Then
       (`feat/i18n-listing-forms`): creating and editing a listing. Then
       (`feat/i18n-creator-listings`): the creator's listing pages and the
-      creator application, which finishes the creator's side. Next: My reports
-      and Settings, then the remaining screens a few at a time, then the policies by a
+      creator application, which finishes the creator's side. Then
+      (`feat/i18n-settings-reports`): My reports, Preferences, the settings
+      frame, the profile page, What's new, About and the failed-action notice.
+      Next: Personal details and Payouts, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 
