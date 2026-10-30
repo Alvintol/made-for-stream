@@ -1,3 +1,5 @@
+import { english, type Translate } from "../../lib/i18n/i18n";
+
 // The private legal details behind an account (public.user_account_details,
 // 20261008_150). The database trigger validate_user_account_details() is the
 // real check; this mirrors it so the form can point at the field.
@@ -82,11 +84,9 @@ export const getRegionOptions = (
 // and Quebec until the site is in French.
 export const SANCTIONED_COUNTRIES = ["BY", "CU", "IR", "KP", "RU", "SY"] as const;
 
-export const SANCTIONED_COUNTRY_MESSAGE =
-  "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider.";
+export const SANCTIONED_COUNTRY_MESSAGE = english("account.sanctioned");
 
-export const QUEBEC_MESSAGE =
-  "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way.";
+export const QUEBEC_MESSAGE = english("account.quebec");
 
 const yearsAgo = (years: number, today: Date): string => {
   const date = new Date(Date.UTC(today.getFullYear() - years, today.getMonth(), today.getDate()));
@@ -97,6 +97,7 @@ const yearsAgo = (years: number, today: Date): string => {
 export const validateAccountDetails = (
   form: AccountDetailsForm,
   today = new Date(),
+  t: Translate = english,
 ): { values: AccountDetails | null; errors: AccountDetailsErrors } => {
   const trimmed = Object.fromEntries(
     Object.entries(form).map(([key, value]) => [key, value.trim()]),
@@ -107,31 +108,31 @@ export const validateAccountDetails = (
     if (!trimmed[key]) errors[key] = message;
   };
 
-  require("legal_first_name", "Enter your legal first name.");
-  require("legal_last_name", "Enter your legal last name.");
-  require("address_line1", "Enter your street address.");
-  require("city", "Enter your city or town.");
-  require("country_code", "Choose your country.");
+  require("legal_first_name", t("account.errorFirstName"));
+  require("legal_last_name", t("account.errorLastName"));
+  require("address_line1", t("account.errorStreet"));
+  require("city", t("account.errorCity"));
+  require("country_code", t("account.errorCountry"));
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed.date_of_birth) || trimmed.date_of_birth < "1900-01-01") {
-    errors.date_of_birth = "Enter a valid date of birth.";
+    errors.date_of_birth = t("account.errorDob");
   } else if (trimmed.date_of_birth > yearsAgo(MINIMUM_AGE, today)) {
-    errors.date_of_birth = `You must be at least ${MINIMUM_AGE} to use Made for Stream.`;
+    errors.date_of_birth = t("account.errorAge", { age: MINIMUM_AGE });
   }
 
   if (REGION_CODES[trimmed.country_code]) {
-    require("region", "Choose your province or state.");
-    require("postal_code", "Enter your postal or ZIP code.");
+    require("region", t("account.errorRegion"));
+    require("postal_code", t("account.errorPostal"));
   }
 
   if ((SANCTIONED_COUNTRIES as readonly string[]).includes(trimmed.country_code.toUpperCase())) {
-    errors.country_code = SANCTIONED_COUNTRY_MESSAGE;
+    errors.country_code = t("account.sanctioned");
   } else if (trimmed.country_code === "CA" && trimmed.region.toUpperCase() === "QC") {
-    errors.region = QUEBEC_MESSAGE;
+    errors.region = t("account.quebec");
   }
 
   if (trimmed.account_type === "business") {
-    require("business_legal_name", "Enter the legal name of the business.");
+    require("business_legal_name", t("account.errorBusiness"));
   }
 
   if (Object.keys(errors).length > 0) return { values: null, errors };

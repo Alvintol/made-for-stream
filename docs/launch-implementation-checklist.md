@@ -1006,9 +1006,10 @@ Build order (each its own branch):
       creator application, which finishes the creator's side. Then
       (`feat/i18n-settings-reports`): My reports, Preferences, the settings
       frame, the profile page, What's new, About and the failed-action notice.
-      Next: Personal details and Payouts, then the remaining screens a few at a time, then the policies by a
-      translator, then a French speaker's review, then mark French ready and
-      lift the Quebec block.
+      Then (`feat/i18n-personal-payouts`): Personal details and Payouts, which
+      finishes the pages every member and creator uses. Next: the admin pages only if the owner wants them, then the
+      policies by a translator, then a French speaker's review, then mark
+      French ready and lift the Quebec block.
 
 Owner's steps, outside the code:
 

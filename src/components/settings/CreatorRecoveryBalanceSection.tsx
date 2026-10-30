@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
+import { dateLocale, hasMessage, useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 import { useCreateCreatorRecoverySettlementCheckout } from "../../hooks/payments/useCreateCreatorRecoverySettlementCheckout";
 import {
   useCreatorRecoveryBalance,
@@ -22,21 +23,23 @@ const classes = {
   historyList: "mt-2 space-y-1 text-xs text-zinc-500",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
-    : "Something went wrong.";
+    : t("apply.failed");
 
-const entryTypeLabel: Record<string, string> = {
-  debit: "Platform-funded refund",
-  credit: "Recovered",
-  write_off: "Written off",
+const entryTypeLabel = (entryType: string, t: Translate): string => {
+  const key = `recovery.entry.${entryType}`;
+
+  return hasMessage(key) ? t(key) : entryType;
 };
 
 // launch-scope.md section 6.5: "Creator settings: balance visible, entry
 // history, direct settlement path." Renders nothing when the creator has no
 // recovery balance row at all -- the common case.
 const CreatorRecoveryBalanceSection = () => {
+  const t = useT();
+  const locale = dateLocale(useLanguage());
   const balanceQuery = useCreatorRecoveryBalance();
   const entriesQuery = useCreatorRecoveryEntries();
   const createSettlement = useCreateCreatorRecoverySettlementCheckout();
@@ -58,7 +61,7 @@ const CreatorRecoveryBalanceSection = () => {
     const parsed = Number(amountInput.trim());
 
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      setErrMsg("Enter an amount greater than zero.");
+      setErrMsg(t("recovery.amountError"));
       return;
     }
 
@@ -68,31 +71,26 @@ const CreatorRecoveryBalanceSection = () => {
       const response = await createSettlement.mutateAsync({ amountCents });
 
       if (response.checkout.clientSecret) {
-        setSuccessMsg(
-          "Redirecting to secure Stripe checkout to complete your settlement…",
-        );
+        setSuccessMsg(t("recovery.redirecting"));
       }
     } catch (error) {
-      setErrMsg(getErrorMessage(error));
+      setErrMsg(getErrorMessage(error, t));
     }
   };
 
   return (
     <div className={classes.wrap}>
-      <h3 className={classes.title}>Recovery balance</h3>
+      <h3 className={classes.title}>{t("recovery.title")}</h3>
 
       <div className={classes.warning}>
-        You owe Made for Stream{" "}
-        {formatPaymentCents(balance.outstanding_cents, balance.currency)} from
-        a buyer refund that your held balance could not fully cover. New
-        commissions are blocked until this clears. It clears automatically
-        as it is recovered from your future payments, or you can settle it
-        directly below.
+        {t("recovery.warning", {
+          amount: formatPaymentCents(balance.outstanding_cents, balance.currency),
+        })}
       </div>
 
       <div className={classes.form}>
         <label className={classes.field}>
-          <span className={classes.label}>Amount to settle</span>
+          <span className={classes.label}>{t("recovery.amount")}</span>
           <input
             className={classes.input}
             type="number"
@@ -110,7 +108,7 @@ const CreatorRecoveryBalanceSection = () => {
           disabled={createSettlement.isPending}
           onClick={() => void onSettle()}
         >
-          {createSettlement.isPending ? "Preparing…" : "Settle by card"}
+          {t(createSettlement.isPending ? "payout.preparing" : "recovery.settle")}
         </button>
       </div>
 
@@ -121,8 +119,8 @@ const CreatorRecoveryBalanceSection = () => {
         <ul className={classes.historyList}>
           {entriesQuery.data.map((entry) => (
             <li key={entry.id}>
-              {new Date(entry.created_at).toLocaleDateString()} —{" "}
-              {entryTypeLabel[entry.entry_type] ?? entry.entry_type}:{" "}
+              {new Date(entry.created_at).toLocaleDateString(locale)} —{" "}
+              {t("recovery.entryLabel", { label: entryTypeLabel(entry.entry_type, t) })}{" "}
               {formatPaymentCents(entry.amount_cents, entry.currency)} (
               {entry.reason})
             </li>

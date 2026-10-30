@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AccountDetails } from "../../domain/settings/accountDetails";
+import { useT } from "../../lib/i18n/i18n";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -58,6 +59,7 @@ export const useSaveAccountDetails = () => {
 // Saves the public display name the person chose, which also marks it as
 // their own choice (display_name_auto = false, 20261008_152).
 export const useSaveDisplayName = () => {
+  const t = useT();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -70,7 +72,7 @@ export const useSaveDisplayName = () => {
         .update({ display_name: displayName.trim(), display_name_auto: false })
         .eq("user_id", user.id);
 
-      if (error) throw new Error("Your display name could not be saved. Please try again.");
+      if (error) throw new Error(t("account.nameSaveFailed"));
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["myProfile", user?.id ?? null] }),
   });

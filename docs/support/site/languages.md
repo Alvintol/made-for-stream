@@ -82,7 +82,12 @@ browser. Emails are still in English.
   shows it in the page's language.
 - 2026-10-30: My reports, Preferences, the settings frame, the profile page,
   the What's new page and window, the About page and the "That did not go
-  through" notice. Personal details and Payouts are still English.
+  through" notice.
+- 2026-10-30: Personal details and Payouts, with the recovery balance. The
+  Quebec and sanctions messages are the database's own English wording
+  (`blocked_location_message()`), so the form's French only shows before
+  saving; if the database refuses, its English message shows. Country names
+  follow the language; saved values (country and province codes) do not change.
 - 2026-10-30: the milestone, final delivery and progress update forms, with
   file checks, upload progress, the storage bar and file sizes (Go, Mo, Ko).
 - 2026-10-30: the agreement form and the milestone payment plan, with their
@@ -156,8 +161,11 @@ with "Your choice could not be saved. Please try again."
   final delivery confirms (`deliveryReview.approveNote`), what accepting
   a change order agrees to (`changeOrderReview.acceptNote`), the creator's
   notice and tick box about a buyer's right to cancel
-  (`consumerRights.notice`, `consumerRights.acknowledge`) and the four
-  creator application agreements (`apply.agree*`) were translated
+  (`consumerRights.notice`, `consumerRights.acknowledge`), the four
+  creator application agreements (`apply.agree*`), the Stripe agreement
+  sentence (`payout.accept*`, `payout.connectedAgreement`,
+  `payout.servicesAgreement`) and the email opt-in
+  (`preferences.marketing`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
   them with the policies before French is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under
@@ -188,6 +196,11 @@ with "Your choice could not be saved. Please try again."
 - **Site update entries are English.** The What's new list is a public log
   written once per version, so its titles and lines stay English; the French
   page says so.
+- **Stripe's own screens** (the embedded payout setup form and the agreements
+  it links to) are Stripe's: they follow the person's browser language, not
+  the site's, and the agreements open on Stripe's site.
+- **Recovery entry reasons are English.** The reason beside each recovery
+  balance entry is saved as written by the database and the API.
 - **The storage plan name is English.** The commission storage bar shows
   `plan_label` from the database as it is written ("Standard").
 - **The French has not been checked by a French speaker.** Do that before
