@@ -15,13 +15,6 @@ export const offSiteDeliveryMethods = [
 
 export type OffSiteDeliveryMethod = (typeof offSiteDeliveryMethods)[number];
 
-export const offSiteDeliveryMethodLabels: Record<OffSiteDeliveryMethod, string> = {
-  email: english("offSiteMethod.email"),
-  discord: english("offSiteMethod.discord"),
-  text_message: english("offSiteMethod.text_message"),
-  other: english("offSiteMethod.other"),
-};
-
 export const OFF_SITE_OTHER_MIN_LENGTH = 2;
 export const OFF_SITE_OTHER_MAX_LENGTH = 80;
 

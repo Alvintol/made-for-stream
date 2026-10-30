@@ -154,25 +154,26 @@ export const getSubmittedListingRequestFinalDelivery = <
 export const getListingRequestFinalDeliveryCreationBlockedReason =
   (
     agreement: ListingRequestFinalDeliveryAgreement | null,
-    finalDeliveries: ListingRequestFinalDeliveryRow[]
+    finalDeliveries: ListingRequestFinalDeliveryRow[],
+    t: Translate = english
   ): string | null => {
     if (!agreement) {
-      return "A buyer-accepted project agreement is required before final delivery can be created.";
+      return t("deliveryCreate.agreement");
     }
 
     if (agreement.status !== "buyer_accepted") {
-      return "A buyer-accepted project agreement is required before final delivery can be created.";
+      return t("deliveryCreate.agreement");
     }
 
     if (
       agreement.starting_payment_status !== "paid" &&
       agreement.starting_payment_status !== "not_required"
     ) {
-      return "Starting payment must be resolved before final delivery can be created.";
+      return t("deliveryCreate.starting");
     }
 
     if (!getHasAllMilestonePaymentsPaid(agreement)) {
-      return "All milestone payments must be confirmed before final delivery can be created.";
+      return t("deliveryCreate.milestones");
     }
 
     const latestFinalDelivery =
@@ -183,7 +184,7 @@ export const getListingRequestFinalDeliveryCreationBlockedReason =
       latestFinalDelivery.status !== "revision_requested" &&
       latestFinalDelivery.status !== "cancelled"
     ) {
-      return "A new final delivery can only be created after the previous delivery is revised or cancelled.";
+      return t("deliveryCreate.previous");
     }
 
     return null;

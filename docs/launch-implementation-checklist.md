@@ -995,8 +995,11 @@ Build order (each its own branch):
       with its stages, next-step card, section summaries, brief, listing
       snapshot, off-site confirmation and the page after checkout. Then
       (`feat/i18n-chat-inbox`): the chat box, the inbox and a single
-      conversation. Next: the creator's side, then the remaining screens a
-      few at a time, then the policies by a
+      conversation. Then (`feat/i18n-creator-commissions`): the creator
+      dashboard, commission list, commission page and short action boxes.
+      Next: the creator's forms (agreement and milestone plan; milestone,
+      delivery and update forms; change orders), listing management and the
+      creator application, then the remaining screens a few at a time, then the policies by a
       translator, then a French speaker's review, then mark French ready and
       lift the Quebec block.
 

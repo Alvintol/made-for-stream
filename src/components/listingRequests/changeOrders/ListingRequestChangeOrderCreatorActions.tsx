@@ -4,7 +4,7 @@ import {
   canWithdrawListingRequestChangeOrder,
 } from "../../../domain/listings/listingRequestChangeOrders";
 import type { ListingRequestChangeOrderRow } from "../../../hooks/creatorRequests/useListingRequestChangeOrders";
-
+import { useT } from "../../../lib/i18n/i18n";
 type ListingRequestChangeOrderCreatorActionsProps = {
   changeOrder: Pick<
     ListingRequestChangeOrderRow,
@@ -54,6 +54,8 @@ const ListingRequestChangeOrderCreatorActions = ({
   withdrawError,
   onWithdrawChangeOrder,
 }: ListingRequestChangeOrderCreatorActionsProps) => {
+  const t = useT();
+
   if (
     !changeOrder ||
     !canWithdrawListingRequestChangeOrder(changeOrder.status)
@@ -68,12 +70,12 @@ const ListingRequestChangeOrderCreatorActions = ({
   const errorMessage = withdrawError
     ? getErrorMessage(
         withdrawError,
-        "The project change order could not be withdrawn."
+        t("changeOrderActions.withdrawFailed")
       )
     : error
       ? getErrorMessage(
           error,
-          "The project change order could not be sent."
+          t("changeOrderActions.sendFailed")
         )
       : null;
 
@@ -84,22 +86,19 @@ const ListingRequestChangeOrderCreatorActions = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Change order actions
+            {t("changeOrderActions.title")}
           </h2>
 
           <p className={classes.text}>
-            {isDraft
-              ? "This change order is saved as a private draft. Send it when it is ready for buyer review."
-              : "This change order is with the buyer, who has not answered yet. Other project steps wait until they do."}{" "}
-            To change or cancel it, withdraw it. You can then
-            propose a new one, which starts from the same
-            details.
+            {t(isDraft ? "changeOrderActions.draftText" : "changeOrderActions.sentText")}{" "}
+            {t("changeOrderActions.withdrawText")}
           </p>
         </div>
 
         <div className={classes.draft}>
-          {isDraft ? "Draft" : "Awaiting buyer review"}:{" "}
-          {changeOrder.title}
+          {t(isDraft ? "creatorActions.draftLine" : "changeOrderActions.sentLine", {
+            title: changeOrder.title,
+          })}
         </div>
 
         {errorMessage && (
@@ -118,9 +117,7 @@ const ListingRequestChangeOrderCreatorActions = ({
                 void onSendChangeOrder(changeOrder.id)
               }
             >
-              {isPending
-                ? "Sending change order…"
-                : "Send draft to buyer"}
+              {t(isPending ? "changeOrderActions.sending" : "creatorActions.send")}
             </button>
           )}
 
@@ -132,9 +129,7 @@ const ListingRequestChangeOrderCreatorActions = ({
               void onWithdrawChangeOrder(changeOrder.id)
             }
           >
-            {isWithdrawing
-              ? "Withdrawing change order…"
-              : "Withdraw change order"}
+            {t(isWithdrawing ? "changeOrderActions.withdrawing" : "changeOrderActions.withdraw")}
           </button>
         </div>
       </div>

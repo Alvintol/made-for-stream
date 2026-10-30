@@ -1,6 +1,6 @@
+import { useT } from "../../lib/i18n/i18n";
 import {
   OFF_SITE_OTHER_MAX_LENGTH,
-  offSiteDeliveryMethodLabels,
   offSiteDeliveryMethods,
   type OffSiteDeliveryFormState,
   type OffSiteDeliveryMethod,
@@ -39,6 +39,7 @@ const OffSiteDeliveryFields = ({
   disabled = false,
   onChange,
 }: OffSiteDeliveryFieldsProps) => {
+  const t = useT();
   const toggleMethod = (method: OffSiteDeliveryMethod, checked: boolean) =>
     onChange({
       ...value,
@@ -60,21 +61,14 @@ const OffSiteDeliveryFields = ({
           }
         />
 
-        <span className={classes.label}>Provided off site</span>
+        <span className={classes.label}>{t("offSiteFields.provided")}</span>
       </label>
 
-      <p className={classes.warning}>
-        Images or work you send outside Made for Stream, for example by email, Discord
-        or text message, are not protected by Made for Stream. They carry no watermark,
-        we hold no copy of them, and we cannot confirm that they arrived. If you did send
-        this work another way, tick the box and say how, so the commission&rsquo;s chat
-        keeps a record of where it went. Confirming that the buyer received it is up to
-        you.
-      </p>
+      <p className={classes.warning}>{t("offSiteFields.warning")}</p>
 
       {value.provided && (
         <fieldset className={classes.methods} disabled={disabled}>
-          <legend className={classes.legend}>How did you send it?</legend>
+          <legend className={classes.legend}>{t("offSiteFields.how")}</legend>
 
           {offSiteDeliveryMethods.map((method) => (
             <label className={classes.row} key={method}>
@@ -88,7 +82,7 @@ const OffSiteDeliveryFields = ({
               />
 
               <span className={classes.methodLabel}>
-                {offSiteDeliveryMethodLabels[method]}
+                {t(`offSiteMethod.${method}`)}
               </span>
             </label>
           ))}
@@ -96,7 +90,7 @@ const OffSiteDeliveryFields = ({
           {value.methods.includes("other") && (
             <div>
               <label className={classes.legend} htmlFor={`${idPrefix}-off-site-other`}>
-                Which way?
+                {t("offSiteFields.which")}
               </label>
 
               <input
@@ -110,14 +104,13 @@ const OffSiteDeliveryFields = ({
               />
 
               <p className={classes.help}>
-                Name the service or method only. The buyer sees this in the chat.
+                {t("offSiteFields.whichHint")}
               </p>
             </div>
           )}
 
           <p className={classes.help}>
-            The chat will say the work was also sent this way. It is your statement, not
-            proof of delivery.
+            {t("offSiteFields.statement")}
           </p>
         </fieldset>
       )}

@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.18";
+export const siteVersion = "V0.7.19";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.7.19",
+    date: "2026-10-30",
+    title: "Clearer creator commissions",
+    changes: [
+      "The creator commission list shows how each listing is bought, its type and its category as words, such as Commission request, instead of codes.",
+      "The count above the creator commission list reads \"1 commission found\" instead of \"1 commission(s) found\".",
+      "When a buyer approves a milestone, the creator's page says the next milestone unlocks after payment is confirmed, instead of saying the payment waits for an admin.",
+    ],
+  },
   {
     version: "V0.7.18",
     date: "2026-10-30",

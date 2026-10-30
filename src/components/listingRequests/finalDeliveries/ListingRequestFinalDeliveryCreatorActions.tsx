@@ -1,7 +1,7 @@
 import { hasErrorMessage } from "../../../lib/errorMessage";
 import { canSubmitListingRequestFinalDelivery } from "../../../domain/listings/listingRequestFinalDeliveries";
 import type { ListingRequestFinalDeliveryRow } from "../../../hooks/creatorRequests/useListingRequestFinalDeliveries";
-
+import { useT, type Translate } from "../../../lib/i18n/i18n";
 type ListingRequestFinalDeliveryCreatorActionsProps = {
   finalDelivery: Pick<
     ListingRequestFinalDeliveryRow,
@@ -31,10 +31,10 @@ const classes = {
     "btnPrimary",
 } as const;
 
-const getErrorMessage = (error: unknown): string =>
+const getErrorMessage = (error: unknown, t: Translate): string =>
   hasErrorMessage(error)
     ? error.message
-    : "The final project delivery could not be submitted.";
+    : t("deliveryActions.failed");
 
 const ListingRequestFinalDeliveryCreatorActions = ({
   finalDelivery,
@@ -42,6 +42,8 @@ const ListingRequestFinalDeliveryCreatorActions = ({
   error,
   onSubmitFinalDelivery,
 }: ListingRequestFinalDeliveryCreatorActionsProps) => {
+  const t = useT();
+
   if (
     !finalDelivery ||
     !canSubmitListingRequestFinalDelivery(
@@ -52,7 +54,7 @@ const ListingRequestFinalDeliveryCreatorActions = ({
   }
 
   const errorMessage = error
-    ? getErrorMessage(error)
+    ? getErrorMessage(error, t)
     : null;
 
   return (
@@ -60,24 +62,20 @@ const ListingRequestFinalDeliveryCreatorActions = ({
       <div className={classes.section}>
         <div className={classes.header}>
           <h2 className={classes.title}>
-            Final delivery actions
+            {t("deliveryActions.title")}
           </h2>
 
           <p className={classes.text}>
-            This final delivery is saved as a private
-            draft. Submit it when it is ready for buyer
-            review.
+            {t("deliveryActions.text")}
           </p>
         </div>
 
         <div className={classes.draft}>
-          Draft: {finalDelivery.title}
+          {t("creatorActions.draftLine", { title: finalDelivery.title })}
         </div>
 
         <div className={classes.notice}>
-          Submitting may activate any remaining balance
-          that must be paid before the final work is
-          released.
+          {t("deliveryActions.notice")}
         </div>
 
         {errorMessage && (
@@ -97,9 +95,7 @@ const ListingRequestFinalDeliveryCreatorActions = ({
               )
             }
           >
-            {isPending
-              ? "Submitting final delivery…"
-              : "Submit draft to buyer"}
+            {t(isPending ? "deliveryActions.submitting" : "deliveryActions.submit")}
           </button>
         </div>
       </div>

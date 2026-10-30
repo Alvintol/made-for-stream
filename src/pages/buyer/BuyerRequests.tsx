@@ -263,7 +263,8 @@ const BuyerRequests = ({
                       className={classes.title}
                     >
                       {getListingRequestDisplayTitle(
-                        item.request
+                        item.request,
+                        t
                       )}
                     </h2>
 

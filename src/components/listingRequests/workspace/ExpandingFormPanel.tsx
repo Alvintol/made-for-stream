@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "../../../lib/i18n/i18n";
 import { gsap, motion, prefersReducedMotion } from "../../../lib/motion";
-
 type ExpandingFormPanelProps = {
   title: string;
   description: string;
@@ -35,6 +35,7 @@ const clipFrom = (from: Rect, to: Rect) =>
 const clipFull = "inset(0px 0px 0px 0px round 24px)";
 
 const ExpandingFormPanel = ({ title, description, launchLabel, children }: ExpandingFormPanelProps) => {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const launcherRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -155,9 +156,9 @@ const ExpandingFormPanel = ({ title, description, launchLabel, children }: Expan
             >
               <div className={classes.toolbar}>
                 {/* The form supplies its own heading; the dialog is still labelled by title. */}
-                <p className={classes.toolbarLabel}>Project workspace</p>
+                <p className={classes.toolbarLabel}>{t("formPanel.workspace")}</p>
                 <button type="button" className={classes.close} onClick={close}>
-                  Close
+                  {t("formPanel.close")}
                 </button>
               </div>
 

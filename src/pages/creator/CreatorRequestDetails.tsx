@@ -1,4 +1,5 @@
 import { Collapse } from "../../lib/motion";
+import { dateLocale, useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 import { useCreatorPaymentAccount } from "../../hooks/payments/useCreatorPaymentAccount";
 import { Link, useParams } from "react-router-dom";
 import { useCreatorRequest } from "../../hooks/creatorRequests/useCreatorRequest";
@@ -13,7 +14,6 @@ import {
 } from "../../domain/listings/listingRequests";
 import { getRequestNextStep, getRequestStages } from "../../domain/listings/requestWorkspace";
 import {
-  consumerRightsAcknowledgementLabel,
   consumerRightsHeading,
   consumerRightsNotice,
 } from "../../domain/listings/consumerRights";
@@ -134,30 +134,34 @@ const getCreatorMilestoneWaitMessage = (
     status: string;
     sort_order: number;
     title: string;
-  } | null
+  } | null,
+  t: Translate
 ): string | null => {
   if (!milestone) {
     return null;
   }
 
-  const milestoneLabel = `Milestone ${milestone.sort_order + 1
-    }: ${milestone.title}`;
-
+  const label = t("creatorCommission.milestoneLabel", {
+    number: milestone.sort_order + 1,
+    title: milestone.title,
+  });
   if (milestone.status === "submitted") {
-    return `${milestoneLabel} is waiting for buyer review. The next milestone will unlock after the buyer approves this one and payment is confirmed.`;
+    return t("creatorCommission.waitReview", { label });
   }
 
   if (
     milestone.status === "buyer_approved" ||
     milestone.status === "payment_required"
   ) {
-    return `${milestoneLabel} has been approved by the buyer and is waiting for admin payment confirmation. The next milestone will unlock after payment is confirmed.`;
+    return t("creatorCommission.waitPayment", { label });
   }
 
   return null;
 };
 
 const CreatorRequestDetails = () => {
+  const t = useT();
+  const language = dateLocale(useLanguage());
   const { id } = useParams<{ id: string }>();
 
   const { data, isLoading, error } = useCreatorRequest(id ?? null);
@@ -353,9 +357,7 @@ const CreatorRequestDetails = () => {
     if (!request) return;
 
     if (trimmedDeclineReason.length < 10 || trimmedDeclineReason.length > 1000) {
-      setDeclineReasonError(
-        "Decline reason must be between 10 and 1000 characters."
-      );
+      setDeclineReasonError(t("creatorCommission.declineLength"));
       return;
     }
 
@@ -392,21 +394,19 @@ const CreatorRequestDetails = () => {
   };
 
   if (isLoading) {
-    return <div className={classes.loadingText}>Loading…</div>;
+    return <div className={classes.loadingText}>{t("common.loading")}</div>;
   }
 
   if (error || !request) {
     return (
       <div className={classes.page}>
         <Link to="/creator/requests" className={classes.backLink}>
-          ← Back to creator commissions
+          ← {t("creatorCommission.back")}
         </Link>
 
         <div className={classes.card}>
-          <h1 className={classes.h1}>Commission not found</h1>
-          <p className={classes.sub}>
-            This commission could not be loaded from your creator account.
-          </p>
+          <h1 className={classes.h1}>{t("commission.notFound")}</h1>
+          <p className={classes.sub}>{t("creatorCommission.notFoundText")}</p>
         </div>
       </div>
     );
@@ -477,7 +477,8 @@ const CreatorRequestDetails = () => {
       !finalDeliveriesQuery.error
       ? getListingRequestFinalDeliveryCreationBlockedReason(
         agreement,
-        finalDeliveries
+        finalDeliveries,
+        t
       )
       : null;
 
@@ -503,7 +504,7 @@ const CreatorRequestDetails = () => {
       : false;
 
   const activeMilestoneWaitMessage =
-    getCreatorMilestoneWaitMessage(activeMilestone);
+    getCreatorMilestoneWaitMessage(activeMilestone, t);
 
   const milestonesAreLoading =
     milestonesQuery.isLoading ||
@@ -515,13 +516,13 @@ const CreatorRequestDetails = () => {
 
   const requestReadOnlyMessage =
     request.status === "archived"
-      ? "Archived commissions are read-only."
+      ? t("commission.readOnlyArchived")
       : request.status === "declined"
-        ? "Declined commission requests are read-only because the conversation has been ended."
+        ? t("commission.readOnlyDeclined")
         : request.status === "completed"
-          ? "Completed projects are read-only because the buyer approved the final delivery."
+          ? t("commission.readOnlyCompleted")
           : request.status === "cancelled"
-            ? "Cancelled commissions are read-only."
+            ? t("commission.readOnlyCancelled")
             : undefined;
 
   const buyerLabel = buyerText(buyer, request.buyer_user_id);
@@ -544,7 +545,7 @@ const CreatorRequestDetails = () => {
       : null,
   };
 
-  const nextStep = getRequestNextStep(workspaceInput);
+  const nextStep = getRequestNextStep(workspaceInput, t, language);
   const workspaceLoading =
     agreementQuery.isLoading ||
     milestonesAreLoading ||
@@ -576,8 +577,8 @@ const CreatorRequestDetails = () => {
   const sections: WorkspaceSectionSpec[] = [
     {
       id: "request",
-      title: "Commission request",
-      summary: canRespondToRequest ? "Accept or decline" : "Brief, timeline, budget and references",
+      title: t("fulfilment.request"),
+      summary: t(canRespondToRequest ? "agreementReview.title" : "section.yourCommissionSummary"),
       ...flags("request"),
       defaultOpen: request.status === "submitted" || isCancellationProposalOpen,
       content: (
@@ -630,23 +631,23 @@ const CreatorRequestDetails = () => {
             <div className={classes.respond}>
               {updateStatusMutation.error && (
                 <div className={classes.submitError}>
-                  The commission status could not be updated right now.
+                  {t("creatorCommission.updateFailed")}
                 </div>
               )}
 
               {canAcceptListingRequest(request.status) && request.buyer_consumer_rights_region && (
                 <div className={classes.consumerRights}>
                   <p className={classes.consumerRightsTitle}>
-                    {consumerRightsHeading(request.buyer_consumer_rights_region)}
+                    {consumerRightsHeading(request.buyer_consumer_rights_region, t)}
                   </p>
-                  <p>{consumerRightsNotice(request.buyer_consumer_rights_region)}</p>
+                  <p>{consumerRightsNotice(request.buyer_consumer_rights_region, t)}</p>
                   <PolicyAcceptanceCheckbox
                     id="creator-consumer-rights"
                     checked={consumerRightsAcknowledged}
                     onChange={setConsumerRightsAcknowledged}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {consumerRightsAcknowledgementLabel}
+                    {t("consumerRights.acknowledge")}
                   </PolicyAcceptanceCheckbox>
                 </div>
               )}
@@ -662,7 +663,7 @@ const CreatorRequestDetails = () => {
                       (Boolean(request.buyer_consumer_rights_region) && !consumerRightsAcknowledged)
                     }
                   >
-                    {updateStatusMutation.isPending ? "Updating…" : "Accept commission request"}
+                    {t(updateStatusMutation.isPending ? "creatorCommission.updating" : "creatorCommission.accept")}
                   </button>
                 )}
 
@@ -676,7 +677,7 @@ const CreatorRequestDetails = () => {
                     }}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {showDeclineForm ? "Cancel decline" : "Decline commission request"}
+                    {t(showDeclineForm ? "creatorCommission.cancelDecline" : "creatorCommission.decline")}
                   </button>
                 )}
               </div>
@@ -684,7 +685,7 @@ const CreatorRequestDetails = () => {
               <Collapse open={showDeclineForm && canDeclineListingRequest(request.status)}>
                 <div className={classes.field}>
                   <label className={classes.label} htmlFor="declineReason">
-                    Decline reason
+                    {t("changeOrderReview.declineReason")}
                   </label>
 
                   <KeptPlaceholder>
@@ -696,13 +697,13 @@ const CreatorRequestDetails = () => {
                       setDeclineReasonDraft(event.target.value);
                       setDeclineReasonError(null);
                     }}
-                    placeholder="Explain why this commission request is being declined for audit and client clarity."
+                    placeholder={t("creatorCommission.declinePlaceholder")}
                     maxLength={1000}
                   />
                   </KeptPlaceholder>
 
                   <div className={classes.hint}>
-                    {trimmedDeclineReason.length}/1000 characters. Minimum 10 characters required.
+                    {t("creatorCommission.declineHint", { count: trimmedDeclineReason.length })}
                   </div>
 
                   {declineReasonError && (
@@ -716,9 +717,7 @@ const CreatorRequestDetails = () => {
                       onClick={() => void handleDeclineRequest()}
                       disabled={!canConfirmDecline}
                     >
-                      {updateStatusMutation.isPending
-                        ? "Declining commission request…"
-                        : "Confirm decline"}
+                      {t(updateStatusMutation.isPending ? "creatorCommission.declining" : "creatorCommission.confirmDecline")}
                     </button>
                   </div>
                 </div>
@@ -730,15 +729,15 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "agreement",
-      title: "Project agreement",
-      summary: summarizeAgreement(agreement, "Not created yet"),
+      title: t("section.agreement"),
+      summary: summarizeAgreement(agreement, t("section.agreementEmpty"), t),
       ...flags("agreement"),
       visible: request.status !== "submitted" || Boolean(agreement),
       content: (
         <>
           {agreementQuery.error && (
             <div className={classes.errorCard}>
-              Project agreement could not be loaded right now.
+              {t("creatorCommission.agreementLoadFailed")}
             </div>
           )}
 
@@ -756,14 +755,14 @@ const CreatorRequestDetails = () => {
             !agreementQuery.isLoading &&
             !agreementQuery.error && (
               <ExpandingFormPanel
-                title="Create project agreement"
-                description="Scope, price, timeline and payments for the buyer to accept."
-                launchLabel="Create agreement"
+                title={t("creatorCommission.agreementPanelTitle")}
+                description={t("creatorCommission.agreementPanelText")}
+                launchLabel={t("creatorCommission.agreementPanelButton")}
               >
                 {(close) => (
                   <ListingRequestAgreementBuilder
                     request={request}
-                    buyerName={getAgreementPersonName(buyer, "The buyer")}
+                    buyerName={getAgreementPersonName(buyer, t("commission.buyerFallback"))}
                     currency={payoutCurrency}
                     isPending={createAgreementMutation.isPending}
                     error={createAgreementMutation.error}
@@ -776,15 +775,15 @@ const CreatorRequestDetails = () => {
           <ListingRequestAgreementSummary
             agreement={agreement}
             isLoading={agreementQuery.isLoading}
-            buyerName={getAgreementPersonName(buyer, "The buyer")}
+            buyerName={getAgreementPersonName(buyer, t("commission.buyerFallback"))}
           />
         </>
       ),
     },
     {
       id: "payments",
-      title: "Payments",
-      summary: summarizeSchedule(agreement),
+      title: t("section.payments"),
+      summary: summarizeSchedule(agreement, t),
       ...flags("payments"),
       visible: request.status === "accepted" || Boolean(agreement),
       content: (
@@ -796,8 +795,8 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "milestones",
-      title: "Milestones",
-      summary: summarizeMilestones(milestones),
+      title: t("section.milestones"),
+      summary: summarizeMilestones(milestones, t),
       ...flags("milestones"),
       visible: usesMilestones,
       content: (
@@ -811,9 +810,9 @@ const CreatorRequestDetails = () => {
             startingPaymentResolved &&
             canSubmitActiveMilestone && (
               <ExpandingFormPanel
-                title={`Submit milestone ${(activeMilestone?.sort_order ?? 0) + 1}`}
-                description={activeMilestone?.title ?? "Share the work for buyer review."}
-                launchLabel={activeMilestone?.status === "revision_requested" ? "Resubmit milestone" : "Submit milestone"}
+                title={t("creatorCommission.milestonePanelTitle", { number: (activeMilestone?.sort_order ?? 0) + 1 })}
+                description={activeMilestone?.title ?? t("creatorCommission.milestonePanelText")}
+                launchLabel={t(activeMilestone?.status === "revision_requested" ? "creatorCommission.milestonePanelResubmit" : "creatorCommission.milestonePanelButton")}
               >
                 {(close) => (
                   <ListingRequestMilestoneSubmissionForm
@@ -839,8 +838,8 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "delivery",
-      title: "Final delivery",
-      summary: summarizeDeliveries(finalDeliveries),
+      title: t("section.delivery"),
+      summary: summarizeDeliveries(finalDeliveries, t),
       ...flags("delivery"),
       visible: agreementAccepted,
       content: (
@@ -860,9 +859,9 @@ const CreatorRequestDetails = () => {
 
           {canCreateFinalDelivery && agreement && (
             <ExpandingFormPanel
-              title="Create final delivery"
-              description="Package the finished files for the buyer's approval."
-              launchLabel="Create delivery"
+              title={t("creatorCommission.deliveryPanelTitle")}
+              description={t("creatorCommission.deliveryPanelText")}
+              launchLabel={t("creatorCommission.deliveryPanelButton")}
             >
               {(close) => (
                 <ListingRequestFinalDeliveryBuilder
@@ -895,8 +894,8 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "changeOrders",
-      title: "Change orders",
-      summary: summarizeChangeOrders(changeOrders),
+      title: t("section.changeOrders"),
+      summary: summarizeChangeOrders(changeOrders, t),
       ...flags("changeOrders"),
       visible: agreementAccepted,
       content: (
@@ -919,9 +918,9 @@ const CreatorRequestDetails = () => {
 
           {canCreateChangeOrder && agreement && (
             <ExpandingFormPanel
-              title="Propose a change order"
-              description="Add scope, cost or time after the agreement was accepted."
-              launchLabel="Propose change"
+              title={t("creatorCommission.changePanelTitle")}
+              description={t("creatorCommission.changePanelText")}
+              launchLabel={t("creatorCommission.changePanelButton")}
             >
               {(close) => (
                 <ListingRequestChangeOrderBuilder
@@ -947,8 +946,8 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "progress",
-      title: "Progress updates",
-      summary: summarizeProgress(progressUpdates),
+      title: t("section.progress"),
+      summary: summarizeProgress(progressUpdates, t, language),
       ...flags("progress"),
       visible: Boolean(agreement),
       content: (
@@ -957,9 +956,9 @@ const CreatorRequestDetails = () => {
 
           {canPostProgressUpdate && (
             <ExpandingFormPanel
-              title="Post a progress update"
-              description="Keep the buyer in the loop and meet the update schedule."
-              launchLabel="Post update"
+              title={t("creatorCommission.updatePanelTitle")}
+              description={t("creatorCommission.updatePanelText")}
+              launchLabel={t("creatorCommission.updatePanelButton")}
             >
               {(close) => (
                 <ListingRequestProgressUpdateForm
@@ -985,8 +984,8 @@ const CreatorRequestDetails = () => {
     },
     {
       id: "snapshot",
-      title: "Listing snapshot",
-      summary: "As it was when the buyer reached out",
+      title: t("section.snapshot"),
+      summary: t("creatorCommission.snapshotSummary"),
       ...flags("snapshot"),
       content: <ListingSnapshotDetails snapshot={snapshot} />,
     },
@@ -994,21 +993,25 @@ const CreatorRequestDetails = () => {
 
   const meta = [
     <span key="buyer">
-      From <span className="font-semibold text-zinc-900">{buyerLabel}</span>
+      {t("creatorCommission.from")} <span className="font-semibold text-zinc-900">{buyerLabel}</span>
     </span>,
-    <span key="submitted">Submitted {workspaceDate(request.created_at)}</span>,
+    <span key="submitted">
+      {t("commission.submitted", { date: workspaceDate(request.created_at, language) })}
+    </span>,
     request.status === "completed" && request.completed_at ? (
-      <span key="completed">Completed {workspaceDate(request.completed_at)}</span>
+      <span key="completed">
+        {t("commission.completed", { date: workspaceDate(request.completed_at, language) })}
+      </span>
     ) : (
-      <span key="updated">Updated {workspaceDate(request.updated_at)}</span>
+      <span key="updated">
+        {t("commission.updated", { date: workspaceDate(request.updated_at, language) })}
+      </span>
     ),
   ];
 
   const manageMenu = canArchiveListingRequest(request.status) ? (
     <ActionMenu>
-      <p className={classes.text}>
-        Archive this commission to remove it from your active queue without declining it.
-      </p>
+      <p className={classes.text}>{t("creatorCommission.archiveText")}</p>
 
       <button
         className={classes.btnOutline}
@@ -1016,7 +1019,7 @@ const CreatorRequestDetails = () => {
         onClick={() => void handleArchiveRequest()}
         disabled={updateStatusMutation.isPending}
       >
-        {updateStatusMutation.isPending ? "Updating…" : "Archive commission"}
+        {t(updateStatusMutation.isPending ? "creatorCommission.updating" : "archive.button")}
       </button>
     </ActionMenu>
   ) : canCancelListingRequestBeforePayment(request.status) &&
@@ -1035,13 +1038,13 @@ const CreatorRequestDetails = () => {
       header={
         <StatusHeader
           backTo={backTo}
-          backLabel="Back to creator commissions"
-          eyebrow="Commission request"
+          backLabel={t("creatorCommission.back")}
+          eyebrow={t("fulfilment.request")}
           title={snapshot.title}
           meta={meta}
-          statusLabel={getListingRequestStatusLabel(request.status, request, request)}
+          statusLabel={getListingRequestStatusLabel(request.status, request, request, t)}
           statusTone={getListingRequestStatusTone(request.status)}
-          stages={getRequestStages(workspaceInput)}
+          stages={getRequestStages(workspaceInput, t)}
           actions={manageMenu}
           notice={
             (request.status === "declined" ||
@@ -1063,14 +1066,14 @@ const CreatorRequestDetails = () => {
           viewer="creator"
           isLoading={workspaceLoading}
           buyerLabel={buyerLabel}
-          creatorLabel="You"
+          creatorLabel={t("common.you")}
         />
       }
       conversation={
         <RequestConversationThread
           requestId={request.id}
           buyerLabel={buyerLabel}
-          creatorLabel="You"
+          creatorLabel={t("common.you")}
           creatorName={
             myProfile
               ? buyerText(
