@@ -45,11 +45,10 @@ export type ListingRequestMinimumUpdateRule = {
 
 export const listingRequestPaymentStructureOptions: Array<{
   value: ListingRequestPaymentStructure;
-  label: string;
 }> = [
-    { value: "full_prepayment", label: "Full prepayment" },
-    { value: "deposit_balance", label: "Deposit + balance" },
-    { value: "milestone_payments", label: "Milestone payments" },
+    { value: "full_prepayment" },
+    { value: "deposit_balance" },
+    { value: "milestone_payments" },
   ];
 
 export type ListingRequestBuyerHoldReason =
@@ -101,7 +100,8 @@ export const getListingRequestPaymentTimingLabel = (
 ): string => t(`paymentTiming.${timing}`);
 
 export const getMinimumCreatorUpdateRule = (
-  estimatedWorkDays: number
+  estimatedWorkDays: number,
+  t: Translate = english
 ): ListingRequestMinimumUpdateRule => {
   // Keep the rule stable even if the creator enters a rough/invalid estimate.
   const safeEstimatedDays = Math.max(1, Math.ceil(estimatedWorkDays));
@@ -109,18 +109,16 @@ export const getMinimumCreatorUpdateRule = (
   return safeEstimatedDays < 7
     ? {
       rule: "single_progress_update",
-      label: "One progress update required",
-      summary:
-        "This project is estimated under one week, so the creator must provide at least one progress update before final delivery.",
+      label: t("updateRule.singleLabel"),
+      summary: t("updateRule.singleSummary"),
       firstUpdateDueDays: null,
       updateFrequencyDays: null,
       recommendedCheckpoints: ["50% progress update"],
     }
     : {
       rule: "weekly_updates",
-      label: "Weekly updates required",
-      summary:
-        "This project is estimated at one week or longer, so the creator must provide weekly progress updates until delivery.",
+      label: t("updateRule.weeklyLabel"),
+      summary: t("updateRule.weeklySummary"),
       firstUpdateDueDays: 5,
       updateFrequencyDays: 7,
       recommendedCheckpoints: [
