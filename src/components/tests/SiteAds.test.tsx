@@ -192,12 +192,35 @@ describe("site ads", () => {
       );
     });
 
-    it("keeps side ads off the home page, so it opens with no ads in view", () => {
+    it("opens the home page with no side ads, and places them after the hero", () => {
       onTestSite();
       onWideScreen();
       renderAds("/");
 
       expect(placeholders().map((box) => box.textContent)).toEqual(["Ad space: 100% × 90"]);
+
+      render(
+        <MemoryRouter initialEntries={["/"]}>
+          <AdGutters afterHero />
+        </MemoryRouter>,
+      );
+
+      const sideAds = screen.getAllByText("Ad space: 160 × 600");
+
+      expect(sideAds).toHaveLength(2);
+      expect(sideAds[0].parentElement).toHaveClass("sticky");
+      expect(sideAds[0].closest("aside")).not.toHaveClass("fixed");
+    });
+
+    it("keeps the after-hero side ads off a narrow screen", () => {
+      onTestSite();
+      render(
+        <MemoryRouter initialEntries={["/"]}>
+          <AdGutters afterHero />
+        </MemoryRouter>,
+      );
+
+      expect(placeholders()).toHaveLength(0);
     });
 
     it("marks nothing on a page that would never show ads", () => {

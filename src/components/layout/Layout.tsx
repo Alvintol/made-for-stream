@@ -28,8 +28,7 @@ const Layout = () => {
             <Outlet />
           </PageTransition>
         </PolicyAcceptanceGate>
-        {/* The home page places its own, after the hero. */}
-        {pathname !== '/' && <AdBanner className={classes.ad} />}
+        <AdBanner className={classes.ad} />
       </main>
       <Footer />
       <SiteUpdatesNotice />

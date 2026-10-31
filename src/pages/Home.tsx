@@ -6,11 +6,12 @@ import { useMarketListings, type MarketListingItem } from "../hooks/listings/use
 import { usePublicCreators, type PublicCreatorItem } from "../hooks/usePublicCreators";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { StaggerGroup } from "../lib/motion";
-import { AdBanner } from "../components/ads/SiteAds";
+import { AdGutters } from "../components/ads/SiteAds";
 import HeroParallax from "../components/home/HeroParallax";
 import { hasMessage, useT } from "../lib/i18n/i18n";
 const classes = {
   page: "space-y-16",
+  afterHero: "relative space-y-16",
 
   section: "space-y-5",
   headerRow: "flex items-end justify-between gap-4",
@@ -334,16 +335,18 @@ const Home = () => {
   return (
     <div className={classes.page}>
       <HeroParallax previewUrls={HERO_PLACEHOLDER_URLS} />
-      <AdBanner />
-      <FeaturedSection
-        featuredListings={featuredListings}
-        isLoading={isLoadingMarket}
-      />
-      <LiveNowSection
-        liveNow={liveNow}
-        isFetching={isFetching}
-        errorMsg={errorMsg}
-      />
+      <div className={classes.afterHero}>
+        <AdGutters afterHero />
+        <FeaturedSection
+          featuredListings={featuredListings}
+          isLoading={isLoadingMarket}
+        />
+        <LiveNowSection
+          liveNow={liveNow}
+          isFetching={isFetching}
+          errorMsg={errorMsg}
+        />
+      </div>
     </div>
   );
 };
