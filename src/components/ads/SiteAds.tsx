@@ -13,9 +13,21 @@ declare global {
 
 const SCRIPT_ID = "adsense-script";
 
+// Phones get one small fixed banner, under the page's content.
+const PHONE_SCREEN = "(max-width: 767px)";
+const PHONE_AD = { width: 320, height: 50 };
+
+// The side gutters are only wide enough for a 160 pixel ad from here up. An ad
+// hidden with CSS would still be requested, so it is not rendered at all.
+const WIDE_SCREEN = "(min-width: 1880px)";
+
+const screenMatches = (query: string): boolean =>
+  typeof window.matchMedia === "function" && window.matchMedia(query).matches;
+
 const classes = {
   banner: "mb-6",
-  side: "fixed top-28 z-10 hidden w-40 min-[1880px]:block",
+  phone: "-mx-4 mt-8 flex flex-col items-center sm:mx-0",
+  side: "fixed top-28 z-10 w-40",
   sideLeft: "left-3",
   sideRight: "right-3",
   label: "mb-1 text-center text-[11px] text-zinc-500",
@@ -54,7 +66,10 @@ const useAdsense = (): AdsenseConfig | null => {
   return allowed && isAdPage(pathname) ? config : null;
 };
 
-const AdUnit = ({ client, slot, format }: { client: string; slot: string; format: string }) => {
+type AdUnitProps = { client: string; slot: string; format?: string };
+
+// With no format, the ad is the fixed phone size. Otherwise Google sizes it.
+const AdUnit = ({ client, slot, format }: AdUnitProps) => {
   const t = useT();
 
   useEffect(() => {
@@ -70,33 +85,43 @@ const AdUnit = ({ client, slot, format }: { client: string; slot: string; format
       <p className={classes.label}>{t("ads.label")}</p>
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={format ? { display: "block" } : { display: "inline-block", ...PHONE_AD }}
         data-ad-client={client}
         data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive="true"
+        {...(format ? { "data-ad-format": format, "data-full-width-responsive": "true" } : {})}
       />
     </>
   );
 };
 
-export const AdBanner = () => {
+// Larger screens show the banner above the page. Phones show theirs below it,
+// and with no phone slot they show no ad at all rather than the large one.
+export const AdBanner = ({ position }: { position: "top" | "bottom" }) => {
   const { pathname } = useLocation();
   const config = useAdsense();
+  const phone = screenMatches(PHONE_SCREEN);
+  if (!config || phone !== (position === "bottom")) return null;
 
-  return config ? (
+  if (phone) {
+    return config.phoneSlot ? (
+      <aside className={classes.phone}>
+        <AdUnit key={pathname} client={config.client} slot={config.phoneSlot} />
+      </aside>
+    ) : null;
+  }
+
+  return (
     <aside className={classes.banner}>
       <AdUnit key={pathname} client={config.client} slot={config.bannerSlot} format="horizontal" />
     </aside>
-  ) : null;
+  );
 };
 
-// The side gutters are only wide enough for a 160 pixel ad on very wide screens.
 export const AdGutters = () => {
   const { pathname } = useLocation();
   const config = useAdsense();
 
-  return config?.sideSlot ? (
+  return config?.sideSlot && screenMatches(WIDE_SCREEN) ? (
     <>
       {[classes.sideLeft, classes.sideRight].map((side) => (
         <aside key={side} className={`${classes.side} ${side}`}>

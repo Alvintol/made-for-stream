@@ -22,12 +22,13 @@ const Layout = () => {
       <Nav />
       <AdGutters />
       <main className={classes.main}>
-        <AdBanner />
+        <AdBanner position="top" />
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>
             <Outlet />
           </PageTransition>
         </PolicyAcceptanceGate>
+        <AdBanner position="bottom" />
       </main>
       <Footer />
       <SiteUpdatesNotice />

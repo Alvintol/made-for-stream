@@ -23,8 +23,11 @@ the page as it was.
 **How it works.** With the build variables set, `advertising` becomes an active
 cookie category, so every visitor is asked again. Google's script loads only
 after someone opts in. If they opt out, the page reloads so the script stops.
-The banner sits above the page. Side ads show only on screens at least 1880
-pixels wide, because the gutters are narrower than a 160 pixel ad below that.
+On a screen at least 768 pixels wide, the banner sits above the page. A phone
+gets one small 320 by 50 pixel banner under the page's content, which never
+sticks to the screen and never covers anything. With no phone slot, a phone
+shows no ad. Side ads show only on screens at least 1880 pixels wide, because
+the gutters are narrower than a 160 pixel ad below that.
 
 ## Turning ads on
 
@@ -42,11 +45,13 @@ Do these in order. Google reviews a public site, so this starts after launch.
    Community Guidelines, such as adult content and gambling, and block
    competitors. Google chooses the ads, so a banned category can still get
    through until it is blocked.
-5. **Create the ad units.** One responsive banner and, if wanted, one vertical
-   unit.
+5. **Create the ad units.** One responsive banner, one fixed 320 by 50 unit
+   for phones and, if wanted, one vertical unit. Leave Google's Auto ads and
+   anchor ads off: they add ads the site does not place, and anchor ads stick
+   to the screen.
 6. **Switch on.** Set the **build** variables on the website's Worker, then
-   rebuild: `VITE_ADSENSE_CLIENT` (`ca-pub-…`), `VITE_ADSENSE_BANNER_SLOT` and,
-   for the side ads, `VITE_ADSENSE_SIDE_SLOT`.
+   rebuild: `VITE_ADSENSE_CLIENT` (`ca-pub-…`), `VITE_ADSENSE_BANNER_SLOT`,
+   `VITE_ADSENSE_PHONE_SLOT` and, for the side ads, `VITE_ADSENSE_SIDE_SLOT`.
 
 To turn ads off, clear `VITE_ADSENSE_CLIENT` and rebuild.
 
