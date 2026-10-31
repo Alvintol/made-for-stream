@@ -6,6 +6,7 @@ import { useMarketListings, type MarketListingItem } from "../hooks/listings/use
 import { usePublicCreators, type PublicCreatorItem } from "../hooks/usePublicCreators";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { StaggerGroup } from "../lib/motion";
+import { AdBanner } from "../components/ads/SiteAds";
 import HeroParallax from "../components/home/HeroParallax";
 import { hasMessage, useT } from "../lib/i18n/i18n";
 const classes = {
@@ -333,6 +334,7 @@ const Home = () => {
   return (
     <div className={classes.page}>
       <HeroParallax previewUrls={HERO_PLACEHOLDER_URLS} />
+      <AdBanner />
       <FeaturedSection
         featuredListings={featuredListings}
         isLoading={isLoadingMarket}
