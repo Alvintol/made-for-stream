@@ -3,7 +3,25 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getAdsenseConfig, isAdPage } from "../ads/ads";
 
 describe("isAdPage", () => {
-  it.each(["/", "/market", "/free", "/creators", "/live", "/listing/abc", "/creator/meowington"])(
+  it.each([
+    "/",
+    "/market",
+    "/free",
+    "/creators",
+    "/live",
+    "/listing/abc",
+    "/listing/abc/request",
+    "/creator/meowington",
+    "/creator/dashboard",
+    "/creator/listings/abc",
+    "/creator/requests/abc",
+    "/settings/profile",
+    "/settings/preferences",
+    "/messages/abc",
+    "/requests/abc",
+    "/terms",
+    "/policies/refunds",
+  ])(
     "allows ads on %s",
     (path) => {
       expect(isAdPage(path)).toBe(true);
@@ -12,21 +30,11 @@ describe("isAdPage", () => {
 
   it.each([
     "/signin",
-    "/settings/profile",
-    "/messages/abc",
-    "/requests/abc",
+    "/settings/personal",
     "/payments/checkout/abc",
     "/payments/return",
-    "/listing/abc/request",
-    "/creator/dashboard",
-    "/creator/listings",
-    "/creator/listings/abc",
-    "/creator/requests",
-    "/creator/requests/abc",
     "/admin",
-    "/terms",
-    "/privacy",
-    "/policies/refunds",
+    "/admin/requests/abc",
   ])("keeps ads off %s", (path) => {
     expect(isAdPage(path)).toBe(false);
   });

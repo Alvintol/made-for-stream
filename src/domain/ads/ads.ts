@@ -33,17 +33,10 @@ export const getAdsenseConfig = (): AdsenseConfig | null => {
 export const showAdPlaceholders = (): boolean =>
   window.location.hostname === "dev.madeforstream.com" && !getAdsenseConfig();
 
-// Pages people browse. Never checkout, chat, settings, policies, the admin
-// pages or a creator's own tools: nobody should see an ad while paying or
-// reading what they agree to.
-const AD_PAGES = [
-  /^\/$/,
-  /^\/market$/,
-  /^\/free$/,
-  /^\/creators$/,
-  /^\/live$/,
-  /^\/listing\/[^/]+$/,
-  /^\/creator\/(?!dashboard$|listings$|requests$)[^/]+$/,
-];
+// Every page except these. Google bans its ads on screens for sign-in, alerts
+// and thank-you pages, and they would sit beside a card payment. Admin pages
+// have no audience, and personal details shows a legal name, birth date and
+// address, which a third party's script should not run beside.
+const NO_AD_PAGES = [/^\/signin$/, /^\/payments\//, /^\/admin(\/|$)/, /^\/settings\/personal$/];
 
-export const isAdPage = (pathname: string): boolean => AD_PAGES.some((page) => page.test(pathname));
+export const isAdPage = (pathname: string): boolean => !NO_AD_PAGES.some((page) => page.test(pathname));

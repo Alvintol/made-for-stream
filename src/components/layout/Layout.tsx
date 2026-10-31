@@ -21,14 +21,15 @@ const Layout = () => {
     <div className={classes.shell}>
       <LanguageSync />
       <Nav />
-      <AdGutters />
       <main className={classes.main}>
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>
             <Outlet />
           </PageTransition>
+          {/* Inside the gate: never beside the screen that asks to accept a policy. */}
+          <AdGutters />
+          <AdBanner className={classes.ad} />
         </PolicyAcceptanceGate>
-        <AdBanner className={classes.ad} />
       </main>
       <Footer />
       <SiteUpdatesNotice />
