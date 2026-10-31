@@ -31,6 +31,11 @@ const classes = {
   side: "fixed top-28 z-10 w-40",
   sideLeft: "left-3",
   sideRight: "right-3",
+  // Fills the height of the content beside it, out to the edges of the screen.
+  track: "absolute inset-y-0 z-10 w-40",
+  trackLeft: "left-[calc(50%-50vw+12px)]",
+  trackRight: "right-[calc(50%-50vw+12px)]",
+  trackAd: "sticky top-28",
   label: "mb-1 text-center text-[11px] text-zinc-500",
   placeholder:
     "flex max-w-full items-center justify-center border border-dashed border-zinc-400 text-center text-xs text-zinc-500",
@@ -114,9 +119,8 @@ const AdUnit = ({ client, slot, format }: AdUnitProps) => {
   );
 };
 
-// Never the first thing someone sees: below the page's content, or after the
-// hero on the home page. With no phone slot, a phone shows no ad at all rather
-// than the large one.
+// Never above the page's content. With no phone slot, a phone shows no ad at
+// all rather than the large one.
 export const AdBanner = ({ className = "" }: { className?: string }) => {
   const { pathname } = useLocation();
   const config = useAdsense();
@@ -149,33 +153,39 @@ export const AdBanner = ({ className = "" }: { className?: string }) => {
   );
 };
 
-export const AdGutters = () => {
+// Side ads stay in place as the page scrolls. The home page opens with no ads
+// in view, so it places its own after the hero (afterHero): they scroll in with
+// the content below it, then stay beside that content.
+export const AdGutters = ({ afterHero = false }: { afterHero?: boolean }) => {
   const { pathname } = useLocation();
   const config = useAdsense();
   const placeholders = usePlaceholders();
 
-  // The home page opens with no ads in view.
-  if (pathname === "/") return null;
+  if ((pathname === "/" && !afterHero) || !screenMatches(WIDE_SCREEN)) return null;
 
-  if (placeholders && screenMatches(WIDE_SCREEN)) {
-    return (
-      <>
-        {[classes.sideLeft, classes.sideRight].map((side) => (
-          <aside key={side} className={`${classes.side} ${side}`}>
-            <AdPlaceholder {...SIDE_AD} />
-          </aside>
-        ))}
-      </>
-    );
-  }
+  const ad = placeholders ? (
+    <AdPlaceholder {...SIDE_AD} />
+  ) : config?.sideSlot ? (
+    <AdUnit key={pathname} client={config.client} slot={config.sideSlot} format="vertical" />
+  ) : null;
 
-  return config?.sideSlot && screenMatches(WIDE_SCREEN) ? (
+  if (!ad) return null;
+
+  return afterHero ? (
     <>
-      {[classes.sideLeft, classes.sideRight].map((side) => (
-        <aside key={side} className={`${classes.side} ${side}`}>
-          <AdUnit key={pathname} client={config.client} slot={config.sideSlot} format="vertical" />
+      {[classes.trackLeft, classes.trackRight].map((side) => (
+        <aside key={side} className={`${classes.track} ${side}`}>
+          <div className={classes.trackAd}>{ad}</div>
         </aside>
       ))}
     </>
-  ) : null;
+  ) : (
+    <>
+      {[classes.sideLeft, classes.sideRight].map((side) => (
+        <aside key={side} className={`${classes.side} ${side}`}>
+          {ad}
+        </aside>
+      ))}
+    </>
+  );
 };

@@ -23,10 +23,11 @@ the page as it was.
 **How it works.** With the build variables set, `advertising` becomes an active
 cookie category, so every visitor is asked again. Google's script loads only
 after someone opts in. If they opt out, the page reloads so the script stops.
-No page opens with an ad. The banner sits below the page's content, and on the
-home page it sits after the hero, with no side ads. A phone gets a small 320 by
-50 pixel banner in the same places, which never sticks to the screen and never
-covers anything. With no phone slot, a phone
+No banner sits above a page's content: it is below the content on every page.
+A phone gets a small 320 by 50 pixel banner in the same place, which never sticks
+to the screen and never covers anything. On the home page, the side ads start at
+the bottom of the hero, so it opens with no ads in view. They scroll in with the
+content, then stay in place beside it. With no phone slot, a phone
 shows no ad. Side ads show only on screens at least 1880 pixels wide, because
 the gutters are narrower than a 160 pixel ad below that.
 
