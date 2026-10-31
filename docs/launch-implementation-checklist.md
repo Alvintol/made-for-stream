@@ -1033,6 +1033,12 @@ Owner's steps, outside the code:
 - [x] Mexico is left out of the beta (owner's decision, 2026-10-31: Canada and
       the United States only). Spanish makes buyers there more likely, so
       Mexican consumer law needs its own check before it opens.
+- [ ] A subscription to remove ads is not built, and is not worth building while
+      ads need opt-in: saying no already removes them for free. The
+      `subscriptions` table exists on the test database only, empty, with no
+      migration, and nothing reads or writes it. It would need a migration,
+      Stripe Billing, webhooks, a billing page and Payment Terms section 8
+      changes. The buyer fee is ready for a subscription waiver (`*_fee_reason`).
 - [ ] AdSense (owner's decision, 2026-10-31). Built and off, with no script
       and no ad space until `VITE_ADSENSE_CLIENT` is set. It cannot start before
       the site is public and the policies change: `site/ads.md` has the steps.

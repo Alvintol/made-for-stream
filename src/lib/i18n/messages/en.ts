@@ -2501,6 +2501,7 @@ export const en = {
 
   // Banner ads (components/ads/SiteAds.tsx)
   "ads.label": "Advertisement",
+  "ads.placeholder": "Ad space: {size}",
 
   // Page not found (src/pages/NotFound.tsx)
   "notFound.text": "That page doesn’t exist.",

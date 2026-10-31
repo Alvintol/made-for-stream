@@ -2423,6 +2423,7 @@ export const es: Record<MessageKey, Message> = {
   "chat.line.theCreator": "el creador",
 
   "ads.label": "Publicidad",
+  "ads.placeholder": "Espacio publicitario: {size}",
 
   "notFound.text": "Esa página no existe.",
   "notFound.home": "Ir al inicio",

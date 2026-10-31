@@ -55,6 +55,14 @@ Do these in order. Google reviews a public site, so this starts after launch.
 
 To turn ads off, clear `VITE_ADSENSE_CLIENT` and rebuild.
 
+## Seeing where ads would sit
+
+Set the build variable `VITE_SHOW_AD_PLACEHOLDERS=true` on the test website and
+rebuild. Dashed boxes appear at each ad's real size, on the same pages, and
+Google is never contacted. Every tester sees them. **Never set it in
+production.** Real ads replace the boxes if both are set. A phone or a narrower
+window picks its layout when the page loads, so reload after resizing.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |
@@ -142,3 +150,5 @@ ads off until it is blocked, because the site promises general audiences.
   until they are blocked.
 - **The ad label is translated,** but the ads are in whatever language Google
   picks.
+- **Paying to remove ads does not work with opt-in.** Anyone can already avoid
+  ads for free by not opting in. See the checklist before building it.

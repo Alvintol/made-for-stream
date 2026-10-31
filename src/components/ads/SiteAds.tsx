@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-import { getAdsenseConfig, isAdPage, type AdsenseConfig } from "../../domain/ads/ads";
+import { getAdsenseConfig, isAdPage, showAdPlaceholders, type AdsenseConfig } from "../../domain/ads/ads";
 import { useT } from "../../lib/i18n/i18n";
 import { useCookiePreferences } from "../../providers/CookiePreferencesProvider";
 
@@ -16,6 +16,8 @@ const SCRIPT_ID = "adsense-script";
 // Phones get one small fixed banner, under the page's content.
 const PHONE_SCREEN = "(max-width: 767px)";
 const PHONE_AD = { width: 320, height: 50 };
+const BANNER_HEIGHT = 90;
+const SIDE_AD = { width: 160, height: 600 };
 
 // The side gutters are only wide enough for a 160 pixel ad from here up. An ad
 // hidden with CSS would still be requested, so it is not rendered at all.
@@ -31,6 +33,8 @@ const classes = {
   sideLeft: "left-3",
   sideRight: "right-3",
   label: "mb-1 text-center text-[11px] text-zinc-500",
+  placeholder:
+    "flex max-w-full items-center justify-center border border-dashed border-zinc-400 text-center text-xs text-zinc-500",
 } as const;
 
 const loadScript = (client: string) => {
@@ -66,6 +70,23 @@ const useAdsense = (): AdsenseConfig | null => {
   return allowed && isAdPage(pathname) ? config : null;
 };
 
+// Shows where an ad would sit, at its real size. Google is never contacted.
+const usePlaceholders = (): boolean => {
+  const { pathname } = useLocation();
+
+  return showAdPlaceholders() && isAdPage(pathname);
+};
+
+const AdPlaceholder = ({ width, height }: { width?: number; height: number }) => {
+  const t = useT();
+
+  return (
+    <div className={classes.placeholder} style={{ width: width ?? "100%", height }}>
+      {t("ads.placeholder", { size: `${width ?? "100%"} × ${height}` })}
+    </div>
+  );
+};
+
 type AdUnitProps = { client: string; slot: string; format?: string };
 
 // With no format, the ad is the fixed phone size. Otherwise Google sizes it.
@@ -99,8 +120,20 @@ const AdUnit = ({ client, slot, format }: AdUnitProps) => {
 export const AdBanner = ({ position }: { position: "top" | "bottom" }) => {
   const { pathname } = useLocation();
   const config = useAdsense();
+  const placeholders = usePlaceholders();
   const phone = screenMatches(PHONE_SCREEN);
-  if (!config || phone !== (position === "bottom")) return null;
+
+  if (phone !== (position === "bottom")) return null;
+
+  if (placeholders) {
+    return (
+      <aside className={phone ? classes.phone : classes.banner}>
+        <AdPlaceholder {...(phone ? PHONE_AD : { height: BANNER_HEIGHT })} />
+      </aside>
+    );
+  }
+
+  if (!config) return null;
 
   if (phone) {
     return config.phoneSlot ? (
@@ -120,6 +153,19 @@ export const AdBanner = ({ position }: { position: "top" | "bottom" }) => {
 export const AdGutters = () => {
   const { pathname } = useLocation();
   const config = useAdsense();
+  const placeholders = usePlaceholders();
+
+  if (placeholders && screenMatches(WIDE_SCREEN)) {
+    return (
+      <>
+        {[classes.sideLeft, classes.sideRight].map((side) => (
+          <aside key={side} className={`${classes.side} ${side}`}>
+            <AdPlaceholder {...SIDE_AD} />
+          </aside>
+        ))}
+      </>
+    );
+  }
 
   return config?.sideSlot && screenMatches(WIDE_SCREEN) ? (
     <>
