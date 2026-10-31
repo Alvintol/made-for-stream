@@ -1,5 +1,5 @@
-// The site's text in English: the master list. Every key here needs a
-// French line in fr.ts, or the type check fails. Text not moved here yet is
+// The site's text in English: the master list. Every key here needs a line
+// in fr.ts and es.ts, or the type check fails. Text not moved here yet is
 // still written in its component, in English.
 //
 // "{name}" is filled in by t(key, { name }). A plural message has a form per
@@ -478,7 +478,7 @@ export const en = {
   "checkout.failed": "Something went wrong.",
 
   // The terms box before paying (src/components/legal/CheckoutPolicyAcceptance.tsx).
-  // Consent wording: the French needs the policy translator's check too.
+  // Consent wording: translations need the policy translator's check too.
   "checkoutTerms.label": "Terms for this payment",
   "checkoutTerms.acceptedStart": "You accepted the project terms, the",
   "checkoutTerms.acceptedMiddle": "and the",
@@ -545,7 +545,7 @@ export const en = {
   "agreement.policies": "Policies",
   "agreement.confirmations": "Buyer confirmations",
   "agreement.holds": "Timeline holds",
-  // Consent wording (the buyer ticks it): the French needs the policy translator's check.
+  // Consent wording (the buyer ticks it): translations need the policy translator's check.
   "agreement.understand": "I understand the {section} above.",
   "agreement.paymentStructure": "Payment structure",
   "agreement.total": "Total",
@@ -734,7 +734,7 @@ export const en = {
   "deliveryReview.offSiteFirst":
     "Confirm in the chat that you received the work sent outside Made for Stream before approving the final delivery.",
   "deliveryReview.goToConfirmation": "Go to the confirmation",
-  // What the buyer confirms by approving: the French needs the policy translator's check.
+  // What the buyer confirms by approving: translations need the policy translator's check.
   "deliveryReview.approveNote":
     "Approving confirms that the submitted final delivery satisfies the accepted project agreement and any accepted change orders.",
   "deliveryReview.revisionsLabel": "Required revisions",
@@ -825,7 +825,7 @@ export const en = {
   "changeOrderReview.text":
     "Review the proposed changes carefully. They do not become enforceable until you accept them.",
   "changeOrderReview.saveFailed": "The project change order response could not be saved.",
-  // What the buyer agrees to by accepting: the French needs the policy translator's check.
+  // What the buyer agrees to by accepting: translations need the policy translator's check.
   "changeOrderReview.acceptNote":
     "By accepting, you agree that the proposed project changes replace the affected terms of the currently accepted agreement.",
   "changeOrderReview.declineReason": "Decline reason",
@@ -1424,7 +1424,7 @@ export const en = {
   "consumerRights.headingUk": "This buyer has UK consumer rights",
   "consumerRights.regionEu": "the EU or EEA",
   "consumerRights.regionUk": "the UK",
-  // Consent wording (the creator ticks it): the French needs the policy translator's check.
+  // Consent wording (the creator ticks it): translations need the policy translator's check.
   "consumerRights.notice":
     "This buyer lives in {region}, where a consumer can usually cancel a purchase of services within 14 days of agreeing to it. When they accept your agreement, they ask you to start work straight away. If they cancel within those 14 days, they pay for the work you've done so far and the rest is refunded. Once the work is complete and delivered, this right ends. A custom piece is not exempt just because it is made for them.",
   "consumerRights.acknowledge":
@@ -2009,7 +2009,7 @@ export const en = {
   "apply.reqSamplesMin": "Add at least {min} work samples ({count} so far).",
   "apply.reqAgreements": "Terms and acknowledgements accepted",
   "apply.reqAgreementsBlock": "Accept the creator terms and acknowledgements.",
-  // Consent wording (the applicant ticks it): the French needs the policy translator's check.
+  // Consent wording (the applicant ticks it): translations need the policy translator's check.
   "apply.agreeTermsStart": "I have read, understood, and agree to the",
   "apply.agreeTermsLink": "Creator Terms",
   "apply.agreeTermsEnd": ".",
@@ -2387,7 +2387,7 @@ export const en = {
   "payout.ready": "Your payout account is ready. You can publish listings and receive buyer payments.",
   "payout.acceptedStart": "You accepted the",
   "payout.acceptedEnd": "and Stripe agreements on {date}.",
-  // Consent wording (the creator ticks it): the French needs the policy translator's check.
+  // Consent wording (the creator ticks it): translations need the policy translator's check.
   "payout.acceptStart": "I accept the Made for Stream",
   "payout.acceptAnd": "and the",
   "payout.connectedAgreement": "Stripe Connected Account Agreement",

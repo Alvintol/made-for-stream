@@ -119,7 +119,7 @@ const CreatorRecoveryBalanceSection = () => {
         <ul className={classes.historyList}>
           {entriesQuery.data.map((entry) => (
             <li key={entry.id}>
-              {new Date(entry.created_at).toLocaleDateString(locale)} —{" "}
+              {new Date(entry.created_at).toLocaleDateString(locale, { dateStyle: "medium" })} —{" "}
               {t("recovery.entryLabel", { label: entryTypeLabel(entry.entry_type, t) })}{" "}
               {formatPaymentCents(entry.amount_cents, entry.currency)} (
               {entry.reason})

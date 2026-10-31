@@ -9,6 +9,7 @@
 export const SUPPORTED_LANGUAGES = [
   { code: "en", name: "English", ready: true },
   { code: "fr", name: "Français", ready: false },
+  { code: "es", name: "Español", ready: false },
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
@@ -26,7 +27,7 @@ const isOffered = (code: string | null | undefined): code is LanguageCode =>
   OFFERED_LANGUAGES.some((language) => language.code === code);
 
 // The saved choice if it is offered, else the first offered language the
-// browser asks for ("fr-CA" counts as French), else English.
+// browser asks for ("fr-CA" counts as French, "es-US" as Spanish), else English.
 export const resolveLanguage = (
   saved: string | null | undefined,
   browserLanguages: readonly string[],
