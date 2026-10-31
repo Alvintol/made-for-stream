@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { translate } from "../i18n";
+import { dateLocale, translate } from "../i18n";
 import { resolveLanguage } from "../languages";
 import { en, type Message, type MessageKey } from "../messages/en";
+import { es } from "../messages/es";
 import { fr } from "../messages/fr";
 
 const placeholders = (message: Message) =>
@@ -25,18 +26,46 @@ describe("translate", () => {
     // French treats 0 and 1 as singular.
     expect(translate("fr", "nav.unread", { count: 0 })).toBe("0 message non lu");
     expect(translate("fr", "nav.unread", { count: 2 })).toBe("2 messages non lus");
+    expect(translate("es", "nav.unread", { count: 1 })).toBe("1 mensaje sin leer");
+    expect(translate("es", "nav.unread", { count: 0 })).toBe("0 mensajes sin leer");
+    expect(translate("es", "nav.unread", { count: 1_000_000 })).toBe("1000000 mensajes sin leer");
     // A form a message does not have ("many" in French for millions) falls
     // back to "other".
     expect(translate("fr", "nav.unread", { count: 1_000_000 })).toBe("1000000 messages non lus");
   });
 });
 
-describe("the French text", () => {
+describe.each([
+  ["French", fr],
+  ["Spanish", es],
+])("the %s text", (_name, messages) => {
   it("keeps every placeholder of the English, and leaves nothing empty", () => {
     for (const key of Object.keys(en) as MessageKey[]) {
-      expect(placeholders(fr[key]), key).toEqual(placeholders(en[key]));
-      expect(typeof fr[key] === "string" ? fr[key] : fr[key].other, key).not.toBe("");
+      const message = messages[key];
+
+      expect(placeholders(message), key).toEqual(placeholders(en[key]));
+      expect(typeof message === "string" ? message : message.other, key).not.toBe("");
     }
+  });
+});
+
+describe("dateLocale", () => {
+  const browserAsks = (languages: string[]) =>
+    vi.spyOn(navigator, "languages", "get").mockReturnValue(languages);
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("keeps the reader's own style in English", () => {
+    expect(dateLocale("en")).toBeUndefined();
+  });
+
+  it("uses the reader's variant of the language, or the language itself", () => {
+    browserAsks(["en-US", "es-US"]);
+    expect(dateLocale("es")).toBe("es-US");
+    expect(new Date(2026, 9, 3, 15, 5).toLocaleTimeString(dateLocale("es"), { timeStyle: "short" })).toMatch(/^3:05/);
+    browserAsks(["en-US"]);
+    expect(dateLocale("es")).toBe("es");
+    expect(dateLocale("fr")).toBe("fr");
   });
 });
 
@@ -45,6 +74,8 @@ describe("resolveLanguage", () => {
   it("uses the saved choice, then the browser, then English", () => {
     expect(resolveLanguage("fr", ["en-US"])).toBe("fr");
     expect(resolveLanguage(null, ["fr-CA", "en"])).toBe("fr");
+    expect(resolveLanguage(null, ["es-US", "en"])).toBe("es");
+    expect(resolveLanguage(null, ["es-MX"])).toBe("es");
     expect(resolveLanguage(null, ["de-DE", "en-GB"])).toBe("en");
     expect(resolveLanguage("xx", ["de"])).toBe("en");
   });

@@ -6,19 +6,28 @@ surfaces:
   - src/lib/i18n/i18n.ts                 # translate, useT, useLanguage
   - src/lib/i18n/messages/en.ts          # the English master list
   - src/lib/i18n/messages/fr.ts          # French
+  - src/lib/i18n/messages/es.ts          # Spanish
   - src/components/app/LanguageSync.tsx  # sets the page language and <html lang>
   - src/components/settings/DisplayCurrencySettings.tsx
   - src/domain/listings/listingRequestForm.ts  # form errors are translation keys
-  - public.user_display_preferences.language  # 20261029_173
+  - public.user_display_preferences.language  # 20261029_173, 20261030_175
 unmatched_tier: 2
 ---
 
 # Languages — Support Playbook
 
-The site can be shown in English or French (decided 2026-10-29). The text is
+The site can be shown in English, French (decided 2026-10-29) or Spanish
+(decided 2026-10-30, for Spanish speakers in the United States). The text is
 translated in the site's own code, not by a translation widget. English is the
-master list; French must have every English line, or the build fails.
+master list; every other language must have every English line, or the build
+fails.
 
+**Spanish is not ready yet either.** All its lines are drafted in `es.ts`
+(neutral Latin American and US Spanish, "tú"; "encargo" for a commission, so
+it cannot be mistaken for a fee), but nobody who speaks Spanish has checked
+them, and the policies are not translated. Like French, it is offered only on
+a local development server or where `VITE_OFFER_UNFINISHED_LANGUAGES=true`.
+Everything below that says French applies to Spanish, except the Quebec block.
 **French is not ready yet.** Screens are moved to the translation lists a few at
 a time; anything not moved yet is still English. Until every screen and every
 policy is translated, French is offered only on a local development server or
@@ -27,7 +36,7 @@ else sees English only, and Quebec stays blocked (ACC-006).
 
 **How the language is chosen.** The language saved in Settings → Preferences
 (or the globe button in the top bar); otherwise the browser's language
-(`fr-CA` counts as French) if it is offered; otherwise English. A signed-in
+(`fr-CA` counts as French, `es-US` as Spanish) if it is offered; otherwise English. A signed-in
 person's choice is saved on their account (`user_display_preferences.language`).
 A visitor's choice lasts until they reload, and nothing is stored in the
 browser. Emails are still in English.
@@ -172,7 +181,7 @@ with "Your choice could not be saved. Please try again."
   `payout.servicesAgreement`) and the email opt-in
   (`preferences.marketing`) were translated
   here, not by a translator. They are what the buyer agrees to, so check
-  them with the policies before French is marked ready.
+  them with the policies before French or Spanish is marked ready.
 - **A buyer's recorded confirmations stay in English.** The lines under
   "Buyer confirmations" on an agreement are the wording saved when the buyer
   accepted, so they are shown as saved. The same goes for the payment names
@@ -205,5 +214,9 @@ with "Your choice could not be saved. Please try again."
   balance entry is saved as written by the database and the API.
 - **The storage plan name is English.** The commission storage bar shows
   `plan_label` from the database as it is written ("Standard").
-- **The French has not been checked by a French speaker.** Do that before
-  French is marked ready.
+- **The French has not been checked by a French speaker,** and the Spanish
+  has not been checked by a Spanish speaker. Do that before either is marked
+  ready.
+- **Dates in Spanish are written with the month** ("3 oct 2026"), because
+  `es-US` writes all-number dates day first (3/10/2026), which a US reader
+  could take for March 10. Keep the month written on any new date.

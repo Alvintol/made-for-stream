@@ -173,6 +173,30 @@ describe("French", () => {
   });
 });
 
+describe("Spanish", () => {
+  const spanish: Translate = (key, values) => translate("es", key, values);
+
+  it("reads with a name or with the generic words", () => {
+    const body = "The creator sent a project change order for buyer review: discount";
+
+    expect(systemLineText(lineFor(body), body, names, spanish)).toBe(
+      "@meowington envió una orden de cambio del proyecto para que @ImAllBeans la revise: discount",
+    );
+    expect(inboxPreviewText(lineFor(body), body, spanish)).toBe(
+      "El creador envió una orden de cambio del proyecto para que el comprador la revise: discount",
+    );
+  });
+
+  it("translates where the off-site work was and how it was sent", () => {
+    const body =
+      "The creator reports that the work for the final delivery (coloured) was also sent outside Made for Stream, by: email, another way (a, b). Made for Stream has no copy of what was sent and cannot confirm that it arrived.";
+
+    expect(systemLineText(lineFor(body), body, names, spanish)).toContain(
+      "para la entrega final (coloured) también se envió fuera de Made for Stream, por: correo electrónico, otra forma (a, b).",
+    );
+  });
+});
+
 describe("a line the site cannot show from its code", () => {
   it("reads as saved when there is no code", () => {
     expect(systemLineText(null, "The buyer did something new.", names, french)).toBe(

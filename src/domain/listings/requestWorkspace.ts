@@ -269,7 +269,10 @@ export const getRequestNextStep = (
         waitingTitle: t("nextStep.submitCancellationStatement.waitingTitle"),
         waitingDescription: cancellationProposal.statement_due_at
           ? t("nextStep.submitCancellationStatement.waitingUntil", {
-              date: new Date(cancellationProposal.statement_due_at).toLocaleString(language),
+              date: new Date(cancellationProposal.statement_due_at).toLocaleString(language, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }),
             })
           : t("nextStep.submitCancellationStatement.waitingDays"),
         sectionId: "request",

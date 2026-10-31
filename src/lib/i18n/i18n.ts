@@ -2,11 +2,11 @@ import { useCallback, useSyncExternalStore } from "react";
 
 import { DEFAULT_LANGUAGE, resolveLanguage, type LanguageCode } from "./languages";
 import { en, type Message, type MessageKey } from "./messages/en";
+import { es } from "./messages/es";
 import { fr } from "./messages/fr";
-
-// ponytail: both languages are bundled. Load French on demand once its
+// ponytail: every language is bundled. Load each on demand once their
 // strings grow large enough to matter for page weight.
-const messages: Record<LanguageCode, Record<MessageKey, Message>> = { en, fr };
+const messages: Record<LanguageCode, Record<MessageKey, Message>> = { en, fr, es };
 
 export type TranslationValues = Record<string, string | number>;
 
@@ -46,9 +46,15 @@ export const wordFor = (prefix: string, value: string, t: Translate): string => 
 };
 
 // The locale for a date on the page. English keeps the reader's own style
-// (a.m. in Canada, 24-hour in the UK); other languages use their own.
-export const dateLocale = (language: LanguageCode): string | undefined =>
-  language === DEFAULT_LANGUAGE ? undefined : language;
+// (a.m. in Canada, 24-hour in the UK). Other languages use the reader's own
+// variant when the browser asks for one: es-US keeps a 12-hour clock.
+export const dateLocale = (language: LanguageCode): string | undefined => {
+  if (language === DEFAULT_LANGUAGE) return undefined;
+
+  const browser = typeof navigator === "undefined" ? [] : navigator.languages;
+
+  return browser.find((tag) => tag.toLowerCase().startsWith(`${language}-`)) ?? language;
+};
 
 // A translator for code outside components. Shared helpers take one and
 // default to English, so callers that are not translated yet are unchanged.

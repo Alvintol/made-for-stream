@@ -1012,9 +1012,21 @@ Build order (each its own branch):
       chat lines and their inbox previews. Next: the policies by a translator,
       then a French speaker's review, then mark French ready and lift the
       Quebec block.
+- [x] Spanish for the North American beta, for Spanish speakers in the United
+      States (owner's decision, 2026-10-30; `feat/i18n-spanish`, migration
+      175). Every line in `es.ts`, neutral Latin American and US Spanish, "tú".
+      It stays hidden until marked ready. Next: the policies and consent
+      wording by a translator, a Spanish speaker's review, then mark it ready.
 
 Owner's steps, outside the code:
 
+- [ ] Have a Spanish translator do the policies and the consent wording, and
+      a Spanish speaker review the site, before Spanish is marked ready.
+- [ ] Ask a lawyer whether the policies need a line saying which language
+      controls, now that the site is offered in other languages.
+- [ ] Decide whether the beta includes Mexico. It is open to Mexico today, and
+      Spanish makes it far more likely to attract buyers there; Mexican
+      consumer law needs its own check first.
 - [ ] Add "Made for Stream" as an operating name on the business number, and
       register the trade name in Alberta.
 - [ ] Hire an EU and a UK representative (privacy, and the EU Digital
