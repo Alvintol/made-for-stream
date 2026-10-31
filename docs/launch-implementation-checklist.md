@@ -1033,6 +1033,9 @@ Owner's steps, outside the code:
 - [x] Mexico is left out of the beta (owner's decision, 2026-10-31: Canada and
       the United States only). Spanish makes buyers there more likely, so
       Mexican consumer law needs its own check before it opens.
+- [ ] AdSense (owner's decision, 2026-10-31). Built and off, with no script
+      and no ad space until `VITE_ADSENSE_CLIENT` is set. It cannot start before
+      the site is public and the policies change: `site/ads.md` has the steps.
 - [ ] Add "Made for Stream" as an operating name on the business number, and
       register the trade name in Alberta.
 - [ ] Hire an EU and a UK representative (privacy, and the EU Digital

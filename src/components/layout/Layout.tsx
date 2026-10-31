@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Nav from './Nav';
 import Footer from './Footer';
 import { PageTransition } from '../../lib/motion';
+import { AdBanner, AdGutters } from '../ads/SiteAds';
 import CookieConsent from '../legal/CookieConsent';
 import PolicyAcceptanceGate from '../legal/PolicyAcceptanceGate';
 import SiteUpdatesNotice from '../app/SiteUpdatesNotice';
@@ -19,7 +20,9 @@ const Layout = () => {
     <div className={classes.shell}>
       <LanguageSync />
       <Nav />
+      <AdGutters />
       <main className={classes.main}>
+        <AdBanner />
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>
             <Outlet />

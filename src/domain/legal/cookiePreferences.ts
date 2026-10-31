@@ -1,5 +1,5 @@
+import { getAdsenseConfig } from "../ads/ads";
 import { cookiePolicyVersion } from "./cookiePolicy";
-
 // Optional categories from Cookie Policy section 3. Necessary categories
 // (sign-in sessions, requested payments, and remembering this choice) are not
 // listed: they do not need consent and cannot be switched off here.
@@ -42,8 +42,10 @@ export const optionalCookieCategoryInfo: OptionalCookieCategoryInfo[] = [
 // is active (Cookie Policy section 3), so visitors are not asked anything.
 // Add a category here when a feature that needs it ships. Every visitor is
 // then asked again, because a new purpose is not covered by an earlier
-// choice (section 6).
-export const activeOptionalCookieCategories: OptionalCookieCategory[] = [];
+// choice (section 6). Advertising turns on with the AdSense publisher id.
+export const activeOptionalCookieCategories: OptionalCookieCategory[] = getAdsenseConfig()
+  ? ["advertising"]
+  : [];
 
 export type CookieCategoryChoices = Record<OptionalCookieCategory, boolean>;
 
