@@ -34,6 +34,8 @@ const onPhone = () =>
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-width") }));
 const onWideScreen = () =>
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("min-width") }));
+const onSite = (hostname: string) => vi.stubGlobal("location", { ...window.location, hostname });
+const onTestSite = () => onSite("dev.madeforstream.com");
 
 describe("site ads", () => {
   beforeEach(() => {
@@ -134,15 +136,20 @@ describe("site ads", () => {
   describe("placeholders", () => {
     const placeholders = () => screen.queryAllByText(/^Ad space:/);
 
-    it("shows nothing unless they are switched on", () => {
+    it("never shows on the real site or anywhere else", () => {
       onWideScreen();
-      renderAds();
 
-      expect(placeholders()).toHaveLength(0);
+      for (const hostname of ["madeforstream.com", "www.madeforstream.com", "localhost"]) {
+        onSite(hostname);
+        const { unmount } = renderAds();
+
+        expect(placeholders()).toHaveLength(0);
+        unmount();
+      }
     });
 
     it("marks the banner and both side ads on a wide screen, and loads nothing", () => {
-      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onTestSite();
       onWideScreen();
       renderAds();
 
@@ -156,7 +163,7 @@ describe("site ads", () => {
     });
 
     it("marks one small banner under the content on a phone", () => {
-      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onTestSite();
       onPhone();
       renderAds();
 
@@ -167,7 +174,7 @@ describe("site ads", () => {
     });
 
     it("marks nothing on a page that would never show ads", () => {
-      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onTestSite();
       renderAds("/payments/checkout/abc");
 
       expect(placeholders()).toHaveLength(0);
@@ -175,7 +182,7 @@ describe("site ads", () => {
 
     it("gives way to real ads", () => {
       configure();
-      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onTestSite();
       mocks.consent = true;
       renderAds();
 

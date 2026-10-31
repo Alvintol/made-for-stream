@@ -57,11 +57,11 @@ To turn ads off, clear `VITE_ADSENSE_CLIENT` and rebuild.
 
 ## Seeing where ads would sit
 
-Set the build variable `VITE_SHOW_AD_PLACEHOLDERS=true` on the test website and
-rebuild. Dashed boxes appear at each ad's real size, on the same pages, and
-Google is never contacted. Every tester sees them. **Never set it in
-production.** Real ads replace the boxes if both are set. A phone or a narrower
-window picks its layout when the page loads, so reload after resizing.
+On `dev.madeforstream.com`, dashed boxes appear at each ad's real size, on the
+same pages, and Google is never contacted. Every tester sees them. They depend on
+the site's address, so they cannot appear on the real site, and real ads replace
+them if ads are switched on. A phone or a narrower window picks its layout when
+the page loads, so reload after resizing.
 
 ## Quick triage
 
