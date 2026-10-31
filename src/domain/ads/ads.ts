@@ -27,10 +27,11 @@ export const getAdsenseConfig = (): AdsenseConfig | null => {
     : null;
 };
 
-// Dashed boxes where ads would sit, so the layout can be judged on the test
-// site before any ad exists. Real ads always win. Never set this in production.
+// Dashed boxes where ads would sit, so the layout can be judged before any ad
+// exists. Only on the test site, by its address, so they can never reach the
+// real one. Real ads always win.
 export const showAdPlaceholders = (): boolean =>
-  envValue(import.meta.env.VITE_SHOW_AD_PLACEHOLDERS) === "true" && !getAdsenseConfig();
+  window.location.hostname === "dev.madeforstream.com" && !getAdsenseConfig();
 
 // Pages people browse. Never checkout, chat, settings, policies, the admin
 // pages or a creator's own tools: nobody should see an ad while paying or
