@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  OPEN_COUNTRIES,
   SUPPORTED_PAYOUT_COUNTRIES,
   getPayoutCountryCurrency,
   getPayoutCountryOptions,
@@ -45,12 +46,28 @@ describe("supported payout countries", () => {
     expect(getPayoutCountryCurrency("JP")).toBeNull();
   });
 
-  it("offers every country once, by name, in alphabetical order", () => {
-    const options = getPayoutCountryOptions("en");
+  it("is open in the same countries in the API and the web app, all of them payable", () => {
+    expect(api.OPEN_COUNTRIES).toEqual([...OPEN_COUNTRIES]);
 
-    expect(options).toHaveLength(Object.keys(SUPPORTED_PAYOUT_COUNTRIES).length);
+    for (const country of OPEN_COUNTRIES) {
+      expect(isSupportedPayoutCountry(country), country).toBe(true);
+    }
+  });
+
+  it("opens payout accounts only where the beta is open", () => {
+    expect(api.isOpenPayoutCountry(" ca ")).toBe(true);
+    expect(api.isOpenPayoutCountry("US")).toBe(true);
+    expect(api.isOpenPayoutCountry("MX")).toBe(false);
+    expect(api.isOpenPayoutCountry("IE")).toBe(false);
+    expect(api.isOpenPayoutCountry("toString")).toBe(false);
+    expect(api.isOpenPayoutCountry("")).toBe(false);
+  });
+
+  it("offers each open country once, by name, in alphabetical order", () => {
+    const options = getPayoutCountryOptions("en");
+    expect(options).toHaveLength(OPEN_COUNTRIES.length);
     expect(options.find((option) => option.code === "CA")?.name).toBe("Canada");
-    expect(options.find((option) => option.code === "GB")?.name).toBe("United Kingdom");
+    expect(options.find((option) => option.code === "US")?.name).toBe("United States");
     expect(options.map((option) => option.name)).toEqual(
       [...options.map((option) => option.name)].sort((a, b) => a.localeCompare(b, "en")),
     );

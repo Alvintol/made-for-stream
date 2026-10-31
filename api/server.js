@@ -12,7 +12,7 @@ import { CHECKOUT_POLICY_VERSIONS } from "./policyVersions.js";
 import { getMissingCheckoutPolicyTypes } from "./policyAcceptanceGuard.js";
 import {
   getUnsupportedPayoutCountryMessage,
-  isSupportedPayoutCountry,
+  isOpenPayoutCountry,
 } from "./supportedCountries.js";
 import {
   getUnsupportedCurrencyMessage,
@@ -4646,9 +4646,10 @@ app.post("/api/stripe/connect/account-session", async (req, res) => {
 
     // Payout accounts can only be opened where Stripe lets this platform
     // onboard creators and pay them in a currency we support
-    // (api/supportedCountries.js). No account existed outside this list when
-    // the check was added (2026-10-05).
-    if (!isSupportedPayoutCountry(country)) {
+    // (api/supportedCountries.js), and only in the countries the beta is open
+    // in. No account existed outside this list when the check was added
+    // (2026-10-05).
+    if (!isOpenPayoutCountry(country)) {
       return res.status(400).json({
         error: getUnsupportedPayoutCountryMessage(country),
       });

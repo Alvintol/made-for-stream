@@ -1,5 +1,5 @@
 import { english, type Translate } from "../../lib/i18n/i18n";
-
+import { isOpenCountry } from "../payments/supportedCountries";
 // The private legal details behind an account (public.user_account_details,
 // 20261008_150). The database trigger validate_user_account_details() is the
 // real check; this mirrors it so the form can point at the field.
@@ -80,14 +80,16 @@ export const getRegionOptions = (
 };
 
 // Places Made for Stream does not serve, as the database's
-// blocked_location_message() (20261029_171) says them: sanctioned countries,
-// and Quebec until the site is in French.
+// blocked_location_message() (20261031_177) says them: sanctioned countries,
+// Quebec until the site is in French, and anywhere outside Canada and the
+// United States during the beta.
 export const SANCTIONED_COUNTRIES = ["BY", "CU", "IR", "KP", "RU", "SY"] as const;
 
 export const SANCTIONED_COUNTRY_MESSAGE = english("account.sanctioned");
 
 export const QUEBEC_MESSAGE = english("account.quebec");
 
+export const BETA_COUNTRY_MESSAGE = english("account.betaCountries");
 const yearsAgo = (years: number, today: Date): string => {
   const date = new Date(Date.UTC(today.getFullYear() - years, today.getMonth(), today.getDate()));
 
@@ -129,8 +131,9 @@ export const validateAccountDetails = (
     errors.country_code = t("account.sanctioned");
   } else if (trimmed.country_code === "CA" && trimmed.region.toUpperCase() === "QC") {
     errors.region = t("account.quebec");
+  } else if (trimmed.country_code && !isOpenCountry(trimmed.country_code)) {
+    errors.country_code = t("account.betaCountries");
   }
-
   if (trimmed.account_type === "business") {
     require("business_legal_name", t("account.errorBusiness"));
   }

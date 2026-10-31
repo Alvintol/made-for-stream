@@ -140,10 +140,11 @@ describe("<AccountDetailsSettings />", () => {
     fill(/^Legal first name/, "Ada");
     fill(/^Legal last name/, "Buyer");
     fill(/^Date of birth/, "1990-01-01");
-    fill(/^Country/, "IE");
+    fill(/^Country/, "CA");
     fill(/^Street address/, "1 Main St");
-    fill(/^City or town/, "Dublin");
-
+    fill(/^City or town/, "Calgary");
+    fill(/^Province or state/, "AB");
+    fill(/^Postal or ZIP code/, "T2T 2T2");
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
 
     expect(name).toHaveAccessibleDescription("Enter a display name of 2 to 50 characters.");

@@ -302,14 +302,25 @@ signals:
   - source: db
     match: "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way."
     where: "the same places"
+  - source: db
+    match: "During the beta, Made for Stream is only open in Canada and the United States."
+    where: "the same places"
   - source: api
     match: "Your location could not be checked. Please try again."
     where: "POST /api/stripe/checkout/session (assertCheckoutLocationAllowed)"
 auto_fix: none
-reason_not_automatable: "the refusal is the law (sanctions) or a decision (Quebec until French); support cannot override it"
+reason_not_automatable: "the refusal is the law (sanctions) or a decision (Quebec until French, Canada and the US only during the beta); support cannot override it"
 escalate_if:
   - "someone outside these places is refused"        # a wrong address, or a wrong internet-address country
 ```
+
+**The beta (2026-10-31, `20261031_177`).** Only addresses in Canada and the
+United States are accepted, outside Quebec. The form offers only those two
+countries, and payout accounts open only there. The account address decides
+this; the internet address is checked for sanctions only, so a traveller is not
+refused. To open a country, change `blocked_location_message()` in a migration
+and `OPEN_COUNTRIES` in `src/domain/payments/supportedCountries.ts` and
+`api/supportedCountries.js` (a test compares the three), then deploy the API.
 
 **What it is (2026-10-29, `20261029_171`).** Made for Stream does not serve
 Belarus, Cuba, Iran, North Korea, Russia or Syria (sanctions), or Quebec until

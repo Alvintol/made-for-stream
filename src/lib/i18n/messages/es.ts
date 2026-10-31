@@ -2266,7 +2266,7 @@ export const es: Record<MessageKey, Message> = {
   "account.lastName": "Apellido legal",
   "account.dobHint": "Debes tener al menos {age} años.",
   "account.country": "País",
-  "account.countryHint": "Este es tu país de facturación cuando pagas.",
+  "account.countryHint": "Este es tu país de facturación cuando pagas. Durante la beta, solo están abiertos Canadá y Estados Unidos.",
   "account.chooseCountry": "Elige un país",
   "account.street": "Dirección",
   "account.unit": "Apartamento, oficina o unidad",
@@ -2296,7 +2296,7 @@ export const es: Record<MessageKey, Message> = {
   "account.sanctioned":
     "Made for Stream no se puede usar desde Bielorrusia, Cuba, Irán, Corea del Norte, Rusia ni Siria, debido a las sanciones que se aplican a Made for Stream y a su proveedor de pagos.",
   "account.quebec": "Made for Stream todavía no está disponible en Quebec. Primero el sitio debe estar en francés, y estamos trabajando en ello.",
-
+  "account.betaCountries": "Durante la beta, Made for Stream solo está disponible en Canadá y Estados Unidos.",
   "payout.signIn": "Debes iniciar sesión para empezar la configuración de Stripe.",
   "payout.acceptFirst": "Acepta los Términos para creadores y los acuerdos de Stripe para empezar la configuración de Stripe.",
   "payout.chooseCountryFirst": "Elige y confirma tu país antes de empezar la configuración de Stripe.",

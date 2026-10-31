@@ -915,9 +915,11 @@ before sending. Six known gaps, each waiting on an answer:
       file from, not each authority's upload format.
 - [ ] **Receipts do not say who the seller is.** The receipt email gives the
       amount and the project title only (question 4).
-- [ ] **Nothing limits which countries a buyer may pay from** (questions 18
-      and 19). **2026-10-29:** sanctioned countries and Quebec are refused
-      (`20261029_171`, ACC-006); any other limit waits on the answers.
+- [x] **Which countries a buyer may pay from** (questions 18 and 19).
+      **2026-10-29:** sanctioned countries and Quebec are refused
+      (`20261029_171`, ACC-006). **2026-10-31:** the beta is limited to Canada
+      and the United States, for buyers and creators (`20261031_177`, owner's
+      decision).
 
 **Compliance plan for a global beta (decided 2026-10-28)**
 
@@ -1028,9 +1030,9 @@ Owner's steps, outside the code:
       a Spanish speaker review the site, before Spanish is marked ready.
 - [ ] Ask a lawyer whether the policies need a line saying which language
       controls, now that the site is offered in other languages.
-- [ ] Decide whether the beta includes Mexico. It is open to Mexico today, and
-      Spanish makes it far more likely to attract buyers there; Mexican
-      consumer law needs its own check first.
+- [x] Mexico is left out of the beta (owner's decision, 2026-10-31: Canada and
+      the United States only). Spanish makes buyers there more likely, so
+      Mexican consumer law needs its own check before it opens.
 - [ ] Add "Made for Stream" as an operating name on the business number, and
       register the trade name in Alberta.
 - [ ] Hire an EU and a UK representative (privacy, and the EU Digital
@@ -1257,7 +1259,9 @@ deploy** (see the runbook's step 0).
       `97653182-…` completed 2026-10-28 (two milestones, a revision, 278.00 and
       321.00 paid, final delivery confirmed and approved). Not yet tried on any
       run: milestone preview videos, "It hasn't arrived", the folder zip and
-      its name, a refused `.exe`, a delivery download on USD. EUR is not started. The runbook's
+      its name, a refused `.exe`, a delivery download on USD. EUR is not started,
+      and the beta does not need it: Canada and the US price in CAD and USD, and
+      the Irish test creator is blocked since `20261031_177`. The runbook's
       "Progress" section has the exact state. It includes the Storage Register
       browser check.
 - [ ] **Confirm processor terms are in place** before relying on the register as
