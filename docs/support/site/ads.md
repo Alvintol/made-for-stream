@@ -14,11 +14,13 @@ unmatched_tier: 2
 
 # Banner ads (Google AdSense) — Support Playbook
 
-The site can show Google AdSense ads on the pages people browse. **It is off.**
-With no publisher id there is no Google script, no ad space and no consent
-question. Ads never run on checkout, chat, settings, policies, admin pages or a
-creator's own tools. No money or commission depends on them: a broken ad leaves
-the page as it was.
+The site can show Google AdSense ads on every page, with four exceptions. **It
+is off.** With no publisher id there is no Google script, no ad space and no
+consent question. Ads never run on sign-in, on checkout or the page after paying,
+on admin pages, or on Personal details. Google bans its ads on sign-in, alert and
+thank-you screens, and the others show a card payment, staff tools or a legal
+name and address. A screen asking someone to accept a policy has no ads either.
+No money or commission depends on them: a broken ad leaves the page as it was.
 
 **How it works.** With the build variables set, `advertising` becomes an active
 cookie category, so every visitor is asked again. Google's script loads only
@@ -152,5 +154,9 @@ ads off until it is blocked, because the site promises general audiences.
   until they are blocked.
 - **The ad label is translated,** but the ads are in whatever language Google
   picks.
+- **Error pages can show an ad.** Google bans ads on error and dead-end screens,
+  and a mistyped address is not on the no-ad list. Fix this before ads go on.
+- **Google's script runs on private pages,** including chat and commission
+  pages, for people who opted in. Check this with the lawyer before ads go on.
 - **Paying to remove ads does not work with opt-in.** Anyone can already avoid
   ads for free by not opting in. See the checklist before building it.
