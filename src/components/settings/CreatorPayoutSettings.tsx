@@ -30,7 +30,6 @@ import {
 import {
   getPayoutCountryCurrency,
   getPayoutCountryOptions,
-  isSupportedPayoutCountry,
 } from "../../domain/payments/supportedCountries";
 import {
   createStripeConnectAccountSession,
@@ -364,7 +363,7 @@ const CreatorPayoutSettings = ({ isCreatorApproved }: CreatorPayoutSettingsProps
                 {t("payout.chooseYourCountry")}
               </option>
             )}
-            {country && !isSupportedPayoutCountry(country) && (
+            {country && !payoutCountryOptions.some((option) => option.code === country) && (
               <option value={country}>{t("payout.notSupported", { value: country })}</option>
             )}
             {payoutCountryOptions.map((option) => (

@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  BETA_COUNTRY_MESSAGE,
   emptyAccountDetailsForm,
   getRegionOptions,
   QUEBEC_MESSAGE,
@@ -12,6 +13,8 @@ import {
   validateAccountDetails,
   type AccountDetailsForm,
 } from "../settings/accountDetails";
+
+import { OPEN_COUNTRIES } from "../payments/supportedCountries";
 
 const today = new Date(2026, 9, 8);
 
@@ -36,10 +39,23 @@ describe("places Made for Stream does not serve", () => {
     expect(validateAccountDetails({ ...valid, region: "ON" }, today).errors).toEqual({});
   });
 
+  it("is open in Canada and the United States only during the beta", () => {
+    const abroad = { ...valid, region: "", postal_code: "" };
+
+    expect(validateAccountDetails({ ...abroad, country_code: "IE" }, today).errors).toEqual({
+      country_code: BETA_COUNTRY_MESSAGE,
+    });
+    expect(validateAccountDetails({ ...abroad, country_code: "MX" }, today).errors).toEqual({
+      country_code: BETA_COUNTRY_MESSAGE,
+    });
+    expect(
+      validateAccountDetails({ ...valid, country_code: "US", region: "WA", postal_code: "98101" }, today).errors,
+    ).toEqual({});
+  });
   it("matches the database's list and wording exactly", () => {
     const migration = fs
       .readFileSync(
-        path.resolve(__dirname, "../../../supabase/migrations/20261029_171_block_sanctioned_countries_and_quebec.sql"),
+        path.resolve(__dirname, "../../../supabase/migrations/20261031_177_limit_beta_to_canada_and_us.sql"),
         "utf8",
       )
       .replace(/''/g, "'");
@@ -47,6 +63,9 @@ describe("places Made for Stream does not serve", () => {
     expect(migration).toContain(`in (${SANCTIONED_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
     expect(migration).toContain(SANCTIONED_COUNTRY_MESSAGE);
     expect(migration).toContain(QUEBEC_MESSAGE);
+    expect(migration).toContain(BETA_COUNTRY_MESSAGE);
+    // Doubled quotes were undone above, so the empty string reads as one quote.
+    expect(migration).toContain(`not in (', ${OPEN_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
   });
 });
 
@@ -92,9 +111,9 @@ describe("validateAccountDetails", () => {
       "region",
       "postal_code",
     ]);
-    expect(
-      validateAccountDetails({ ...withoutRegion, country_code: "IE" }, today).values,
-    ).not.toBeNull();
+    expect(validateAccountDetails({ ...withoutRegion, country_code: "IE" }, today).errors).not.toHaveProperty(
+      "region",
+    );
   });
 
   it("needs the legal name of a business, and keeps optional numbers", () => {

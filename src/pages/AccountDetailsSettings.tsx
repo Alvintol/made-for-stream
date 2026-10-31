@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getBillingCountryOptions } from "../domain/payments/billingCountries";
+import { isOpenCountry } from "../domain/payments/supportedCountries";
 import {
   MASKED_VALUE,
   MINIMUM_AGE,
@@ -147,7 +148,10 @@ const AccountDetailsSettings = () => {
   const form = draft ?? toAccountDetailsForm(details);
   const showForm = editing || !details || needsDisplayName;
 
-  const countryOptions = useMemo(() => getBillingCountryOptions(language), [language]);
+  const countryOptions = useMemo(
+    () => getBillingCountryOptions(language).filter((option) => isOpenCountry(option.code)),
+    [language],
+  );
   const regionOptions = getRegionOptions(form.country_code);
   const countryName = (code: string) =>
     countryOptions.find((option) => option.code === code)?.name ?? code;

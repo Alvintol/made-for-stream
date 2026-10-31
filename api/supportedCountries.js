@@ -64,5 +64,13 @@ export const SUPPORTED_PAYOUT_COUNTRIES = {
 export const isSupportedPayoutCountry = (value) =>
   Object.hasOwn(SUPPORTED_PAYOUT_COUNTRIES, String(value || "").trim().toUpperCase());
 
+// Where payout accounts can be opened during the beta. Matches
+// blocked_location_message() (20261031_177) and
+// src/domain/payments/supportedCountries.ts; a test compares all three.
+export const OPEN_COUNTRIES = ["CA", "US"];
+
+export const isOpenPayoutCountry = (value) =>
+  isSupportedPayoutCountry(value) &&
+  OPEN_COUNTRIES.includes(String(value || "").trim().toUpperCase());
 export const getUnsupportedPayoutCountryMessage = (value) =>
   `Payouts are not available in ${String(value || "(none)").trim().toUpperCase()} yet. Choose a country from the list in payout settings.`;

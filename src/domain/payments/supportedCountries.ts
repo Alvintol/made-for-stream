@@ -43,6 +43,13 @@ export const SUPPORTED_PAYOUT_COUNTRIES = {
 
 export type SupportedPayoutCountryCode = keyof typeof SUPPORTED_PAYOUT_COUNTRIES;
 
+// Where the site is open during the beta, for buyers and creators alike.
+// Matches blocked_location_message() (20261031_177) and
+// api/supportedCountries.js; a test compares all three.
+export const OPEN_COUNTRIES = ["CA", "US"] as const;
+
+export const isOpenCountry = (value: string | null | undefined): boolean =>
+  (OPEN_COUNTRIES as readonly string[]).includes(String(value ?? "").trim().toUpperCase());
 export const isSupportedPayoutCountry = (
   value: string | null | undefined,
 ): value is SupportedPayoutCountryCode =>
@@ -70,6 +77,7 @@ export const getPayoutCountryOptions = (locale = "en"): PayoutCountryOption[] =>
   }
 
   return Object.keys(SUPPORTED_PAYOUT_COUNTRIES)
+    .filter(isOpenCountry)
     .map((code) => ({ code, name: displayNames?.of(code) ?? code }))
     .sort((a, b) => a.name.localeCompare(b.name, locale));
 };

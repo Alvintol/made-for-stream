@@ -5,8 +5,9 @@ how the site handles money and tax today, lists what is missing, proposes
 a model with ten questions about it, then asks thirty detailed questions.
 It is written by the site's builders, who are not tax advisers. Revised 2026-10-28: section 7 now proposes one model to test
 first. Nothing here is a tax position; where we describe a rule, it is our
-understanding and may be wrong.
-
+understanding and may be wrong. Revised 2026-10-31: the beta is now limited to
+buyers and creators in Canada and the United States, outside Quebec. Sections 3
+and 4 describe the full design for later.
 **No tax is collected on the live site today, and none will be until these
 questions are answered.**
 

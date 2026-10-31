@@ -354,17 +354,19 @@ describe("CreatorPayoutSettings country", () => {
 
     expect(country.tagName).toBe("SELECT");
     expect(country.value).toBe("");
-    expect(screen.getByRole("option", { name: "Ireland" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Canada" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "United States" })).toBeInTheDocument();
+    // Open during the beta only: a supported country outside it is not offered.
+    expect(screen.queryByRole("option", { name: "Ireland" })).not.toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Japan" })).not.toBeInTheDocument();
   });
 
   it("switches the currency to the chosen country's own", () => {
     renderSettings();
 
-    fireEvent.change(screen.getByLabelText("Country"), { target: { value: "IE" } });
+    fireEvent.change(screen.getByLabelText("Country"), { target: { value: "CA" } });
 
-    expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("eur");
-
+    expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("cad");
     fireEvent.change(screen.getByLabelText("Country"), { target: { value: "US" } });
 
     expect((screen.getByLabelText("Currency") as HTMLSelectElement).value).toBe("usd");
@@ -392,7 +394,7 @@ describe("CreatorPayoutSettings country", () => {
   it("lets the creator change a confirmed country before Stripe setup starts", () => {
     renderSettings();
 
-    chooseAndConfirmCountry("IE");
+    chooseAndConfirmCountry("CA");
     fireEvent.click(screen.getByRole("button", { name: "Change country" }));
 
     expect(screen.getByLabelText("Country")).toBeEnabled();

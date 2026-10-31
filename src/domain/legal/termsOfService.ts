@@ -1,20 +1,14 @@
-export const termsVersion = "2026-10-29";
+export const termsVersion = "2026-10-31";
 
 // What changed in this version, in plain words, for the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
 // fails if the two versions differ.
 export const termsChanges = {
-  version: "2026-10-29",
+  version: "2026-10-31",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "Mature and adult content is no longer allowed anywhere on Made for Stream, with or without a warning.",
-    "Mature or adult content is removed, and the account that posted or sent it can be suspended or permanently banned.",
-    "Made for Stream is not available in Belarus, Cuba, Iran, North Korea, Russia, Syria or the occupied regions of Ukraine, or to anyone on a sanctions list.",
-    "Made for Stream is not yet available in Quebec, until the site is in French.",
-    "Section 10 explains how we find and decide on illegal or harmful content, how to report it, and how to ask for a review of a decision within six months.",
-    "safety@madeforstream.com is the contact for reports, and for authorities under the EU Digital Services Act and the UK Online Safety Act.",
-    "The Community Guidelines and the Creator Terms changed in the same ways.",
+    "During the beta, Made for Stream is only open to people who live in Canada or the United States.",
   ],
 } as const;
 
@@ -37,7 +31,7 @@ export const termsSections = [
     "title": "3. Eligibility and accounts",
     "body": [
       "Registered users must be at least 18 and meet any higher legal contracting age applicable to them. Creator applicants, sellers and payout recipients must satisfy the same requirement. You must have authority to bind any business you represent. Do not misstate your age, identity, authority or ownership of a linked account.",
-      "Because of the sanctions that apply to Made for Stream and its payment provider, Made for Stream is not available to anyone who lives in Belarus, Cuba, Iran, North Korea, Russia, Syria or the occupied regions of Ukraine, or who is named on a sanctions list kept by Canada, the United States, the European Union or the United Kingdom. Made for Stream is not yet available in Quebec, until it is offered in French. Do not use a false address, another person's account or any other means to get around these limits; we close accounts that do.",
+      "Because of the sanctions that apply to Made for Stream and its payment provider, Made for Stream is not available to anyone who lives in Belarus, Cuba, Iran, North Korea, Russia, Syria or the occupied regions of Ukraine, or who is named on a sanctions list kept by Canada, the United States, the European Union or the United Kingdom. Made for Stream is not yet available in Quebec, until it is offered in French. During the beta, Made for Stream is only open to people who live in Canada or the United States. Do not use a false address, another person's account or any other means to get around these limits; we close accounts that do.",
       "Before you can create a listing, send a commission request, send a project agreement or pay, you must give us the private account details described in the Privacy Policy: your legal name, date of birth and address and, if the account belongs to a business or other legal entity, its legal name. A business registration number and a tax number are optional unless the law requires us to collect them. These details are not shown to other users. They must be true, must be your own or those of the business you are authorised to represent, and must be kept up to date. We may restrict an account whose details are false, incomplete or out of date.",
       "Keep your account information accurate and access secure. Notify support promptly of suspected compromise. You are responsible for your conduct and authorised account activity; these Terms do not make you automatically liable for every unauthorised act irrespective of applicable law or fault."
     ]

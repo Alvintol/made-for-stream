@@ -2336,7 +2336,7 @@ export const en = {
   "account.lastName": "Legal last name",
   "account.dobHint": "You must be at least {age}.",
   "account.country": "Country",
-  "account.countryHint": "This is your billing country when you pay.",
+  "account.countryHint": "This is your billing country when you pay. During the beta, only Canada and the United States are open.",
   "account.chooseCountry": "Choose a country",
   "account.street": "Street address",
   "account.unit": "Apartment, suite or unit",
@@ -2363,12 +2363,12 @@ export const en = {
   "account.errorRegion": "Choose your province or state.",
   "account.errorPostal": "Enter your postal or ZIP code.",
   "account.errorBusiness": "Enter the legal name of the business.",
-  // These two match the database's blocked_location_message() word for word
+  // These three match the database's blocked_location_message() word for word
   // (a test reads the migration).
   "account.sanctioned":
     "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider.",
   "account.quebec": "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way.",
-
+  "account.betaCountries": "During the beta, Made for Stream is only open in Canada and the United States.",
   // Payouts (components/settings/CreatorPayoutSettings.tsx and
   // CreatorRecoveryBalanceSection.tsx)
   "payout.signIn": "You must be signed in to start Stripe setup.",
