@@ -49,7 +49,13 @@ describe("getAdsenseConfig", () => {
     vi.stubEnv("VITE_ADSENSE_CLIENT", " ca-pub-123 ");
     vi.stubEnv("VITE_ADSENSE_BANNER_SLOT", "111");
     vi.stubEnv("VITE_ADSENSE_SIDE_SLOT", "");
+    vi.stubEnv("VITE_ADSENSE_PHONE_SLOT", "333");
 
-    expect(getAdsenseConfig()).toEqual({ client: "ca-pub-123", bannerSlot: "111", sideSlot: "" });
+    expect(getAdsenseConfig()).toEqual({
+      client: "ca-pub-123",
+      bannerSlot: "111",
+      phoneSlot: "333",
+      sideSlot: "",
+    });
   });
 });

@@ -13,7 +13,9 @@ vi.mock("../../providers/CookiePreferencesProvider", () => ({
 const renderAds = (path = "/market") =>
   render(
     <MemoryRouter initialEntries={[path]}>
-      <AdBanner />
+      <AdBanner position="top" />
+      <p>Page content</p>
+      <AdBanner position="bottom" />
       <AdGutters />
     </MemoryRouter>,
   );
@@ -25,7 +27,13 @@ const configure = () => {
   vi.stubEnv("VITE_ADSENSE_CLIENT", "ca-pub-123");
   vi.stubEnv("VITE_ADSENSE_BANNER_SLOT", "111");
   vi.stubEnv("VITE_ADSENSE_SIDE_SLOT", "222");
+  vi.stubEnv("VITE_ADSENSE_PHONE_SLOT", "333");
 };
+
+const onPhone = () =>
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-width") }));
+const onWideScreen = () =>
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("min-width") }));
 
 describe("site ads", () => {
   beforeEach(() => {
@@ -57,6 +65,7 @@ describe("site ads", () => {
 
   it("shows a labelled banner and the side ads after opting in", () => {
     configure();
+    onWideScreen();
     mocks.consent = true;
     renderAds();
 
@@ -71,16 +80,53 @@ describe("site ads", () => {
   it("leaves out the side ads when they have no slot", () => {
     configure();
     vi.stubEnv("VITE_ADSENSE_SIDE_SLOT", "");
+    onWideScreen();
     mocks.consent = true;
     renderAds();
 
     expect(units()).toHaveLength(1);
   });
 
+  it("does not request a side ad on a screen too narrow to show it", () => {
+    configure();
+    mocks.consent = true;
+    renderAds();
+
+    expect(units()).toHaveLength(1);
+    expect(units()[0]).toHaveAttribute("data-ad-slot", "111");
+    expect(window.adsbygoogle).toHaveLength(1);
+  });
   it("shows no ad on a page where someone pays or manages their account", () => {
     configure();
     mocks.consent = true;
     renderAds("/payments/checkout/abc");
+
+    expect(units()).toHaveLength(0);
+  });
+
+  it("gives a phone one small fixed banner, under the page's content", () => {
+    configure();
+    onPhone();
+    mocks.consent = true;
+    renderAds();
+
+    const ads = units();
+
+    expect(ads).toHaveLength(1);
+    expect(ads[0]).toHaveAttribute("data-ad-slot", "333");
+    expect(ads[0]).toHaveStyle({ width: "320px", height: "50px" });
+    expect(ads[0]).not.toHaveAttribute("data-ad-format");
+    expect(screen.getByText("Page content").compareDocumentPosition(ads[0])).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("shows a phone no ad rather than the large one when it has no phone slot", () => {
+    configure();
+    vi.stubEnv("VITE_ADSENSE_PHONE_SLOT", "");
+    onPhone();
+    mocks.consent = true;
+    renderAds();
 
     expect(units()).toHaveLength(0);
   });

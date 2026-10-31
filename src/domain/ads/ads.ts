@@ -4,7 +4,12 @@
 // change before it is set.
 // Playbook: docs/support/site/ads.md.
 
-export type AdsenseConfig = { client: string; bannerSlot: string; sideSlot: string };
+export type AdsenseConfig = {
+  client: string;
+  bannerSlot: string;
+  phoneSlot: string;
+  sideSlot: string;
+};
 
 const envValue = (value: unknown): string => String(value ?? "").trim();
 
@@ -13,7 +18,12 @@ export const getAdsenseConfig = (): AdsenseConfig | null => {
   const bannerSlot = envValue(import.meta.env.VITE_ADSENSE_BANNER_SLOT);
 
   return client && bannerSlot
-    ? { client, bannerSlot, sideSlot: envValue(import.meta.env.VITE_ADSENSE_SIDE_SLOT) }
+    ? {
+        client,
+        bannerSlot,
+        phoneSlot: envValue(import.meta.env.VITE_ADSENSE_PHONE_SLOT),
+        sideSlot: envValue(import.meta.env.VITE_ADSENSE_SIDE_SLOT),
+      }
     : null;
 };
 
