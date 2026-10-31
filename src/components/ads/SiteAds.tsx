@@ -27,8 +27,7 @@ const screenMatches = (query: string): boolean =>
   typeof window.matchMedia === "function" && window.matchMedia(query).matches;
 
 const classes = {
-  banner: "mb-6",
-  phone: "-mx-4 mt-8 flex flex-col items-center sm:mx-0",
+  phone: "-mx-4 flex flex-col items-center sm:mx-0",
   side: "fixed top-28 z-10 w-40",
   sideLeft: "left-3",
   sideRight: "right-3",
@@ -115,19 +114,19 @@ const AdUnit = ({ client, slot, format }: AdUnitProps) => {
   );
 };
 
-// Larger screens show the banner above the page. Phones show theirs below it,
-// and with no phone slot they show no ad at all rather than the large one.
-export const AdBanner = ({ position }: { position: "top" | "bottom" }) => {
+// Never the first thing someone sees: below the page's content, or after the
+// hero on the home page. With no phone slot, a phone shows no ad at all rather
+// than the large one.
+export const AdBanner = ({ className = "" }: { className?: string }) => {
   const { pathname } = useLocation();
   const config = useAdsense();
   const placeholders = usePlaceholders();
   const phone = screenMatches(PHONE_SCREEN);
-
-  if (phone !== (position === "bottom")) return null;
+  const placed = `${className} ${phone ? classes.phone : ""}`;
 
   if (placeholders) {
     return (
-      <aside className={phone ? classes.phone : classes.banner}>
+      <aside className={placed}>
         <AdPlaceholder {...(phone ? PHONE_AD : { height: BANNER_HEIGHT })} />
       </aside>
     );
@@ -137,14 +136,14 @@ export const AdBanner = ({ position }: { position: "top" | "bottom" }) => {
 
   if (phone) {
     return config.phoneSlot ? (
-      <aside className={classes.phone}>
+      <aside className={placed}>
         <AdUnit key={pathname} client={config.client} slot={config.phoneSlot} />
       </aside>
     ) : null;
   }
 
   return (
-    <aside className={classes.banner}>
+    <aside className={placed}>
       <AdUnit key={pathname} client={config.client} slot={config.bannerSlot} format="horizontal" />
     </aside>
   );
@@ -154,6 +153,9 @@ export const AdGutters = () => {
   const { pathname } = useLocation();
   const config = useAdsense();
   const placeholders = usePlaceholders();
+
+  // The home page opens with no ads in view.
+  if (pathname === "/") return null;
 
   if (placeholders && screenMatches(WIDE_SCREEN)) {
     return (

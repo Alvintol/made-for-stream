@@ -11,6 +11,7 @@ import LanguageSync from '../app/LanguageSync';
 const classes = {
   shell: 'appShell',
   main: 'container',
+  ad: 'mt-8',
 } as const;
 
 const Layout = () => {
@@ -22,13 +23,13 @@ const Layout = () => {
       <Nav />
       <AdGutters />
       <main className={classes.main}>
-        <AdBanner position="top" />
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>
             <Outlet />
           </PageTransition>
         </PolicyAcceptanceGate>
-        <AdBanner position="bottom" />
+        {/* The home page places its own, after the hero. */}
+        {pathname !== '/' && <AdBanner className={classes.ad} />}
       </main>
       <Footer />
       <SiteUpdatesNotice />

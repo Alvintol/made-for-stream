@@ -13,9 +13,8 @@ vi.mock("../../providers/CookiePreferencesProvider", () => ({
 const renderAds = (path = "/market") =>
   render(
     <MemoryRouter initialEntries={[path]}>
-      <AdBanner position="top" />
       <p>Page content</p>
-      <AdBanner position="bottom" />
+      <AdBanner />
       <AdGutters />
     </MemoryRouter>,
   );
@@ -87,6 +86,16 @@ describe("site ads", () => {
     renderAds();
 
     expect(units()).toHaveLength(1);
+  });
+
+  it("requests no side ad on the home page", () => {
+    configure();
+    onWideScreen();
+    mocks.consent = true;
+    renderAds("/");
+
+    expect(units()).toHaveLength(1);
+    expect(units()[0]).toHaveAttribute("data-ad-slot", "111");
   });
 
   it("does not request a side ad on a screen too narrow to show it", () => {
@@ -171,6 +180,24 @@ describe("site ads", () => {
       expect(screen.getByText("Page content").compareDocumentPosition(placeholders()[0])).toBe(
         Node.DOCUMENT_POSITION_FOLLOWING,
       );
+    });
+
+    it("marks the banner under the content on a larger screen too", () => {
+      onTestSite();
+      onWideScreen();
+      renderAds();
+
+      expect(screen.getByText("Page content").compareDocumentPosition(placeholders()[0])).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+
+    it("keeps side ads off the home page, so it opens with no ads in view", () => {
+      onTestSite();
+      onWideScreen();
+      renderAds("/");
+
+      expect(placeholders().map((box) => box.textContent)).toEqual(["Ad space: 100% × 90"]);
     });
 
     it("marks nothing on a page that would never show ads", () => {
