@@ -39,7 +39,8 @@ else sees English only, and Quebec stays blocked (ACC-006).
 (`fr-CA` counts as French, `es-US` as Spanish) if it is offered; otherwise English. A signed-in
 person's choice is saved on their account (`user_display_preferences.language`).
 A visitor's choice lasts until they reload, and nothing is stored in the
-browser. Emails are still in English.
+browser. Emails follow the same choice once the language is ready: see
+`EMAIL-005` in the transactional email playbook.
 
 **What is translated:**
 
@@ -167,7 +168,11 @@ with "Your choice could not be saved. Please try again."
 
 - **Most screens are not translated yet.** Including the policies, which need a
   human translator.
-- **Emails are English only.**
+- **Emails are drafted but held back.** French and Spanish email is written
+  (`api/emailTextFr.js`, `api/emailTextEs.js`) and stays off until the language
+  is marked ready in both `languages.ts` and `api/emailLanguage.js`. The first
+  and final notices and the cancellation warning explain consequences, so
+  check them with the policies. Sign-in and account emails stay English.
 - **The consent wording needs the policy translator's check.** The checkout
   agreement line, the early-start request (`consent.earlyStart*`, also
   used when accepting an agreement), the agreement's "I understand" boxes

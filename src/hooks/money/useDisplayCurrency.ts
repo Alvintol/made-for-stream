@@ -8,6 +8,8 @@ export type DisplayPreferences = {
   display_currency: string | null;
   // The chosen site language (20261029_173). Null: follow the browser.
   language?: string | null;
+  // What the browser last showed the site in, for email (20261031_176).
+  browser_language?: string | null;
 };
 
 const getApiBase = (): string =>
@@ -52,7 +54,7 @@ export const useDisplayPreferences = () => {
 
       const { data, error } = await supabase
         .from("user_display_preferences")
-        .select("country_code, display_currency, language")
+        .select("country_code, display_currency, language, browser_language")
         .eq("user_id", userId)
         .maybeSingle();
 

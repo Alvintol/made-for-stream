@@ -5,7 +5,8 @@
 // translated: until then it is offered only on a local development server,
 // or where VITE_OFFER_UNFINISHED_LANGUAGES is "true" (the dev website), so
 // nobody else sees half-translated pages. Quebec stays blocked
-// (20261029_171) until French is ready.
+// (20261029_171) until French is ready. Marking a language ready here means
+// marking it in api/emailLanguage.js too (a test compares them).
 export const SUPPORTED_LANGUAGES = [
   { code: "en", name: "English", ready: true },
   { code: "fr", name: "Français", ready: false },

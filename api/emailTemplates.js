@@ -14,6 +14,12 @@
 // address -- deliberately blank by default rather than a placeholder,
 // because a fabricated address is worse than none; every line below that
 // depends on it just doesn't render until it's set).
+import { es } from "./emailTextEs.js";
+import { fr } from "./emailTextFr.js";
+
+// The translations. English has no entry: it is written in the templates.
+export const EMAIL_TRANSLATIONS = { fr, es };
+
 const BRAND_NAME = process.env.EMAIL_BRAND_NAME || "Made for Stream";
 const LOGO_URL = process.env.EMAIL_LOGO_URL || "";
 const SUPPORT_EMAIL = process.env.EMAIL_SUPPORT_EMAIL || "support@madeforstream.com";
@@ -42,8 +48,8 @@ export const escapeHtml = (value) =>
 // gradient with a solid fallback for clients that drop gradients (Outlook).
 // The dark version follows the reader's system setting in Apple Mail, iOS
 // Mail and Outlook for Mac; Gmail ignores it and darkens the light version.
-const wrap = (title, bodyHtml, ctaUrl, ctaLabel) => `<!doctype html>
-<html lang="en">
+const wrap = (title, bodyHtml, ctaUrl, ctaLabel, language = "en") => `<!doctype html>
+<html lang="${language}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -88,7 +94,7 @@ const wrap = (title, bodyHtml, ctaUrl, ctaLabel) => `<!doctype html>
               }
               <p class="mfs-footer" style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px;line-height:1.6;">
                 ${FOOTER_ADDRESS}<br />
-                Questions? <a href="mailto:${SUPPORT_EMAIL}" style="color:#71717a;">${SUPPORT_EMAIL}</a>
+                ${EMAIL_TRANSLATIONS[language]?.questions ?? "Questions?"} <a href="mailto:${SUPPORT_EMAIL}" style="color:#71717a;">${SUPPORT_EMAIL}</a>
                 &middot; <a href="${SITE_URL}" style="color:#71717a;">${SITE_URL.replace(/^https?:\/\//, "")}</a>
               </p>
             </td></tr>
@@ -105,21 +111,45 @@ const formatCents = (cents, currency) =>
     currency: (currency || "usd").toUpperCase(),
   }).format((cents || 0) / 100);
 
+// When a notice's deadline falls, in the reader's language. English keeps
+// the server's own format. The time is UTC, and says so.
+const noticeDate = (expiresAt, pack) =>
+  `${new Date(expiresAt).toLocaleString(pack.locale, {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "UTC",
+  })} UTC`;
+
+export const formatArrivalDate = (seconds, language = "en") => {
+  const pack = EMAIL_TRANSLATIONS[language];
+
+  return pack
+    ? new Date(seconds * 1000).toLocaleDateString(pack.locale, { dateStyle: "long", timeZone: "UTC" })
+    : new Date(seconds * 1000).toLocaleDateString();
+};
+
 export const renderPaymentReceiptEmail = ({
   requestTitle,
   amountCents,
   currency,
   requestUrl,
+  language = "en",
 }) => {
   const amount = formatCents(amountCents, currency);
-  const subject = `Receipt: ${amount} for "${requestTitle}"`;
+  const pack = EMAIL_TRANSLATIONS[language];
 
+  if (pack) {
+    return renderTranslated(pack.receipt({ amount, title: requestTitle || pack.yourProject }), requestUrl, language);
+  }
+
+  const title = requestTitle || "your project";
+  const subject = `Receipt: ${amount} for "${title}"`;
   return {
     subject,
-    text: `We received your payment of ${amount} for "${requestTitle}". View the commission: ${requestUrl}`,
+    text: `We received your payment of ${amount} for "${title}". View the commission: ${requestUrl}`,
     html: wrap(
       "Payment received",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">We received your payment of <strong>${amount}</strong> for "${escapeHtml(requestTitle)}".</p>`,
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">We received your payment of <strong>${amount}</strong> for "${escapeHtml(title)}".</p>`,
       requestUrl,
       "View commission",
     ),
@@ -131,16 +161,31 @@ export const renderFirstNoticeEmail = ({
   requestedAction,
   expiresAt,
   requestUrl,
+  language = "en",
 }) => {
-  const subject = `Action needed on "${requestTitle}"`;
-  const expiresLabel = new Date(expiresAt).toLocaleString();
+  const pack = EMAIL_TRANSLATIONS[language];
 
+  if (pack) {
+    return renderTranslated(
+      pack.firstNotice({
+        title: requestTitle || pack.yourProject,
+        action: requestedAction,
+        date: noticeDate(expiresAt, pack),
+      }),
+      requestUrl,
+      language,
+    );
+  }
+
+  const title = requestTitle || "your project";
+  const subject = `Action needed on "${title}"`;
+  const expiresLabel = new Date(expiresAt).toLocaleString();
   return {
     subject,
-    text: `A notice was sent on "${requestTitle}": ${requestedAction}. Please reply by ${expiresLabel}. ${requestUrl}`,
+    text: `A notice was sent on "${title}": ${requestedAction}. Please reply by ${expiresLabel}. ${requestUrl}`,
     html: wrap(
       "A reply is needed",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">On <strong>${escapeHtml(requestTitle)}</strong>, the other party needs: ${escapeHtml(requestedAction)}</p>
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">On <strong>${escapeHtml(title)}</strong>, the other party needs: ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">Please reply by <strong>${expiresLabel}</strong>. A final notice may follow if there is no reply.</p>`,
       requestUrl,
       "Open commission",
@@ -153,16 +198,31 @@ export const renderFinalNoticeEmail = ({
   requestedAction,
   expiresAt,
   requestUrl,
+  language = "en",
 }) => {
-  const subject = `Final notice: "${requestTitle}"`;
-  const expiresLabel = new Date(expiresAt).toLocaleString();
+  const pack = EMAIL_TRANSLATIONS[language];
 
+  if (pack) {
+    return renderTranslated(
+      pack.finalNotice({
+        title: requestTitle || pack.yourProject,
+        action: requestedAction,
+        date: noticeDate(expiresAt, pack),
+      }),
+      requestUrl,
+      language,
+    );
+  }
+
+  const title = requestTitle || "your project";
+  const subject = `Final notice: "${title}"`;
+  const expiresLabel = new Date(expiresAt).toLocaleString();
   return {
     subject,
-    text: `Final notice on "${requestTitle}": ${requestedAction}. This grants a further 7 days, until ${expiresLabel}. Administrative closure may follow. ${requestUrl}`,
+    text: `Final notice on "${title}": ${requestedAction}. This grants a further 7 days, until ${expiresLabel}. Administrative closure may follow. ${requestUrl}`,
     html: wrap(
       "Final notice",
-      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">This is a <strong>final notice</strong> on "${escapeHtml(requestTitle)}": ${escapeHtml(requestedAction)}</p>
+      `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">This is a <strong>final notice</strong> on "${escapeHtml(title)}": ${escapeHtml(requestedAction)}</p>
        <p style="margin:0 0 8px;font-size:14px;line-height:1.5;">You have until <strong>${expiresLabel}</strong> to reply. After that, the other party may request that Made for Stream administratively close this project.</p>`,
       requestUrl,
       "Open commission",
@@ -175,10 +235,16 @@ export const renderPayoutReleasedEmail = ({
   currency,
   arrivalDate,
   requestUrl,
+  language = "en",
 }) => {
   const amount = formatCents(amountCents, currency);
-  const subject = `Payout released: ${amount}`;
+  const pack = EMAIL_TRANSLATIONS[language];
 
+  if (pack) {
+    return renderTranslated(pack.payoutReleased({ amount, arrivalDate }), requestUrl, language);
+  }
+
+  const subject = `Payout released: ${amount}`;
   return {
     subject,
     text: `A payout of ${amount} was released and is on its way to your bank${
@@ -219,21 +285,38 @@ export const renderActionEmail = ({
   note = "",
   ctaUrl,
   ctaLabel,
+  language = "en",
 }) => ({
   subject,
-  text: [...lines, note ? `${noteLabel}: ${note}` : "", ctaUrl].filter(Boolean).join("\n\n"),
+  text: [...lines, note ? `${noteLabel}${language === "fr" ? " :" : ":"} ${note}` : "", ctaUrl]
+    .filter(Boolean)
+    .join("\n\n"),
   html: wrap(
     escapeHtml(title),
     lines.map((line) => paragraph(escapeHtml(line))).join("") +
       applicationNote(escapeHtml(noteLabel), note),
     ctaUrl,
     escapeHtml(ctaLabel),
+    language,
   ),
 });
 
-export const renderCreatorApplicationDecisionEmail = ({ status, note = "" }) => {
+// A translated email is { subject, title, lines, noteLabel, note, cta }.
+const renderTranslated = ({ cta, ...content }, ctaUrl, language) =>
+  renderActionEmail({ ...content, ctaUrl, ctaLabel: cta, language });
+export const renderCreatorApplicationDecisionEmail = ({ status, note = "", language = "en" }) => {
   const applicationUrl = `${SITE_URL}/apply/creator`;
   const cleanNote = String(note || "").trim();
+  const decision = EMAIL_TRANSLATIONS[language]?.decision[status];
+
+  if (decision) {
+    return renderTranslated(
+      { ...decision({ brand: BRAND_NAME, support: SUPPORT_EMAIL }), note: cleanNote },
+      status === "approved" ? `${SITE_URL}/settings` : applicationUrl,
+      language,
+    );
+  }
+
   const textNote = (label) => (cleanNote ? `\n\n${label}\n${cleanNote}` : "");
 
   if (status === "approved") {

@@ -20,6 +20,7 @@ import {
 } from "./supportedCurrencies.js";
 import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
+import { getEmailLanguage } from "./emailLanguage.js";
 import {
   getListingRequestUrl as buildListingRequestUrl,
   getNotificationNames,
@@ -56,6 +57,7 @@ import {
   renderOpsAlertDigest,
 } from "./opsAlerts.js";
 import {
+  formatArrivalDate,
   renderFinalNoticeEmail,
   renderFirstNoticeEmail,
   renderPaymentReceiptEmail,
@@ -1372,6 +1374,7 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
           payload: row.payload,
           requestUrl: getNotificationUrl(APP_ORIGIN, row, request?.buyer_user_id ?? null),
           names,
+          language: await getEmailLanguage(supabaseAdmin, row.recipient_user_id),
         });
 
         if (!rendered) {
@@ -1438,10 +1441,11 @@ const sendPaymentReceiptEmailBestEffort = async ({ payment }) => {
     const email = await getSupabaseUserEmail(request.buyer_user_id);
 
     const { subject, html, text } = renderPaymentReceiptEmail({
-      requestTitle: request.request_title || "your project",
+      requestTitle: request.request_title,
       amountCents: payment.total_checkout_cents ?? payment.base_amount_cents,
       currency: payment.currency,
       requestUrl: getListingRequestUrl(request.id, "buyer"),
+      language: await getEmailLanguage(supabaseAdmin, request.buyer_user_id),
     });
 
     await sendTransactionalEmail(supabaseAdmin, { to: email, subject, html, text });
@@ -1470,13 +1474,13 @@ const sendPayoutReleasedEmailBestEffort = async ({ payout, event }) => {
 
     const email = await getSupabaseUserEmail(account.user_id);
 
+    const language = await getEmailLanguage(supabaseAdmin, account.user_id);
     const { subject, html, text } = renderPayoutReleasedEmail({
       amountCents: payout.amount,
       currency: payout.currency,
-      arrivalDate: payout.arrival_date
-        ? new Date(payout.arrival_date * 1000).toLocaleDateString()
-        : null,
+      arrivalDate: payout.arrival_date ? formatArrivalDate(payout.arrival_date, language) : null,
       requestUrl: `${APP_ORIGIN}/settings/profile`,
+      language,
     });
 
     await sendTransactionalEmail(supabaseAdmin, { to: email, subject, html, text });
@@ -3733,10 +3737,11 @@ app.post("/api/notices/:noticeId/send-email", async (req, res) => {
       request?.buyer_user_id === notice.recipient_user_id ? "buyer" : "creator";
 
     const templateData = {
-      requestTitle: request?.request_title || "your project",
+      requestTitle: request?.request_title,
       requestedAction: notice.requested_action,
       expiresAt: notice.expires_at,
       requestUrl: getListingRequestUrl(notice.listing_request_id, recipientViewer),
+      language: await getEmailLanguage(supabaseAdmin, notice.recipient_user_id),
     };
 
     const { subject, html, text } =
@@ -3843,6 +3848,7 @@ app.post("/api/creator-applications/:applicationId/send-decision-email", async (
       const { subject, html, text } = renderCreatorApplicationDecisionEmail({
         status: application.status,
         note: getApplicantVisibleNote(application),
+        language: await getEmailLanguage(supabaseAdmin, application.profile_user_id),
       });
 
       result = await sendTransactionalEmail(supabaseAdmin, {

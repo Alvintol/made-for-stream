@@ -6,7 +6,7 @@
 // uses a kind that has no entry here.
 //
 // Playbook: docs/support/messaging/commission-notifications.md.
-import { renderActionEmail } from "./emailTemplates.js";
+import { EMAIL_TRANSLATIONS, renderActionEmail } from "./emailTemplates.js";
 
 // Where a commission lives on the site for each side. The buyer's page has
 // no prefix: "/buyer/requests/..." does not exist.
@@ -29,16 +29,15 @@ export const getNotificationUrl = (appOrigin, row, buyerUserId) =>
         buyerUserId === row.recipient_user_id ? "buyer" : "creator",
       );
 
-const deadline = (payload) =>
+const deadline = (payload, pack) =>
   payload.expires_at
-    ? new Date(payload.expires_at).toLocaleDateString("en-US", {
+    ? new Date(payload.expires_at).toLocaleDateString(pack?.locale ?? "en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
         timeZone: "UTC",
       })
-    : "the deadline";
-
+    : (pack?.deadlineFallback ?? "the deadline");
 const formatCents = (cents, currency) =>
   typeof cents === "number" && currency
     ? `${new Intl.NumberFormat("en-US", {
@@ -441,19 +440,72 @@ export const getNotificationNames = ({ buyerUserId, creatorUserId, recipientUser
   return { buyer: handle(buyerUserId), creator: handle(creatorUserId), other: handle(otherUserId) };
 };
 
-// Null when the kind has no template (NOTIF-002).
-export const renderNotificationEmail = ({ kind, requestTitle, payload, requestUrl, names }) => {
-  const build = NOTIFICATION_EMAILS[kind];
+// The database saves what off-site work was, and how it was sent, in English.
+const offSiteSubject = (saved, pack) => {
+  const milestone = saved?.match(/^milestone (\d+) \((.*)\)$/s);
+  if (milestone) return pack.subjectMilestone(milestone[1], milestone[2]);
 
-  if (!build) {
+  const delivery = saved?.match(/^the final delivery \((.*)\)$/s);
+  if (delivery) return pack.subjectDelivery(delivery[1]);
+
+  return saved === "this commission" ? pack.subjectCommission : saved;
+};
+
+const offSiteMethods = (saved, pack) =>
+  saved
+    ?.split(", ")
+    .map((method) =>
+      method.startsWith("another way (")
+        ? pack.methods.other + method.slice("another way".length)
+        : (pack.methods[method] ?? method),
+    )
+    .join(", ");
+
+// The one reason the database writes itself. Anything else was typed.
+const reasonText = (reason, pack) => {
+  const noReply = reason?.match(/^No reply to a cancellation warning within (\d+) days\.$/);
+
+  return noReply ? pack.noReply(noReply[1]) : reason;
+};
+
+// What a translated email works out from the row (emailTextFr.js).
+const translatedHelpers = (payload, pack) => ({
+  amount: amountOf(payload),
+  waited: pack.waited(payload.waiting_days),
+  deadline: deadline(payload, pack),
+  reason: reasonText(payload.reason, pack),
+  methods: offSiteMethods(payload.methods, pack),
+  subject: (fallback) => offSiteSubject(payload.subject, pack) || fallback,
+});
+
+const translatedPeople = (names = {}, payload = {}, pack) => ({
+  buyer: names.buyer || pack.people.buyer,
+  Buyer: names.buyer || pack.people.Buyer,
+  aBuyer: names.buyer || pack.people.aBuyer,
+  creator: names.creator || pack.people.creator,
+  Creator: names.creator || pack.people.Creator,
+  other: names.other || pack.people.other,
+  Other: names.other || pack.people.Other,
+  sender: names.other || payload.sender || "",
+});
+
+// Null when the kind has no template (NOTIF-002).
+export const renderNotificationEmail = ({ kind, requestTitle, payload, requestUrl, names, language = "en" }) => {
+  const pack = EMAIL_TRANSLATIONS[language];
+
+  if (!NOTIFICATION_EMAILS[kind]) {
     return null;
   }
 
-  const content = build(
-    requestTitle || "your conversation",
-    payload || {},
-    people(names, payload || {}),
-  );
+  const row = payload || {};
+  const content = pack
+    ? pack.notifications[kind](
+        requestTitle || pack.yourConversation,
+        row,
+        translatedPeople(names, row, pack),
+        translatedHelpers(row, pack),
+      )
+    : NOTIFICATION_EMAILS[kind](requestTitle || "your conversation", row, people(names, row));
 
-  return renderActionEmail({ ...content, ctaUrl: requestUrl, ctaLabel: content.cta });
+  return renderActionEmail({ ...content, ctaUrl: requestUrl, ctaLabel: content.cta, language });
 };

@@ -4,6 +4,12 @@ status: active
 surfaces:
   - api/email.js
   - api/emailTemplates.js
+  - api/emailLanguage.js                 # which language an email is in
+  - api/emailTextFr.js                   # the emails in French
+  - api/emailTextEs.js                   # the emails in Spanish
+  - public.user_display_preferences.language
+  - public.user_display_preferences.browser_language  # 20261031_176
+  - src/components/app/LanguageSync.tsx  # saves browser_language
   - public.listing_request_notices
   - public.email_suppressions
   - POST /api/notices/:noticeId/send-email
@@ -102,7 +108,7 @@ same sender (`sendTransactionalEmail`), so `EMAIL-001`, `EMAIL-002` and
 | A closure is disputed and delivery needs proof | [`EMAIL-003`](#email-003--proving-a-notice-was-delivered) |
 | "My emails to this platform bounce" (creator/buyer side) | [`EMAIL-002`](#email-002--hard-bounce-suppresses-the-address) |
 | Notices stopped sending for everyone | [`EMAIL-004`](#email-004--sending-domain-not-onboarded-or-quota-exceeded) |
-
+| "My emails are in the wrong language" | [`EMAIL-005`](#email-005--email-in-the-wrong-language) |
 ---
 
 ## `EMAIL-001` — Send failed or silently dropped
@@ -290,8 +296,60 @@ weak-evidence problem.
 
 ---
 
+## `EMAIL-005` — Email in the wrong language
+
+```yaml
+id: EMAIL-005
+tier: 2
+signals:
+  - source: logs
+    match: "/EMAIL-005: could not read the language for .+/"
+    where: "API stderr (api/emailLanguage.js, getEmailLanguage)"
+auto_fix: none
+reason_not_automatable: "the usual cause is a language that is not ready yet, which is intended"
+```
+
+**How it works.** `getEmailLanguage` reads the recipient's row in
+`user_display_preferences`. Their chosen `language` comes first, then
+`browser_language`, then English. The website saves `browser_language`
+(`LanguageSync`) for someone who never chose a language, the first time their
+browser shows the site in something other than English.
+
+**Expected, not a fault.**
+
+- Everyone gets English until the language is marked ready in **both**
+  `src/lib/i18n/languages.ts` and `EMAIL_LANGUAGES` in `api/emailLanguage.js`.
+  `EMAIL_OFFER_UNFINISHED_LANGUAGES=true` lifts that on a test deployment. Never
+  set it in production.
+- The ops alert digest is for the owner and stays English.
+- Sign-in and account emails come from Supabase, not this API
+  (`supabase/templates`), and are English only. See Known gaps.
+- A title, a reason or a note someone typed stays in the language it was typed.
+
+**Diagnose.** Check what is saved:
+
+```sql
+select language, browser_language from public.user_display_preferences
+where user_id = '<user id>';
+```
+
+If the log shows `EMAIL-005`, the row could not be read, so the email went in
+English: it is never held back. The likely cause is the API running before
+migration 176 (`column user_display_preferences.browser_language does not
+exist`). Apply the migration.
+
+**Fix.** Someone who wants a different language changes it in Settings →
+Preferences. Nothing else is needed: the next email follows it.
+
+**Money impact.** None. A notice in the wrong language is still a notice sent,
+but see `EMAIL-003` if one is disputed.
+
+---
+
 ## Known gaps
 
+- **Sign-in and account emails are English only.** They are Supabase's, and
+  someone signing in for the first time has no saved language yet.
 - **No retry UI.** A failed send can only be retried by calling
   `POST /api/notices/:noticeId/send-email` again by hand (or writing a one-off
   script) — there is no admin button yet.

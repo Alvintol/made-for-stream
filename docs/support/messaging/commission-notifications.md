@@ -194,7 +194,9 @@ reason_not_automatable: "needs a code change and an API deploy"
 **Cause.** The database queued a `kind` the running API does not know: a
 migration added one and the API was not deployed, or the template was never
 written. `api/tests/notificationEmails.test.js` fails in that second case, so
-it should not reach a deploy.
+it should not reach a deploy. A new kind also needs an entry in
+`api/emailTextFr.js` and `api/emailTextEs.js`:
+`api/tests/emailLanguage.test.js` fails until it has one.
 
 **Fix.** Deploy the API that has the template. Then reset the rows so they
 are retried: `update listing_request_notifications set email_status =
@@ -325,6 +327,9 @@ and treat it as a defect.
 
 ## Known gaps
 
+- **Saved English inside a translated email.** A payment name saved on a
+  schedule ("Change order: …") stays as saved. The email's language follows
+  the reader: see `EMAIL-005` in the transactional email playbook.
 - **Presence is activity, not a live connection.** Someone reading a long
   page without touching it for five minutes counts as away. A websocket
   presence channel will make this exact.

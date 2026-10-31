@@ -1017,7 +1017,11 @@ Build order (each its own branch):
       175). Every line in `es.ts`, neutral Latin American and US Spanish, "tú".
       It stays hidden until marked ready. Next: the policies and consent
       wording by a translator, a Spanish speaker's review, then mark it ready.
-
+- [x] Emails in French and Spanish (`feat/i18n-emails`, migration 176): every
+      commission email, notice, receipt, payout and application decision. They
+      stay off until the language is marked ready, in `languages.ts` and
+      `api/emailLanguage.js`. Still English: sign-in and account emails, which
+      come from Supabase.
 Owner's steps, outside the code:
 
 - [ ] Have a Spanish translator do the policies and the consent wording, and
