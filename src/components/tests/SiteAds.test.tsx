@@ -131,6 +131,59 @@ describe("site ads", () => {
     expect(units()).toHaveLength(0);
   });
 
+  describe("placeholders", () => {
+    const placeholders = () => screen.queryAllByText(/^Ad space:/);
+
+    it("shows nothing unless they are switched on", () => {
+      onWideScreen();
+      renderAds();
+
+      expect(placeholders()).toHaveLength(0);
+    });
+
+    it("marks the banner and both side ads on a wide screen, and loads nothing", () => {
+      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onWideScreen();
+      renderAds();
+
+      expect(placeholders().map((box) => box.textContent)).toEqual([
+        "Ad space: 100% × 90",
+        "Ad space: 160 × 600",
+        "Ad space: 160 × 600",
+      ]);
+      expect(script()).toBeNull();
+      expect(window.adsbygoogle).toBeUndefined();
+    });
+
+    it("marks one small banner under the content on a phone", () => {
+      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      onPhone();
+      renderAds();
+
+      expect(placeholders().map((box) => box.textContent)).toEqual(["Ad space: 320 × 50"]);
+      expect(screen.getByText("Page content").compareDocumentPosition(placeholders()[0])).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+
+    it("marks nothing on a page that would never show ads", () => {
+      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      renderAds("/payments/checkout/abc");
+
+      expect(placeholders()).toHaveLength(0);
+    });
+
+    it("gives way to real ads", () => {
+      configure();
+      vi.stubEnv("VITE_SHOW_AD_PLACEHOLDERS", "true");
+      mocks.consent = true;
+      renderAds();
+
+      expect(placeholders()).toHaveLength(0);
+      expect(units()).toHaveLength(1);
+    });
+  });
+
   it("reloads the page when someone opts out with the script running", () => {
     configure();
     const reload = vi.fn();

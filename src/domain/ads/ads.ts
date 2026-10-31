@@ -27,6 +27,11 @@ export const getAdsenseConfig = (): AdsenseConfig | null => {
     : null;
 };
 
+// Dashed boxes where ads would sit, so the layout can be judged on the test
+// site before any ad exists. Real ads always win. Never set this in production.
+export const showAdPlaceholders = (): boolean =>
+  envValue(import.meta.env.VITE_SHOW_AD_PLACEHOLDERS) === "true" && !getAdsenseConfig();
+
 // Pages people browse. Never checkout, chat, settings, policies, the admin
 // pages or a creator's own tools: nobody should see an ad while paying or
 // reading what they agree to.
