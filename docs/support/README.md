@@ -126,7 +126,7 @@ how it fails.
 | Creators | [`creators/applications.md`](creators/applications.md) |
 | Listings | [`listings/listings.md`](listings/listings.md) |
 | Site | [`site/site-updates.md`](site/site-updates.md) |
-| Site | [`site/languages.md`](site/languages.md) |
+| Site | [`site/languages.md`](site/languages.md), [`site/ads.md`](site/ads.md) |
 | Requests | [`requests/request-lifecycle.md`](requests/request-lifecycle.md) |
 | Requests | [`requests/agreements.md`](requests/agreements.md) |
 | Requests | [`requests/milestones.md`](requests/milestones.md) |

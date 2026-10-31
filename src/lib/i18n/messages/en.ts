@@ -2499,6 +2499,9 @@ export const en = {
   "chat.line.theBuyer": "the buyer",
   "chat.line.theCreator": "the creator",
 
+  // Banner ads (components/ads/SiteAds.tsx)
+  "ads.label": "Advertisement",
+
   // Page not found (src/pages/NotFound.tsx)
   "notFound.text": "That page doesn’t exist.",
   "notFound.home": "Go home",

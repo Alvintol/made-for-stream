@@ -2456,6 +2456,8 @@ export const fr: Record<MessageKey, Message> = {
   "chat.line.theBuyer": "l’acheteur",
   "chat.line.theCreator": "le créateur",
 
+  "ads.label": "Publicité",
+
   "notFound.text": "Cette page n’existe pas.",
   "notFound.home": "Retour à l’accueil",
 };

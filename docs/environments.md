@@ -8,7 +8,7 @@ environment now, and **prod** is built when they clear.
 | --- | --- | --- |
 | Website | `dev.madeforstream.com`, Cloudflare Worker `made-for-stream-dev` (static assets, `wrangler.jsonc`), built from `main` | `madeforstream.com` |
 | API | Cloud Run `made-for-stream-api` (`us-central1`), `STRIPE_KEY_MODE=dev` | a second Cloud Run service with live Stripe keys |
-| Database | Supabase project `itbgxxczuazwroniiyot`, Pro plan, **Small** compute (since 2026-10-06) | a new Supabase project in the same organization, Small compute or larger |
+| Database | Supabase project `itbgxxczuazwroniiyot`, Pro plan, **Small** compute (since 2026-10-06) | Supabase project `caqvtbahdhcznwnbixqq` (`made-for-stream-prod`, `us-east-2`, created 2026-10-31, empty), in the same organization, Small compute or larger |
 | Stripe | test mode (sandbox) | live mode |
 
 `madeforstream.com` and `www` have no web records on purpose. Only email
@@ -100,6 +100,10 @@ on **Small** compute (2 GB). Two things to know:
 
 ## Before prod is built
 
+- The prod database is in `us-east-2`, not dev's `us-west-2`: that region was
+  not offered, and Ohio is the closest to the API. Update the location in the
+  Service Provider Register before launch. Set its compute to Small in
+  Project Settings → Compute and Disk.
 - Replay every migration on an empty database first. `056` and `058` could not
   apply on the live one (`20260926_140` explains why), so the chain may not
   replay cleanly.
