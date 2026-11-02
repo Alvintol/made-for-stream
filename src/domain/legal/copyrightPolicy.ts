@@ -1,7 +1,7 @@
 // Section 2's agent details must match the US Copyright Office's DMCA
 // Designated Agent Directory entry exactly (registered 2026-09-24). Change
 // both together, and renew the registration every three years.
-export const copyrightPolicyVersion = "2026-09-24";
+export { copyrightPolicyVersion } from "./policyVersions";
 
 export const copyrightPolicySections = [
   {

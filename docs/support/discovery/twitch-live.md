@@ -2,9 +2,8 @@
 feature: discovery/twitch-live
 status: active
 surfaces:
-  - api/server.js:2799    # GET /api/twitch/live, what the site calls
-  - api/server.js:2830    # GET /api/twitch/streams, kept for pages opened before the switch
-  - api/server.js:433     # live answer cached 60s / linked logins cached 5 min
+  - api/server.js:2812    # GET /api/twitch/live, what the site calls
+  - api/server.js:464     # live answer cached 60s / linked logins cached 5 min
   - api/twitchLive.js     # batches of 100
   - api/tests/twitchLive.test.js
   - src/hooks/useTwitchStreams.ts
@@ -19,7 +18,7 @@ now. The API keeps one shared answer: it reads the linked Twitch logins every 5
 minutes, asks Twitch about them at most once a minute, and gives that answer to
 every visitor. A visitor costs no database read and no Twitch call, so a busy site
 costs the same as a quiet one. Twitch takes 100 logins a request, so the list goes
-in batches. User data is cached for 6 hours. What the Live and home pages then
+in batches. What the Live and home pages then
 read from the database is in [`efficient-reads.md`](../site/efficient-reads.md).
 
 This is a **discovery convenience, not a transactional feature**. Nothing here
@@ -74,8 +73,6 @@ tier: 2
 signals:
   - source: api
     match: "/Twitch streams failed \\(5\\d\\d\\)/"
-  - source: api
-    match: "/Twitch users failed \\(5\\d\\d\\)/"
   - source: api
     match: "/Token request failed \\(5\\d\\d\\)/"
 auto_fix: none
@@ -165,7 +162,5 @@ failures are not cached, so the next visitor's request tries again.
   again, though requests arriving together share one attempt.
 - **Each copy of the API has its own cache,** so with several running, Twitch is
   asked once a minute per copy. A shared cache isn't worth adding until many run.
-- **`/api/twitch/streams` is still there** for pages opened before the switch. It
-  is capped at 100 logins. Remove it one release later.
 - **Only Twitch is implemented.** YouTube and Kick creators have no live status
   at all.

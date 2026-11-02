@@ -351,6 +351,9 @@ export const es: Record<MessageKey, Message> = {
   "common.previous": "Anterior",
   "common.next": "Siguiente",
   "common.loadMore": "Ver más",
+  "common.pageFailedTitle": "Esta página no se pudo cargar",
+  "common.pageFailedText": "Revisa tu conexión e inténtalo de nuevo.",
+  "common.pageFailedReload": "Recargar la página",
   "common.saving": "Guardando…",
 
   "requestStatus.submitted": "En revisión",

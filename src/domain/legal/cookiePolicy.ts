@@ -1,4 +1,4 @@
-export const cookiePolicyVersion = "2026-09-24";
+export { cookiePolicyVersion } from "./policyVersions";
 
 export const cookiePolicySections = [
   {

@@ -1,11 +1,15 @@
-import { communityGuidelinesVersion } from "./communityGuidelines";
-import { cookiePolicyVersion } from "./cookiePolicy";
-import { copyrightPolicyVersion } from "./copyrightPolicy";
-import { creatorTermsVersion } from "./creatorTerms";
-import { paymentTermsVersion } from "./paymentTerms";
-import { privacyChanges, privacyVersion } from "./privacyPolicy";
-import { refundPolicyVersion } from "./refundPolicy";
-import { termsChanges, termsVersion } from "./termsOfService";
+import {
+  communityGuidelinesVersion,
+  cookiePolicyVersion,
+  copyrightPolicyVersion,
+  creatorTermsVersion,
+  paymentTermsVersion,
+  privacyChanges,
+  privacyVersion,
+  refundPolicyVersion,
+  termsChanges,
+  termsVersion,
+} from "./policyVersions";
 
 // Mirrors the policy_type check constraint on public.policy_acceptances.
 // "early_service_request" is the EU/UK express request to start work before

@@ -36,6 +36,12 @@ Stream collects tax on the whole payment under its own registrations.
 | The buyer must be shown who the seller is (question 4) | Add the seller's legal name, and whatever else is required, to the payment page and the receipt email. | Small |
 | A formal tax invoice is required, with numbering and both parties' tax numbers | An invoice document per payment, and a credit note per refund. | Feature |
 
+**Answer so far, Canada (2026-11-02).** By phone, the CRA told the owner that GST/HST
+applies only to what Made for Stream itself charges: its fees, subscriptions and its
+own digital products. That matches the "creator is the seller" row above. It is not
+a written ruling. It does not settle a creator outside Canada selling to a Canadian
+buyer (brief, P3), where a platform can be liable for a sale it doesn't charge for.
+
 ## B. What kind of sale each listing is (questions 5 to 9)
 
 | Answer | What changes | Size |

@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { dateLocale, translate } from "../i18n";
+import { dateLocale, loadLanguage, setCurrentLanguage, translate, useLanguage } from "../i18n";
 import { resolveLanguage } from "../languages";
 import { en, type Message, type MessageKey } from "../messages/en";
 import { es } from "../messages/es";
@@ -10,6 +11,20 @@ const placeholders = (message: Message) =>
   [...(typeof message === "string" ? message : `${message.one} ${message.other}`).matchAll(/\{(\w+)\}/g)]
     .map((match) => match[1])
     .sort();
+
+beforeAll(() => Promise.all([loadLanguage("fr"), loadLanguage("es")]));
+
+describe("setCurrentLanguage", () => {
+  afterEach(() => setCurrentLanguage("en"));
+
+  it("ends on the last language asked for", async () => {
+    const { result } = renderHook(() => useLanguage());
+
+    await Promise.all([setCurrentLanguage("fr"), setCurrentLanguage("es")]);
+
+    await waitFor(() => expect(result.current).toBe("es"));
+  });
+});
 
 describe("translate", () => {
   it("fills in values and leaves unknown placeholders alone", () => {

@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   inboxPreviewText,
@@ -8,7 +8,9 @@ import {
   systemLineText,
   type SystemLine,
 } from "../conversations/conversations";
-import { english, hasMessage, translate, type Translate } from "../../lib/i18n/i18n";
+import { english, hasMessage, loadLanguage, translate, type Translate } from "../../lib/i18n/i18n";
+
+beforeAll(() => Promise.all([loadLanguage("fr"), loadLanguage("es")]));
 
 const names = { buyerName: "@ImAllBeans", creatorName: "@meowington" };
 const french: Translate = (key, values) => translate("fr", key, values);

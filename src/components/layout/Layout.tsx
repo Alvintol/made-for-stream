@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Nav from './Nav';
 import Footer from './Footer';
@@ -7,16 +8,18 @@ import CookieConsent from '../legal/CookieConsent';
 import PolicyAcceptanceGate from '../legal/PolicyAcceptanceGate';
 import SiteUpdatesNotice from '../app/SiteUpdatesNotice';
 import LanguageSync from '../app/LanguageSync';
-
+import PageErrorBoundary from '../app/PageErrorBoundary';
+import { useT } from '../../lib/i18n/i18n';
 const classes = {
   shell: 'appShell',
   main: 'container',
   ad: 'mt-8',
+  loading: 'text-sm text-zinc-600',
 } as const;
 
 const Layout = () => {
   const { pathname } = useLocation();
-
+  const t = useT();
   return (
     <div className={classes.shell}>
       <LanguageSync />
@@ -24,7 +27,11 @@ const Layout = () => {
       <main className={classes.main}>
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>
-            <Outlet />
+            <PageErrorBoundary resetKey={pathname}>
+              <Suspense fallback={<div className={classes.loading}>{t('common.loading')}</div>}>
+                <Outlet />
+              </Suspense>
+            </PageErrorBoundary>
           </PageTransition>
           {/* Inside the gate: never beside the screen that asks to accept a policy. */}
           <AdGutters />

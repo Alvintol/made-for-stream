@@ -126,7 +126,7 @@ how it fails.
 | Creators | [`creators/applications.md`](creators/applications.md) |
 | Listings | [`listings/listings.md`](listings/listings.md) |
 | Site | [`site/site-updates.md`](site/site-updates.md) |
-| Site | [`site/languages.md`](site/languages.md), [`site/ads.md`](site/ads.md), [`site/efficient-reads.md`](site/efficient-reads.md) |
+| Site | [`site/languages.md`](site/languages.md), [`site/ads.md`](site/ads.md), [`site/efficient-reads.md`](site/efficient-reads.md), [`site/page-loading.md`](site/page-loading.md) |
 | Requests | [`requests/request-lifecycle.md`](requests/request-lifecycle.md) |
 | Requests | [`requests/agreements.md`](requests/agreements.md) |
 | Requests | [`requests/milestones.md`](requests/milestones.md) |
@@ -147,6 +147,7 @@ how it fails.
 | Payments | [`payments/display-currency.md`](payments/display-currency.md) |
 | Discovery | [`discovery/twitch-live.md`](discovery/twitch-live.md) |
 | Operations | [`operations/alerting.md`](operations/alerting.md) — scheduled jobs and ops alerts |
+| Operations | [`operations/rate-limits.md`](operations/rate-limits.md) — API request limits |
 
 Several playbooks record gaps that were product decisions rather than support
 problems — cancellation, refunds, abandonment, currency scope. **Those decisions are

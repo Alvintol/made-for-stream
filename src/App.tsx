@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import {
   Navigate,
   Route,
@@ -10,58 +11,62 @@ import RequireAdminAccess from "./components/auth/RequireAdminAccess";
 import RequireAuth from "./components/auth/RequireAuth";
 import RequireCreatorAccess from "./components/auth/RequireCreatorAccess";
 import ScrollToTop from "./components/layout/ScrollToTop";
-import About from "./pages/About";
-import Home from "./pages/Home";
-import Live from "./pages/Live";
-import Market from "./pages/Market";
 import NotFound from "./pages/NotFound";
-import ProfileSettings from "./pages/ProfileSettings";
-import AccountDetailsSettings from "./pages/AccountDetailsSettings";
-import PreferencesSettings from "./pages/PreferencesSettings";
-import SettingsLayout from "./components/settings/SettingsLayout";
-import SignIn from "./pages/SignIn";
-import AdminCreatorApplications from "./pages/admin/AdminCreatorApplications";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminListingRevisions from "./pages/admin/AdminListingRevisions";
-import AdminListings from "./pages/admin/AdminListings";
-import AdminModerationReportDetails from "./pages/admin/AdminModerationReportDetails";
-import AdminModerationReports from "./pages/admin/AdminModerationReports";
-import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
-import AdminRequestDetails from "./pages/admin/AdminRequestDetails";
-import AdminRequests from "./pages/admin/AdminRequests";
-import AdminStorage from "./pages/admin/AdminStorage";
-import AdminTaxReporting from "./pages/admin/AdminTaxReporting";
-import BuyerRequestDetails from "./pages/buyer/BuyerRequestDetails";
-import BuyerRequests from "./pages/buyer/BuyerRequests";
-import ApplyCreator from "./pages/creator/ApplyCreator";
-import CreatorDashboard from "./pages/creator/CreatorDashboard";
-import CreatorProfile from "./pages/creator/CreatorProfile";
-import CreatorRequestDetails from "./pages/creator/CreatorRequestDetails";
-import CreatorRequests from "./pages/creator/CreatorRequests";
-import Creators from "./pages/creator/Creators";
-import CreateListing from "./pages/listings/CreateListing";
-import CreatorListingDetails from "./pages/listings/CreatorListingDetails";
-import CreatorListingRevisions from "./pages/listings/CreatorListingRevisions";
-import CreatorListings from "./pages/listings/CreatorListings";
-import EditListing from "./pages/listings/EditListing";
-import Listing from "./pages/listings/Listing";
-import RequestListing from "./pages/listings/RequestListing";
-import CommunityGuidelines from "./pages/legal/CommunityGuidelines";
-import CookiePolicy from "./pages/legal/CookiePolicy";
-import ServiceProviderRegister from "./pages/legal/ServiceProviderRegister";
-import CopyrightPolicy from "./pages/legal/CopyrightPolicy";
-import CreatorTerms from "./pages/legal/CreatorTerms";
-import FeeSchedule from "./pages/legal/FeeSchedule";
-import Legal from "./pages/legal/Legal";
-import Privacy from "./pages/legal/Privacy";
-import SiteUpdates from "./pages/SiteUpdates";
-import RefundPolicy from "./pages/legal/RefundPolicy";
-import Terms from "./pages/legal/Terms";
-import MessageDetails from "./pages/messages/MessageDetails";
-import MessagesInbox from "./pages/messages/MessagesInbox";
-import MyReports from "./pages/reports/MyReports";
-import PaymentReturn from './pages/payments/PaymentReturn';
-import ListingRequestPaymentCheckout from './pages/payments/ListingRequestPaymentCheckout';
+
+// Each page downloads when it is first opened, so a first visit only pays for
+// the page it lands on. Layout shows the loading state and handles a failure.
+// Playbook: docs/support/site/page-loading.md.
+const About = lazy(() => import("./pages/About"));
+const Home = lazy(() => import("./pages/Home"));
+const Live = lazy(() => import("./pages/Live"));
+const Market = lazy(() => import("./pages/Market"));
+const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
+const AccountDetailsSettings = lazy(() => import("./pages/AccountDetailsSettings"));
+const PreferencesSettings = lazy(() => import("./pages/PreferencesSettings"));
+const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const AdminCreatorApplications = lazy(() => import("./pages/admin/AdminCreatorApplications"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminListingRevisions = lazy(() => import("./pages/admin/AdminListingRevisions"));
+const AdminListings = lazy(() => import("./pages/admin/AdminListings"));
+const AdminModerationReportDetails = lazy(() => import("./pages/admin/AdminModerationReportDetails"));
+const AdminModerationReports = lazy(() => import("./pages/admin/AdminModerationReports"));
+const AdminPaymentIssues = lazy(() => import("./pages/admin/AdminPaymentIssues"));
+const AdminRequestDetails = lazy(() => import("./pages/admin/AdminRequestDetails"));
+const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
+const AdminStorage = lazy(() => import("./pages/admin/AdminStorage"));
+const AdminTaxReporting = lazy(() => import("./pages/admin/AdminTaxReporting"));
+const BuyerRequestDetails = lazy(() => import("./pages/buyer/BuyerRequestDetails"));
+const BuyerRequests = lazy(() => import("./pages/buyer/BuyerRequests"));
+const ApplyCreator = lazy(() => import("./pages/creator/ApplyCreator"));
+const CreatorDashboard = lazy(() => import("./pages/creator/CreatorDashboard"));
+const CreatorProfile = lazy(() => import("./pages/creator/CreatorProfile"));
+const CreatorRequestDetails = lazy(() => import("./pages/creator/CreatorRequestDetails"));
+const CreatorRequests = lazy(() => import("./pages/creator/CreatorRequests"));
+const Creators = lazy(() => import("./pages/creator/Creators"));
+const CreateListing = lazy(() => import("./pages/listings/CreateListing"));
+const CreatorListingDetails = lazy(() => import("./pages/listings/CreatorListingDetails"));
+const CreatorListingRevisions = lazy(() => import("./pages/listings/CreatorListingRevisions"));
+const CreatorListings = lazy(() => import("./pages/listings/CreatorListings"));
+const EditListing = lazy(() => import("./pages/listings/EditListing"));
+const Listing = lazy(() => import("./pages/listings/Listing"));
+const RequestListing = lazy(() => import("./pages/listings/RequestListing"));
+const CommunityGuidelines = lazy(() => import("./pages/legal/CommunityGuidelines"));
+const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
+const ServiceProviderRegister = lazy(() => import("./pages/legal/ServiceProviderRegister"));
+const CopyrightPolicy = lazy(() => import("./pages/legal/CopyrightPolicy"));
+const CreatorTerms = lazy(() => import("./pages/legal/CreatorTerms"));
+const FeeSchedule = lazy(() => import("./pages/legal/FeeSchedule"));
+const Legal = lazy(() => import("./pages/legal/Legal"));
+const Privacy = lazy(() => import("./pages/legal/Privacy"));
+const SiteUpdates = lazy(() => import("./pages/SiteUpdates"));
+const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy"));
+const Terms = lazy(() => import("./pages/legal/Terms"));
+const MessageDetails = lazy(() => import("./pages/messages/MessageDetails"));
+const MessagesInbox = lazy(() => import("./pages/messages/MessagesInbox"));
+const MyReports = lazy(() => import("./pages/reports/MyReports"));
+const PaymentReturn = lazy(() => import("./pages/payments/PaymentReturn"));
+const ListingRequestPaymentCheckout = lazy(() => import("./pages/payments/ListingRequestPaymentCheckout"));
 
 const App = () => {
   return (

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
+import { useChatPoll } from "./chatPolling";
 import type {
   BuyerImageUploadStatus,
   ConversationCloseReasonCode,
@@ -79,12 +80,15 @@ const fetchRequestConversation = async (
   return (data ?? null) as RequestConversationRow | null;
 };
 
-export const useRequestConversation = (requestId: string | null) =>
-  useQuery<RequestConversationRow | null>({
+export const useRequestConversation = (requestId: string | null) => {
+  const pollMs = useChatPoll(60_000);
+
+  return useQuery<RequestConversationRow | null>({
     queryKey: ["requestConversation", requestId],
     enabled: Boolean(requestId),
     queryFn: () =>
       requestId ? fetchRequestConversation(requestId) : Promise.resolve(null),
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: () => pollMs(),
   });
+};
