@@ -5,8 +5,9 @@ import { StaggerGroup } from "../lib/motion";
 import { CATEGORIES } from "../domain/catalog";
 import { normalizeTwitchLogin } from "../domain/twitch";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
-import { useMarketListings, type MarketListingItem } from "../hooks/listings/useMarketListings";
+import { useMarketListings } from "../hooks/listings/useMarketListings";
 import { useT } from "../lib/i18n/i18n";
+import { useDebouncedValue } from "../lib/useDebouncedValue";
 import type { MessageKey } from "../lib/i18n/messages/en";
 import {
   useHubActions,
@@ -34,35 +35,13 @@ const classes = {
   grid: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
   loadingText: "text-sm text-zinc-600",
   emptyText: "text-sm text-zinc-600",
+  moreRow: "flex justify-center",
+  moreButton: "btnOutline",
 } as const;
 
 // Sourced from src/domain/catalog.ts so Market and the rest of the app
 // (creator specialty labels, etc.) can never drift out of sync again.
 const categoryKeys = ["all", ...CATEGORIES.map((category) => category.key)] as const;
-
-// Builds a search string for listing filtering
-const getListingHaystack = (item: MarketListingItem): string => {
-  const { listing, creator, platformAccounts } = item;
-
-  const twitchAccount =
-    platformAccounts.find((account) => account.platform === "twitch") ?? null;
-
-  return [
-    listing.title,
-    listing.short,
-    listing.category,
-    listing.offering_type,
-    listing.video_subtype ?? "",
-    ...(listing.deliverables ?? []),
-    ...(listing.tags ?? []),
-    creator?.display_name ?? "",
-    creator?.handle ?? "",
-    twitchAccount?.platform_login ?? "",
-    twitchAccount?.platform_display_name ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
-};
 
 // Reads supported filter values from the current URL query string
 const parseFromUrl = (search: string): Partial<HubFilters> => {
@@ -92,87 +71,31 @@ const Market = ({ forceFree = false }: MarketProps) => {
   const { setFilters } = useHubActions();
   const { search } = useLocation();
   const { twitchByLogin } = useTwitchStreams();
+  const q = useDebouncedValue(filters.q.trim());
 
-  const { data: items = [], isLoading, error } = useMarketListings();
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useMarketListings({
+    q,
+    category: filters.category === "all" ? null : filters.category,
+    type: forceFree || filters.type === "all" ? null : filters.type,
+    video: filters.videoSubtype === "all" ? null : filters.videoSubtype,
+    freeOnly: forceFree || filters.freeOnly,
+  });
+
+  const listings = useMemo(() => data?.pages.flatMap((page) => page.rows) ?? [], [data]);
   const t = useT();
-  // Syncs supported URL params into Hub filter state
+
+  // A link sets the filters when the URL changes. From there the controls on
+  // the page own them, so nothing here may put the URL's values back.
   useEffect(() => {
-    const fromUrl = parseFromUrl(search);
-    const patch: Partial<HubFilters> = {};
-
-    if (fromUrl.q !== undefined && fromUrl.q !== filters.q) {
-      patch.q = fromUrl.q;
-    }
-
-    if (fromUrl.type !== undefined && fromUrl.type !== filters.type) {
-      patch.type = fromUrl.type;
-    }
-
-    if (
-      fromUrl.category !== undefined &&
-      fromUrl.category !== filters.category
-    ) {
-      patch.category = fromUrl.category;
-    }
-
-    if (
-      fromUrl.videoSubtype !== undefined &&
-      fromUrl.videoSubtype !== filters.videoSubtype
-    ) {
-      patch.videoSubtype = fromUrl.videoSubtype;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      setFilters(patch);
-    }
-  }, [
-    search,
-    filters.q,
-    filters.type,
-    filters.category,
-    filters.videoSubtype,
-    setFilters,
-  ]);
-
-  // Applies the current Hub filters to public marketplace listings
-  const filtered = useMemo((): MarketListingItem[] => {
-    const searchValue = filters.q.trim().toLowerCase();
-
-    return items.filter((item) => {
-      const { listing } = item;
-
-      if ((forceFree || filters.freeOnly) && !listing.is_free) {
-        return false;
-      }
-
-      if (
-        !forceFree &&
-        filters.type !== "all" &&
-        listing.offering_type !== filters.type
-      ) {
-        return false;
-      }
-
-      if (
-        filters.category !== "all" &&
-        listing.category !== filters.category
-      ) {
-        return false;
-      }
-
-      if (filters.videoSubtype !== "all") {
-        if (listing.category !== "video-editing") return false;
-        if ((listing.video_subtype ?? "all") !== filters.videoSubtype) {
-          return false;
-        }
-      }
-
-      if (!searchValue) return true;
-
-      return getListingHaystack(item).includes(searchValue);
-    });
-  }, [filters, items, forceFree]);
-
+    setFilters(parseFromUrl(search));
+  }, [search, setFilters]);
   return (
     <div className={classes.page}>
       <div className={classes.headerWrap}>
@@ -245,51 +168,41 @@ const Market = ({ forceFree = false }: MarketProps) => {
         </div>
       )}
 
-      {!isLoading && !error && filtered.length === 0 && (
+      {!isLoading && !error && listings.length === 0 && (
         <div className={classes.emptyText}>{t("market.empty")}</div>
       )}
 
       <StaggerGroup
         className={classes.grid}
-        itemCount={filtered.length}
+        itemCount={listings.length}
         resetKey={search}
       >
-        {filtered.map((item) => {
-          const { listing, creator, platformAccounts } = item;
-
-          const twitchAccount =
-            platformAccounts.find((account) => account.platform === "twitch") ?? null;
-
-          const twitchLoginRaw = twitchAccount?.platform_login ?? null;
-          const twitchLogin = twitchLoginRaw
-            ? normalizeTwitchLogin(twitchLoginRaw)
-            : null;
-
-          const isLive = twitchLogin ? Boolean(twitchByLogin[twitchLogin]) : false;
-
-          return (
-            <ListingCard
-              key={listing.id}
-              listing={{
-                id: listing.id,
-                title: listing.title,
-                short: listing.short,
-                offering_type: listing.offering_type,
-                price_type: listing.price_type,
-                price_min: listing.price_min,
-                price_max: listing.price_max,
-                currency: listing.currency,
-                preview_url: listing.preview_url,
-                is_free: listing.is_free,
-              }}
-              creator={{
-                name: creator?.display_name ?? creator?.handle ?? t("common.unknownCreator"),
-                isLive,
-              }}
-            />
-          );
-        })}
+        {listings.map((listing) => (
+          <ListingCard
+            key={listing.id}
+            listing={listing}
+            creator={{
+              name: listing.creator_name ?? listing.creator_handle ?? t("common.unknownCreator"),
+              isLive: listing.twitch_login
+                ? Boolean(twitchByLogin[normalizeTwitchLogin(listing.twitch_login)])
+                : false,
+            }}
+          />
+        ))}
       </StaggerGroup>
+
+      {hasNextPage && (
+        <div className={classes.moreRow}>
+          <button
+            type="button"
+            className={classes.moreButton}
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
+          >
+            {isFetchingNextPage ? t("common.loading") : t("common.loadMore")}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

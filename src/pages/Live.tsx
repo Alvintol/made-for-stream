@@ -2,12 +2,15 @@ import { useMemo, useState, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, type CategoryKey } from "../domain/catalog";
 import { normalizeTwitchLogin, type TwitchStream } from "../domain/twitch";
-import { usePublicCreators, type PublicCreatorItem } from "../hooks/usePublicCreators";
+import { useLiveCreators, type CreatorDirectoryRow } from "../hooks/useCreatorDirectory";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { StaggerGroup } from "../lib/motion";
 
 type PlatformFilter = "all" | "twitch" | "youtube";
 
+// ponytail: the most-watched 48 are shown, and search covers only those. Add
+// paging when more than 48 linked creators are regularly live at once.
+const LIVE_CARD_COUNT = 48;
 const classes = {
   page: "space-y-5",
 
@@ -53,91 +56,42 @@ const classes = {
 const categoryLabel = (key: string): string =>
   CATEGORIES.find((category) => category.key === key)?.label ?? key;
 
-const getCreatorName = (item: PublicCreatorItem): string =>
-  item.profile.display_name ?? item.profile.handle ?? "Creator";
-
-const getCreatorHandle = (item: PublicCreatorItem): string =>
-  item.profile.handle ?? "";
-
-const getCreatorSpecialties = (item: PublicCreatorItem): string[] =>
-  Array.from(new Set(item.listings.map((listing) => listing.category).filter(Boolean)));
-
-const getCreatorTags = (item: PublicCreatorItem): string[] =>
-  Array.from(new Set(item.listings.flatMap((listing) => listing.tags ?? []).filter(Boolean)));
-
-const getTwitchAccount = (item: PublicCreatorItem) =>
-  item.platformAccounts.find((account) => account.platform === "twitch") ?? null;
+const getCreatorName = (creator: CreatorDirectoryRow): string =>
+  creator.display_name ?? creator.handle;
 
 // Builds a search haystack for live creator filtering
-const getSearchHaystack = (
-  item: PublicCreatorItem,
-  stream?: TwitchStream
-): string =>
+const getSearchHaystack = (creator: CreatorDirectoryRow, stream: TwitchStream): string =>
   [
-    getCreatorName(item),
-    getCreatorHandle(item),
-    item.profile.bio ?? "",
-    ...getCreatorTags(item),
-    ...getCreatorSpecialties(item).map(categoryLabel),
-    stream?.title ?? "",
-    stream?.gameName ?? "",
+    getCreatorName(creator),
+    creator.handle,
+    creator.bio ?? "",
+    ...creator.tags,
+    ...creator.specialties.map(categoryLabel),
+    stream.title ?? "",
+    stream.gameName ?? "",
   ]
     .join(" ")
     .toLowerCase();
 
-// Builds a Twitch watch URL when possible
-const getTwitchWatchUrl = (item: PublicCreatorItem): string => {
-  const twitchAccount = getTwitchAccount(item);
-
-  return (
-    twitchAccount?.profile_url ??
-    (twitchAccount?.platform_login
-      ? `https://twitch.tv/${encodeURIComponent(
-        normalizeTwitchLogin(twitchAccount.platform_login)
-      )}`
-      : "#")
-  );
-};
-
-// Checks whether a creator has enough Twitch data for a live watch link
-const canWatchTwitchLive = (item: PublicCreatorItem): boolean => {
-  const twitchAccount = getTwitchAccount(item);
-
-  return Boolean(twitchAccount?.profile_url || twitchAccount?.platform_login);
-};
-
-type LiveNowItem = {
-  item: PublicCreatorItem;
-  stream: TwitchStream;
-};
-
+const getTwitchWatchUrl = (creator: CreatorDirectoryRow, stream: TwitchStream): string =>
+  creator.twitch_url ??
+  `https://twitch.tv/${encodeURIComponent(normalizeTwitchLogin(stream.login))}`;
 const Live = () => {
   const [q, setQ] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
 
   const { twitchByLogin, isFetching, error } = useTwitchStreams();
-  const { data: creatorItems = [] } = usePublicCreators();
+  const liveCreators = useLiveCreators(twitchByLogin, LIVE_CARD_COUNT);
 
   const liveNow = useMemo(() => {
     const searchValue = q.trim().toLowerCase();
 
-    return creatorItems
-      .map((item) => {
-        const twitchAccount = getTwitchAccount(item);
-        const loginRaw = twitchAccount?.platform_login ?? null;
-        const login = loginRaw ? normalizeTwitchLogin(loginRaw) : undefined;
-        const stream = login ? twitchByLogin[login] : undefined;
-
-        return stream ? { item, stream } : null;
-      })
-      .filter((value): value is LiveNowItem => Boolean(value))
+    return liveCreators
       .filter(() => platform === "all" || platform === "twitch")
-      .filter(({ item, stream }) =>
-        searchValue ? getSearchHaystack(item, stream).includes(searchValue) : true
-      )
-      .sort((a, b) => (b.stream.viewerCount ?? 0) - (a.stream.viewerCount ?? 0));
-  }, [creatorItems, platform, q, twitchByLogin]);
-
+      .filter(({ creator, stream }) =>
+        searchValue ? getSearchHaystack(creator, stream).includes(searchValue) : true
+      );
+  }, [liveCreators, platform, q]);
   const onPlatformChange = (event: ChangeEvent<HTMLSelectElement>) =>
     setPlatform(event.currentTarget.value as PlatformFilter);
 
@@ -206,19 +160,17 @@ const Live = () => {
         </div>
       ) : (
         <StaggerGroup className={classes.grid} itemCount={liveNow.length}>
-          {liveNow.map(({ item, stream }) => {
+          {liveNow.map(({ creator, stream }) => {
             const thumb =
               stream.thumbnailUrl
                 ?.replace("{width}", "640")
                 .replace("{height}", "360") ?? "";
 
-            const creatorName = getCreatorName(item);
-            const creatorHandle = getCreatorHandle(item);
-            const specialties = getCreatorSpecialties(item);
+            const creatorName = getCreatorName(creator);
 
             return (
-              <div key={item.profile.user_id} className={classes.card}>
-                <Link to={`/creator/${creatorHandle}`} className={classes.cardLink}>
+              <div key={creator.user_id} className={classes.card}>
+                <Link to={`/creator/${creator.handle}`} className={classes.cardLink}>
                   {Boolean(thumb) && (
                     <img
                       src={thumb}
@@ -239,9 +191,9 @@ const Live = () => {
                     {stream.gameName ?? ""} • {stream.viewerCount ?? 0} viewers
                   </p>
 
-                  {specialties.length > 0 && (
+                  {creator.specialties.length > 0 && (
                     <div className={classes.specialtiesRow}>
-                      {specialties.slice(0, 4).map((specialty) => (
+                      {creator.specialties.slice(0, 4).map((specialty) => (
                         <span key={specialty} className={classes.specPill}>
                           {categoryLabel(specialty)}
                         </span>
@@ -251,21 +203,16 @@ const Live = () => {
                 </Link>
 
                 <div className={classes.actionsRow}>
-                  <Link to={`/creator/${creatorHandle}`} className={classes.btnOutline}>
+                  <Link to={`/creator/${creator.handle}`} className={classes.btnOutline}>
                     View profile
                   </Link>
 
                   <a
                     className={classes.btnPrimary}
-                    href={getTwitchWatchUrl(item)}
+                    href={getTwitchWatchUrl(creator, stream)}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={`Watch ${creatorName} live on Twitch`}
-                    onClick={(event) => {
-                      if (!canWatchTwitchLive(item)) {
-                        event.preventDefault();
-                      }
-                    }}
                   >
                     Watch live
                   </a>

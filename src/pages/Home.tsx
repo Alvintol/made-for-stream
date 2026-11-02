@@ -1,9 +1,7 @@
-import { useMemo } from "react";
 import ListingPriceText from "../components/listings/ListingPriceText";
 import { Link } from "react-router-dom";
-import { normalizeTwitchLogin, type TwitchStream } from "../domain/twitch";
-import { useMarketListings, type MarketListingItem } from "../hooks/listings/useMarketListings";
-import { usePublicCreators, type PublicCreatorItem } from "../hooks/usePublicCreators";
+import { useFeaturedListings, type MarketListingRow } from "../hooks/listings/useMarketListings";
+import { useLiveCreators, type LiveCreator } from "../hooks/useCreatorDirectory";
 import { useTwitchStreams } from "../hooks/useTwitchStreams";
 import { StaggerGroup } from "../lib/motion";
 import { AdGutters } from "../components/ads/SiteAds";
@@ -98,18 +96,20 @@ const HERO_PLACEHOLDER_URLS = [
   "https://picsum.photos/seed/pngtuber/960/540",
 ];
 
+// The home page shows six at most, so nothing more is asked for.
+const LIVE_CARD_COUNT = 6;
+
 type FeaturedListingCardProps = {
-  item: MarketListingItem;
+  listing: MarketListingRow;
 };
 
-const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
-  const { listing, creator } = item;
+const FeaturedListingCard = ({ listing }: FeaturedListingCardProps) => {
   const t = useT();
   const videoSuffix =
     listing.category === "video-editing" && listing.video_subtype
       ? ` • ${t(listing.video_subtype === "long-form" ? "video.long-form" : "video.short-form")}`
       : "";
-  const creatorName = creator?.display_name ?? creator?.handle ?? t("common.unknownCreator");
+  const creatorName = listing.creator_name ?? listing.creator_handle ?? t("common.unknownCreator");
   const categoryKey = `category.${listing.category}`;
 
   return (
@@ -162,7 +162,7 @@ const FeaturedListingCard = ({ item }: FeaturedListingCardProps) => {
 };
 
 type FeaturedSectionProps = {
-  featuredListings: MarketListingItem[];
+  featuredListings: MarketListingRow[];
   isLoading: boolean;
 };
 
@@ -184,8 +184,8 @@ const FeaturedSection = ({ featuredListings, isLoading }: FeaturedSectionProps) 
       <p className={classes.emptyText}>{t("home.noListings")}</p>
     ) : (
       <StaggerGroup className={classes.grid} itemCount={featuredListings.length}>
-        {featuredListings.map((item) => (
-          <FeaturedListingCard key={item.listing.id} item={item} />
+        {featuredListings.map((listing) => (
+          <FeaturedListingCard key={listing.id} listing={listing} />
         ))}
       </StaggerGroup>
     )}
@@ -193,15 +193,7 @@ const FeaturedSection = ({ featuredListings, isLoading }: FeaturedSectionProps) 
   );
 };
 
-type LiveNowItem = {
-  creator: PublicCreatorItem["profile"];
-  verified: boolean;
-  stream: TwitchStream;
-};
-
-type LiveCreatorCardProps = LiveNowItem;
-
-const LiveCreatorCard = ({ creator, verified, stream }: LiveCreatorCardProps) => {
+const LiveCreatorCard = ({ creator, stream }: LiveCreator) => {
   const t = useT();
   const thumb =
     stream.thumbnailUrl
@@ -219,14 +211,13 @@ const LiveCreatorCard = ({ creator, verified, stream }: LiveCreatorCardProps) =>
 
         <div className={classes.mediaBadges}>
           <span className={classes.badgeLive}>{t("common.live")}</span>
-          {verified && <span className={classes.badge}>{t("common.verified")}</span>}
         </div>
       </div>
 
       <div className={classes.cardBody}>
         <div className={classes.liveRow}>
           <div className={classes.liveTitle}>
-            {creator.display_name ?? creator.handle ?? t("common.creator")}
+            {creator.display_name ?? creator.handle}
           </div>
         </div>
 
@@ -242,7 +233,7 @@ const LiveCreatorCard = ({ creator, verified, stream }: LiveCreatorCardProps) =>
 };
 
 type LiveNowSectionProps = {
-  liveNow: LiveNowItem[];
+  liveNow: LiveCreator[];
   isFetching: boolean;
   errorMsg: string | null;
 };
@@ -271,14 +262,9 @@ const LiveNowSection = ({ liveNow, isFetching, errorMsg }: LiveNowSectionProps) 
         {isFetching ? t("home.checkingLive") : t("home.noOneLive")}
       </p>
     ) : (
-      <StaggerGroup className={classes.grid} itemCount={Math.min(liveNow.length, 6)}>
-        {liveNow.slice(0, 6).map(({ creator, verified, stream }) => (
-          <LiveCreatorCard
-            key={creator.user_id}
-            creator={creator}
-            verified={verified}
-            stream={stream}
-          />
+      <StaggerGroup className={classes.grid} itemCount={liveNow.length}>
+        {liveNow.map(({ creator, stream }) => (
+          <LiveCreatorCard key={creator.user_id} creator={creator} stream={stream} />
         ))}
       </StaggerGroup>
     )}
@@ -288,49 +274,14 @@ const LiveNowSection = ({ liveNow, isFetching, errorMsg }: LiveNowSectionProps) 
 
 const Home = () => {
   const { twitchByLogin, isFetching, error } = useTwitchStreams();
-  const {
-    data: marketItems = [],
-    isLoading: isLoadingMarket,
-  } = useMarketListings();
-  const {
-    data: creatorItems = [],
-  } = usePublicCreators();
-
+  const { data: featuredListings = [], isLoading: isLoadingMarket } = useFeaturedListings();
+  const liveNow = useLiveCreators(twitchByLogin, LIVE_CARD_COUNT);
   const errorMsg =
     error && typeof error === "object" && "message" in error
       ? String((error as { message: unknown }).message)
       : error
         ? String(error)
         : null;
-
-  const liveNow = useMemo<LiveNowItem[]>(
-    () =>
-      creatorItems
-        .map((item) => {
-          const twitchAccount =
-            item.platformAccounts.find((account) => account.platform === "twitch") ?? null;
-
-          const loginRaw = twitchAccount?.platform_login ?? null;
-          const login = loginRaw ? normalizeTwitchLogin(loginRaw) : null;
-          const stream = login ? twitchByLogin[login] : undefined;
-
-          return stream
-            ? {
-              creator: item.profile,
-              verified: false,
-              stream,
-            }
-            : null;
-        })
-        .filter((value): value is LiveNowItem => Boolean(value))
-        .sort((a, b) => (b.stream.viewerCount ?? 0) - (a.stream.viewerCount ?? 0)),
-    [creatorItems, twitchByLogin]
-  );
-
-  // Until listings have a dedicated featured flag in the db,
-  // use the first public listings returned by the market query.
-  const featuredListings = marketItems.slice(0, 6);
-
 
   return (
     <div className={classes.page}>

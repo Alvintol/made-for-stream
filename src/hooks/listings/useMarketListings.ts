@@ -1,6 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { toPageOfRows, type PageOfRows } from "../../lib/pageOfRows";
 import { supabase } from "../../lib/supabaseClient";
-import type { ProfilePlatformAccountRow } from "../profile/useProfilePlatformAccounts";
+
+// A page of cards: enough to fill the screen a few times, and divisible by the
+// grid's 2 and 3 columns so the last row is never left short.
+export const MARKET_PAGE_SIZE = 24;
+
+const FEATURED_COUNT = 6;
 
 export type MarketListingRow = {
   id: string;
@@ -8,139 +14,79 @@ export type MarketListingRow = {
   title: string;
   short: string;
   offering_type: string;
-  fulfilment_mode: "request" | "instant";
   category: string;
   video_subtype: string | null;
   price_type: "fixed" | "starting_at" | "range";
   price_min: number;
   price_max: number | null;
   currency: string;
-  deliverables: string[];
-  tags: string[];
   preview_url: string | null;
-  status: string;
-  is_active: boolean;
   is_free: boolean;
-  free_delivery_type: "download" | "external_link" | null;
-  free_external_url: string | null;
-  free_file_path: string | null;
-  free_file_name: string | null;
+  created_at: string;
+  creator_handle: string | null;
+  creator_name: string | null;
+  twitch_login: string | null;
 };
 
-export type MarketCreatorRow = {
-  user_id: string;
-  handle: string | null;
-  display_name: string | null;
-  avatar_url: string | null;
+export type MarketFilters = {
+  q: string;
+  category: string | null;
+  type: string | null;
+  video: string | null;
+  freeOnly: boolean;
 };
 
-export type MarketListingItem = {
-  listing: MarketListingRow;
-  creator: MarketCreatorRow | null;
-  platformAccounts: ProfilePlatformAccountRow[];
+type MarketCursor = { createdAt: string; id: string };
+
+const noFilters: MarketFilters = {
+  q: "",
+  category: null,
+  type: null,
+  video: null,
+  freeOnly: false,
 };
 
-const emptyResult: MarketListingItem[] = [];
+// Search and filters run in the database, which returns one page of matches.
+const fetchMarketPage = async (
+  filters: MarketFilters,
+  cursor: MarketCursor | null,
+  pageSize: number
+): Promise<PageOfRows<MarketListingRow, MarketCursor>> => {
+  const { data, error } = await supabase.rpc("market_listings", {
+    p_q: filters.q || null,
+    p_category: filters.category,
+    p_type: filters.type,
+    p_video: filters.video,
+    p_free_only: filters.freeOnly,
+    p_after_created_at: cursor?.createdAt ?? null,
+    p_after_id: cursor?.id ?? null,
+    p_limit: pageSize,
+  });
 
-const fetchMarketListings = async (): Promise<MarketListingItem[]> => {
-  const { data: listings, error: listingsError } = await supabase
-    .from("listings")
-    .select(`
-      id,
-      user_id,
-      title,
-      short,
-      offering_type,
-      category,
-      video_subtype,
-      price_type,
-      price_min,
-      price_max,
-      currency,
-      deliverables,
-      tags,
-      preview_url,
-      status,
-      is_active,
-      fulfilment_mode,
-      is_free,
-      free_delivery_type,
-      free_external_url,
-      free_file_path,
-      free_file_name
-    `)
-    .eq("status", "published")
-    .eq("is_active", true)
-    .is("admin_hidden_at", null)
-    .order("created_at", { ascending: false });
+  if (error) throw error;
 
-  if (listingsError) throw listingsError;
-
-  const listingRows = (listings ?? []) as MarketListingRow[];
-  if (listingRows.length === 0) return emptyResult;
-
-  const userIds = Array.from(new Set(listingRows.map((listing) => listing.user_id)));
-
-  const [
-    { data: profiles, error: profilesError },
-    { data: platformAccounts, error: platformAccountsError },
-  ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("user_id, handle, display_name, avatar_url")
-      .in("user_id", userIds),
-
-    supabase
-      .from("profile_platform_accounts")
-      .select(`
-        id,
-        profile_user_id,
-        platform,
-        platform_user_id,
-        platform_login,
-        platform_display_name,
-        profile_url,
-        account_created_at,
-        connected_at,
-        last_activity_at,
-        activity_checked_at,
-        is_active_recently,
-        metadata,
-        created_at,
-        updated_at
-      `)
-      .in("profile_user_id", userIds)
-      .order("connected_at", { ascending: false }),
-  ]);
-
-  if (profilesError) throw profilesError;
-  if (platformAccountsError) throw platformAccountsError;
-
-  const creatorByUserId = Object.fromEntries(
-    ((profiles ?? []) as MarketCreatorRow[]).map((profile) => [
-      profile.user_id,
-      profile,
-    ])
-  ) as Record<string, MarketCreatorRow>;
-
-  const platformAccountsByUserId = ((platformAccounts ?? []) as ProfilePlatformAccountRow[])
-    .reduce<Record<string, ProfilePlatformAccountRow[]>>((acc, account) => {
-      const key = account.profile_user_id;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(account);
-      return acc;
-    }, {});
-
-  return listingRows.map((listing) => ({
-    listing,
-    creator: creatorByUserId[listing.user_id] ?? null,
-    platformAccounts: platformAccountsByUserId[listing.user_id] ?? [],
+  return toPageOfRows((data ?? []) as MarketListingRow[], pageSize, (lastRow) => ({
+    createdAt: lastRow.created_at,
+    id: lastRow.id,
   }));
 };
 
-export const useMarketListings = () =>
-  useQuery<MarketListingItem[]>({
-    queryKey: ["marketListings"],
-    queryFn: fetchMarketListings,
-    staleTime: 30_000,
+export const useMarketListings = (filters: MarketFilters) =>
+  useInfiniteQuery({
+    queryKey: ["marketListings", filters],
+    queryFn: ({ pageParam }) => fetchMarketPage(filters, pageParam, MARKET_PAGE_SIZE),
+    initialPageParam: null as MarketCursor | null,
+    getNextPageParam: (lastPage) => lastPage.next,
+    // The old results stay up while a new search loads.
+    placeholderData: keepPreviousData,
+    // Coming back to the tab would otherwise reload every page opened so far.
+    refetchOnWindowFocus: false,
+  });
+
+// Until listings have a featured flag, the home page shows the newest.
+export const useFeaturedListings = () =>
+  useQuery<MarketListingRow[]>({
+    queryKey: ["marketListings", "featured"],
+    queryFn: async () => (await fetchMarketPage(noFilters, null, FEATURED_COUNT)).rows,
+    staleTime: 5 * 60_000,
   });

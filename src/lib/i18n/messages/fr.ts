@@ -356,6 +356,7 @@ export const fr: Record<MessageKey, Message> = {
 
   "common.previous": "Précédent",
   "common.next": "Suivant",
+  "common.loadMore": "Afficher plus",
   "common.saving": "Enregistrement…",
 
   "requestStatus.submitted": "En cours d’examen",

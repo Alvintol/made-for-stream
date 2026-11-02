@@ -40,7 +40,7 @@ const AppProviders = (props: AppProvidersProps) => {
           },
         }),
         defaultOptions: {
-          queries: { retry: 1, staleTime: 15_000, refetchOnWindowFocus: true },
+          queries: { retry: 1, staleTime: 60_000, refetchOnWindowFocus: true },
         },
       })
   );

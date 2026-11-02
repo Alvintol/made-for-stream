@@ -84,9 +84,9 @@ const emptyResult: MessagesInboxResult = {
 
 // Loads one page of the person's communication threads, newest first.
 // Request conversations are included because Inbox is now the primary nav entry.
-// This runs on every page (the top bar's unread count) and every 15 seconds,
-// so it reads one page of conversations and only the messages that can be
-// unread, never a whole history.
+// This runs every 15 seconds while the inbox is open, so it reads one page of
+// conversations and only the messages that can be unread, never a whole
+// history. The top bar uses useUnreadMessageCount instead.
 const fetchMessagesInbox = async (
   userId: string,
   offset = 0

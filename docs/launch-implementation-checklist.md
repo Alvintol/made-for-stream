@@ -1976,6 +1976,12 @@ in [`environments.md`](environments.md).
 Real gaps the playbooks already record. None of them stops a buyer paying a creator,
 so none of them is in the eight sprints above — but they should not be lost.
 
+- [x] Public pages read a page at a time, not whole tables (V0.7.38, migration
+      `20261102_178`). See `site/efficient-reads.md`.
+- [ ] Split the website's code by page, and load each language only when it is
+      used. Everything is one 2 MB file today, so the first visit downloads it all.
+- [ ] Remove `GET /api/twitch/streams` one release after V0.7.38.
+- [ ] The Live page's text is still English only.
 - [x] ~~Account-state handling, scheduled resync, and alerting for `PAY-005`,
       `CHG-003` and the Sprint 6 staleness query~~ — built in Sprint 9 (with the
       `TAX-002`–`004` and wave 2 currency alerts). The registration and

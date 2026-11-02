@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import CreatorCard, { type CreatorCardModel } from "../../components/creators/CreatorCard";
-import { normalizeTwitchLogin } from "../../domain/twitch";
-import { usePublicCreators, type PublicCreatorItem } from "../../hooks/usePublicCreators";
+import { normalizeTwitchLogin, type TwitchStream } from "../../domain/twitch";
+import { useCreatorDirectory, type CreatorDirectoryRow } from "../../hooks/useCreatorDirectory";
 import { useTwitchStreams } from "../../hooks/useTwitchStreams";
 import { useT } from "../../lib/i18n/i18n";
 import { StaggerGroup } from "../../lib/motion";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import {
   useHubState,
   useHubActions,
@@ -29,99 +30,49 @@ const classes = {
   cardsGrid: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
   loadingText: "text-sm text-zinc-600",
   emptyText: "text-sm text-zinc-600",
+  moreRow: "flex justify-center",
+  moreButton: "btnOutline",
 } as const;
 
 // Adapts real db-backed creator data into the shape CreatorCard already expects
 const toCreatorCardModel = (
-  item: PublicCreatorItem,
-  isLive: boolean,
-  liveTitle?: string
-): CreatorCardModel => {
-  const { profile, platformAccounts, listings } = item;
-
-  const twitchAccount =
-    platformAccounts.find((account) => account.platform === "twitch") ?? null;
-
-  const youtubeAccount =
-    platformAccounts.find((account) => account.platform === "youtube") ?? null;
-
-  const tags = Array.from(
-    new Set(
-      listings.flatMap((listing) => [
-        ...(listing.tags ?? []),
-        listing.category,
-        listing.offering_type,
-      ])
-    )
-  ).filter(Boolean);
-
-  const specialties = Array.from(
-    new Set(listings.map((listing) => listing.category).filter(Boolean))
-  );
-
-  return {
-    id: profile.user_id,
-    handle: profile.handle ?? "",
-    displayName: profile.display_name ?? profile.handle ?? "Creator",
-    verified: false,
-    bio: profile.bio ?? "",
-    tags,
-    specialties,
-    commissionStatus: listings.length > 0 ? "open" : "closed",
-    platforms: {
-      twitch: twitchAccount?.platform_login
-        ? {
-          login: twitchAccount.platform_login,
-          userId: twitchAccount.platform_user_id,
-        }
-        : undefined,
-      youtube: youtubeAccount
-        ? {
-          channelId: youtubeAccount.platform_user_id,
-          handle: youtubeAccount.platform_login ?? undefined,
-        }
-        : undefined,
-    },
-    links: {
-      twitch: twitchAccount?.profile_url ?? undefined,
-      youtube: youtubeAccount?.profile_url ?? undefined,
-    },
-    live: twitchAccount
+  creator: CreatorDirectoryRow,
+  stream: TwitchStream | undefined
+): CreatorCardModel => ({
+  id: creator.user_id,
+  handle: creator.handle,
+  displayName: creator.display_name ?? creator.handle,
+  verified: false,
+  bio: creator.bio ?? "",
+  tags: creator.tags,
+  specialties: creator.specialties,
+  commissionStatus: creator.listing_count > 0 ? "open" : "closed",
+  platforms: {
+    twitch: creator.twitch_login
       ? {
-        isLive,
-        title: liveTitle,
-        platform: "twitch",
+        login: creator.twitch_login,
+        userId: creator.twitch_user_id ?? undefined,
       }
       : undefined,
-  };
-};
-
-// Filters creators using the current Hub filter state
-const getFilteredCreators = (
-  list: CreatorCardModel[],
-  filters: HubFilters
-): CreatorCardModel[] => {
-  const searchValue = filters.q.trim().toLowerCase();
-
-  return list.filter((creator) => {
-    if (filters.onlyLive && !creator.live?.isLive) return false;
-    if (filters.onlyOpen && creator.commissionStatus !== "open") return false;
-    if (!searchValue) return true;
-
-    const haystack = [
-      creator.displayName,
-      creator.handle,
-      creator.bio,
-      ...(creator.tags ?? []),
-      ...(creator.specialties ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(searchValue);
-  });
-};
-
+    youtube: creator.youtube_user_id
+      ? {
+        channelId: creator.youtube_user_id,
+        handle: creator.youtube_login ?? undefined,
+      }
+      : undefined,
+  },
+  links: {
+    twitch: creator.twitch_url ?? undefined,
+    youtube: creator.youtube_url ?? undefined,
+  },
+  live: creator.twitch_user_id
+    ? {
+      isLive: Boolean(stream),
+      title: stream?.title,
+      platform: "twitch",
+    }
+    : undefined,
+});
 const PageHeader = () => {
   const t = useT();
 
@@ -183,31 +134,38 @@ const CreatorsPage = () => {
   const { filters } = useHubState();
   const { setFilters } = useHubActions();
   const { twitchByLogin } = useTwitchStreams();
+  const q = useDebouncedValue(filters.q.trim());
+  const liveLogins = useMemo(() => Object.keys(twitchByLogin).sort(), [twitchByLogin]);
 
-  const { data: items = [], isLoading, error } = usePublicCreators();
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useCreatorDirectory({
+    q,
+    onlyOpen: filters.onlyOpen,
+    logins: filters.onlyLive ? liveLogins : null,
+  });
+
   const t = useT();
-  const creators = useMemo(() => {
-    return items.map((item) => {
-      const twitchAccount =
-        item.platformAccounts.find((account) => account.platform === "twitch") ?? null;
 
-      const twitchLoginRaw = twitchAccount?.platform_login ?? null;
-      const twitchLogin = twitchLoginRaw
-        ? normalizeTwitchLogin(twitchLoginRaw)
-        : null;
-
-      const stream = twitchLogin ? twitchByLogin[twitchLogin] : undefined;
-      const isLive = Boolean(stream);
-
-      return toCreatorCardModel(item, isLive, stream?.title);
-    });
-  }, [items, twitchByLogin]);
-
-  const filtered = useMemo(
-    () => getFilteredCreators(creators, filters),
-    [creators, filters]
+  const creators = useMemo(
+    () =>
+      (data?.pages ?? [])
+        .flatMap((page) => page.rows)
+        .map((creator) =>
+          toCreatorCardModel(
+            creator,
+            creator.twitch_login
+              ? twitchByLogin[normalizeTwitchLogin(creator.twitch_login)]
+              : undefined
+          )
+        ),
+    [data, twitchByLogin]
   );
-
   return (
     <div className={classes.container}>
       <PageHeader />
@@ -221,15 +179,28 @@ const CreatorsPage = () => {
         </div>
       )}
 
-      {!isLoading && !error && filtered.length === 0 && (
+      {!isLoading && !error && creators.length === 0 && (
         <div className={classes.emptyText}>{t("creators.empty")}</div>
       )}
 
-      <StaggerGroup className={classes.cardsGrid} itemCount={filtered.length}>
-        {filtered.map((creator) => (
+      <StaggerGroup className={classes.cardsGrid} itemCount={creators.length}>
+        {creators.map((creator) => (
           <CreatorCard key={creator.id} creator={creator} />
         ))}
       </StaggerGroup>
+
+      {hasNextPage && (
+        <div className={classes.moreRow}>
+          <button
+            type="button"
+            className={classes.moreButton}
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
+          >
+            {isFetchingNextPage ? t("common.loading") : t("common.loadMore")}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
