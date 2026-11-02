@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
+import { useChatPoll } from "./chatPolling";
 import type {
   ConversationInitiationReasonCode,
   ConversationStatus,
@@ -84,7 +85,7 @@ const emptyResult: MessagesInboxResult = {
 
 // Loads one page of the person's communication threads, newest first.
 // Request conversations are included because Inbox is now the primary nav entry.
-// This runs every 15 seconds while the inbox is open, so it reads one page of
+// This runs every 30 seconds while the inbox is open, so it reads one page of
 // conversations and only the messages that can be unread, never a whole
 // history. The top bar uses useUnreadMessageCount instead.
 const fetchMessagesInbox = async (
@@ -352,14 +353,14 @@ export const useOlderMessagesInbox = (enabled: boolean) => {
 export const useMessagesInbox = () => {
   const { user, loading } = useAuth();
   const userId = user?.id ?? null;
-
+  const pollMs = useChatPoll(30_000);
   return useQuery<MessagesInboxResult>({
     queryKey: ["messagesInbox", userId],
     enabled: !loading && Boolean(userId),
     queryFn: () =>
       userId ? fetchMessagesInbox(userId) : Promise.resolve(emptyResult),
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: () => pollMs(),
   });
 };
 // The conversations in which some message contains the text typed into the

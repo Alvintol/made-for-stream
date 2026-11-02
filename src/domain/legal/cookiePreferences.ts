@@ -1,5 +1,5 @@
 import { getAdsenseConfig } from "../ads/ads";
-import { cookiePolicyVersion } from "./cookiePolicy";
+import { cookiePolicyVersion } from "./policyVersions";
 // Optional categories from Cookie Policy section 3. Necessary categories
 // (sign-in sessions, requested payments, and remembering this choice) are not
 // listed: they do not need consent and cannot be switched off here.

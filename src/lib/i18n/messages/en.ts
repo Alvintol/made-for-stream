@@ -372,6 +372,9 @@ export const en = {
   "common.previous": "Previous",
   "common.next": "Next",
   "common.loadMore": "Load more",
+  "common.pageFailedTitle": "This page didn't load",
+  "common.pageFailedText": "Check your connection, then try again.",
+  "common.pageFailedReload": "Reload page",
   "common.saving": "Saving…",
 
   // Commission status (getListingRequestStatusLabel)

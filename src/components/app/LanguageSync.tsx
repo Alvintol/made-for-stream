@@ -22,7 +22,7 @@ const LanguageSync = () => {
   );
 
   useEffect(() => {
-    setCurrentLanguage(language);
+    void setCurrentLanguage(language);
     document.documentElement.lang = language;
   }, [language]);
 

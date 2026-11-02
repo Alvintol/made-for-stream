@@ -1,4 +1,4 @@
-export const creatorTermsVersion = "2026-10-29";
+export { creatorTermsVersion } from "./policyVersions";
 
 export const creatorTermsSections = [
   {

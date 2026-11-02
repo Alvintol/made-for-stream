@@ -2,12 +2,19 @@ import { useCallback, useSyncExternalStore } from "react";
 
 import { DEFAULT_LANGUAGE, resolveLanguage, type LanguageCode } from "./languages";
 import { en, type Message, type MessageKey } from "./messages/en";
-import { es } from "./messages/es";
-import { fr } from "./messages/fr";
-// ponytail: every language is bundled. Load each on demand once their
-// strings grow large enough to matter for page weight.
-const messages: Record<LanguageCode, Record<MessageKey, Message>> = { en, fr, es };
 
+// English is always here, as the fallback for any missing text. The others are
+// downloaded only by people reading them.
+const messages: Partial<Record<LanguageCode, Record<MessageKey, Message>>> = { en };
+
+export const loadLanguage = async (language: LanguageCode): Promise<void> => {
+  if (language === "en" || messages[language]) return;
+
+  messages[language] =
+    language === "fr"
+      ? (await import("./messages/fr")).fr
+      : (await import("./messages/es")).es;
+};
 export type TranslationValues = Record<string, string | number>;
 
 // Whether a key exists, for keys built from data (a listing's category or
@@ -21,7 +28,7 @@ export const translate = (
   key: MessageKey,
   values: TranslationValues = {},
 ): string => {
-  const message = messages[language][key] ?? en[key];
+  const message = messages[language]?.[key] ?? en[key];
 
   // Only reachable with a key built from data; hasMessage() guards those.
   if (message === undefined) return key;
@@ -69,14 +76,29 @@ let currentLanguage: LanguageCode = resolveLanguage(
   typeof navigator === "undefined" ? [] : navigator.languages,
 );
 const listeners = new Set<() => void>();
+let wantedLanguage = currentLanguage;
 
-export const setCurrentLanguage = (language: LanguageCode) => {
-  if (language === currentLanguage) return;
+const loadOrWarn = (language: LanguageCode) =>
+  loadLanguage(language).catch((error: unknown) => {
+    console.warn("PAGE-002: a language could not be downloaded, so English is showing.", error);
+  });
+
+// The browser's language, before the first page draws, so nobody sees English
+// flash up first.
+export const loadStartingLanguage = () => loadOrWarn(currentLanguage);
+
+// Waits for the words before switching. If they cannot be downloaded the page
+// shows English, which translate() falls back to.
+export const setCurrentLanguage = async (language: LanguageCode) => {
+  wantedLanguage = language;
+
+  await loadOrWarn(language);
+
+  if (language === currentLanguage || language !== wantedLanguage) return;
 
   currentLanguage = language;
   listeners.forEach((listener) => listener());
 };
-
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
 

@@ -29,6 +29,7 @@ import {
 } from "./notificationEmails.js";
 import { getExchangeRates } from "./exchangeRates.js";
 import { TWITCH_BATCH_SIZE, chunkLogins, toStream, uniqueLogins } from "./twitchLive.js";
+import { RATE_LIMIT_MESSAGE, createRateLimiter, requestLimitFor } from "./rateLimit.js";
 import {
   buildCheckoutLineItems,
   buildTaxCalculationLineItems,
@@ -234,6 +235,34 @@ app.use(
 
 app.options("*", cors());
 
+// Cloud Run adds the caller's address as the last X-Forwarded-For entry. Trusting
+// exactly one hop means a visitor cannot choose their own address by sending that
+// header. Change this if the API is ever put behind another proxy.
+app.set("trust proxy", 1);
+
+const rateLimiter = createRateLimiter();
+
+app.use("/api", (req, res, next) => {
+  const path = `${req.baseUrl}${req.path}`;
+  const limit = requestLimitFor(req.method, path);
+
+  if (limit === null) return next();
+
+  const { allowed, firstRefusal, retryAfterSeconds } = rateLimiter.take(
+    `${req.method === "GET" ? "read" : "write"}:${req.ip}`,
+    limit,
+  );
+
+  if (allowed) return next();
+
+  if (firstRefusal) {
+    console.warn(`RATE-001: request limit reached on ${req.method} ${path}`);
+  }
+
+  res.set("Retry-After", String(retryAfterSeconds));
+
+  return res.status(429).json({ error: RATE_LIMIT_MESSAGE });
+});
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
@@ -393,10 +422,13 @@ app.post(
 
 app.use(express.json());
 
-app.get("/api/health", (_req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     service: "made-for-stream-api",
+    // The caller's own address as the API sees it, to check the rate limiter
+    // is counting each visitor separately (RATE-001).
+    yourAddress: req.ip,
   });
 });
 
@@ -426,36 +458,19 @@ let cachedToken = null;
 let cachedTokenExpMs = 0;
 
 // Cache config
-const STREAMS_CACHE_TTL_MS = 15_000;
 const STREAMS_CACHE_MAX = 250;
 
 // One shared answer for every visitor, so a busy site costs the same as a quiet one.
 const LIVE_CACHE_TTL_MS = 60_000;
 const LINKED_LOGINS_CACHE_TTL_MS = 5 * 60 * 1000;
 const LINKED_LOGINS_PAGE_SIZE = 1000;
-const USERS_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const USERS_CACHE_MAX = 500;
-
 const CACHE_CLEANUP_INTERVAL_MS = 60_000; // 1 minute
 
 // Caches
 const streamsCache = new Map(); // key -> { expMs, value }
 const streamsInflight = new Map(); // key -> Promise<value>
 
-const usersCache = new Map();
-const usersInflight = new Map();
-
 const nowMs = () => Date.now();
-
-const normalizeLogins = (loginsParam) => {
-  return String(loginsParam || "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-    .filter((v, i, a) => a.indexOf(v) === i)
-    .sort()
-    .slice(0, 100);
-};
 
 const pruneOldest = (cache, maxEntries) => {
   while (cache.size > maxEntries) {
@@ -2728,11 +2743,9 @@ const getAppAccessToken = async () => {
 // Periodic cleanup + size enforcement
 const cleanupTick = () => {
   cleanupExpired(streamsCache);
-  cleanupExpired(usersCache);
-
+  rateLimiter.sweep();
   // Safety: enforce hard caps even if lots of non-expired keys exist
   pruneOldest(streamsCache, STREAMS_CACHE_MAX);
-  pruneOldest(usersCache, USERS_CACHE_MAX);
 };
 
 // run once on boot
@@ -2819,82 +2832,6 @@ app.get("/api/twitch/live", async (_req, res) => {
     );
 
     res.setHeader("Cache-Control", "public, max-age=30");
-    return res.json({ data });
-  } catch (err) {
-    return res.status(500).json({ error: String(err?.message || err) });
-  }
-});
-
-// GET /api/twitch/streams?logins=a,b,c
-// Pages opened before the site moved to /api/twitch/live still call this.
-app.get("/api/twitch/streams", async (req, res) => {
-  try {
-    const logins = normalizeLogins(req.query.logins);
-    if (logins.length === 0) return res.json({ data: [] });
-
-    const cacheKey = `streams:${logins.join(",")}`;
-
-    const data = await getOrSetInflight(
-      streamsCache,
-      streamsInflight,
-      cacheKey,
-      STREAMS_CACHE_TTL_MS,
-      STREAMS_CACHE_MAX,
-      () => fetchTwitchStreams(logins)
-    );
-
-    res.setHeader("Cache-Control", "public, max-age=15");
-    return res.json({ data });
-  } catch (err) {
-    return res.status(500).json({ error: String(err?.message || err) });
-  }
-});
-
-// GET /api/twitch/users?logins=a,b,c
-app.get("/api/twitch/users", async (req, res) => {
-  try {
-    const logins = normalizeLogins(req.query.logins);
-    if (logins.length === 0) return res.json({ data: [] });
-
-    const cacheKey = `users:${logins.join(",")}`;
-
-    const data = await getOrSetInflight(
-      usersCache,
-      usersInflight,
-      cacheKey,
-      USERS_CACHE_TTL_MS,
-      USERS_CACHE_MAX,
-      async () => {
-        const token = await getAppAccessToken();
-
-        const url = new URL("https://api.twitch.tv/helix/users");
-        logins.forEach((login) => url.searchParams.append("login", login));
-
-        const r = await fetch(url.toString(), {
-          headers: {
-            "Client-ID": TWITCH_CLIENT_ID,
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!r.ok) {
-          const text = await r.text();
-          throw new Error(`Twitch users failed (${r.status}): ${text}`);
-        }
-
-        const json = await r.json();
-
-        return (json.data || []).map((u) => ({
-          id: u.id,
-          login: u.login,
-          displayName: u.display_name,
-          profileImageUrl: u.profile_image_url,
-        }));
-      }
-    );
-
-    // short browser cache; server cache is the main benefit
-    res.setHeader("Cache-Control", "public, max-age=300");
     return res.json({ data });
   } catch (err) {
     return res.status(500).json({ error: String(err?.message || err) });

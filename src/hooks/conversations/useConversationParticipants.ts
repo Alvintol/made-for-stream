@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
-
+import { useChatPoll } from "./chatPolling";
 export type ConversationParticipantRow = {
   conversation_id: string;
   user_id: string;
@@ -38,8 +38,10 @@ const fetchConversationParticipants = async (
 
 export const useConversationParticipants = (
   conversationId: string | null
-) =>
-  useQuery<ConversationParticipantRow[]>({
+) => {
+  const pollMs = useChatPoll(60_000);
+
+  return useQuery<ConversationParticipantRow[]>({
     queryKey: ["conversationParticipants", conversationId],
     enabled: Boolean(conversationId),
     queryFn: () =>
@@ -47,5 +49,6 @@ export const useConversationParticipants = (
         ? fetchConversationParticipants(conversationId)
         : Promise.resolve([]),
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: () => pollMs(),
   });
+};

@@ -2,7 +2,7 @@
 // while the Sprint 7 tax advice is outstanding (docs/support/payments/tax.md).
 // When a country is switched on, rewrite section 6 and bump this version, so
 // buyers accept the change before any tax is charged.
-export const paymentTermsVersion = "2026-09-23";
+export { paymentTermsVersion } from "./policyVersions";
 
 export const paymentTermsSections = [
   {

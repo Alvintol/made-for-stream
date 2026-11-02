@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 import type { ConversationMessageType, SystemLine } from "../../domain/conversations/conversations";
+import { mergeMessages, messagesSince, useChatPoll } from "./chatPolling";
 
 export type ConversationMessageRow = {
   id: string;
@@ -19,9 +20,12 @@ const conversationMessagesQueryKey = (conversationId: string | null) =>
 const normaliseBody = (value: string) => value.trim();
 
 const fetchConversationMessages = async (
-  conversationId: string
+  conversationId: string,
+  known: ConversationMessageRow[]
 ): Promise<ConversationMessageRow[]> => {
-  const { data, error } = await supabase
+  const since = messagesSince(known);
+
+  let query = supabase
     .from("conversation_messages")
     .select(`
       id,
@@ -35,11 +39,17 @@ const fetchConversationMessages = async (
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
+  if (since) {
+    query = query.gte("created_at", since);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
     throw error;
   }
 
-  return (data ?? []) as ConversationMessageRow[];
+  return mergeMessages(known, (data ?? []) as ConversationMessageRow[]);
 };
 
 export const useConversationMessages = (conversationId: string | null) => {
@@ -47,16 +57,22 @@ export const useConversationMessages = (conversationId: string | null) => {
   const { user, loading } = useAuth();
 
   const userId = user?.id ?? null;
+  const pollMs = useChatPoll();
 
   const messagesQuery = useQuery<ConversationMessageRow[]>({
     queryKey: conversationMessagesQueryKey(conversationId),
     enabled: !loading && Boolean(userId && conversationId),
     queryFn: () =>
       conversationId
-        ? fetchConversationMessages(conversationId)
+        ? fetchConversationMessages(
+          conversationId,
+          queryClient.getQueryData<ConversationMessageRow[]>(
+            conversationMessagesQueryKey(conversationId)
+          ) ?? []
+        )
         : Promise.resolve([]),
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: (query) => pollMs(query.state.data?.at(-1)?.created_at),
   });
 
   const sendMessageMutation = useMutation({

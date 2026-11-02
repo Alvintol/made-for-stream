@@ -7,6 +7,7 @@ surfaces:
   - public.conversation_events
   - public.system_line_for
   - src/components/conversations/
+  - src/hooks/conversations/chatPolling.ts
 unmatched_tier: 2
 ---
 
@@ -323,8 +324,27 @@ If someone reports that a line is "on the wrong side", check its
 
 ---
 
-## Known gaps
+## How a chat updates (2026-11-02)
 
+An open chat reads the whole history once, then asks only for messages from the
+minute before the newest one it has. Messages never change once sent, so nothing
+else needs reading again. The look-back catches a message that appears a moment
+after a newer one, and anything repeated is ignored.
+
+| Chat or inbox | Checks |
+| --- | --- |
+| Open chat, last 10 minutes active | Messages every 15 seconds; read receipts and details every minute |
+| Open inbox, last 10 minutes active | Every 30 seconds |
+| Quiet for 10 minutes | Every minute |
+| Quiet for an hour | Stops, until the next message arrives or the person returns to the tab |
+| Hidden tab | Paused |
+
+Sending a message always updates straight away. A reply can take up to a minute to
+appear in a quiet chat, and that's expected. Someone who stays on a chat with the
+tab focused for over an hour with nothing happening won't see a new reply until
+they click back into the tab or reload.
+
+## Known gaps
 - **No documented export of a conversation** for dispute evidence. `REF-003`
   requires assembling exactly this, by hand, under a deadline.
 - **Chat UI is duplicated** (`RequestConversationThread` and `MessageDetails`),

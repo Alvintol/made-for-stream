@@ -1,4 +1,4 @@
-export const refundPolicyVersion = "2026-10-07";
+export { refundPolicyVersion } from "./policyVersions";
 
 export const refundPolicySections = [
   {

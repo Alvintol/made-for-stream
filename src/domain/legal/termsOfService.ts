@@ -1,16 +1,4 @@
-export const termsVersion = "2026-10-31";
-
-// What changed in this version, in plain words, for the card that asks
-// someone who accepted an earlier version to accept this one
-// (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
-// fails if the two versions differ.
-export const termsChanges = {
-  version: "2026-10-31",
-  // One change per line: never join separate changes into one sentence.
-  items: [
-    "During the beta, Made for Stream is only open to people who live in Canada or the United States.",
-  ],
-} as const;
+export { termsVersion, termsChanges } from "./policyVersions";
 
 export const termsSections = [
   {

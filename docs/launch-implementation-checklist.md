@@ -963,6 +963,11 @@ Build order (each its own branch):
       notice (Terms section 13).
 - [ ] **GST/HST on Made for Stream's fees only** (the tax switch now taxes
       the whole price; the creator fee has no tax line).
+      **2026-11-02:** the owner phoned the CRA, who said GST/HST applies only to
+      what Made for Stream itself charges: its fees, subscriptions and its own
+      digital products. This backs the plan, but it is phone advice, not a
+      ruling, and the officer's name and reference are not recorded here. The
+      buyer fee needs settings only; the creator fee needs a tax line built.
 - [ ] **UK Online Safety Act risk assessments and Digital Services Act
       gaps** (report form fields, statements of reasons, contact points).
       Built on `feat/online-safety-report-statement`: report forms ask why
@@ -1978,9 +1983,14 @@ so none of them is in the eight sprints above — but they should not be lost.
 
 - [x] Public pages read a page at a time, not whole tables (V0.7.38, migration
       `20261102_178`). See `site/efficient-reads.md`.
-- [ ] Split the website's code by page, and load each language only when it is
-      used. Everything is one 2 MB file today, so the first visit downloads it all.
-- [ ] Remove `GET /api/twitch/streams` one release after V0.7.38.
+- [x] Split the website's code by page, and load each language only when it is
+      used (V0.7.39). A first visit is about 810 KB, down from 2 MB. See
+      `site/page-loading.md`.
+- [x] API request limits, removal of the unused `/api/twitch/streams` and
+      `/api/twitch/users` routes, and search indexes (V0.7.39, migration
+      `20261102_179`). See `operations/rate-limits.md`.
+- [x] Open chats read only new messages, and every chat timer now stops by itself
+      (V0.7.39). See `messaging/conversations.md`.
 - [ ] The Live page's text is still English only.
 - [x] ~~Account-state handling, scheduled resync, and alerting for `PAY-005`,
       `CHG-003` and the Sprint 6 staleness query~~ — built in Sprint 9 (with the

@@ -1,4 +1,4 @@
-export const communityGuidelinesVersion = "2026-10-29";
+export { communityGuidelinesVersion } from "./policyVersions";
 
 export const communityGuidelinesSections = [
   {
