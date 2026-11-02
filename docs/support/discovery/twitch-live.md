@@ -2,9 +2,11 @@
 feature: discovery/twitch-live
 status: active
 surfaces:
-  - api/server.js:1458    # GET /api/twitch/streams
-  - api/server.js:1512    # GET /api/twitch/users
-  - api/server.js:219     # stream cache TTL 15s / user cache TTL 6h
+  - api/server.js:2799    # GET /api/twitch/live, what the site calls
+  - api/server.js:2830    # GET /api/twitch/streams, kept for pages opened before the switch
+  - api/server.js:433     # live answer cached 60s / linked logins cached 5 min
+  - api/twitchLive.js     # batches of 100
+  - api/tests/twitchLive.test.js
   - src/hooks/useTwitchStreams.ts
   - src/pages/Live.tsx
 unmatched_tier: 2
@@ -12,9 +14,13 @@ unmatched_tier: 2
 
 # Twitch Live Status — Support Playbook
 
-The Live page shows which creators are streaming now. The API proxies Twitch,
-caching stream data for 15 seconds and user data for 6 hours, with in-flight
-request deduplication.
+The Live page, the home page and the top bar show which creators are streaming
+now. The API keeps one shared answer: it reads the linked Twitch logins every 5
+minutes, asks Twitch about them at most once a minute, and gives that answer to
+every visitor. A visitor costs no database read and no Twitch call, so a busy site
+costs the same as a quiet one. Twitch takes 100 logins a request, so the list goes
+in batches. User data is cached for 6 hours. What the Live and home pages then
+read from the database is in [`efficient-reads.md`](../site/efficient-reads.md).
 
 This is a **discovery convenience, not a transactional feature**. Nothing here
 touches money or blocks a commission, so almost everything in this playbook is
@@ -28,6 +34,7 @@ linking too, and that one is not cosmetic.
 | "I'm live but not showing" | [`LIV-001`](#liv-001--live-status-is-stale-or-wrong) |
 | "The Live page is empty" | [`LIV-002`](#liv-002--twitch-api-unavailable) |
 | "Live has been broken all day" | [`LIV-003`](#liv-003--twitch-credentials-rejected) |
+| "Live status unavailable" with a message about linked logins | [`LIV-004`](#liv-004--linked-logins-could-not-be-read) |
 
 ---
 
@@ -46,9 +53,10 @@ escalate_if:
   - "affecting many creators at once"
 ```
 
-**Cause.** Cache lag, usually. Streams are cached for 15 seconds, so a brief
-mismatch is expected. A persistent one means the creator's Twitch link is stale
-or missing, which is really
+**Cause.** Cache lag, usually. The API's answer lasts 60 seconds and each open page
+checks once a minute, so up to about 2 minutes behind is expected. A creator who
+linked Twitch just now can take 5 more minutes. A persistent mismatch means the
+creator's Twitch link is stale or missing, which is really
 [`twitch-linking.md`](../auth/twitch-linking.md) presenting here.
 
 **Fix.** Wait out the cache. If it persists, check the linked account — a
@@ -118,13 +126,46 @@ verification is a trust feature the product sells on.
 
 ---
 
+## `LIV-004` — Linked logins could not be read
+
+```yaml
+id: LIV-004
+tier: 2
+signals:
+  - source: api
+    match: "Linked Twitch logins failed:"
+    where: "api/server.js fetchLinkedTwitchLogins, on GET /api/twitch/live"
+  - source: api
+    match: "Supabase admin not configured"
+    where: "api/server.js fetchLinkedTwitchLogins, on GET /api/twitch/live"
+auto_fix: none
+reason_not_automatable: "the cause is the database or the API's configuration"
+escalate_if:
+  - "other API routes are failing too"
+```
+
+**Cause.** The API could not read `profile_platform_accounts`, because the database
+was unreachable or `SUPABASE_SERVICE_ROLE_KEY` is missing or wrong on the service.
+
+**What the user sees.** "Live status unavailable" on the Live and home pages, and
+no live count on the top bar. Everything else on those pages still works.
+
+**Fix.** Check the service's variables and the database. It recovers by itself:
+failures are not cached, so the next visitor's request tries again.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
 
 - **No alerting on Live page failures.** Everything here is discovered by a user
   mentioning it.
-- **Cache has no negative-result handling documented** — whether a failed
-  upstream call is cached, and for how long, is not specified.
-- **The 100-login cap** on the streams endpoint is not documented as a scaling
-  limit. Past that many linked creators, some will silently never appear.
+- **Failures are not cached.** During a Twitch outage each new request tries
+  again, though requests arriving together share one attempt.
+- **Each copy of the API has its own cache,** so with several running, Twitch is
+  asked once a minute per copy. A shared cache isn't worth adding until many run.
+- **`/api/twitch/streams` is still there** for pages opened before the switch. It
+  is capped at 100 logins. Remove it one release later.
 - **Only Twitch is implemented.** YouTube and Kick creators have no live status
   at all.

@@ -28,6 +28,7 @@ import {
   renderNotificationEmail,
 } from "./notificationEmails.js";
 import { getExchangeRates } from "./exchangeRates.js";
+import { TWITCH_BATCH_SIZE, chunkLogins, toStream, uniqueLogins } from "./twitchLive.js";
 import {
   buildCheckoutLineItems,
   buildTaxCalculationLineItems,
@@ -428,6 +429,10 @@ let cachedTokenExpMs = 0;
 const STREAMS_CACHE_TTL_MS = 15_000;
 const STREAMS_CACHE_MAX = 250;
 
+// One shared answer for every visitor, so a busy site costs the same as a quiet one.
+const LIVE_CACHE_TTL_MS = 60_000;
+const LINKED_LOGINS_CACHE_TTL_MS = 5 * 60 * 1000;
+const LINKED_LOGINS_PAGE_SIZE = 1000;
 const USERS_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const USERS_CACHE_MAX = 500;
 
@@ -2737,7 +2742,91 @@ cleanupTick();
 const cleanupInterval = setInterval(cleanupTick, CACHE_CLEANUP_INTERVAL_MS);
 if (typeof cleanupInterval.unref === "function") cleanupInterval.unref();
 
+const fetchTwitchStreams = async (logins) => {
+  const token = await getAppAccessToken();
+
+  const batches = await Promise.all(
+    chunkLogins(logins).map(async (batch) => {
+      const url = new URL("https://api.twitch.tv/helix/streams");
+      url.searchParams.set("first", String(TWITCH_BATCH_SIZE));
+      batch.forEach((login) => url.searchParams.append("user_login", login));
+
+      const r = await fetch(url.toString(), {
+        headers: {
+          "Client-ID": TWITCH_CLIENT_ID,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(`Twitch streams failed (${r.status}): ${text}`);
+      }
+
+      const json = await r.json();
+      return (json.data || []).map(toStream);
+    })
+  );
+
+  return batches.flat();
+};
+
+const fetchLinkedTwitchLogins = async () => {
+  if (!supabaseAdmin) throw new Error("Supabase admin not configured");
+
+  const logins = [];
+
+  for (let from = 0; ; from += LINKED_LOGINS_PAGE_SIZE) {
+    const { data, error } = await supabaseAdmin
+      .from("profile_platform_accounts")
+      .select("platform_login")
+      .eq("platform", "twitch")
+      .not("platform_login", "is", null)
+      .order("id")
+      .range(from, from + LINKED_LOGINS_PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Linked Twitch logins failed: ${error.message}`);
+
+    logins.push(...data.map((row) => row.platform_login));
+
+    if (data.length < LINKED_LOGINS_PAGE_SIZE) return uniqueLogins(logins);
+  }
+};
+
+// GET /api/twitch/live
+// Everyone linked who is live right now. The site asks this rather than sending
+// its own list of logins, so a visitor costs no database read and no Twitch call.
+app.get("/api/twitch/live", async (_req, res) => {
+  try {
+    const data = await getOrSetInflight(
+      streamsCache,
+      streamsInflight,
+      "live",
+      LIVE_CACHE_TTL_MS,
+      STREAMS_CACHE_MAX,
+      async () => {
+        const logins = await getOrSetInflight(
+          streamsCache,
+          streamsInflight,
+          "linked-logins",
+          LINKED_LOGINS_CACHE_TTL_MS,
+          STREAMS_CACHE_MAX,
+          fetchLinkedTwitchLogins
+        );
+
+        return logins.length > 0 ? fetchTwitchStreams(logins) : [];
+      }
+    );
+
+    res.setHeader("Cache-Control", "public, max-age=30");
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ error: String(err?.message || err) });
+  }
+});
+
 // GET /api/twitch/streams?logins=a,b,c
+// Pages opened before the site moved to /api/twitch/live still call this.
 app.get("/api/twitch/streams", async (req, res) => {
   try {
     const logins = normalizeLogins(req.query.logins);
@@ -2751,37 +2840,7 @@ app.get("/api/twitch/streams", async (req, res) => {
       cacheKey,
       STREAMS_CACHE_TTL_MS,
       STREAMS_CACHE_MAX,
-      async () => {
-        const token = await getAppAccessToken();
-
-        const url = new URL("https://api.twitch.tv/helix/streams");
-        logins.forEach((login) => url.searchParams.append("user_login", login));
-
-        const r = await fetch(url.toString(), {
-          headers: {
-            "Client-ID": TWITCH_CLIENT_ID,
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!r.ok) {
-          const text = await r.text();
-          throw new Error(`Twitch streams failed (${r.status}): ${text}`);
-        }
-
-        const json = await r.json();
-
-        return (json.data || []).map((s) => ({
-          login: s.user_login,
-          displayName: s.user_name,
-          isLive: true,
-          title: s.title,
-          gameName: s.game_name,
-          viewerCount: s.viewer_count,
-          startedAt: s.started_at,
-          thumbnailUrl: s.thumbnail_url,
-        }));
-      }
+      () => fetchTwitchStreams(logins)
     );
 
     res.setHeader("Cache-Control", "public, max-age=15");

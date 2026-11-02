@@ -11,7 +11,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 import { useSellerAccess } from '../../hooks/creatorApplication/useSellerAccess';
 import { useMyAdminAccess } from '../../hooks/admin/useMyAdminAccess';
-import { useMessagesInbox } from '../../hooks/conversations/useMessagesInbox';
+import { useUnreadMessageCount } from '../../hooks/conversations/useUnreadMessageCount';
 import { useCollapsed, useFitCount } from "../../hooks/useCollapsed";
 import { useT } from "../../lib/i18n/i18n";
 import type { MessageKey } from "../../lib/i18n/messages/en";
@@ -157,14 +157,12 @@ const Nav = () => {
   const { isLoading: isSellerAccessLoading, canAccessCreatorRoutes } =
     useSellerAccess();
   const { data: isAdmin = false, isLoading: isAdminLoading } = useMyAdminAccess();
-  const { data: messagesInbox } = useMessagesInbox();
+  const { data: unreadMessageCount = 0 } = useUnreadMessageCount();
 
   const liveCount = useMemo(
     () => Object.keys(twitchByLogin).length,
     [twitchByLogin]
   );
-
-  const unreadMessageCount = messagesInbox?.totalUnreadCount ?? 0;
 
   const unreadMessageLabel =
     unreadMessageCount > 99 ? "99+" : String(unreadMessageCount);
