@@ -25,11 +25,73 @@ export const INSTANT_MIN_PRICE = 10;
 export const PRODUCT_FILES_BUCKET = "product-files";
 export const PRODUCT_FILES_MAX_COUNT = 10;
 
+// Measured in the browser on upload (src/lib/listings/productFileDetails.ts).
+// The database stores it as sent, so it's read as untrusted here.
+export type ProductFileDetails =
+  | { kind: "image"; width: number; height: number }
+  | { kind: "video"; width: number; height: number; seconds: number }
+  | { kind: "audio"; seconds: number }
+  | {
+      kind: "zip";
+      files: number;
+      unzipped_bytes: number;
+      images?: Array<{ width: number; height: number; count: number }>;
+    };
+
 export type ProductFile = {
   path?: string;
   name: string;
   size_bytes: number;
   uploaded_at: string;
+  details?: ProductFileDetails;
+};
+
+const isCount = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
+
+// 75 -> "1:15", 3725 -> "1:02:05".
+export const formatDuration = (seconds: number): string => {
+  const whole = Math.round(seconds);
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  const rest = String(whole % 60).padStart(2, "0");
+
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${minutes}:${rest}`;
+};
+
+// A file's details as short phrases, such as "1920 × 1080 px" and "0:12".
+export const describeProductFileDetails = (
+  details: unknown,
+  t: (key: MessageKey, values?: Record<string, string | number>) => string,
+  formatSize: (bytes: number) => string,
+): string[] => {
+  if (!details || typeof details !== "object") return [];
+
+  const value = details as Record<string, unknown>;
+  const pixels = isCount(value.width) && isCount(value.height) && value.width > 0 && value.height > 0
+    ? [t("fileDetails.pixels", { width: value.width, height: value.height })]
+    : [];
+  const length = isCount(value.seconds) && value.seconds > 0 ? [formatDuration(value.seconds)] : [];
+
+  if (value.kind === "image") return pixels;
+  if (value.kind === "video") return [...pixels, ...length];
+  if (value.kind === "audio") return length;
+
+  if (value.kind === "zip" && isCount(value.files)) {
+    const images = Array.isArray(value.images) ? value.images : [];
+
+    return [
+      t("fileDetails.zipFiles", {
+        count: value.files,
+        size: formatSize(isCount(value.unzipped_bytes) ? value.unzipped_bytes : 0),
+      }),
+      ...images
+        .filter((group) => isCount(group?.width) && isCount(group?.height) && isCount(group?.count))
+        .map((group) => t("fileDetails.zipImages", group)),
+    ];
+  }
+
+  return [];
 };
 
 // A stored name carries a unique id before the extension

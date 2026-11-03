@@ -215,6 +215,26 @@ export const es = {
       ],
       cta: "Abrir el encargo",
     }),
+    purchase_receipt: (t, p, n, h) => ({
+      subject: `Tu recibo de ${q(t)}`,
+      title: "Gracias por tu compra",
+      lines: [
+        `Compraste ${q(t)} a ${n.creator}.`,
+        `Recibo${p.number ? ` ${p.number}` : ""}${h.paidOn ? `, pagado el ${h.paidOn}` : ""}${h.amount ? `: ${h.item ? `${h.item} por el artículo, ` : ""}${h.fee ? `${h.fee} de tarifa de servicio, ` : ""}${h.amount} en total` : ""}. Los precios incluyen el GST/HST que corresponda.`,
+        "Es una venta final. Al comprar, aceptaste que no se puede cancelar ni reembolsar, salvo que la ley lo exija.",
+        "Tus archivos están en tu página Descargas, listos cuando los necesites. Tu factura también está ahí.",
+      ],
+      cta: "Ir a tus descargas",
+    }),
+    instant_sale: (t, p, n, h) => ({
+      subject: `Nueva venta: ${q(t)}`,
+      title: `${n.Buyer} compró tu descarga`,
+      lines: [
+        `${n.Buyer} compró ${q(t)}${h.amount ? ` por ${h.amount} antes de tarifas` : ""}. Los archivos se le abrieron de inmediato.`,
+        "Está en tu página Ventas.",
+      ],
+      cta: "Ver tus ventas",
+    }),
     payment_refunded: (t, p) => ({
       subject: `Reembolso en ${q(t)}`,
       title: "Se reembolsó un pago",

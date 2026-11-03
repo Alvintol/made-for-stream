@@ -8,7 +8,7 @@ import {
 import { useInstantListing, useStartInstantPurchase } from "../../hooks/listings/useInstantDownloads";
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { useT } from "../../lib/i18n/i18n";
-import { formatFileSize } from "../../lib/listings/deliveryFiles";
+import { productFileMeta } from "./productFileMeta";
 
 const classes = {
   panel: "space-y-3",
@@ -16,7 +16,7 @@ const classes = {
   text: "text-sm leading-6 text-zinc-600",
   heading: "text-xs font-semibold uppercase tracking-wide text-zinc-500",
   files: "space-y-1 text-sm",
-  file: "flex justify-between gap-3",
+  file: "flex flex-col",
   fileName: "min-w-0 break-all text-zinc-800",
   fileSize: "shrink-0 text-zinc-500",
   button: "btnPrimary inline-flex",
@@ -70,10 +70,11 @@ const InstantPurchasePanel = ({ listingId, licence, userId, isOwnListing }: Prop
             {files.map((file) => (
               <li key={file.name} className={classes.file}>
                 <span className={classes.fileName}>{productFileDisplayName(file.name)}</span>
-                <span className={classes.fileSize}>{formatFileSize(file.size_bytes, t)}</span>
+                <span className={classes.fileSize}>{productFileMeta(file, t)}</span>
               </li>
             ))}
           </ul>
+          <p className={classes.note}>{t("fileDetails.measured")}</p>
         </div>
       )}
 

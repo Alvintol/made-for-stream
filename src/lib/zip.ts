@@ -146,10 +146,20 @@ export type ZipListing = {
   encrypted: boolean;
 };
 
-// The paths inside a zip, read from its central directory at the end of
-// the file, without unpacking anything. Null when the file is not a zip
-// this can read (damaged, or a zip64 archive).
-export const listZipEntryNames = async (blob: Blob): Promise<ZipListing | null> => {
+export type ZipDirectoryEntry = {
+  name: string;
+  encrypted: boolean;
+  // 0 stored, 8 deflated.
+  method: number;
+  compressedSize: number;
+  uncompressedSize: number;
+  localHeaderOffset: number;
+};
+
+// The entries of a zip, read from its central directory at the end of the
+// file, without unpacking anything. Null when the file is not a zip this
+// can read (damaged, or a zip64 archive).
+export const readZipEntries = async (blob: Blob): Promise<ZipDirectoryEntry[] | null> => {
   const tailStart = Math.max(0, blob.size - (22 + 0xffff));
   const tail = new Uint8Array(await blob.slice(tailStart).arrayBuffer());
   const tailView = new DataView(tail.buffer);
@@ -175,22 +185,53 @@ export const listZipEntryNames = async (blob: Blob): Promise<ZipListing | null> 
   const directory = new Uint8Array(await blob.slice(offset, offset + size).arrayBuffer());
   const view = new DataView(directory.buffer);
   const decoder = new TextDecoder();
-  const names: string[] = [];
-  let encrypted = false;
+  const entries: ZipDirectoryEntry[] = [];
   let at = 0;
 
   for (let i = 0; i < count; i += 1) {
     if (at + 46 > directory.length || view.getUint32(at, true) !== 0x02014b50) return null;
 
-    const flags = view.getUint16(at + 8, true);
     const nameLength = view.getUint16(at + 28, true);
     const extraLength = view.getUint16(at + 30, true);
     const commentLength = view.getUint16(at + 32, true);
 
-    encrypted ||= (flags & 1) === 1;
-    names.push(decoder.decode(directory.slice(at + 46, at + 46 + nameLength)));
+    entries.push({
+      name: decoder.decode(directory.slice(at + 46, at + 46 + nameLength)),
+      encrypted: (view.getUint16(at + 8, true) & 1) === 1,
+      method: view.getUint16(at + 10, true),
+      compressedSize: view.getUint32(at + 20, true),
+      uncompressedSize: view.getUint32(at + 24, true),
+      localHeaderOffset: view.getUint32(at + 42, true),
+    });
     at += 46 + nameLength + extraLength + commentLength;
   }
 
-  return { names, encrypted };
+  return entries;
+};
+
+export const listZipEntryNames = async (blob: Blob): Promise<ZipListing | null> => {
+  const entries = await readZipEntries(blob);
+
+  return entries
+    ? { names: entries.map((entry) => entry.name), encrypted: entries.some((entry) => entry.encrypted) }
+    : null;
+};
+
+// One entry's contents, unpacked with the browser's own DecompressionStream.
+// Null for an encrypted entry or a method other than stored or deflated.
+export const readZipEntry = async (blob: Blob, entry: ZipDirectoryEntry): Promise<Blob | null> => {
+  if (entry.encrypted || (entry.method !== 0 && entry.method !== 8)) return null;
+
+  const header = new DataView(
+    await blob.slice(entry.localHeaderOffset, entry.localHeaderOffset + 30).arrayBuffer(),
+  );
+
+  if (header.byteLength < 30 || header.getUint32(0, true) !== 0x04034b50) return null;
+
+  const dataStart = entry.localHeaderOffset + 30 + header.getUint16(26, true) + header.getUint16(28, true);
+  const data = blob.slice(dataStart, dataStart + entry.compressedSize);
+
+  if (entry.method === 0) return data;
+
+  return new Response(data.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();
 };

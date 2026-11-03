@@ -986,6 +986,12 @@ Build order (each its own branch):
 - [ ] Have the lawyer review the instant-download wording: Refund Policy section 12,
       the three licences in Terms of Service section 8, Creator Terms section 8, the
       Payment Terms GST/HST paragraph and the Privacy Policy retention line.
+- [x] **Download receipts, final sale and file details** (V0.11.00, migration
+      `20261103_183`). Buyers get an emailed receipt; instant downloads are final
+      sales, confirmed in their own checkbox; files show their measured pixels,
+      length or zip contents.
+- [ ] Have the lawyer confirm the final-sale wording in Refund Policy section 12
+      and the checkout checkbox, including the exception for refunds the law requires.
 - [ ] Ask the accountant whether Made for Stream remitting GST/HST on a download's
       whole price, including the creator's share, is the right treatment, and how the
       creator reports that sale.

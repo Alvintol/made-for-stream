@@ -13,6 +13,7 @@ const migration = [
   "supabase/migrations/20261007_148_add_listing_request_notifications.sql",
   "supabase/migrations/20261007_149_add_presence_message_emails_and_cancellation_warnings.sql",
   "supabase/migrations/20261016_166_confirm_off_site_receipt.sql",
+  "supabase/migrations/20261103_183_add_download_receipts_and_file_details.sql",
 ]
   .map((file) => readFileSync(file, "utf8"))
   // An ops alert id such as off_site_receipt_overdue is not an email kind.
@@ -29,6 +30,53 @@ const queuedKinds = [
     ].map((match) => match[1]),
   ),
 ];
+
+describe("instant download emails", () => {
+  it("sends the buyer a receipt that says it's a final sale, opening their downloads", () => {
+    const row = { kind: "purchase_receipt", listing_request_id: "r1", recipient_user_id: "b1" };
+
+    expect(getNotificationUrl("https://example.test", row, "b1")).toBe("https://example.test/downloads");
+
+    const email = renderNotificationEmail({
+      kind: "purchase_receipt",
+      requestTitle: "Cosy overlay pack",
+      payload: {
+        currency: "cad",
+        amount_cents: 2100,
+        item_cents: 2000,
+        fee_cents: 100,
+        number: "A581F954",
+        paid_at: "2026-11-03T12:00:00Z",
+      },
+      requestUrl: "https://example.test/downloads",
+      names: { creator: "ada" },
+    });
+
+    expect(email.subject).toBe('Your receipt for "Cosy overlay pack"');
+    expect(email.text).toContain("Receipt A581F954, paid November 3, 2026: $20.00 CAD for the item, $1.00 CAD buyer service fee, $21.00 CAD in total.");
+    expect(email.text).toContain("This is a final sale.");
+    expect(email.text).toContain("from ada");
+
+    for (const language of ["fr", "es"]) {
+      const translated = renderNotificationEmail({
+        kind: "purchase_receipt",
+        requestTitle: "Cosy overlay pack",
+        payload: { currency: "cad", amount_cents: 2100, number: "A581F954" },
+        requestUrl: "https://example.test/downloads",
+        language,
+      });
+
+      expect(translated.text, language).toContain("A581F954");
+      expect(translated.text, language).not.toMatch(/undefined|null/);
+    }
+  });
+
+  it("opens the creator's sales for a download sale", () => {
+    expect(
+      getNotificationUrl("https://example.test", { kind: "instant_sale", listing_request_id: "r1", recipient_user_id: "c1" }, "b1"),
+    ).toBe("https://example.test/creator/sales");
+  });
+});
 
 describe("commission notification emails", () => {
   it("has a template for every kind the database queues, and no others", () => {

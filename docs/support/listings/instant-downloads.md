@@ -21,6 +21,10 @@ surfaces:
   - src/components/listings/ProductFilesManager.tsx
   - src/components/listings/InstantPurchaseDownloadsCard.tsx
   - src/pages/buyer/Downloads.tsx
+  - src/lib/listings/productFileDetails.ts       # 20261103_183
+  - public.product_files_json()
+  - public.notify_listing_request_payment_change() # purchase_receipt, instant_sale
+  - api/notificationEmails.js
 unmatched_tier: 2
 ---
 
@@ -35,8 +39,20 @@ Money is involved, and a refund decision turns on whether a file was downloaded.
 `fulfilment_mode = 'instant'`, made by `start_instant_purchase()` with one
 `one_time` payment. Payments, refunds, invoices, sales numbers and tax all use the
 commission paths. A purchase has no conversation and sends no commission emails.
-The creator gets the usual "payment received" email. When Stripe marks the payment
-paid, a trigger completes the request, so it counts as a sale.
+When Stripe marks the payment paid, the buyer gets a **receipt** email
+(`purchase_receipt`: receipt number, item, fee, total, and that it's a final sale)
+and the creator gets a **new sale** email (`instant_sale`). They are sent like any
+notification (`messaging/commission-notifications.md`). A trigger completes the
+request, so it counts as a sale.
+
+**File details.** When a creator uploads a file, the website measures it: an image's
+or video's size in pixels, a video's or sound's length, and for a zip, how many files
+it holds, their unzipped size and the sizes of up to 50 images inside. It's saved as
+the file's `user_metadata.details` and shown with the file on the listing,
+Downloads and the creator's file list. The database can't check it, so the listing
+says sizes are measured on upload. Files uploaded before 2026-11-03 have none until
+re-uploaded. A file that can't be measured (a font, a PSD, a damaged zip) just shows
+its size in bytes.
 
 **Who can open the files.** The listing's creator, admins, and a buyer whose
 payment is `paid` or `partially_refunded` (`can_download_product_file()`). A full
@@ -54,12 +70,20 @@ a purchase directly, and no request can switch between commission and purchase.
 rate (owner's decision, 2026-11-02). There is no creator-side tax on a download.
 See [`../payments/sales.md`](../payments/sales.md).
 
-**Refunds.** Refund Policy section 12. Until a file is downloaded, a refund is
-allowed within 14 days. After that, only for a faulty file, one that won't open or
-one materially not as described, that the creator doesn't fix within 7 days. The
-admin request page shows **Instant download** with the number of downloads and the
-first one. Creators aren't shown download records. Refund through the usual admin
-refund panel on that page.
+**Refunds: final sale.** Refund Policy section 12 (version 2026-11-03-2). Every
+instant download is a final sale, and the buyer ticks a separate checkbox giving up
+any right to cancel or get a refund before checkout opens. It's recorded as an
+`early_service_request` acceptance on the purchase, and the API refuses checkout
+without it. Stripe's checkout repeats "Final sale" beside the Pay button. The only
+refund is one the law requires: a file that's faulty, won't open or is materially
+not as described, that the creator doesn't fix within 7 days. A change of mind, a
+mistaken purchase or an undownloaded file is not a reason. Refund through the usual
+admin refund panel on the admin request page.
+
+**Bank disputes.** The admin request page's **Instant download** card shows the
+downloads (how many, first and last) and when the buyer agreed to the final sale, at
+which version. Submit those, the receipt and the listing's file list as evidence in
+Stripe. Creators aren't shown download records.
 
 ## Quick triage
 
@@ -72,7 +96,10 @@ refund panel on that page.
 | "This file isn't available to you." | [`DL-003`](#dl-003--a-download-is-refused) |
 | A paid purchase isn't in the creator's Sales | [`DL-001`](#dl-001--a-paid-purchase-didnt-complete) |
 | An upload is refused | [`DL-004`](#dl-004--a-file-wont-upload) |
-| A buyer wants a refund | Check the admin request page's **Instant download** card, then Refund Policy section 12 |
+| A buyer wants a refund | Final sale: refuse unless a file is faulty or not as described and the creator can't fix it (Refund Policy section 12) |
+| A buyer disputed a download with their bank | Send the **Instant download** card's record, the receipt and the file list as evidence |
+| "I didn't get a receipt" | Check `listing_request_notifications` for `purchase_receipt` on the purchase (`messaging/commission-notifications.md`) |
+| A file shows no pixels or length | Expected for files uploaded before 2026-11-03, or types the browser can't open. Re-upload to measure |
 
 ---
 
@@ -187,8 +214,9 @@ listing was changed in another tab.
 
 ## Known gaps
 
-- **No receipt email for the buyer.** They see the purchase on the return page and
-  in Downloads, and each has an invoice.
+- **File details come from the creator's browser.** A creator who uploads outside
+  the website could save wrong details. Check the file itself in a dispute.
+- **Images inside a zip are measured only up to 50,** each under 40 MB.
 - **An abandoned checkout leaves a waiting purchase.** It isn't counted anywhere,
   and the next try reuses it.
 - **No download limit.** Each link lasts a minute and each download is recorded.
