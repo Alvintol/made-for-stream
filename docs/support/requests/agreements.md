@@ -369,6 +369,15 @@ other route to `buyer_accepted` without that row.
 ticked. The message itself appears only if something calls the RPC without the
 version. After the deploy, the likely cause is an old cached web build.
 
+**If the box is ticked and it still appears.** The RPC also refuses a version
+whose shape it doesn't recognise. Until `20261103_186` it allowed only
+`YYYY-MM-DD` and `YYYY-MM-DD-draft-N`, so Refund Policy `2026-11-03-2` blocked
+every acceptance. Compare the regex in
+`pg_get_functiondef('public.respond_listing_request_agreement(uuid,text,text[],text)'::regprocedure)`
+with `refundPolicyVersion` in `src/domain/legal/policyVersions.ts`. A mismatch
+is a code fix, never a data fix. `checkoutPolicyVersionsSync.test.ts` now fails
+when a version stops matching.
+
 **Fix.** The buyer ticks the box and accepts. **Never insert the row for them.**
 As with `AGR-003`, a consent the buyer did not give is worse than none, because
 it looks like evidence. If a buyer does not want work to start early, the honest

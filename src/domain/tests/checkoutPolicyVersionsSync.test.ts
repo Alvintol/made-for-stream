@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   checkoutPolicyTypes,
@@ -32,5 +33,19 @@ describe("api/policyVersions.js stays in sync with policyAcceptance.ts", () => {
 
       expect(versionsByType[policyType]).toBe(currentPolicyVersions[policyType]);
     }
+  });
+
+  it("sends an early-start version the agreement function accepts", () => {
+    // respond_listing_request_agreement refuses a version that doesn't match
+    // its pattern, so a new version shape blocks every agreement acceptance.
+    const migrations = readdirSync("supabase/migrations").sort();
+    const latest = migrations
+      .map((name) => readFileSync(`supabase/migrations/${name}`, "utf8"))
+      .filter((sql) => sql.includes("create or replace function public.respond_listing_request_agreement("))
+      .at(-1);
+    const pattern = /p_early_service_request_version\s+!~ '([^']+)'/.exec(latest ?? "")?.[1];
+
+    expect(pattern).toBeDefined();
+    expect(CHECKOUT_POLICY_VERSIONS.early_service_request).toMatch(new RegExp(pattern!));
   });
 });
