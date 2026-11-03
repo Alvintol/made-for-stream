@@ -1,11 +1,15 @@
-// Sales numbers and invoices (20261102_180). The database works out every
-// figure; this file only shapes them for the pages. Playbook:
+// Sales numbers and invoices (20261102_180, 20261103_181). The database works
+// out every figure; this file only shapes them for the pages. Playbook:
 // docs/support/payments/sales.md.
-
+//
+// A sale is one completed project, however many payments it took. A transaction
+// is one payment or refund.
 export type CreatorSalesTotals = {
   currency: string;
   sales: number;
   sold_cents: number;
+  transactions: number;
+  paid_cents: number;
   refunded_cents: number;
   fee_cents: number;
   fee_tax_cents: number;
@@ -13,6 +17,17 @@ export type CreatorSalesTotals = {
 };
 
 export type CreatorSaleRow = {
+  listing_request_id: string;
+  completed_at: string;
+  title: string | null;
+  currency: string;
+  transactions: number;
+  sold_cents: number;
+  fee_cents: number;
+  earned_cents: number;
+};
+
+export type CreatorTransactionRow = {
   movement_id: string;
   payment_id: string;
   listing_request_id: string;
@@ -29,6 +44,8 @@ export type AdminSalesTotals = {
   currency: string;
   sales: number;
   sold_cents: number;
+  transactions: number;
+  paid_cents: number;
   refunded_cents: number;
   kept_cents: number;
   tax_cents: number;
@@ -49,6 +66,17 @@ export type AdminSalesSummary = {
 };
 
 export type AdminSaleRow = {
+  listing_request_id: string;
+  completed_at: string;
+  title: string | null;
+  creator_handle: string | null;
+  currency: string;
+  transactions: number;
+  sold_cents: number;
+  kept_cents: number;
+};
+
+export type AdminTransactionRow = {
   movement_id: string;
   payment_id: string;
   listing_request_id: string;
@@ -62,6 +90,36 @@ export type AdminSaleRow = {
   tax_cents: number;
   buyer_tax_place: string;
   creator_tax_place: string;
+};
+
+export type CreatorChartRow = {
+  period: string;
+  currency: string;
+  sales: number;
+  sold_cents: number;
+  transactions: number;
+  paid_cents: number;
+  fee_cents: number;
+  earned_cents: number;
+};
+
+export type AdminChartRow = {
+  period: string;
+  currency: string;
+  sales: number;
+  sold_cents: number;
+  transactions: number;
+  paid_cents: number;
+  kept_cents: number;
+  tax_cents: number;
+  earned_cents: number;
+};
+
+// `periods` lists every day or month in the range, including quiet ones.
+export type SalesChartData<Row> = {
+  unit: "day" | "month";
+  periods: string[];
+  rows: Row[];
 };
 
 export type PaymentInvoice = {
@@ -93,6 +151,31 @@ export type PaymentInvoice = {
 export const currentSalesMonth = (now = new Date()): string => now.toISOString().slice(0, 7);
 
 export const salesMonthToDate = (month: string): string => `${month}-01`;
+
+// Round numbers for a graph's axis, always including zero. A refund can take a
+// day below it.
+export const chartTicks = (values: number[]): number[] => {
+  const low = Math.min(0, ...values);
+  const high = Math.max(0, ...values);
+  const rough = Math.max(high - low, 100) / 4;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 5, 10].map((size) => size * power).find((size) => size >= rough) ?? rough;
+  const first = Math.floor(low / step);
+  const last = Math.max(Math.ceil(high / step), first + 1);
+
+  return Array.from({ length: last - first + 1 }, (_, index) => (first + index) * step);
+};
+
+export const formatChartPeriod = (
+  period: string,
+  unit: SalesChartData<unknown>["unit"],
+  locale?: string,
+): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    month: "short",
+    ...(unit === "day" ? { day: "numeric" } : { year: "numeric" }),
+  }).format(new Date(`${period}T00:00:00Z`));
 
 const CANADA_REGIONS: Record<string, string> = {
   AB: "Alberta",

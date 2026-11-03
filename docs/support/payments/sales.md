@@ -7,10 +7,17 @@ surfaces:
   - public.record_paid_payment_details()
   - public.record_details_when_payment_paid()    # trigger on listing_request_payments
   - public.sale_movements()
+  - public.completed_sales()                     # 20261103_181
+  - public.sales_by_period()
+  - public.sales_chart_range()
   - public.my_sales_summary()
-  - public.my_sales()
+  - public.my_sales()                            # the transactions
+  - public.my_completed_sales()
+  - public.my_sales_chart()
   - public.admin_sales_summary()
-  - public.admin_sales()
+  - public.admin_sales()                         # the transactions
+  - public.admin_completed_sales()
+  - public.admin_sales_chart()
   - public.get_payment_invoice()
   - public.user_account_details                  # show_tax_number_on_invoices
   - src/domain/payments/sales.ts
@@ -35,6 +42,18 @@ are 5%, Ontario 13%, Nova Scotia 14%, and New Brunswick, Newfoundland and Labrad
 PEI 15%. Outside Canada it's 0%, which assumes the fee is zero-rated. A rate change is
 a new migration editing `canada_sales_tax_bps()`.
 
+**Sales and transactions.** A sale is one completed commission or listing, however many
+payments it took. It counts on the day the project completed, with all its payments
+added together less refunds, even when they were paid in other months. A transaction
+is one payment or refund, and it counts on the day the money moved. So a milestone
+project paid in October and November and completed in November is one November sale,
+with a transaction in each month. A project that's cancelled, still in progress or
+refunded in full isn't a sale, but its payments stay under Transactions.
+
+Earnings, fees and tax follow the transactions, because that's when the money moved
+and when tax is due. That's why Total sales less fees won't always equal earnings in a
+single month.
+
 **The numbers.** The tax inside an amount is `amount × rate ÷ (1 + rate)`, so $100 at
 13% holds $11.50. Tax is rounded per sale. When a payment is paid, a trigger records
 the place, rate and seller's details in `paid_payment_details`, so a later change of
@@ -42,16 +61,22 @@ address or rate never rewrites an old sale.
 
 | On the page | What it means |
 | --- | --- |
-| Creator: Total sales | The work and tips, less refunds |
-| Creator: Total earnings | Total sales less the creator fee, before Stripe's costs |
-| Creator: Fees to Made for Stream | The creator fee, less fees given back on refunds |
-| Admin: Total sales | Everything buyers paid, less refunds |
+| Creator: Total sales | The work and tips on projects completed that month, less refunds |
+| Creator: Transactions | The work and tips paid that month, less refunds |
+| Creator: Total earnings | Transactions less the creator fee, before Stripe's costs |
+| Creator: Fees to Made for Stream | The creator fee on those transactions, less fees given back on refunds |
+| Admin: Total sales | Everything buyers paid on projects completed that month, less refunds |
+| Admin: Transactions | Everything buyers paid that month, less refunds |
 | Admin: Fees and support | The buyer fee, creator fee and contributions kept |
 | Admin: Tax to set aside | The GST/HST inside those fees |
 | Admin: Total earnings | Fees and support less that tax, before your own costs |
 
-Months run in UTC, the same as the tax reports. A refund counts in the month it was
-made, as a negative amount. Each currency has its own row, because amounts in
+**The graphs.** Each Sales page graphs these numbers for the last 7, 28 or 90 days by day,
+or the last 12 months by month. They read the same totals as the month cards. A graph
+shows one currency at a time, and a refund can take a day below zero.
+
+Days and months run in UTC, the same as the tax reports. A refund counts in the month
+it was made, as a negative amount. Each currency has its own row, because amounts in
 different currencies can't be added. Money in US dollars is converted when the return
 is filed.
 
@@ -80,6 +105,9 @@ added on top of the price. See [`tax.md`](tax.md).
 | Can't tick "Show my tax number on invoices" | [`SALE-003`](#sale-003--a-tax-number-is-refused) |
 | The admin page warns about an unknown location | [`TAX-009`](#tax-009--a-sale-has-no-known-location) |
 | "My earnings don't match my payout" | Expected: earnings are before Stripe's costs, and payouts run on their own schedule |
+| "My milestone payment isn't in my sales" | Expected until the project completes. It's under Transactions now |
+| "Sales less fees doesn't equal my earnings" | Expected: sales land when a project completes, and earnings when each payment is made |
+| "Last month's total sales changed" | Expected: a refund on a completed project lowers that sale's total |
 | "The tax looks a cent off" | Expected: tax is rounded per sale |
 | A creator asks where a buyer lives | Refuse. They aren't told |
 
@@ -92,11 +120,11 @@ id: SALE-001
 tier: 2
 signals:
   - source: client
-    match: "/Could not find the function public\\.(my_sales_summary|my_sales|admin_sales_summary|admin_sales)/"
+    match: "/Could not find the function public\\.(my_sales_summary|my_sales|my_completed_sales|my_sales_chart|admin_sales_summary|admin_sales|admin_completed_sales|admin_sales_chart)/"
     where: "PostgREST PGRST202 on /rest/v1/rpc/*"
   - source: client
     match: "Only an administrator can see sales."
-    where: "admin_sales_summary() and admin_sales(), Postgres 42501"
+    where: "admin_sales_summary(), admin_sales(), admin_completed_sales() and admin_sales_chart(), Postgres 42501"
 auto_fix: none
 reason_not_automatable: "applying a migration is the owner's step"
 escalate_if:
@@ -104,15 +132,15 @@ escalate_if:
   - "a creator can see another creator's sales"
 ```
 
-**Cause.** The website went out before migration 180, or someone without an admin role
-opened the admin page.
+**Cause.** The website went out before migration 180 or 181, or someone without an admin
+role opened the admin page.
 
-**What the user sees.** The load error on the Sales page and in the dashboard's
+**What the user sees.** The load error on the graph, the lists or the dashboard's
 This month's sales.
 
 **Fix.** Check the functions exist. If they don't, apply
-`20261102_180_add_sales_numbers_and_invoices.sql`.
-
+`20261102_180_add_sales_numbers_and_invoices.sql` or
+`20261103_181_group_sales_by_completed_project.sql`.
 **Money impact.** None. These pages only read.
 
 ---
@@ -210,7 +238,10 @@ Fix it before filing.
   aren't recorded here.
 - **Provincial sales tax isn't included.** BC, Manitoba and Saskatchewan have their own,
   and whether it applies to these fees is a question for the accountant.
-- **Each page reads the whole month.** That's fine into the tens of thousands of sales
-  a month. Past that, keep monthly totals in a table.
+- **Each page reads the whole month, and each graph its whole period.** That's fine into
+  the tens of thousands of sales a month. Past that, keep daily totals in a table.
+- **A refund changes an old month's sale.** Total sales shows each project as it stands
+  now. Transactions and tax don't change: a refund counts in the month it was made.
+- **Dashboards show the month's cards, not the graph.** The graph is on the Sales pages.
 - **There's no monthly statement for creators by email.** The Sales page and each
   invoice are the record.
