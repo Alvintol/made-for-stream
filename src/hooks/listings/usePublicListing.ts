@@ -9,6 +9,7 @@ export type PublicListingRow = {
   short: string;
   offering_type: string;
   fulfilment_mode: "request" | "instant";
+  instant_licence: string | null;
   category: string;
   video_subtype: string | null;
   price_type: "fixed" | "starting_at" | "range";
@@ -60,6 +61,7 @@ const fetchPublicListing = async (
       short,
       offering_type,
       fulfilment_mode,
+      instant_licence,
       category,
       video_subtype,
       price_type,

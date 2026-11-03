@@ -230,8 +230,12 @@ Fix it before filing.
 
 ---
 
-## Known gaps
+**Instant downloads.** A download is a sale on the day it's paid, since it
+completes itself then. Its GST/HST is on the whole price at the buyer's rate, and
+there's no creator-side tax, so the admin tax table counts the whole price as the
+taxable amount. See [`../listings/instant-downloads.md`](../listings/instant-downloads.md).
 
+## Known gaps
 - **A lost chargeback still counts as a sale,** because disputes don't write to the
   refund ledger. Adjust the return by hand.
 - **Earnings are before Stripe's costs.** They're charged on the creator's account and

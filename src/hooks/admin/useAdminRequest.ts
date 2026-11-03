@@ -28,6 +28,7 @@ export type AdminRequestDetailsRow = {
   cancelled_at: string | null;
   cancelled_by_user_id: string | null;
   cancellation_reason: string | null;
+  fulfilment_mode?: "request" | "instant";
 };
 
 export type AdminRequestDetails = {
@@ -70,7 +71,8 @@ const fetchAdminRequest = async (
       completed_by_user_id,
       cancelled_at,
       cancelled_by_user_id,
-      cancellation_reason
+      cancellation_reason,
+      fulfilment_mode
     `)
     .eq("id", requestId)
     .maybeSingle();

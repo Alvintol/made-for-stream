@@ -19,7 +19,9 @@ const fetchCreatorDashboardCounts = async (userId: string): Promise<CreatorDashb
       .from("listing_requests")
       .select("id", { count: "exact", head: true })
       .eq("creator_user_id", userId)
-      .eq("status", status);
+      .eq("status", status)
+      // An instant download is a sale, not a commission.
+      .eq("fulfilment_mode", "request");
 
   const listings = () =>
     supabase.from("listings").select("id", { count: "exact", head: true }).eq("user_id", userId);

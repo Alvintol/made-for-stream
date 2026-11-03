@@ -102,7 +102,7 @@ const PaymentInvoice = () => {
                   <span>{money(invoice.support_cents)}</span>
                 </div>
               )}
-              {invoice.buyer_tax_bps !== null && invoice.buyer_fee_tax_cents !== null && (
+              {!invoice.instant && invoice.buyer_tax_bps !== null && invoice.buyer_fee_tax_cents !== null && (
                 <div className={classes.sub}>
                   <span>{t("invoice.includesTax", { rate: formatFeeRateBps(invoice.buyer_tax_bps) })}</span>
                   <span>{money(invoice.buyer_fee_tax_cents)}</span>
@@ -123,6 +123,13 @@ const PaymentInvoice = () => {
             <span>{t("invoice.total")}</span>
             <span>{money(invoice.total_cents)}</span>
           </div>
+          {/* A download's tax is on the whole price, which Made for Stream accounts for. */}
+          {invoice.instant && invoice.buyer_tax_bps !== null && invoice.buyer_fee_tax_cents !== null && (
+            <div className={classes.sub}>
+              <span>{t("invoice.priceIncludesTax", { rate: formatFeeRateBps(invoice.buyer_tax_bps) })}</span>
+              <span>{money(invoice.buyer_fee_tax_cents)}</span>
+            </div>
+          )}
           {invoice.refunded_cents > 0 && (
             <div className={classes.line}>
               <span>{t("invoice.refunded")}</span>

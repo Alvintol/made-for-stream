@@ -4,7 +4,7 @@ export const refundPolicySections = [
   {
     "title": "1. Coverage and your rights",
     "body": [
-      "This policy applies to custom commissions and digital services purchased through Made for Stream. It forms part of the Terms of Service and applies to buyers and creators. The creator supplies the commissioned work; Made for Stream operates the marketplace and provides the support process described here. Made for Stream is responsible for its own services and obligations.",
+      "This policy applies to custom commissions, digital services and instant downloads purchased through Made for Stream. It forms part of the Terms of Service and applies to buyers and creators. The creator supplies the commissioned work or download; Made for Stream operates the marketplace and provides the support process described here. Made for Stream is responsible for its own services and obligations.",
       "A creator may offer more generous cancellation or refund terms, but cannot reduce the protections in this policy. Mandatory consumer rights and payment-provider rights apply even where they provide a longer deadline or a different remedy. Our internal deadlines do not replace statutory limitation periods, bank dispute deadlines or legal remedies.",
       "For consumers with a statutory distance-contract withdrawal right, including qualifying EU or UK purchases from traders, a 14-day cancellation period may run from conclusion of the service contract. Starting a service early does not by itself remove that right. Any lawful charge for service supplied during that period depends on the required disclosures and express request to start. Loss of a withdrawal right for a fully performed service or immediately supplied digital content requires the applicable express consent, acknowledgement and confirmation. A custom digital commission is not automatically exempt merely because it is personalised. Made for Stream asks for that express request as a separate confirmation when you accept a project agreement, and records it; an agreement cannot be accepted without it. Where these requirements have not been met, we will not rely on our earned-value rules to impose a charge the law prohibits.",
       "Days mean calendar days unless stated otherwise. Business days mean Monday to Friday, excluding statutory holidays in Alberta, Canada. Deadlines run from delivery of the relevant notice or accessible work, not from creation of an inaccessible file. A material platform outage extends an affected internal deadline by the period access was unavailable. We consider reasonable extensions for illness, emergencies and accessibility needs."
@@ -97,8 +97,16 @@ export const refundPolicySections = [
   {
     "title": "11. Use of cancelled or refunded work",
     "body": [
-      "A buyer must stop using and delete work whose licence was fully refunded, except copies reasonably needed for evidence or as law permits. Rights in separately paid, retained work continue under the agreement. A disputed payment alone does not automatically revoke all project rights. Where a refund results from alleged infringement, users must not keep using infringing material merely because they previously paid for it.",
-      "This policy does not promise a separate instant-download store. Any future instant-download product must disclose its licence and applicable cancellation rules before sale, including any legally required express consent to immediate supply."
+      "A buyer must stop using and delete work whose licence was fully refunded, except copies reasonably needed for evidence or as law permits. Rights in separately paid, retained work continue under the agreement. A disputed payment alone does not automatically revoke all project rights. Where a refund results from alleged infringement, users must not keep using infringing material merely because they previously paid for it."
+    ]
+  },
+  {
+    "title": "12. Instant downloads",
+    "body": [
+      "An instant download is a ready-made digital item bought from a listing and downloaded straight away. Its price, the files included and its licence, which is personal, streaming or commercial use as Terms of Service section 8 defines them, are shown before you pay.",
+      "Before paying, you ask for the files straight away and confirm that the sale becomes final once you download a file. That is the express consent and acknowledgement the law requires for immediately supplied digital content, and it is recorded with your purchase. Until you download a file, you can ask for a full refund within 14 days of buying.",
+      "After you download a file, you can still get a refund if a file is faulty, cannot be opened, or is materially not as described, and the creator does not fix it within 7 days of being told. A change of mind is not a reason for a refund once a file is downloaded. Mandatory consumer rights still apply.",
+      "Ask for a refund through support, naming the purchase and what is wrong. We decide using the record of when files were downloaded and the files themselves. Made for Stream's fees are returned in proportion, as section 8 explains. A full refund ends your licence and closes the files, and section 11 applies. While a purchase is not fully refunded, you can download its files again."
     ]
   }
 ] as const;

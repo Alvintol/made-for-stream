@@ -3,32 +3,35 @@
 // text, so keeping these here stops the full policies downloading on every visit.
 // Changing a policy's text means changing its version here.
 
-export const termsVersion = "2026-10-31";
+export const termsVersion = "2026-11-03";
 
 // What changed in this version, in plain words, for the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
 // fails if the two versions differ.
 export const termsChanges = {
-  version: "2026-10-31",
+  version: "2026-11-03",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "During the beta, Made for Stream is only open to people who live in Canada or the United States.",
+    "You can now buy instant downloads: ready-made digital items you download straight after paying.",
+    "Each instant download comes with a personal, streaming or commercial use licence, explained in section 8.",
+    "Earlier change (version 2026-10-31): during the beta, Made for Stream is only open to people who live in Canada or the United States.",
   ],
 } as const;
 
-export const privacyVersion = "2026-11-02";
+export const privacyVersion = "2026-11-03";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-11-02",
+  version: "2026-11-03",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "If you are a creator and choose to show your tax number on invoices, your buyers see that number and your business or legal name.",
-    "With each payment we now keep your province or state, not only your country, to work out the GST/HST in our fees.",
+    "When you buy an instant download, we record each time you download one of its files, to decide whether a refund is owed. The creator doesn't see this record.",
+    "Earlier change (version 2026-11-02): if you are a creator and choose to show your tax number on invoices, your buyers see that number and your business or legal name.",
+    "Earlier change (version 2026-11-02): with each payment we now keep your province or state, not only your country, to work out the GST/HST in our fees.",
     "Earlier change (version 2026-10-29): when you send a commission request, the creator is told whether you have EU (including EEA) or UK consumer rights, so they know you can cancel within 14 days. They are not told your country or address.",
     "Earlier change (version 2026-10-29): we use the country in your account address, and the country of your internet connection at checkout, to check that Made for Stream is available where you are.",
     "Earlier change (version 2026-10-29): we report child sexual abuse material to the authorities as the law requires, and tell the police when someone's life or safety is at risk.",
@@ -36,11 +39,11 @@ export const privacyChanges = {
   ],
 } as const;
 
-export const creatorTermsVersion = "2026-10-29";
+export const creatorTermsVersion = "2026-11-03";
 
-export const refundPolicyVersion = "2026-10-07";
+export const refundPolicyVersion = "2026-11-03";
 
-export const paymentTermsVersion = "2026-11-02";
+export const paymentTermsVersion = "2026-11-03";
 
 export const copyrightPolicyVersion = "2026-09-24";
 

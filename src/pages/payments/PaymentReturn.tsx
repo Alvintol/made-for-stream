@@ -1,6 +1,7 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { Link, useSearchParams } from "react-router-dom";
 import { useListingRequestPaymentCheckoutStatus } from "../../hooks/payments/useListingRequestPaymentCheckoutStatus";
+import { useListingRequestPayment } from "../../hooks/payments/useListingRequestPayments";
 import { useT, type Translate } from "../../lib/i18n/i18n";
 const classes = {
   shell: "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8",
@@ -56,6 +57,8 @@ const PaymentReturn = () => {
     sessionId,
   });
 
+  const isInstant = useListingRequestPayment(paymentId).data?.metadata?.instant === true;
+
   const message = getPaymentMessage({
     paymentStatus: data?.checkout.paymentStatus,
     appStatus: data?.payment.status,
@@ -90,6 +93,11 @@ const PaymentReturn = () => {
       )}
 
       <div className={classes.actions}>
+        {isInstant && (
+          <Link className="btnPrimary" to="/downloads">
+            {t("paymentReturn.downloads")}
+          </Link>
+        )}
         <Link className={classes.btn} to="/requests">
           {t("checkout.back")}
         </Link>

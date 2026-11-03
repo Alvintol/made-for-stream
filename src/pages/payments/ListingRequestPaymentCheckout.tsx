@@ -133,7 +133,11 @@ const ListingRequestPaymentCheckout = () => {
   const setTipAndSupport = useSetListingRequestPaymentTipAndSupport();
   const paymentQuery = useListingRequestPayment(paymentId);
   const payment = paymentQuery.data ?? null;
-
+  // An instant download (20261103_182): no tip or contribution step, and the
+  // buyer agrees to download straight away instead of an early start.
+  const isInstant = payment?.metadata?.instant === true;
+  const instantListingId =
+    typeof payment?.metadata?.listing_id === "string" ? payment.metadata.listing_id : null;
   // launch-scope.md section 4: both default to zero and require an
   // affirmative choice before checkout opens -- entered as whole-currency-unit
   // strings so the buyer never sees "0" pre-filled as if it were a suggestion.
@@ -276,13 +280,14 @@ const ListingRequestPaymentCheckout = () => {
   // Until the tip and contribution are confirmed, the summary follows what
   // is in the boxes, so the buyer sees the total they are about to pay. Tax
   // is on the project payment and the fee only, so a known tax still holds.
-  const shownTipCents = extrasConfirmed ? (payment?.creator_tip_cents ?? 0) : tipCentsNow;
-  const shownSupportCents = extrasConfirmed
+  const extrasDone = extrasConfirmed || isInstant;
+  const shownTipCents = extrasDone ? (payment?.creator_tip_cents ?? 0) : tipCentsNow;
+  const shownSupportCents = extrasDone
     ? (payment?.platform_support_cents ?? 0)
     : supportCentsNow;
   const shownTotalCents = !payment
     ? 0
-    : extrasConfirmed
+    : extrasDone
       ? payment.total_checkout_cents
       : totalCentsNow + (taxLine && !taxLine.pending ? payment.tax_cents : 0);
 
@@ -295,7 +300,7 @@ const ListingRequestPaymentCheckout = () => {
     <main className={classes.shell}>
       <section className={classes.card}>
         <h1 className={classes.title}>{t("checkout.title")}</h1>
-        <p className={classes.text}>{t("checkout.intro")}</p>
+        <p className={classes.text}>{t(isInstant ? "checkout.instantIntro" : "checkout.intro")}</p>
       </section>
 
       {paymentQuery.isLoading && (
@@ -317,7 +322,7 @@ const ListingRequestPaymentCheckout = () => {
           <h2 className={classes.summaryTitle}>{getListingRequestPaymentTitle(payment, t)}</h2>
           <dl className={classes.amounts}>
             <div className={classes.amountRow}>
-              <dt>{t("checkout.projectPayment")}</dt>
+              <dt>{t(isInstant ? "checkout.itemPrice" : "checkout.projectPayment")}</dt>
               <dd>{formatPaymentCents(payment.base_amount_cents, payment.currency)}</dd>
             </div>
             <div className={classes.amountRow}>
@@ -365,7 +370,7 @@ const ListingRequestPaymentCheckout = () => {
         </section>
       )}
 
-      {payment && !extrasConfirmed && (
+      {payment && !extrasDone && (
         <section className={classes.card}>
           <h2 className={classes.summaryTitle}>{t("checkout.extrasTitle")}</h2>
           <p className={classes.text}>{t("checkout.extrasIntro")}</p>
@@ -475,9 +480,10 @@ const ListingRequestPaymentCheckout = () => {
         </section>
       )}
 
-      {payment && extrasConfirmed && (
+      {payment && extrasDone && (
         <CheckoutPolicyAcceptance
           listingRequestId={payment.listing_request_id}
+          instantListingId={isInstant ? instantListingId : null}
           onAccepted={onPoliciesAccepted}
         />
       )}
@@ -502,8 +508,11 @@ const ListingRequestPaymentCheckout = () => {
       )}
 
       <div className={classes.actions}>
-        <Link className={classes.btn} to="/requests">
-          {t("checkout.back")}
+        <Link
+          className={classes.btn}
+          to={isInstant && instantListingId ? `/listing/${instantListingId}` : "/requests"}
+        >
+          {t(isInstant ? "checkout.backToListing" : "checkout.back")}
         </Link>
       </div>
     </main>

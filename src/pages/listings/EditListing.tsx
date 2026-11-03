@@ -20,6 +20,12 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useMyListing } from "../../hooks/listings/useMyListing";
 import { getAllowedFulfilmentModes, isAdminHiddenListing, ListingFulfilmentMode, listingFulfilmentModeOptions, normaliseFulfilmentMode } from '../../domain/listings/listings';
 import { useT } from "../../lib/i18n/i18n";
+import InstantLicenceField from "../../components/listings/InstantLicenceField";
+import {
+  instantListingProblems,
+  isInstantLicence,
+  type InstantLicence,
+} from "../../domain/listings/instantDownloads";
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
 type ListingVideoSubtype = "" | "long-form" | "short-form";
@@ -29,6 +35,7 @@ type FormState = {
   short: string;
   offeringType: ListingOfferingType;
   fulfilmentMode: ListingFulfilmentMode;
+  instantLicence: InstantLicence | "";
   category: string;
   videoSubtype: ListingVideoSubtype;
   priceType: ListingPriceType;
@@ -111,6 +118,7 @@ const initialState: FormState = {
   short: "",
   offeringType: "digital",
   fulfilmentMode: "request",
+  instantLicence: "",
   category: "",
   videoSubtype: "",
   priceType: "fixed",
@@ -153,6 +161,7 @@ const toFormState = (listing: {
   short: string;
   offering_type: ListingOfferingType;
   fulfilment_mode: ListingFulfilmentMode;
+  instant_licence?: string | null;
   category: string;
   video_subtype: "long-form" | "short-form" | null;
   price_type: ListingPriceType;
@@ -166,6 +175,7 @@ const toFormState = (listing: {
   short: listing.short,
   offeringType: listing.offering_type,
   fulfilmentMode: listing.fulfilment_mode,
+  instantLicence: isInstantLicence(listing.instant_licence) ? listing.instant_licence : "",
   category: listing.category,
   videoSubtype: listing.video_subtype ?? "",
   priceType: listing.price_type,
@@ -299,6 +309,16 @@ const EditListing = () => {
       nextErrors.fulfilmentMode = t("listingForm.errorFlow");
     }
 
+    const instantProblems = instantListingProblems({
+      isInstant: form.fulfilmentMode === "instant",
+      priceType: form.priceType,
+      priceMin,
+      licence: form.instantLicence,
+    });
+
+    if (instantProblems.priceMin) nextErrors.priceMin = t(instantProblems.priceMin);
+    if (instantProblems.instantLicence) nextErrors.instantLicence = t(instantProblems.instantLicence);
+
     setErrors(nextErrors);
 
     return {
@@ -359,6 +379,10 @@ const EditListing = () => {
             form.offeringType,
             form.fulfilmentMode
           ),
+          instant_licence:
+            normaliseFulfilmentMode(form.offeringType, form.fulfilmentMode) === "instant"
+              ? form.instantLicence || null
+              : null,
           category: form.category.trim(),
           video_subtype: form.videoSubtype || null,
           price_type: form.priceType,
@@ -574,6 +598,13 @@ const EditListing = () => {
               )}
             </div>
 
+            {form.fulfilmentMode === "instant" && (
+              <InstantLicenceField
+                value={form.instantLicence}
+                error={errors.instantLicence}
+                onChange={(value) => setField("instantLicence", value)}
+              />
+            )}
             <div className={classes.field}>
               <label className={classes.label} htmlFor="category">
                 {t("snapshot.category")}

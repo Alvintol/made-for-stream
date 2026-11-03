@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.9.00";
+export const siteVersion = "V0.10.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.10.00",
+    date: "2026-11-03",
+    title: "Instant downloads",
+    changes: [
+      "Creators can sell ready-made digital items that buyers download straight after paying.",
+      "Each instant download shows its files and its licence before you buy.",
+      "A new Downloads page keeps everything you've bought to download, ready to download again.",
+      "The Terms of Service, Creator Terms, Refund Policy, Payment Terms and Privacy Policy are updated for instant downloads.",
+    ],
+  },
   {
     version: "V0.9.00",
     date: "2026-11-03",

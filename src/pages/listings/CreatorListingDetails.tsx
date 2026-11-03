@@ -2,6 +2,7 @@ import { hasErrorMessage } from "../../lib/errorMessage";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { formatListingPrice } from "../../lib/money/displayCurrency";
 import { useMyListing } from "../../hooks/listings/useMyListing";
+import ProductFilesManager from "../../components/listings/ProductFilesManager";
 import { useDeleteListingDraft } from "../../hooks/listings/useDeleteListingDraft";
 import {
   getListingPublishReadiness,
@@ -440,6 +441,8 @@ const CreatorListingDetails = () => {
         </div>
 
         <div className={classes.section}>
+          {listing.fulfilment_mode === "instant" && <ProductFilesManager listingId={listing.id} />}
+
           <div className={classes.card}>
             <div className={classes.section}>
               <h2 className={classes.sectionTitle}>{t("listingDetails.status")}</h2>

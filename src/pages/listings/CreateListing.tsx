@@ -28,6 +28,8 @@ import ListingAnimatedPreviewField, {
 import { uploadListingAnimation } from "../../lib/listings/listingAnimatedPreview";
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
 import { useT, type Translate } from "../../lib/i18n/i18n";
+import InstantLicenceField from "../../components/listings/InstantLicenceField";
+import { instantListingProblems, type InstantLicence } from "../../domain/listings/instantDownloads";
 type ListingOfferingType = "digital" | "commission" | "service";
 type ListingPriceType = "fixed" | "starting_at" | "range";
 type ListingVideoSubtype = "" | "long-form" | "short-form";
@@ -37,6 +39,7 @@ type FormState = {
   short: string;
   offeringType: ListingOfferingType;
   fulfilmentMode: ListingFulfilmentMode;
+  instantLicence: InstantLicence | "";
   category: string;
   videoSubtype: ListingVideoSubtype;
   priceType: ListingPriceType;
@@ -126,6 +129,7 @@ const initialState: FormState = {
   short: "",
   offeringType: "digital",
   fulfilmentMode: "request",
+  instantLicence: "",
   category: "",
   videoSubtype: "",
   priceType: "fixed",
@@ -333,6 +337,16 @@ const CreateListing = () => {
       nextErrors.fulfilmentMode = t("listingForm.errorFlow");
     }
 
+    const instantProblems = instantListingProblems({
+      isInstant: form.fulfilmentMode === "instant",
+      isFree: isFreeListing,
+      priceType: form.priceType,
+      priceMin,
+      licence: form.instantLicence,
+    });
+
+    if (instantProblems.priceMin) nextErrors.priceMin = t(instantProblems.priceMin);
+    if (instantProblems.instantLicence) nextErrors.instantLicence = t(instantProblems.instantLicence);
     if (
       form.videoSubtype &&
       form.videoSubtype !== "long-form" &&
@@ -449,6 +463,10 @@ const CreateListing = () => {
           form.offeringType,
           form.fulfilmentMode
         ),
+        instant_licence:
+          !isFreeListing && normaliseFulfilmentMode(form.offeringType, form.fulfilmentMode) === "instant"
+            ? form.instantLicence || null
+            : null,
         ...freeFields,
       })
         .select("id")
@@ -660,6 +678,13 @@ const CreateListing = () => {
               )}
             </div>
 
+            {form.fulfilmentMode === "instant" && (
+              <InstantLicenceField
+                value={form.instantLicence}
+                error={errors.instantLicence}
+                onChange={(value) => setField("instantLicence", value)}
+              />
+            )}
             <div className={classes.field}>
               <label className={classes.label} htmlFor="category">
                 {t("snapshot.category")}

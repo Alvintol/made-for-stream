@@ -39,6 +39,7 @@ const AdminTaxReporting = lazy(() => import("./pages/admin/AdminTaxReporting"));
 const AdminSales = lazy(() => import("./pages/admin/AdminSales"));
 const BuyerRequestDetails = lazy(() => import("./pages/buyer/BuyerRequestDetails"));
 const BuyerRequests = lazy(() => import("./pages/buyer/BuyerRequests"));
+const Downloads = lazy(() => import("./pages/buyer/Downloads"));
 const ApplyCreator = lazy(() => import("./pages/creator/ApplyCreator"));
 const CreatorDashboard = lazy(() => import("./pages/creator/CreatorDashboard"));
 const CreatorProfile = lazy(() => import("./pages/creator/CreatorProfile"));
@@ -179,6 +180,8 @@ const App = () => {
                 <PaymentInvoice />
               }
             />
+
+            <Route path="/downloads" element={<Downloads />} />
           </Route>
 
           <Route element={<RequireAdminAccess />}>

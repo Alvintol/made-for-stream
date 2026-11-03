@@ -124,7 +124,7 @@ how it fails.
 | Profiles | [`profiles/profiles-and-media.md`](profiles/profiles-and-media.md) |
 | Profiles | [`profiles/account-details.md`](profiles/account-details.md) |
 | Creators | [`creators/applications.md`](creators/applications.md) |
-| Listings | [`listings/listings.md`](listings/listings.md) |
+| Listings | [`listings/listings.md`](listings/listings.md), [`listings/instant-downloads.md`](listings/instant-downloads.md) |
 | Site | [`site/site-updates.md`](site/site-updates.md) |
 | Site | [`site/languages.md`](site/languages.md), [`site/ads.md`](site/ads.md), [`site/efficient-reads.md`](site/efficient-reads.md), [`site/page-loading.md`](site/page-loading.md) |
 | Requests | [`requests/request-lifecycle.md`](requests/request-lifecycle.md) |

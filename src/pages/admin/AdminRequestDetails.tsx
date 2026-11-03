@@ -31,6 +31,7 @@ import ListingRequestSubmissionDetails from '../../components/listingRequests/co
 import ListingRequestFinalDeliverySummary from '../../components/listingRequests/finalDeliveries/ListingRequestFinalDeliverySummary';
 import ListingRequestAgreementAdminPaymentActions from '../../components/listingRequests/payments/ListingRequestAgreementAdminPaymentActions';
 import ListingRequestPaymentAdminRefundPanel from '../../components/listingRequests/payments/ListingRequestPaymentAdminRefundPanel';
+import InstantPurchaseDownloadsCard from '../../components/listings/InstantPurchaseDownloadsCard';
 import CreatorRecoveryBalanceAdminPanel from '../../components/listingRequests/payments/CreatorRecoveryBalanceAdminPanel';
 import AdminNoticeClosurePanel from '../../components/listingRequests/core/AdminNoticeClosurePanel';
 import AdminDisputeHoldPanel from '../../components/listingRequests/core/AdminDisputeHoldPanel';
@@ -269,6 +270,9 @@ const AdminRequestDetails = () => {
             }
           />
 
+          {request.fulfilment_mode === "instant" && (
+            <InstantPurchaseDownloadsCard listingRequestId={request.id} />
+          )}
           <ListingRequestPaymentAdminRefundPanel listingRequestId={request.id} />
           <CreatorRecoveryBalanceAdminPanel creatorUserId={request.creator_user_id} />
 
