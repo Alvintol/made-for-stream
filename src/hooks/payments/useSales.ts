@@ -1,11 +1,16 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   salesMonthToDate,
+  type AdminChartRow,
   type AdminSaleRow,
   type AdminSalesSummary,
+  type AdminTransactionRow,
+  type CreatorChartRow,
   type CreatorSaleRow,
   type CreatorSalesTotals,
+  type CreatorTransactionRow,
   type PaymentInvoice,
+  type SalesChartData,
 } from "../../domain/payments/sales";
 import { toPageOfRows, type PageOfRows } from "../../lib/pageOfRows";
 import { supabase } from "../../lib/supabaseClient";
@@ -14,12 +19,23 @@ export const SALES_PAGE_SIZE = 25;
 
 type SaleCursor = { after_at: string; after_id: string };
 
-type SaleRow = { happened_at: string; movement_id: string };
+type ListRpc = "my_completed_sales" | "admin_completed_sales" | "my_sales" | "admin_sales";
 
-const fetchSalesPage = async <Row extends SaleRow>(
-  rpc: "my_sales" | "admin_sales",
+const saleCursor = (row: { completed_at: string; listing_request_id: string }): SaleCursor => ({
+  after_at: row.completed_at,
+  after_id: row.listing_request_id,
+});
+
+const transactionCursor = (row: { happened_at: string; movement_id: string }): SaleCursor => ({
+  after_at: row.happened_at,
+  after_id: row.movement_id,
+});
+
+const fetchSalesPage = async <Row>(
+  rpc: ListRpc,
   month: string,
   cursor: SaleCursor | null,
+  toCursor: (row: Row) => SaleCursor,
 ): Promise<PageOfRows<Row, SaleCursor>> => {
   const { data, error } = await supabase.rpc(rpc, {
     p_month: salesMonthToDate(month),
@@ -30,19 +46,30 @@ const fetchSalesPage = async <Row extends SaleRow>(
 
   if (error) throw error;
 
-  return toPageOfRows((data ?? []) as Row[], SALES_PAGE_SIZE, (lastRow) => ({
-    after_at: lastRow.happened_at,
-    after_id: lastRow.movement_id,
-  }));
+  return toPageOfRows((data ?? []) as Row[], SALES_PAGE_SIZE, toCursor);
 };
 
-const useSalesPages = <Row extends SaleRow>(rpc: "my_sales" | "admin_sales", month: string) =>
+const useSalesPages = <Row>(rpc: ListRpc, month: string, toCursor: (row: Row) => SaleCursor) =>
   useInfiniteQuery({
     queryKey: [rpc, month],
-    queryFn: ({ pageParam }) => fetchSalesPage<Row>(rpc, month, pageParam),
+    queryFn: ({ pageParam }) => fetchSalesPage<Row>(rpc, month, pageParam, toCursor),
     initialPageParam: null as SaleCursor | null,
     getNextPageParam: (lastPage) => lastPage.next,
     placeholderData: keepPreviousData,
+  });
+
+// One read per period chosen. The previous graph stays up while the next loads.
+const useSalesChart = <Row>(rpc: "my_sales_chart" | "admin_sales_chart", days: number) =>
+  useQuery({
+    queryKey: [rpc, days],
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<SalesChartData<Row>> => {
+      const { data, error } = await supabase.rpc(rpc, { p_days: days });
+
+      if (error) throw error;
+
+      return data as SalesChartData<Row>;
+    },
   });
 
 // The signed-in creator's month, one row per currency. Read once per visit.
@@ -61,7 +88,13 @@ export const useMySalesSummary = (month: string) =>
     },
   });
 
-export const useMySales = (month: string) => useSalesPages<CreatorSaleRow>("my_sales", month);
+export const useMyCompletedSales = (month: string) =>
+  useSalesPages<CreatorSaleRow>("my_completed_sales", month, saleCursor);
+
+export const useMyTransactions = (month: string) =>
+  useSalesPages<CreatorTransactionRow>("my_sales", month, transactionCursor);
+
+export const useMySalesChart = (days: number) => useSalesChart<CreatorChartRow>("my_sales_chart", days);
 
 export const useAdminSalesSummary = (month: string) =>
   useQuery({
@@ -78,7 +111,13 @@ export const useAdminSalesSummary = (month: string) =>
     },
   });
 
-export const useAdminSales = (month: string) => useSalesPages<AdminSaleRow>("admin_sales", month);
+export const useAdminCompletedSales = (month: string) =>
+  useSalesPages<AdminSaleRow>("admin_completed_sales", month, saleCursor);
+
+export const useAdminTransactions = (month: string) =>
+  useSalesPages<AdminTransactionRow>("admin_sales", month, transactionCursor);
+
+export const useAdminSalesChart = (days: number) => useSalesChart<AdminChartRow>("admin_sales_chart", days);
 
 export const usePaymentInvoice = (paymentId: string | undefined) =>
   useQuery({

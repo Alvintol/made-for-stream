@@ -20,6 +20,7 @@
   --accent: 107 52 224;
   --accent-soft: 237 235 250;
   --accent-text: 39 24 112;
+  --chart: 107 52 224;
   --info: 59 130 246;
 
   --hairline: rgb(var(--border) / 0.09);
@@ -58,6 +59,7 @@
   --on-primary: 39 24 112;
   --accent: 185 180 224;
   --accent-soft: 42 40 58;
+  --chart: 143 118 240;
   --accent-text: 201 197 234;
   --info: 125 170 245;
 

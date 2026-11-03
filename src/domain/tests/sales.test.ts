@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  chartTicks,
   currentSalesMonth,
+  formatChartPeriod,
   isUnknownTaxPlace,
   salesMonthToDate,
   taxPlaceName,
@@ -15,6 +17,31 @@ describe("sales months", () => {
 
   it("gives the database the first of the month", () => {
     expect(salesMonthToDate("2026-11")).toBe("2026-11-01");
+  });
+});
+
+describe("the graph's axis", () => {
+  it("uses round steps from zero up past the highest value", () => {
+    expect(chartTicks([0, 19000, 5000])).toEqual([0, 5000, 10000, 15000, 20000]);
+  });
+
+  it("goes below zero when refunds beat sales", () => {
+    const ticks = chartTicks([-3000, 8000]);
+
+    expect(ticks[0]).toBeLessThanOrEqual(-3000);
+    expect(ticks).toContain(0);
+    expect(ticks.at(-1)).toBeGreaterThanOrEqual(8000);
+  });
+
+  it("still draws an axis when every value is zero", () => {
+    expect(chartTicks([0, 0]).length).toBeGreaterThan(1);
+  });
+});
+
+describe("the graph's dates", () => {
+  it("reads the period in UTC, so a day never slips", () => {
+    expect(formatChartPeriod("2026-11-01", "day", "en-CA")).toBe("Nov 1");
+    expect(formatChartPeriod("2026-11-01", "month", "en-CA")).toBe("Nov 2026");
   });
 });
 

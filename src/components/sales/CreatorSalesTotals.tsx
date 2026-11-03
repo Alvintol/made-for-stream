@@ -43,11 +43,17 @@ const CreatorSalesTotals = ({ month }: { month: string }) => {
             <Stat
               label={t("sales.totalSales")}
               value={money(totals.sold_cents)}
-              note={
-                totals.refunded_cents > 0
-                  ? t("sales.afterRefunds", { amount: money(totals.refunded_cents) })
-                  : undefined
-              }
+              note={t("sales.completedCount", { count: totals.sales })}
+            />
+            <Stat
+              label={t("sales.transactions")}
+              value={money(totals.paid_cents)}
+              note={[
+                t("sales.paymentCount", { count: totals.transactions }),
+                ...(totals.refunded_cents > 0
+                  ? [t("sales.afterRefunds", { amount: money(totals.refunded_cents) })]
+                  : []),
+              ].join(" · ")}
             />
             <Stat
               label={t("sales.totalEarnings")}
@@ -63,7 +69,6 @@ const CreatorSalesTotals = ({ month }: { month: string }) => {
                   : undefined
               }
             />
-            <Stat label={t("sales.count")} value={String(totals.sales)} />
           </div>
         );
       })}

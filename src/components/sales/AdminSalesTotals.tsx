@@ -3,7 +3,7 @@ import { useAdminSalesSummary } from "../../hooks/payments/useSales";
 
 const classes = {
   group: "space-y-3",
-  stats: "grid grid-cols-2 gap-3 lg:grid-cols-4",
+  stats: "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5",
   stat: "card p-4",
   label: "text-xs font-semibold uppercase tracking-wide text-zinc-500",
   value: "mt-1 font-display text-2xl font-bold tabular-nums tracking-tight text-zinc-900",
@@ -42,7 +42,12 @@ const AdminSalesTotals = ({ month }: { month: string }) => {
             <Stat
               label="Total sales"
               value={money(totals.sold_cents)}
-              note={`${totals.sales} sale${totals.sales === 1 ? "" : "s"}, ${money(totals.refunded_cents)} refunded`}
+              note={`${totals.sales} completed`}
+            />
+            <Stat
+              label="Transactions"
+              value={money(totals.paid_cents)}
+              note={`${totals.transactions} payment${totals.transactions === 1 ? "" : "s"}, ${money(totals.refunded_cents)} refunded`}
             />
             <Stat label="Fees and support" value={money(totals.kept_cents)} note="What Made for Stream kept" />
             <Stat label="Tax to set aside" value={money(totals.tax_cents)} note="GST/HST inside those fees" />

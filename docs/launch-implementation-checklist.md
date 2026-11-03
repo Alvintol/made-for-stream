@@ -974,6 +974,10 @@ Build order (each its own branch):
       an invoice for every paid payment, and a creator's opt-in to show their tax
       number. The buyer's tax location is no longer readable from the browser. See
       `payments/sales.md`.
+- [x] **Sales graphs and transactions** (V0.9.00, migration `20261103_181`). A sale
+      is one completed project, with all its payments together, and every payment
+      is a transaction. Creator and admin Sales pages have a graph by day or month.
+      Earnings, fees and tax still follow the transactions.
 - [ ] **Instant digital downloads.** Next, on its own branch. Owner's decisions:
       Made for Stream absorbs the tax on the whole price, and sales are final once
       downloaded, except for a faulty file or one that was never downloaded.

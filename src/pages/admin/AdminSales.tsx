@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AdminSalesTotals from "../../components/sales/AdminSalesTotals";
+import SalesChart, {
+  type SalesChartMetric,
+  type SalesChartText,
+} from "../../components/sales/SalesChart";
 import {
   formatFeeRateBps,
   formatPaymentCents,
@@ -10,14 +14,20 @@ import {
   isUnknownTaxPlace,
   taxPlaceName,
   taxTotalsByCurrency,
+  type AdminChartRow,
 } from "../../domain/payments/sales";
-import { useAdminSales, useAdminSalesSummary } from "../../hooks/payments/useSales";
-
+import {
+  useAdminCompletedSales,
+  useAdminSalesChart,
+  useAdminSalesSummary,
+  useAdminTransactions,
+} from "../../hooks/payments/useSales";
 const classes = {
   page: "space-y-6",
   header: "flex flex-wrap items-end justify-between gap-3",
   h1: "pageTitle",
   sub: "pageSub",
+  months: "space-y-3",
   month: "space-y-1",
   label: "formLabel",
   input: "formControl",
@@ -37,40 +47,82 @@ const classes = {
   warning: "notice noticeWarning",
 } as const;
 
-// Every sale on the site for one month, what Made for Stream kept, and the
-// GST/HST to set aside for each place. Playbook: docs/support/payments/sales.md.
+const CHART_METRICS: SalesChartMetric<AdminChartRow>[] = [
+  { id: "earnings", label: "Total earnings", cents: (row) => row.earned_cents },
+  {
+    id: "sales",
+    label: "Total sales",
+    cents: (row) => row.sold_cents,
+    count: (row) => `${row.sales} completed`,
+  },
+  {
+    id: "transactions",
+    label: "Transactions",
+    cents: (row) => row.paid_cents,
+    count: (row) => `${row.transactions} payment${row.transactions === 1 ? "" : "s"}`,
+  },
+  { id: "kept", label: "Fees and support", cents: (row) => row.kept_cents },
+  { id: "tax", label: "Tax to set aside", cents: (row) => row.tax_cents },
+];
+
+const CHART_TEXT: SalesChartText = {
+  title: "Over time",
+  range: "Period",
+  days: (count) => `Last ${count} days`,
+  months: "Last 12 months",
+  currency: "Currency",
+  loading: "Loading…",
+  empty: "No sales or transactions in this period.",
+  failed: "Sales could not be loaded.",
+  table: "Show as a table",
+  date: "Date",
+};
+
+// The whole site's numbers: a graph over time, then one month's totals, the
+// GST/HST to set aside for each place, each completed sale and each
+// transaction. Playbook: docs/support/payments/sales.md.
 const AdminSales = () => {
   const [month, setMonth] = useState(currentSalesMonth);
   const summary = useAdminSalesSummary(month);
-  const sales = useAdminSales(month);
+  const sales = useAdminCompletedSales(month);
+  const transactions = useAdminTransactions(month);
 
   const taxRows = summary.data?.tax ?? [];
-  const rows = sales.data?.pages.flatMap((page) => page.rows) ?? [];
-
+  const saleRows = sales.data?.pages.flatMap((page) => page.rows) ?? [];
+  const transactionRows = transactions.data?.pages.flatMap((page) => page.rows) ?? [];
   return (
     <div className={classes.page}>
-      <div className={classes.header}>
-        <div>
-          <h1 className={classes.h1}>Sales</h1>
-          <p className={classes.sub}>
-            Months run in UTC, the same as the tax reports. A refund counts in the month it was made.
-          </p>
-        </div>
-
-        <label className={classes.month}>
-          <span className={classes.label}>Month</span>
-          <input
-            className={classes.input}
-            type="month"
-            max={currentSalesMonth()}
-            value={month}
-            onChange={(event) => event.currentTarget.value && setMonth(event.currentTarget.value)}
-          />
-        </label>
+      <div>
+        <h1 className={classes.h1}>Sales</h1>
+        <p className={classes.sub}>
+          A sale is one completed commission or listing. Transactions, fees and tax follow each
+          payment. Days and months run in UTC, the same as the tax reports.
+        </p>
       </div>
 
-      <AdminSalesTotals month={month} />
+      <SalesChart useChart={useAdminSalesChart} metrics={CHART_METRICS} text={CHART_TEXT} />
 
+      <section className={classes.months}>
+        <div className={classes.header}>
+          <div>
+            <h2 className={classes.title}>By month</h2>
+            <p className={classes.text}>A refund counts in the month it was made.</p>
+          </div>
+
+          <label className={classes.month}>
+            <span className={classes.label}>Month</span>
+            <input
+              className={classes.input}
+              type="month"
+              max={currentSalesMonth()}
+              value={month}
+              onChange={(event) => event.currentTarget.value && setMonth(event.currentTarget.value)}
+            />
+          </label>
+        </div>
+
+        <AdminSalesTotals month={month} />
+      </section>
       <section className={classes.card}>
         <h2 className={classes.title}>Tax to set aside</h2>
         <p className={classes.text}>
@@ -126,9 +178,9 @@ const AdminSales = () => {
 
         {sales.error && <div className={classes.error}>Sales could not be loaded.</div>}
 
-        {sales.data && rows.length === 0 && <p className={classes.empty}>No sales this month.</p>}
+        {sales.data && saleRows.length === 0 && <p className={classes.empty}>No sales this month.</p>}
 
-        {rows.length > 0 && (
+        {saleRows.length > 0 && (
           <div className={classes.tableWrap}>
             <table className={classes.table}>
               <thead>
@@ -136,7 +188,61 @@ const AdminSales = () => {
                   <th className={classes.th}>Date</th>
                   <th className={classes.th}>Item</th>
                   <th className={classes.th}>Creator</th>
+                  <th className={classes.th}>Payments</th>
                   <th className={classes.th}>Sale</th>
+                  <th className={classes.th}>Kept</th>
+                </tr>
+              </thead>
+              <tbody>
+                {saleRows.map((row) => (
+                  <tr key={`${row.listing_request_id}:${row.currency}`}>
+                    <td className={classes.td}>{row.completed_at.slice(0, 10)}</td>
+                    <td className={classes.td}>
+                      <Link className={classes.link} to={`/admin/requests/${row.listing_request_id}`}>
+                        {row.title ?? "Untitled"}
+                      </Link>
+                    </td>
+                    <td className={classes.td}>{row.creator_handle ? `@${row.creator_handle}` : "—"}</td>
+                    <td className={classes.td}>{row.transactions}</td>
+                    <td className={classes.td}>{formatPaymentCents(row.sold_cents, row.currency)}</td>
+                    <td className={classes.td}>{formatPaymentCents(row.kept_cents, row.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {sales.hasNextPage && (
+          <button
+            type="button"
+            className={classes.more}
+            disabled={sales.isFetchingNextPage}
+            onClick={() => void sales.fetchNextPage()}
+          >
+            Load more
+          </button>
+        )}
+      </section>
+
+      <section className={classes.card}>
+        <h2 className={classes.title}>Each transaction</h2>
+
+        {transactions.error && <div className={classes.error}>Sales could not be loaded.</div>}
+
+        {transactions.data && transactionRows.length === 0 && (
+          <p className={classes.empty}>No transactions this month.</p>
+        )}
+
+        {transactionRows.length > 0 && (
+          <div className={classes.tableWrap}>
+            <table className={classes.table}>
+              <thead>
+                <tr>
+                  <th className={classes.th}>Date</th>
+                  <th className={classes.th}>Item</th>
+                  <th className={classes.th}>Creator</th>
+                  <th className={classes.th}>Amount</th>
                   <th className={classes.th}>Kept</th>
                   <th className={classes.th}>Tax</th>
                   <th className={classes.th}>Buyer in</th>
@@ -147,7 +253,7 @@ const AdminSales = () => {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {transactionRows.map((row) => (
                   <tr key={row.movement_id}>
                     <td className={classes.td}>{row.happened_at.slice(0, 10)}</td>
                     <td className={classes.td}>
@@ -174,12 +280,12 @@ const AdminSales = () => {
           </div>
         )}
 
-        {sales.hasNextPage && (
+        {transactions.hasNextPage && (
           <button
             type="button"
             className={classes.more}
-            disabled={sales.isFetchingNextPage}
-            onClick={() => void sales.fetchNextPage()}
+            disabled={transactions.isFetchingNextPage}
+            onClick={() => void transactions.fetchNextPage()}
           >
             Load more
           </button>
