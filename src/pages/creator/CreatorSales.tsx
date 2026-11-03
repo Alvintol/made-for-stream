@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import CreatorMonthEarnings from "../../components/sales/CreatorMonthEarnings";
+import CreatorTaxHelp from "../../components/sales/CreatorTaxHelp";
 import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
 import { currentSalesMonth } from "../../domain/payments/sales";
 import { useMyCompletedSales, useMyTransactions } from "../../hooks/payments/useSales";
@@ -24,8 +25,8 @@ const classes = {
 } as const;
 
 // A creator's Earnings page: one month's totals, each completed commission
-// or download with its fee, and each transaction. The graph is on the
-// dashboard.
+// or download with its fee, each transaction, and a year of tax help. The
+// graph is on the dashboard.
 const CreatorSales = () => {
   const t = useT();
   const [month, setMonth] = useState(currentSalesMonth);
@@ -161,6 +162,8 @@ const CreatorSales = () => {
           </button>
         )}
       </section>
+
+      <CreatorTaxHelp />
     </div>
   );
 };

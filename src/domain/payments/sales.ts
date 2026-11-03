@@ -1,4 +1,5 @@
-// Sales numbers and invoices (20261102_180, 20261103_181, 20261103_184). The database works
+// Sales numbers and invoices (20261102_180, 20261103_181, 20261103_184,
+// 20261103_185). The database works
 // out every figure; this file only shapes them for the pages. Playbook:
 // docs/support/payments/sales.md.
 //
@@ -84,6 +85,45 @@ export type AdminSalesSummary = {
   tax: AdminTaxRow[];
   regions?: AdminRegionRow[];
 };
+
+// A creator's year for their own tax records (20261103_185). Estimates from
+// Made for Stream sales only.
+export type CreatorTaxTotals = {
+  currency: string;
+  payments: number;
+  sold_cents: number;
+  fee_cents: number;
+  fee_tax_cents: number;
+  earned_cents: number;
+};
+
+// country "-": the buyer paid before agreeing that creators see their region.
+// bps and tax_cents only for buyers in Canada: the GST/HST rate there, and
+// that rate on the commission sales (downloads are left out, because Made
+// for Stream pays the tax on those).
+export type CreatorTaxRegionRow = {
+  country: string;
+  region: string;
+  currency: string;
+  payments: number;
+  sold_cents: number;
+  earned_cents: number;
+  commission_sold_cents: number;
+  bps: number | null;
+  tax_cents: number | null;
+};
+
+export type CreatorTaxSummary = {
+  creator_country: string | null;
+  totals: CreatorTaxTotals[];
+  regions: CreatorTaxRegionRow[];
+  // Canadian dollars sold over the last four calendar quarters, from `from`.
+  small_supplier: { from: string; sold_cents: number };
+};
+
+// Canada's small supplier limit: past $30,000 in four calendar quarters, a
+// business has to register for GST/HST.
+export const SMALL_SUPPLIER_LIMIT_CENTS = 3_000_000;
 
 export type AdminSaleRow = {
   listing_request_id: string;
@@ -281,11 +321,12 @@ const CANADA_REGIONS: Record<string, string> = {
 
 export const isUnknownTaxPlace = (place: string): boolean => place.includes("?");
 
-// For the admin page's sales by region: "Ontario", "WA, United States".
-export const regionName = (country: string, region: string): string => {
+// "Ontario", "WA, United States". Province names stay in English. The "?"
+// label is for the admin page; the creator page names "?" itself.
+export const regionName = (country: string, region: string, locale = "en"): string => {
   if (country === "?") return "Unknown, check this";
 
-  const countryName = new Intl.DisplayNames(["en"], { type: "region" }).of(country) ?? country;
+  const countryName = new Intl.DisplayNames([locale], { type: "region" }).of(country) ?? country;
 
   if (country === "CA" && CANADA_REGIONS[region]) return CANADA_REGIONS[region];
 

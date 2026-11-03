@@ -20,6 +20,10 @@ surfaces:
   - public.admin_sales_chart()
   - public.sales_chart_window()                  # 20261103_184
   - public.check_sales_kind()
+  - public.my_tax_summary()                      # 20261103_185
+  - public.creator_sees_buyer_region()
+  - public.policy_acceptances                    # privacy 2026-11-03-3
+  - src/components/sales/CreatorTaxHelp.tsx
   - src/components/sales/MonthPicker.tsx
   - src/components/sales/CreatorEarningsChart.tsx
   - src/components/sales/AdminSalesChart.tsx
@@ -100,13 +104,36 @@ checkout, or else the buyer's address at that date, which may have changed. US s
 tax is owed by state once sales there pass that state's limit, so these totals are
 what to watch; nothing here charges US tax.
 
+**Tax help for creators.** At the bottom of the Earnings page, `my_tax_summary()` gives a
+creator a year of estimates for their own tax records:
+
+- Earnings for the year, and the fees Made for Stream charged with the GST/HST inside them.
+  A registered creator can usually claim that GST/HST back; the fees are a business expense.
+- For a creator whose account country is Canada, their Canadian-dollar sales over the last
+  four calendar quarters against the $30,000 small supplier limit, with a warning past it.
+  It counts Made for Stream sales only, downloads included.
+- Their sales by the buyer's country and province or state. For buyers in Canada, and
+  only for a creator in Canada, the GST/HST rate there and that rate on the commission
+  sales, on top of the price. Downloads are left out of that column because Made for
+  Stream pays their GST/HST. The rate is the one saved with each payment.
+
+A region row reads **Not shared** when the buyer paid before accepting Privacy Policy
+version 2026-11-03-3, which is what tells buyers creators see their region.
+`creator_sees_buyer_region()` checks for that acceptance, dated on or before the payment;
+a refund follows its payment. Those payments still count in every total. It refuses a
+year before 2020 or after this one ("Choose a year from 2020 to this one.", 22023).
+
 Days and months run in UTC, the same as the tax reports. A refund counts in the month
 it was made, as a negative amount. Each currency has its own row, because amounts in
 different currencies can't be added. Money in US dollars is converted when the return
 is filed.
 
-**Privacy.** Creators are told nothing about where a buyer lives. Their pages and their
-invoice leave out the buyer's place and rate, and the rate would give it away. The
+**Privacy.** Creators see where buyers are only in the tax help's region table: the
+country and province or state, added up for the year, and only for payments made after
+the buyer accepted the 2026-11-03-3 Privacy Policy. Never a street address, city or
+postal code, and never the place of a single sale: the lists and the invoice still leave
+out the buyer's place and rate. A creator with one buyer in a place can still tell which
+sale it was, and the policy says so. The
 buyer's `tax_jurisdiction_*` columns aren't readable from the browser, and
 `paid_payment_details` is read only through these functions. New columns on
 `listing_request_payments` are private until a migration grants them.
@@ -134,7 +161,10 @@ added on top of the price. See [`tax.md`](tax.md).
 | "Sales less fees doesn't equal my earnings" | Expected: sales land when a project completes, and earnings when each payment is made |
 | "Last month's total sales changed" | Expected: a refund on a completed project lowers that sale's total |
 | "The tax looks a cent off" | Expected: tax is rounded per sale |
-| A creator asks where a buyer lives | Refuse. They aren't told |
+| A creator asks where a buyer lives | Refuse anything beyond the tax help's region totals |
+| A creator's region table says "Not shared" | Expected: those buyers paid before accepting the updated Privacy Policy |
+| A creator in Canada sees no GST/HST rate column | Their account country isn't Canada (Settings → Personal details) |
+| "My $30,000 total doesn't match my own records" | Expected: it counts Made for Stream sales only, in Canadian dollars |
 
 ---
 
@@ -145,11 +175,14 @@ id: SALE-001
 tier: 2
 signals:
   - source: client
-    match: "/Could not find the function public\\.(my_sales_summary|my_sales|my_completed_sales|my_sales_chart|admin_sales_summary|admin_sales|admin_completed_sales|admin_sales_chart)/"
+    match: "/Could not find the function public\\.(my_tax_summary|my_sales_summary|my_sales|my_completed_sales|my_sales_chart|admin_sales_summary|admin_sales|admin_completed_sales|admin_sales_chart)/"
     where: "PostgREST PGRST202 on /rest/v1/rpc/*"
   - source: client
     match: "Only an administrator can see sales."
     where: "admin_sales_summary(), admin_sales(), admin_completed_sales() and admin_sales_chart(), Postgres 42501"
+  - source: client
+    match: "Choose a year from 2020 to this one."
+    where: "my_tax_summary(), Postgres 22023; the website only offers this year and the two before"
 auto_fix: none
 reason_not_automatable: "applying a migration is the owner's step"
 escalate_if:
@@ -157,7 +190,7 @@ escalate_if:
   - "a creator can see another creator's sales"
 ```
 
-**Cause.** The website went out before migration 180 or 181, or someone without an admin
+**Cause.** The website went out before its migration (180, 181, 184 or 185), or someone without an admin
 role opened the admin page.
 
 **What the user sees.** The load error on the graph, the lists or the dashboard's
@@ -165,7 +198,8 @@ This month's sales.
 
 **Fix.** Check the functions exist. If they don't, apply
 `20261102_180_add_sales_numbers_and_invoices.sql` or
-`20261103_181_group_sales_by_completed_project.sql`.
+`20261103_181_group_sales_by_completed_project.sql`, or for the tax help
+`20261103_185_add_creator_tax_help.sql`.
 **Money impact.** None. These pages only read.
 
 ---
@@ -271,6 +305,11 @@ taxable amount. See [`../listings/instant-downloads.md`](../listings/instant-dow
   the tens of thousands of sales a month. Past that, keep daily totals in a table.
 - **A refund changes an old month's sale.** Total sales shows each project as it stands
   now. Transactions and tax don't change: a refund counts in the month it was made.
-- **Dashboards show the month's cards, not the graph.** The graph is on the Sales pages.
+- **Tax help is an estimate.** It leaves out sales made elsewhere, provincial sales tax and
+  income tax, and treats GST/HST as on top of the price. Whether a creator's commissions
+  are taxable, and how, is for their accountant.
+- **Tax help is by calendar year only.** A creator who files GST/HST quarterly or monthly
+  adds up the Earnings page's months instead.
+- **Province names stay in English** in the creator's region table, in every language.
 - **There's no monthly statement for creators by email.** The Sales page and each
   invoice are the record.

@@ -996,6 +996,13 @@ Build order (each its own branch):
       by country and state or province.
 - [ ] Ask the accountant which US states' sales tax limits to watch, using the
       admin page's sales by region.
+- [x] **Tax help for creators** (V0.13.00, migration `20261103_185`, Privacy Policy
+      2026-11-03-3). A year of earnings and fees with their GST/HST, the $30,000
+      small supplier tracker, and sales by the buyer's region with the GST/HST rate.
+- [ ] Have the lawyer confirm the Privacy Policy 2026-11-03-3 wording that creators
+      see buyers' country and province or state, added up by place.
+- [ ] Ask the accountant to check the tax help's wording, especially the GST/HST
+      estimate on commissions and the $30,000 tracker counting downloads.
 - [ ] Have the lawyer confirm the final-sale wording in Refund Policy section 12
       and the checkout checkbox, including the exception for refunds the law requires.
 - [ ] Ask the accountant whether Made for Stream remitting GST/HST on a download's

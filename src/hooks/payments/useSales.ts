@@ -8,6 +8,7 @@ import {
   type CreatorChartRow,
   type CreatorSaleRow,
   type CreatorSalesTotals,
+  type CreatorTaxSummary,
   type CreatorTransactionRow,
   type PaymentInvoice,
   type SalesChartData,
@@ -91,6 +92,20 @@ export const useMySalesSummary = (month: string) =>
       if (error) throw error;
 
       return data as CreatorSalesTotals[];
+    },
+  });
+
+// The signed-in creator's year for their taxes (20261103_185).
+export const useMyTaxSummary = (year: number) =>
+  useQuery({
+    queryKey: ["myTaxSummary", year],
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<CreatorTaxSummary> => {
+      const { data, error } = await supabase.rpc("my_tax_summary", { p_year: year });
+
+      if (error) throw error;
+
+      return data as CreatorTaxSummary;
     },
   });
 

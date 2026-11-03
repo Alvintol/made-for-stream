@@ -1489,6 +1489,25 @@ export const en = {
   "sales.noTransactions": "No transactions this month.",
   "sales.loadFailed": "Your sales could not be loaded. Please try again.",
 
+  // A creator's tax help on the Earnings page (src/components/sales/CreatorTaxHelp.tsx)
+  "tax.title": "Tax help",
+  "tax.note": "Estimates from your Made for Stream sales, to help with your own tax records. Add any sales you make elsewhere. This isn't tax advice, so check with an accountant.",
+  "tax.noSales": "No sales this year.",
+  "tax.earningsNote": "What you were paid this year, less refunds and Made for Stream's fees. This is income to report.",
+  "tax.feesNote": "Fees are usually a business expense. If you're registered for GST/HST, you can usually claim back the GST/HST in them.",
+  "tax.limitTitle": "GST/HST small supplier limit",
+  "tax.limitValue": "{amount} of {limit}",
+  "tax.limitNote": "Your Made for Stream sales since {month}, over four calendar quarters. Once your sales everywhere pass $30,000 in four quarters in a row, you have to register for GST/HST.",
+  "tax.limitPassed": "Your Made for Stream sales have passed $30,000 in four quarters. You probably have to register for GST/HST, so talk to an accountant.",
+  "tax.regionsTitle": "Sales by buyer's region",
+  "tax.regionsNote": "Where buyers were when they paid, added up by country and province or state. \"Not shared\" covers payments made before the buyer accepted the Privacy Policy update that shares their region with you.",
+  "tax.rateNote": "If you're registered for GST/HST, the last column is the rate in the buyer's province on your commission sales. Made for Stream pays the GST/HST on instant downloads, so they're left out.",
+  "tax.region": "Region",
+  "tax.rate": "GST/HST rate",
+  "tax.atRate": "GST/HST at this rate",
+  "tax.notShared": "Not shared",
+  "tax.unknownRegion": "Unknown",
+
   // One paid payment's invoice (src/pages/payments/PaymentInvoice.tsx)
   "invoice.title": "Invoice",
   "invoice.number": "No. {number}",
