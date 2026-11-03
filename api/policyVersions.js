@@ -21,7 +21,7 @@
 //                              consent Refund Policy section 1 requires, and is
 //                              versioned with the document that defines it
 export const CHECKOUT_POLICY_VERSIONS = {
-  refund: "2026-10-07",
-  payment_terms: "2026-11-02",
-  early_service_request: "2026-10-07",
+  refund: "2026-11-03",
+  payment_terms: "2026-11-03",
+  early_service_request: "2026-11-03",
 };

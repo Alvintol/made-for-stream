@@ -148,7 +148,10 @@ const CreatorSales = () => {
                   <tr key={`${row.listing_request_id}:${row.currency}`}>
                     <td className={classes.td}>{row.completed_at.slice(0, 10)}</td>
                     <td className={classes.td}>
-                      <Link className={classes.link} to={`/creator/requests/${row.listing_request_id}`}>
+                      <Link
+                        className={classes.link}
+                        to={row.instant ? `/creator/listings/${row.listing_id}` : `/creator/requests/${row.listing_request_id}`}
+                      >
                         {row.title ?? t("sales.untitled")}
                       </Link>
                     </td>
@@ -204,7 +207,10 @@ const CreatorSales = () => {
                   <tr key={row.movement_id}>
                     <td className={classes.td}>{row.happened_at.slice(0, 10)}</td>
                     <td className={classes.td}>
-                      <Link className={classes.link} to={`/creator/requests/${row.listing_request_id}`}>
+                      <Link
+                        className={classes.link}
+                        to={row.instant ? `/creator/listings/${row.listing_id}` : `/creator/requests/${row.listing_request_id}`}
+                      >
                         {row.title ?? t("sales.untitled")}
                       </Link>
                       {row.kind === "refund" && <span className={classes.refund}> {t("sales.refund")}</span>}

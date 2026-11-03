@@ -978,9 +978,17 @@ Build order (each its own branch):
       is one completed project, with all its payments together, and every payment
       is a transaction. Creator and admin Sales pages have a graph by day or month.
       Earnings, fees and tax still follow the transactions.
-- [ ] **Instant digital downloads.** Next, on its own branch. Owner's decisions:
-      Made for Stream absorbs the tax on the whole price, and sales are final once
-      downloaded, except for a faulty file or one that was never downloaded.
+- [x] **Instant digital downloads** (V0.10.00, migration `20261103_182`). Ready-made
+      digital listings bought and downloaded straight away, sold any number of times,
+      up to 10 files each, with a personal, streaming or commercial licence. Made for
+      Stream absorbs the GST/HST on the whole price; a sale is final once a file is
+      downloaded (Refund Policy section 12). See `listings/instant-downloads.md`.
+- [ ] Have the lawyer review the instant-download wording: Refund Policy section 12,
+      the three licences in Terms of Service section 8, Creator Terms section 8, the
+      Payment Terms GST/HST paragraph and the Privacy Policy retention line.
+- [ ] Ask the accountant whether Made for Stream remitting GST/HST on a download's
+      whole price, including the creator's share, is the right treatment, and how the
+      creator reports that sale.
 - [ ] **UK Online Safety Act risk assessments and Digital Services Act
       gaps** (report form fields, statements of reasons, contact points).
       Built on `feat/online-safety-report-statement`: report forms ask why

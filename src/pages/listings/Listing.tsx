@@ -39,6 +39,7 @@ import { useSubmitListingModerationReport } from '../../hooks/moderation/useSubm
 import { useAuth } from '../../providers/AuthProvider';
 import { useActiveListingRequestForListing } from '../../hooks/listings/useActiveListingRequestForListing';
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
+import InstantPurchasePanel from "../../components/listings/InstantPurchasePanel";
 
 const classes = {
   notFoundWrap: "space-y-4",
@@ -363,6 +364,13 @@ const ListingPage = () => {
                     : t("listing.getFree")}
                 </a>
               </>
+            ) : listing.fulfilment_mode === "instant" ? (
+              <InstantPurchasePanel
+                listingId={listing.id}
+                licence={listing.instant_licence}
+                userId={user?.id ?? null}
+                isOwnListing={isOwnListing}
+              />
             ) : (
               <>
                 <div className={classes.ctaTitle}>{t(fulfilmentCopy.title)}</div>
@@ -380,11 +388,7 @@ const ListingPage = () => {
                       {t("listing.requestButton")}
                     </Link>
                   )
-                ) : (
-                  <Link className={classes.ctaLink} to="#">
-                    {t(fulfilmentCopy.primaryLabel)}
-                  </Link>
-                )}
+                ) : null}
               </>
             )}
           </div>

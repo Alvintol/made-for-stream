@@ -61,7 +61,8 @@ export const creatorTermsSections = [
     "body": [
       "Deliver the accepted scope on the agreed schedule and keep evidence of substantive progress. For projects expected to take more than one week, provide a meaningful progress update at least weekly. Promptly report material delays and seek agreement to changed dates rather than silently extending them.",
       "Respond professionally, provide included revisions and follow the refund policy's non-response and escalation process. Do not coerce tips, use abusive messages, hold already-paid conforming work hostage or make a favourable review a condition of a refund. You may decline additional scope, unlawful requests or abusive engagement, but must still account for earned value and return unearned money.",
-      "Once cancellation is requested, stop avoidable additional work and provide the itemised statement required by the refund policy. A “non-refundable deposit” label cannot override that policy. Repeated non-performance or ghosting can affect creator access after review."
+      "Once cancellation is requested, stop avoidable additional work and provide the itemised statement required by the refund policy. A “non-refundable deposit” label cannot override that policy. Repeated non-performance or ghosting can affect creator access after review.",
+      "For an instant download, upload files that match the listing and work as described, choose its licence, and keep the files available for as long as the listing is offered. Do not upload malicious software, files you are not entitled to sell, or anything the listing does not describe. A change to the files reaches everyone who has bought it. When a buyer reports a faulty file, fix it within 7 days. Made for Stream may remove a download or its listing and refund buyers when a file is faulty, infringing or not as described."
     ]
   },
   {

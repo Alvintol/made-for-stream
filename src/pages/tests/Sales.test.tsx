@@ -66,6 +66,8 @@ const totals: CreatorSalesTotals = {
 
 const completedSale: CreatorSaleRow = {
   listing_request_id: "r1",
+  listing_id: "l1",
+  instant: false,
   completed_at: "2026-11-02T12:00:00+00:00",
   title: "Milestone project",
   currency: "cad",
@@ -79,6 +81,8 @@ const transaction: CreatorTransactionRow = {
   movement_id: "m1",
   payment_id: "p1",
   listing_request_id: "r1",
+  listing_id: "l1",
+  instant: false,
   kind: "sale",
   happened_at: "2026-11-02T12:00:00+00:00",
   title: "Emote pack",

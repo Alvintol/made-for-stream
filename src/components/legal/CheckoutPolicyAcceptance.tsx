@@ -15,6 +15,9 @@ import PolicyAcceptanceCheckbox from "./PolicyAcceptanceCheckbox";
 import { useLanguage, useT } from "../../lib/i18n/i18n";
 type CheckoutPolicyAcceptanceProps = {
   listingRequestId: string;
+  // Set for an instant download: the buyer reviews the listing rather than
+  // an agreement, and the express consent is to download straight away.
+  instantListingId?: string | null;
   onAccepted: () => void;
 };
 
@@ -45,7 +48,8 @@ const formatAcceptedDate = (value: string, language: string): string =>
 // It is first recorded when the buyer accepts the agreement (20260923_138),
 // so here it only reappears if the Refund Policy has changed since.
 const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
-  const { listingRequestId, onAccepted } = props;
+  const { listingRequestId, instantListingId = null, onAccepted } = props;
+  const instant = Boolean(instantListingId);
 
   const acceptancesQuery = usePolicyAcceptances({
     policyTypes: checkoutPolicyTypes,
@@ -113,13 +117,23 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
     <section className={classes.card} aria-label={t("checkoutTerms.label")}>
       <div className={classes.group}>
         <h2 className={classes.heading}>{t("checkoutTerms.heading")}</h2>
-        <p className={classes.text}>
-          {t("checkoutTerms.reviewStart")}{" "}
-          <Link className={classes.link} to={`/requests/${listingRequestId}`}>
-            {t("checkoutTerms.agreementLink")}
-          </Link>{" "}
-          {t("checkoutTerms.reviewEnd")}
-        </p>
+        {instant ? (
+          <p className={classes.text}>
+            {t("checkoutTerms.reviewListingStart")}{" "}
+            <Link className={classes.link} to={`/listing/${instantListingId}`}>
+              {t("checkoutTerms.listingLink")}
+            </Link>{" "}
+            {t("checkoutTerms.reviewListingEnd")}
+          </p>
+        ) : (
+          <p className={classes.text}>
+            {t("checkoutTerms.reviewStart")}{" "}
+            <Link className={classes.link} to={`/requests/${listingRequestId}`}>
+              {t("checkoutTerms.agreementLink")}
+            </Link>{" "}
+            {t("checkoutTerms.reviewEnd")}
+          </p>
+        )}
 
         <PolicyAcceptanceCheckbox
           id="checkout-terms-acceptance"
@@ -141,8 +155,12 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
 
       {needsEarlyStartRequest && (
       <div className={classes.group}>
-        <h2 className={classes.heading}>{t("consent.earlyStartHeading")}</h2>
-        <p className={classes.text}>{t("consent.earlyStartText")}</p>
+        <h2 className={classes.heading}>
+          {t(instant ? "consent.downloadHeading" : "consent.earlyStartHeading")}
+        </h2>
+        <p className={classes.text}>
+          {t(instant ? "consent.downloadText" : "consent.earlyStartText")}
+        </p>
 
         <PolicyAcceptanceCheckbox
           id="checkout-early-service-request"
@@ -150,7 +168,7 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
           onChange={setEarlyStartRequested}
           disabled={isBusy}
         >
-          {t("consent.earlyStartLabel")}
+          {t(instant ? "consent.downloadLabel" : "consent.earlyStartLabel")}
         </PolicyAcceptanceCheckbox>
       </div>
       )}

@@ -9,6 +9,7 @@ export type MyListingRow = {
   short: string;
   offering_type: "digital" | "commission" | "service";
   fulfilment_mode: "request" | "instant";
+  instant_licence?: string | null;
   category: string;
   video_subtype: "long-form" | "short-form" | null;
   price_type: "fixed" | "starting_at" | "range";

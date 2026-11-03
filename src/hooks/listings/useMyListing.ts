@@ -16,6 +16,7 @@ const fetchMyListing = async (
       short,
       offering_type,
       fulfilment_mode,
+      instant_licence,
       category,
       video_subtype,
       price_type,

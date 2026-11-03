@@ -328,6 +328,12 @@ const Nav = () => {
         </span>
       </NavLink>
 
+      {!loading && user && (
+        <NavLink to="/downloads" className={({ isActive }) => getAuthPillClass(isActive)}>
+          {t("nav.downloads")}
+        </NavLink>
+      )}
+
       {withPriority && inboxLink}
       
       {!loading && user && (

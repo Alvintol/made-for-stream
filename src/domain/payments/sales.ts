@@ -18,6 +18,8 @@ export type CreatorSalesTotals = {
 
 export type CreatorSaleRow = {
   listing_request_id: string;
+  listing_id: string;
+  instant: boolean;
   completed_at: string;
   title: string | null;
   currency: string;
@@ -31,6 +33,8 @@ export type CreatorTransactionRow = {
   movement_id: string;
   payment_id: string;
   listing_request_id: string;
+  listing_id: string;
+  instant: boolean;
   kind: "sale" | "refund";
   happened_at: string;
   title: string | null;
@@ -67,6 +71,8 @@ export type AdminSalesSummary = {
 
 export type AdminSaleRow = {
   listing_request_id: string;
+  listing_id: string;
+  instant: boolean;
   completed_at: string;
   title: string | null;
   creator_handle: string | null;
@@ -80,6 +86,8 @@ export type AdminTransactionRow = {
   movement_id: string;
   payment_id: string;
   listing_request_id: string;
+  listing_id: string;
+  instant: boolean;
   kind: "sale" | "refund";
   happened_at: string;
   title: string | null;
@@ -127,6 +135,8 @@ export type PaymentInvoice = {
   number: string;
   paid_at: string;
   title: string | null;
+  // A download: the tax is on the whole price, and there is no creator-side tax.
+  instant?: boolean;
   currency: string;
   seller_name: string;
   seller_tax_number: string | null;

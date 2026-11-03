@@ -2274,6 +2274,11 @@ const assertCheckoutPoliciesAccepted = async ({ payment, userId }) => {
 };
 
 const getPaymentCheckoutTitle = (payment) => {
+  // An instant download (20261103_182).
+  if (payment.metadata?.instant === true) {
+    return "Made for Stream instant download";
+  }
+
   const labelByType = {
     one_time: "Made for Stream one-time payment",
     starting_payment: "Made for Stream starting payment",

@@ -9,6 +9,7 @@ const listing: PublicListingRow = {
   short: "12 emotes + variants.",
   offering_type: "digital",
   fulfilment_mode: "request",
+  instant_licence: null,
   category: "emotes",
   video_subtype: null,
   price_type: "fixed",
