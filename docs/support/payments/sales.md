@@ -24,6 +24,8 @@ surfaces:
   - public.creator_sees_buyer_region()
   - public.policy_acceptances                    # privacy 2026-11-03-3
   - src/components/sales/CreatorTaxHelp.tsx
+  - src/components/sales/CreatorTaxRegions.tsx
+  - src/pages/creator/CreatorStatement.tsx       # /creator/earnings/statement/:year
   - src/components/sales/MonthPicker.tsx
   - src/components/sales/CreatorEarningsChart.tsx
   - src/components/sales/AdminSalesChart.tsx
@@ -123,6 +125,15 @@ version 2026-11-03-3, which is what tells buyers creators see their region.
 a refund follows its payment. Those payments still count in every total. It refuses a
 year before 2020 or after this one ("Choose a year from 2020 to this one.", 22023).
 
+**Yearly statement.** Tax help's **Yearly statement** button opens
+`/creator/earnings/statement/:year`, one page to print or save as a PDF. It shows the
+creator's legal or business name, address and tax number from their own personal
+details, the year's totals from `my_tax_summary()`, each month from `my_sales_chart()`
+(added up by month on the page, because the first 92 days of a year come back by day),
+and sales by region. It says it isn't a government tax form. It reads nothing new from
+the database. A year before 2020 or after this one shows "There's no statement for that
+year." without asking the database.
+
 Days and months run in UTC, the same as the tax reports. A refund counts in the month
 it was made, as a negative amount. Each currency has its own row, because amounts in
 different currencies can't be added. Money in US dollars is converted when the return
@@ -164,6 +175,8 @@ added on top of the price. See [`tax.md`](tax.md).
 | A creator asks where a buyer lives | Refuse anything beyond the tax help's region totals |
 | A creator's region table says "Not shared" | Expected: those buyers paid before accepting the updated Privacy Policy |
 | A creator in Canada sees no GST/HST rate column | Their account country isn't Canada (Settings → Personal details) |
+| The statement says "Add your legal name and address in Settings → Personal details" | Expected: they haven't filled in their personal details yet |
+| A creator asks for a T4A, T5018 or 1099 | Made for Stream doesn't issue tax forms yet: the yearly statement is a record, not a form. See the checklist's accountant question |
 | "My $30,000 total doesn't match my own records" | Expected: it counts Made for Stream sales only, in Canadian dollars |
 
 ---

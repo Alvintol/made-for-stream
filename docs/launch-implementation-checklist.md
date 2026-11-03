@@ -1001,6 +1001,16 @@ Build order (each its own branch):
       small supplier tracker, and sales by the buyer's region with the GST/HST rate.
 - [ ] Have the lawyer confirm the Privacy Policy 2026-11-03-3 wording that creators
       see buyers' country and province or state, added up by place.
+- [x] **Yearly earnings statement for creators** (V0.14.00). A printable page per year
+      from Tax help, labelled as a record and not a government tax form.
+- [ ] Ask the accountant whether Made for Stream is a reporting platform operator
+      under Canada's digital platform reporting rules (Income Tax Act Part XX) for
+      commissions, which would mean reporting each creator's yearly income to the CRA
+      by January 31 and giving them a copy. If so, plan the report and whether
+      creators' SIN or business numbers must be collected (a Privacy Policy change).
+- [ ] Ask the accountant, and check Stripe's documentation, who has to issue 1099-K
+      forms to US creators with Stripe accounts set to `dashboard: "none"`, and
+      whether to use Stripe's 1099 filing service.
 - [ ] Ask the accountant to check the tax help's wording, especially the GST/HST
       estimate on commissions and the $30,000 tracker counting downloads.
 - [ ] Have the lawyer confirm the final-sale wording in Refund Policy section 12

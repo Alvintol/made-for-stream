@@ -1508,6 +1508,22 @@ export const en = {
   "tax.notShared": "Not shared",
   "tax.unknownRegion": "Unknown",
 
+  // A creator's yearly statement (src/pages/creator/CreatorStatement.tsx)
+  "statement.link": "Yearly statement",
+  "statement.back": "Back to Earnings",
+  "statement.title": "Earnings statement {year}",
+  "statement.periodFull": "January to December {year}",
+  "statement.periodSoFar": "{year} so far, to {date}",
+  "statement.prepared": "Prepared {date}",
+  "statement.notAForm": "A record of your Made for Stream sales for your own tax records, before Stripe's costs. It isn't a government tax form. Add any sales you make elsewhere.",
+  "statement.preparedFor": "Prepared for",
+  "statement.preparedBy": "From",
+  "statement.noDetails": "Add your legal name and address in Settings → Personal details to show them here.",
+  "statement.summary": "Summary",
+  "statement.sold": "Sales, less refunds",
+  "statement.feeTax": "GST/HST in those fees",
+  "statement.invalidYear": "There's no statement for that year.",
+
   // One paid payment's invoice (src/pages/payments/PaymentInvoice.tsx)
   "invoice.title": "Invoice",
   "invoice.number": "No. {number}",

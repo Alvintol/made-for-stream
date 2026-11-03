@@ -70,6 +70,7 @@ const MyReports = lazy(() => import("./pages/reports/MyReports"));
 const PaymentReturn = lazy(() => import("./pages/payments/PaymentReturn"));
 const PaymentInvoice = lazy(() => import("./pages/payments/PaymentInvoice"));
 const CreatorSales = lazy(() => import("./pages/creator/CreatorSales"));
+const CreatorStatement = lazy(() => import("./pages/creator/CreatorStatement"));
 const ListingRequestPaymentCheckout = lazy(() => import("./pages/payments/ListingRequestPaymentCheckout"));
 
 const App = () => {
@@ -272,6 +273,10 @@ const App = () => {
             <Route
               path="/creator/earnings"
               element={<CreatorSales />}
+            />
+            <Route
+              path="/creator/earnings/statement/:year"
+              element={<CreatorStatement />}
             />
             {/* The old address, which emails still link to. */}
             <Route path="/creator/sales" element={<Navigate to="/creator/earnings" replace />} />

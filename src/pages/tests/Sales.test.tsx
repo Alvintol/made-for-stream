@@ -317,6 +317,10 @@ describe("tax help", () => {
     fireEvent.change(taxHelp().getByLabelText("Year"), { target: { value: String(thisYear - 1) } });
 
     expect(mocks.taxYears.at(-1)).toBe(thisYear - 1);
+    expect(taxHelp().getByRole("link", { name: "Yearly statement" })).toHaveAttribute(
+      "href",
+      `/creator/earnings/statement/${thisYear - 1}`,
+    );
   });
 
   it("tracks a creator in Canada against the $30,000 limit, and warns past it", () => {
