@@ -18,6 +18,11 @@ surfaces:
   - public.admin_sales()                         # the transactions
   - public.admin_completed_sales()
   - public.admin_sales_chart()
+  - public.sales_chart_window()                  # 20261103_184
+  - public.check_sales_kind()
+  - src/components/sales/MonthPicker.tsx
+  - src/components/sales/CreatorEarningsChart.tsx
+  - src/components/sales/AdminSalesChart.tsx
   - public.get_payment_invoice()
   - public.user_account_details                  # show_tax_number_on_invoices
   - src/domain/payments/sales.ts
@@ -71,9 +76,29 @@ address or rate never rewrites an old sale.
 | Admin: Tax to set aside | The GST/HST inside those fees |
 | Admin: Total earnings | Fees and support less that tax, before your own costs |
 
-**The graphs.** Each Sales page graphs these numbers for the last 7, 28 or 90 days by day,
-or the last 12 months by month. They read the same totals as the month cards. A graph
-shows one currency at a time, and a refund can take a day below zero.
+**Where things are.** A creator's dashboard shows the month's earnings and completed
+count at the top, and the graph at the bottom. Their **Earnings** page (`/creator/earnings`;
+the old `/creator/sales` address sends people there) has each completed sale with its
+fee and each transaction. The fee total isn't shown as a card. The admin dashboard has
+the month's cards and the graph; the admin Sales page has the tax table, sales by
+region and the lists. Months are chosen from a calendar, so a typed month like
+"2026-13" can't happen.
+
+**The graphs.** They show the last 7, 28 or 90 days, the last 12 months, a whole year,
+or any dates up to two years apart. Up to 92 days is a line by day; longer is bars by
+month. A filter shows commissions, instant downloads or both. They read the same totals
+as the month cards. A graph shows one currency at a time, and a refund can take a day
+below zero. `sales_chart_window()` refuses an end before the start ("Choose a start
+date before the end date.") and `check_sales_kind()` refuses any other kind ("Choose
+commissions, instant downloads or everything."); the website stops both first.
+
+**Sales by region.** The admin Sales page adds up, for the month, what buyers in each
+country and state or province paid, less refunds, with the GST/HST on their side. It
+uses the buyer's `buyer_country` and `buyer_region` saved in `paid_payment_details`
+when the payment was made. Sales from before 2026-11-03 use the place recorded at
+checkout, or else the buyer's address at that date, which may have changed. US sales
+tax is owed by state once sales there pass that state's limit, so these totals are
+what to watch; nothing here charges US tax.
 
 Days and months run in UTC, the same as the tax reports. A refund counts in the month
 it was made, as a negative amount. Each currency has its own row, because amounts in

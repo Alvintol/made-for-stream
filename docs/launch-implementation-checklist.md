@@ -990,6 +990,12 @@ Build order (each its own branch):
       `20261103_183`). Buyers get an emailed receipt; instant downloads are final
       sales, confirmed in their own checkbox; files show their measured pixels,
       length or zip contents.
+- [x] **Earnings dashboard and sales by region** (V0.12.00, migration `20261103_184`).
+      Earnings and the graph on both dashboards, a month calendar, graph filters for
+      commissions or downloads, any dates and whole years by month, and admin sales
+      by country and state or province.
+- [ ] Ask the accountant which US states' sales tax limits to watch, using the
+      admin page's sales by region.
 - [ ] Have the lawyer confirm the final-sale wording in Refund Policy section 12
       and the checkout checkbox, including the exception for refunds the law requires.
 - [ ] Ask the accountant whether Made for Stream remitting GST/HST on a download's

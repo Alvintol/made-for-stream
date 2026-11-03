@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import CreatorSalesTotals from "../../components/sales/CreatorSalesTotals";
+import CreatorEarningsChart from "../../components/sales/CreatorEarningsChart";
+import CreatorMonthEarnings from "../../components/sales/CreatorMonthEarnings";
 import { currentSalesMonth } from "../../domain/payments/sales";
 import { getListingRequestStatusLabel } from "../../domain/listings/listingRequests";
 import { useMessagesInbox } from "../../hooks/conversations/useMessagesInbox";
@@ -60,6 +61,7 @@ const count = (value: number | undefined) => (value === undefined ? "–" : valu
 // and the way to everything else.
 const CreatorDashboard = () => {
   const t = useT();
+  const [earningsMonth, setEarningsMonth] = useState(currentSalesMonth);
   const counts = useCreatorDashboardCounts().data;
   const activeRequests = useMyCreatorRequests({
     view: "active",
@@ -147,16 +149,11 @@ const CreatorDashboard = () => {
         />
       </div>
 
-      <section className="space-y-2" aria-label={t("dashboard.thisMonth")}>
-        <div className={classes.cardHead}>
-          <h2 className={classes.cardTitle}>{t("dashboard.thisMonth")}</h2>
-          <Link className={classes.cardLink} to="/creator/sales">
-            {t("dashboard.viewAll")}
-          </Link>
-        </div>
-
-        <CreatorSalesTotals month={currentSalesMonth()} />
-      </section>
+      <CreatorMonthEarnings month={earningsMonth} onMonthChange={setEarningsMonth}>
+        <Link className={classes.cardLink} to="/creator/earnings">
+          {t("dashboard.viewEarnings")}
+        </Link>
+      </CreatorMonthEarnings>
 
       <div className={classes.columns}>
         <div className="space-y-4">
@@ -232,7 +229,7 @@ const CreatorDashboard = () => {
           <div className={classes.links}>
             <Link className={classes.link} to="/creator/listings">{t("dashboard.linkListings")}</Link>
             <Link className={classes.link} to="/creator/requests">{t("dashboard.linkCommissions")}</Link>
-            <Link className={classes.link} to="/creator/sales">{t("dashboard.linkSales")}</Link>
+            <Link className={classes.link} to="/creator/earnings">{t("dashboard.linkSales")}</Link>
             <Link className={classes.link} to="/creator/requests/completed">{t("inbox.folder.completed_commissions")}</Link>
             <Link className={classes.link} to="/messages">{t("inbox.title")}</Link>
             <Link className={classes.link} to="/settings/profile">{t("dashboard.linkProfile")}</Link>
@@ -241,6 +238,8 @@ const CreatorDashboard = () => {
           </div>
         </nav>
       </div>
+
+      <CreatorEarningsChart />
     </div>
   );
 };

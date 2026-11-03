@@ -29,6 +29,7 @@ vi.mock("../../hooks/conversations/useMessagesInbox", () => ({
 
 vi.mock("../../hooks/payments/useSales", () => ({
   useMySalesSummary: () => ({ data: mocks.sales, isLoading: false }),
+  useMySalesChart: () => ({ data: { unit: "day", periods: [], rows: [] }, error: null, isPlaceholderData: false }),
 }));
 
 vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({

@@ -11,6 +11,7 @@ import {
   type CreatorTransactionRow,
   type PaymentInvoice,
   type SalesChartData,
+  type SalesChartQuery,
 } from "../../domain/payments/sales";
 import { toPageOfRows, type PageOfRows } from "../../lib/pageOfRows";
 import { supabase } from "../../lib/supabaseClient";
@@ -58,13 +59,18 @@ const useSalesPages = <Row>(rpc: ListRpc, month: string, toCursor: (row: Row) =>
     placeholderData: keepPreviousData,
   });
 
-// One read per period chosen. The previous graph stays up while the next loads.
-const useSalesChart = <Row>(rpc: "my_sales_chart" | "admin_sales_chart", days: number) =>
+// One read per period and kind chosen (20261103_184). The previous graph
+// stays up while the next loads.
+const useSalesChart = <Row>(rpc: "my_sales_chart" | "admin_sales_chart", query: SalesChartQuery) =>
   useQuery({
-    queryKey: [rpc, days],
+    queryKey: [rpc, query.from, query.to, query.kind],
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<SalesChartData<Row>> => {
-      const { data, error } = await supabase.rpc(rpc, { p_days: days });
+      const { data, error } = await supabase.rpc(rpc, {
+        p_from: query.from,
+        p_to: query.to,
+        p_kind: query.kind,
+      });
 
       if (error) throw error;
 
@@ -94,7 +100,8 @@ export const useMyCompletedSales = (month: string) =>
 export const useMyTransactions = (month: string) =>
   useSalesPages<CreatorTransactionRow>("my_sales", month, transactionCursor);
 
-export const useMySalesChart = (days: number) => useSalesChart<CreatorChartRow>("my_sales_chart", days);
+export const useMySalesChart = (query: SalesChartQuery) =>
+  useSalesChart<CreatorChartRow>("my_sales_chart", query);
 
 export const useAdminSalesSummary = (month: string) =>
   useQuery({
@@ -117,7 +124,8 @@ export const useAdminCompletedSales = (month: string) =>
 export const useAdminTransactions = (month: string) =>
   useSalesPages<AdminTransactionRow>("admin_sales", month, transactionCursor);
 
-export const useAdminSalesChart = (days: number) => useSalesChart<AdminChartRow>("admin_sales_chart", days);
+export const useAdminSalesChart = (query: SalesChartQuery) =>
+  useSalesChart<AdminChartRow>("admin_sales_chart", query);
 
 export const usePaymentInvoice = (paymentId: string | undefined) =>
   useQuery({
