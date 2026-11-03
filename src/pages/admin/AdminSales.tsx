@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AdminSalesTotals from "../../components/sales/AdminSalesTotals";
-import SalesChart, {
-  type SalesChartMetric,
-  type SalesChartText,
-} from "../../components/sales/SalesChart";
+import MonthPicker from "../../components/sales/MonthPicker";
 import {
   formatFeeRateBps,
   formatPaymentCents,
@@ -12,13 +9,12 @@ import {
 import {
   currentSalesMonth,
   isUnknownTaxPlace,
+  regionName,
   taxPlaceName,
   taxTotalsByCurrency,
-  type AdminChartRow,
 } from "../../domain/payments/sales";
 import {
   useAdminCompletedSales,
-  useAdminSalesChart,
   useAdminSalesSummary,
   useAdminTransactions,
 } from "../../hooks/payments/useSales";
@@ -28,9 +24,6 @@ const classes = {
   h1: "pageTitle",
   sub: "pageSub",
   months: "space-y-3",
-  month: "space-y-1",
-  label: "formLabel",
-  input: "formControl",
   card: "card space-y-4 p-6",
   title: "font-display text-lg font-extrabold tracking-tight",
   text: "text-sm text-zinc-600",
@@ -47,40 +40,9 @@ const classes = {
   warning: "notice noticeWarning",
 } as const;
 
-const CHART_METRICS: SalesChartMetric<AdminChartRow>[] = [
-  { id: "earnings", label: "Total earnings", cents: (row) => row.earned_cents },
-  {
-    id: "sales",
-    label: "Total sales",
-    cents: (row) => row.sold_cents,
-    count: (row) => `${row.sales} completed`,
-  },
-  {
-    id: "transactions",
-    label: "Transactions",
-    cents: (row) => row.paid_cents,
-    count: (row) => `${row.transactions} payment${row.transactions === 1 ? "" : "s"}`,
-  },
-  { id: "kept", label: "Fees and support", cents: (row) => row.kept_cents },
-  { id: "tax", label: "Tax to set aside", cents: (row) => row.tax_cents },
-];
-
-const CHART_TEXT: SalesChartText = {
-  title: "Over time",
-  range: "Period",
-  days: (count) => `Last ${count} days`,
-  months: "Last 12 months",
-  currency: "Currency",
-  loading: "Loading…",
-  empty: "No sales or transactions in this period.",
-  failed: "Sales could not be loaded.",
-  table: "Show as a table",
-  date: "Date",
-};
-
-// The whole site's numbers: a graph over time, then one month's totals, the
-// GST/HST to set aside for each place, each completed sale and each
-// transaction. Playbook: docs/support/payments/sales.md.
+// The whole site's month: totals, the GST/HST to set aside for each place,
+// sales by the buyer's region, each completed sale and each transaction.
+// The graph is on the admin dashboard. Playbook: docs/support/payments/sales.md.
 const AdminSales = () => {
   const [month, setMonth] = useState(currentSalesMonth);
   const summary = useAdminSalesSummary(month);
@@ -88,6 +50,7 @@ const AdminSales = () => {
   const transactions = useAdminTransactions(month);
 
   const taxRows = summary.data?.tax ?? [];
+  const regionRows = summary.data?.regions ?? [];
   const saleRows = sales.data?.pages.flatMap((page) => page.rows) ?? [];
   const transactionRows = transactions.data?.pages.flatMap((page) => page.rows) ?? [];
   return (
@@ -100,8 +63,6 @@ const AdminSales = () => {
         </p>
       </div>
 
-      <SalesChart useChart={useAdminSalesChart} metrics={CHART_METRICS} text={CHART_TEXT} />
-
       <section className={classes.months}>
         <div className={classes.header}>
           <div>
@@ -109,16 +70,11 @@ const AdminSales = () => {
             <p className={classes.text}>A refund counts in the month it was made.</p>
           </div>
 
-          <label className={classes.month}>
-            <span className={classes.label}>Month</span>
-            <input
-              className={classes.input}
-              type="month"
-              max={currentSalesMonth()}
-              value={month}
-              onChange={(event) => event.currentTarget.value && setMonth(event.currentTarget.value)}
-            />
-          </label>
+          <MonthPicker
+            value={month}
+            onChange={setMonth}
+            text={{ label: "Month", previousYear: "Previous year", nextYear: "Next year" }}
+          />
         </div>
 
         <AdminSalesTotals month={month} />
@@ -165,6 +121,42 @@ const AdminSales = () => {
                       Total in {total.currency.toUpperCase()}
                     </td>
                     <td className={classes.total}>{formatPaymentCents(total.tax_cents, total.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className={classes.card}>
+        <h2 className={classes.title}>Sales by region</h2>
+        <p className={classes.text}>
+          What buyers in each country and state or province paid this month, less refunds. US sales
+          tax is owed by state once sales there pass that state's limit, so watch these totals.
+          GST/HST here is the buyers' side; the table above is the full amount to set aside.
+        </p>
+
+        {summary.data && regionRows.length === 0 && <p className={classes.empty}>No sales this month.</p>}
+
+        {regionRows.length > 0 && (
+          <div className={classes.tableWrap}>
+            <table className={classes.table}>
+              <thead>
+                <tr>
+                  <th className={classes.th}>Region</th>
+                  <th className={classes.th}>Payments</th>
+                  <th className={classes.th}>Buyers paid</th>
+                  <th className={classes.th}>GST/HST</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regionRows.map((row) => (
+                  <tr key={`${row.country}:${row.region}:${row.currency}`}>
+                    <td className={classes.td}>{regionName(row.country, row.region)}</td>
+                    <td className={classes.td}>{row.payments}</td>
+                    <td className={classes.td}>{formatPaymentCents(row.paid_cents, row.currency)}</td>
+                    <td className={classes.td}>{formatPaymentCents(row.tax_cents, row.currency)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,30 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import CreatorSalesTotals from "../../components/sales/CreatorSalesTotals";
-import SalesChart, {
-  type SalesChartMetric,
-  type SalesChartText,
-} from "../../components/sales/SalesChart";
+import CreatorMonthEarnings from "../../components/sales/CreatorMonthEarnings";
 import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
-import { currentSalesMonth, type CreatorChartRow } from "../../domain/payments/sales";
-import {
-  useMyCompletedSales,
-  useMySalesChart,
-  useMyTransactions,
-} from "../../hooks/payments/useSales";
-import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
+import { currentSalesMonth } from "../../domain/payments/sales";
+import { useMyCompletedSales, useMyTransactions } from "../../hooks/payments/useSales";
+import { useT } from "../../lib/i18n/i18n";
 
 const classes = {
   page: "space-y-6",
   sub: "pageSub",
   h1: "pageTitle",
-  months: "space-y-3",
-  monthHeader: "flex flex-wrap items-end justify-between gap-3",
-  monthTitle: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
-  note: "mt-0.5 max-w-2xl text-sm text-zinc-500",
-  month: "space-y-1",
-  label: "formLabel",
-  input: "formControl",
   card: "card p-4",
   title: "font-display text-sm font-bold tracking-tight text-zinc-900",
   tableWrap: "mt-3 overflow-x-auto",
@@ -38,54 +23,16 @@ const classes = {
   error: "notice noticeError mt-3",
 } as const;
 
-// A creator's numbers: a graph over time, then one month's totals, each
-// completed sale and each transaction.
+// A creator's Earnings page: one month's totals, each completed commission
+// or download with its fee, and each transaction. The graph is on the
+// dashboard.
 const CreatorSales = () => {
   const t = useT();
-  const language = useLanguage();
   const [month, setMonth] = useState(currentSalesMonth);
   const sales = useMyCompletedSales(month);
   const transactions = useMyTransactions(month);
   const saleRows = sales.data?.pages.flatMap((page) => page.rows) ?? [];
   const transactionRows = transactions.data?.pages.flatMap((page) => page.rows) ?? [];
-
-  const metrics: SalesChartMetric<CreatorChartRow>[] = [
-    {
-      id: "earnings",
-      label: t("sales.totalEarnings"),
-      cents: (row) => row.earned_cents,
-    },
-    {
-      id: "sales",
-      label: t("sales.totalSales"),
-      cents: (row) => row.sold_cents,
-      count: (row) => t("sales.completedCount", { count: row.sales }),
-    },
-    {
-      id: "transactions",
-      label: t("sales.transactions"),
-      cents: (row) => row.paid_cents,
-      count: (row) => t("sales.paymentCount", { count: row.transactions }),
-    },
-    {
-      id: "fees",
-      label: t("sales.totalFees"),
-      cents: (row) => row.fee_cents,
-    },
-  ];
-
-  const text: SalesChartText = {
-    title: t("sales.overTime"),
-    range: t("sales.range"),
-    days: (count) => t("sales.rangeDays", { count }),
-    months: t("sales.range12Months"),
-    currency: t("sales.currency"),
-    loading: t("sales.loading"),
-    empty: t("sales.noPeriod"),
-    failed: t("sales.loadFailed"),
-    table: t("sales.showTable"),
-    date: t("sales.date"),
-  };
 
   return (
     <div className={classes.page}>
@@ -94,34 +41,7 @@ const CreatorSales = () => {
         <p className={classes.sub}>{t("sales.sub")}</p>
       </div>
 
-      <SalesChart
-        useChart={useMySalesChart}
-        metrics={metrics}
-        text={text}
-        locale={dateLocale(language)}
-      />
-
-      <section className={classes.months}>
-        <div className={classes.monthHeader}>
-          <div>
-            <h2 className={classes.monthTitle}>{t("sales.byMonth")}</h2>
-            <p className={classes.note}>{t("sales.monthNote")}</p>
-          </div>
-
-          <label className={classes.month}>
-            <span className={classes.label}>{t("sales.month")}</span>
-            <input
-              className={classes.input}
-              type="month"
-              max={currentSalesMonth()}
-              value={month}
-              onChange={(event) => event.currentTarget.value && setMonth(event.currentTarget.value)}
-            />
-          </label>
-        </div>
-
-        <CreatorSalesTotals month={month} />
-      </section>
+      <CreatorMonthEarnings month={month} onMonthChange={setMonth} />
 
       <section className={classes.card}>
         <h2 className={classes.title}>{t("sales.eachSale")}</h2>
@@ -138,7 +58,7 @@ const CreatorSales = () => {
                   <th className={classes.th}>{t("sales.date")}</th>
                   <th className={classes.th}>{t("sales.item")}</th>
                   <th className={classes.th}>{t("sales.payments")}</th>
-                  <th className={classes.th}>{t("sales.sale")}</th>
+                  <th className={classes.th}>{t("sales.amount")}</th>
                   <th className={classes.th}>{t("sales.fee")}</th>
                   <th className={classes.th}>{t("sales.earnings")}</th>
                 </tr>

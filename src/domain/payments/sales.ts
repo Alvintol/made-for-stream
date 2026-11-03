@@ -1,4 +1,4 @@
-// Sales numbers and invoices (20261102_180, 20261103_181). The database works
+// Sales numbers and invoices (20261102_180, 20261103_181, 20261103_184). The database works
 // out every figure; this file only shapes them for the pages. Playbook:
 // docs/support/payments/sales.md.
 //
@@ -7,6 +7,8 @@
 export type CreatorSalesTotals = {
   currency: string;
   sales: number;
+  commissions: number;
+  downloads: number;
   sold_cents: number;
   transactions: number;
   paid_cents: number;
@@ -47,6 +49,8 @@ export type CreatorTransactionRow = {
 export type AdminSalesTotals = {
   currency: string;
   sales: number;
+  commissions: number;
+  downloads: number;
   sold_cents: number;
   transactions: number;
   paid_cents: number;
@@ -64,9 +68,21 @@ export type AdminTaxRow = {
   tax_cents: number;
 };
 
+// What buyers in one country and state or province paid that month, less
+// refunds, and the GST/HST inside their side of it.
+export type AdminRegionRow = {
+  country: string;
+  region: string;
+  currency: string;
+  payments: number;
+  paid_cents: number;
+  tax_cents: number;
+};
+
 export type AdminSalesSummary = {
   totals: AdminSalesTotals[];
   tax: AdminTaxRow[];
+  regions?: AdminRegionRow[];
 };
 
 export type AdminSaleRow = {
@@ -104,6 +120,7 @@ export type CreatorChartRow = {
   period: string;
   currency: string;
   sales: number;
+  instant_sales: number;
   sold_cents: number;
   transactions: number;
   paid_cents: number;
@@ -115,12 +132,62 @@ export type AdminChartRow = {
   period: string;
   currency: string;
   sales: number;
+  instant_sales: number;
   sold_cents: number;
   transactions: number;
   paid_cents: number;
   kept_cents: number;
   tax_cents: number;
   earned_cents: number;
+};
+
+// Commissions, instant downloads or both (check_sales_kind).
+export type SalesKind = "all" | "request" | "instant";
+
+export const salesKinds: readonly SalesKind[] = ["all", "request", "instant"];
+
+// Dates as "YYYY-MM-DD", in UTC like the database. Up to 92 days is by day;
+// longer is by month, up to two years (sales_chart_window).
+export type SalesChartQuery = { from: string; to: string; kind: SalesKind };
+
+export type SalesChartPreset = "7" | "28" | "90" | "12m" | "year" | "custom";
+
+export const SALES_CHART_MAX_DAYS = 730;
+
+const isoDay = (date: Date): string => date.toISOString().slice(0, 10);
+
+const daysBefore = (today: Date, days: number): string =>
+  isoDay(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - days)));
+
+// The dates a preset period covers. "year" is that whole year.
+export const chartPresetRange = (
+  preset: Exclude<SalesChartPreset, "custom">,
+  today: Date,
+  year = today.getUTCFullYear(),
+): { from: string; to: string } => {
+  if (preset === "year") return { from: `${year}-01-01`, to: `${year}-12-31` };
+
+  if (preset === "12m") {
+    return {
+      from: isoDay(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 11, 1))),
+      to: isoDay(today),
+    };
+  }
+
+  return { from: daysBefore(today, Number(preset) - 1), to: isoDay(today) };
+};
+
+// Why a typed range can't be shown, or null when it can.
+export const customRangeProblem = (
+  from: string,
+  to: string,
+): "sales.rangeInvalid" | "sales.rangeTooLong" | null => {
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) return "sales.rangeInvalid";
+
+  return (end - start) / 86_400_000 > SALES_CHART_MAX_DAYS ? "sales.rangeTooLong" : null;
 };
 
 // `periods` lists every day or month in the range, including quiet ones.
@@ -162,12 +229,21 @@ export const currentSalesMonth = (now = new Date()): string => now.toISOString()
 
 export const salesMonthToDate = (month: string): string => `${month}-01`;
 
+// "November 2026" for the month picker's button, "Nov" for its grid.
+export const formatSalesMonth = (month: string, locale?: string, style: "long" | "short" = "long"): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    month: style,
+    ...(style === "long" ? { year: "numeric" } : {}),
+  }).format(new Date(`${month}-01T00:00:00Z`));
+
 // Round numbers for a graph's axis, always including zero. A refund can take a
 // day below it.
-export const chartTicks = (values: number[]): number[] => {
+// minSpan keeps a quiet axis readable: a dollar for money, 4 for counts.
+export const chartTicks = (values: number[], minSpan = 100): number[] => {
   const low = Math.min(0, ...values);
   const high = Math.max(0, ...values);
-  const rough = Math.max(high - low, 100) / 4;
+  const rough = Math.max(high - low, minSpan) / 4;
   const power = 10 ** Math.floor(Math.log10(rough));
   const step = [1, 2, 5, 10].map((size) => size * power).find((size) => size >= rough) ?? rough;
   const first = Math.floor(low / step);
@@ -204,6 +280,17 @@ const CANADA_REGIONS: Record<string, string> = {
 };
 
 export const isUnknownTaxPlace = (place: string): boolean => place.includes("?");
+
+// For the admin page's sales by region: "Ontario", "WA, United States".
+export const regionName = (country: string, region: string): string => {
+  if (country === "?") return "Unknown, check this";
+
+  const countryName = new Intl.DisplayNames(["en"], { type: "region" }).of(country) ?? country;
+
+  if (country === "CA" && CANADA_REGIONS[region]) return CANADA_REGIONS[region];
+
+  return region ? `${region}, ${countryName}` : countryName;
+};
 
 // For the admin page, which stays in English.
 export const taxPlaceName = (place: string): string => {

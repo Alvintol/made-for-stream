@@ -1,9 +1,19 @@
 import { useState, type KeyboardEvent, type PointerEvent } from "react";
 import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
-import { chartTicks, formatChartPeriod, type SalesChartData } from "../../domain/payments/sales";
+import {
+  chartPresetRange,
+  chartTicks,
+  customRangeProblem,
+  formatChartPeriod,
+  salesKinds,
+  type SalesChartData,
+  type SalesChartPreset,
+  type SalesChartQuery,
+  type SalesKind,
+} from "../../domain/payments/sales";
 import { formatCompactMoney } from "../../lib/formatMoney";
 
-const RANGES = [7, 28, 90, 365] as const;
+const PRESETS: readonly SalesChartPreset[] = ["7", "28", "90", "12m", "year", "custom"];
 const WIDTH = 1000;
 const HEIGHT = 260;
 
@@ -13,8 +23,10 @@ const classes = {
   title: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
   filters: "flex flex-wrap items-end gap-3",
   filter: "space-y-1",
-  label: "formLabel",
+  label: "formLabel block",
   input: "formControl",
+  apply: "btnOutline",
+  problem: "formError basis-full text-right",
   card: "card overflow-hidden",
   tabs: "flex flex-wrap border-b border-[var(--hairline)]",
   tab: "min-w-36 flex-1 border-b-2 px-4 py-3 text-left transition",
@@ -31,11 +43,17 @@ const classes = {
   svg: "absolute inset-0 h-full w-full overflow-visible",
   crosshair: "pointer-events-none absolute inset-y-0 w-px bg-[var(--hairline-strong)]",
   dot: "pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgb(var(--chart))] ring-2 ring-[rgb(var(--surface))]",
+  bar: "pointer-events-none absolute -translate-x-1/2 bg-[rgb(var(--chart))] transition-opacity",
+  barUp: "rounded-t-[4px]",
+  barDown: "rounded-b-[4px]",
+  barDim: "opacity-70",
   tooltip:
     "pointer-events-none absolute top-1 z-10 rounded-lg border border-[var(--hairline-strong)] bg-[rgb(var(--surface-raised))] px-3 py-2 text-xs shadow-md",
   tooltipValue: "text-sm font-bold tabular-nums text-zinc-900",
   tooltipNote: "text-zinc-500",
   xAxis: "col-start-2 mt-2 flex justify-between text-xs text-zinc-500",
+  xAxisBars: "col-start-2 mt-2 flex text-xs text-zinc-500",
+  xBarLabel: "flex-1 truncate text-center",
   empty: "grid h-64 place-items-center text-sm text-zinc-500",
   table: "mt-3 text-sm",
   summary: "cursor-pointer font-semibold text-[rgb(var(--accent-text))]",
@@ -49,15 +67,24 @@ const classes = {
 export type SalesChartMetric<Row> = {
   id: string;
   label: string;
-  cents: (row: Row) => number;
-  count?: (row: Row) => string;
+  value: (row: Row) => number;
+  // Money is in cents; a count is a number of sales.
+  format: "money" | "count";
+  note?: (row: Row) => string;
 };
 
 export type SalesChartText = {
   title: string;
-  range: string;
-  days: (count: number) => string;
-  months: string;
+  show: string;
+  kinds: Record<SalesKind, string>;
+  period: string;
+  presets: Record<SalesChartPreset, string>;
+  year: string;
+  from: string;
+  to: string;
+  apply: string;
+  rangeInvalid: string;
+  rangeTooLong: string;
   currency: string;
   loading: string;
   empty: string;
@@ -73,27 +100,39 @@ type ChartQuery<Row> = {
 };
 
 type Props<Row> = {
-  useChart: (days: number) => ChartQuery<Row>;
+  useChart: (query: SalesChartQuery) => ChartQuery<Row>;
   metrics: SalesChartMetric<Row>[];
   text: SalesChartText;
   locale?: string;
+  // For tests: the day the presets count back from.
+  today?: Date;
 };
 
 // Numbers over time, with a tab for each number, like a channel's analytics
-// page. Amounts in different currencies can't be added, so it shows one at a
-// time. Admin pages stay in English, so every word comes from the page.
+// page: a line by day, or bars by month for longer periods and whole years.
+// Filters choose commissions, instant downloads or both, and the dates.
+// Amounts in different currencies can't be added, so it shows one at a time.
+// Admin pages stay in English, so every word comes from the page.
 const SalesChart = <Row extends { period: string; currency: string }>({
   useChart,
   metrics,
   text,
   locale,
+  today = new Date(),
 }: Props<Row>) => {
-  const [days, setDays] = useState<number>(28);
+  const thisYear = today.getUTCFullYear();
+  const [kind, setKind] = useState<SalesKind>("all");
+  const [preset, setPreset] = useState<SalesChartPreset>("28");
+  const [year, setYear] = useState(thisYear);
+  const [custom, setCustom] = useState(() => chartPresetRange("28", today));
+  const [customDraft, setCustomDraft] = useState(custom);
   const [metricId, setMetricId] = useState(metrics[0].id);
   const [chosenCurrency, setChosenCurrency] = useState<string | null>(null);
   const [active, setActive] = useState<number | null>(null);
 
-  const { data, error, isPlaceholderData } = useChart(days);
+  const range = preset === "custom" ? custom : chartPresetRange(preset, today, year);
+  const { data, error, isPlaceholderData } = useChart({ ...range, kind });
+  const draftProblem = customRangeProblem(customDraft.from, customDraft.to);
 
   const allRows = data?.rows ?? [];
   const currencies = [...new Set(allRows.map((row) => row.currency))].sort();
@@ -103,22 +142,25 @@ const SalesChart = <Row extends { period: string; currency: string }>({
 
   const metric = metrics.find((item) => item.id === metricId) ?? metrics[0];
   const periods = data?.periods ?? [];
+  const bars = data?.unit === "month";
   const byPeriod = new Map(rows.map((row) => [row.period, row]));
   const values = periods.map((period) => {
     const row = byPeriod.get(period);
 
-    return row ? metric.cents(row) : 0;
+    return row ? metric.value(row) : 0;
   });
 
-  const money = (cents: number) => formatPaymentCents(cents, currency);
+  const show = (item: SalesChartMetric<Row>, value: number) =>
+    item.format === "money" ? formatPaymentCents(value, currency) : String(value);
   const periodName = (period: string) => formatChartPeriod(period, data?.unit ?? "day", locale);
 
-  const ticks = chartTicks(values);
+  const ticks = chartTicks(values, metric.format === "money" ? 100 : 4);
   const bottom = ticks[0];
   const top = ticks[ticks.length - 1];
-  const last = periods.length - 1;
+  const count = periods.length;
+  const last = count - 1;
 
-  const xPercent = (index: number) => (index / last) * 100;
+  const xPercent = (index: number) => (bars ? ((index + 0.5) / count) * 100 : (index / last) * 100);
   const yPercent = (value: number) => ((top - value) / (top - bottom)) * 100;
   const point = (value: number, index: number) =>
     `${(xPercent(index) / 100) * WIDTH},${(yPercent(value) / 100) * HEIGHT}`;
@@ -134,7 +176,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
     const box = event.currentTarget.getBoundingClientRect();
     const ratio = Math.min(Math.max((event.clientX - box.left) / box.width, 0), 1);
 
-    setActive(Math.round(ratio * last));
+    setActive(bars ? Math.min(Math.floor(ratio * count), last) : Math.round(ratio * last));
   };
 
   const step = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -144,7 +186,8 @@ const SalesChart = <Row extends { period: string; currency: string }>({
     setActive(Math.min(Math.max(shown + (event.key === "ArrowLeft" ? -1 : 1), 0), last));
   };
 
-  const hasData = rows.length > 0 && periods.length > 1;
+  const hasData = rows.length > 0 && count > (bars ? 0 : 1);
+  const years = [thisYear, thisYear - 1, thisYear - 2];
 
   return (
     <section className={classes.section}>
@@ -152,6 +195,101 @@ const SalesChart = <Row extends { period: string; currency: string }>({
         <h2 className={classes.title}>{text.title}</h2>
 
         <div className={classes.filters}>
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.show}</span>
+            <select
+              className={classes.input}
+              value={kind}
+              onChange={(event) => {
+                setActive(null);
+                setKind(event.currentTarget.value as SalesKind);
+              }}
+            >
+              {salesKinds.map((item) => (
+                <option key={item} value={item}>
+                  {text.kinds[item]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.period}</span>
+            <select
+              className={classes.input}
+              value={preset}
+              onChange={(event) => {
+                setActive(null);
+                setPreset(event.currentTarget.value as SalesChartPreset);
+              }}
+            >
+              {PRESETS.map((item) => (
+                <option key={item} value={item}>
+                  {text.presets[item]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {preset === "year" && (
+            <label className={classes.filter}>
+              <span className={classes.label}>{text.year}</span>
+              <select
+                className={classes.input}
+                value={year}
+                onChange={(event) => setYear(Number(event.currentTarget.value))}
+              >
+                {years.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {preset === "custom" && (
+            <>
+              <label className={classes.filter}>
+                <span className={classes.label}>{text.from}</span>
+                <input
+                  className={classes.input}
+                  type="date"
+                  max={customDraft.to || undefined}
+                  value={customDraft.from}
+                  onChange={(event) => setCustomDraft({ ...customDraft, from: event.currentTarget.value })}
+                />
+              </label>
+              <label className={classes.filter}>
+                <span className={classes.label}>{text.to}</span>
+                <input
+                  className={classes.input}
+                  type="date"
+                  min={customDraft.from || undefined}
+                  max={chartPresetRange("7", today).to}
+                  value={customDraft.to}
+                  onChange={(event) => setCustomDraft({ ...customDraft, to: event.currentTarget.value })}
+                />
+              </label>
+              <button
+                type="button"
+                className={classes.apply}
+                disabled={draftProblem !== null}
+                onClick={() => {
+                  setActive(null);
+                  setCustom(customDraft);
+                }}
+              >
+                {text.apply}
+              </button>
+              {draftProblem && (
+                <span className={classes.problem}>
+                  {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
+                </span>
+              )}
+            </>
+          )}
+
           {currencies.length > 1 && (
             <label className={classes.filter}>
               <span className={classes.label}>{text.currency}</span>
@@ -168,24 +306,6 @@ const SalesChart = <Row extends { period: string; currency: string }>({
               </select>
             </label>
           )}
-
-          <label className={classes.filter}>
-            <span className={classes.label}>{text.range}</span>
-            <select
-              className={classes.input}
-              value={days}
-              onChange={(event) => {
-                setActive(null);
-                setDays(Number(event.currentTarget.value));
-              }}
-            >
-              {RANGES.map((range) => (
-                <option key={range} value={range}>
-                  {range === 365 ? text.months : text.days(range)}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
       </div>
 
@@ -205,7 +325,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                 >
                   <div className={classes.tabLabel}>{item.label}</div>
                   <div className={classes.tabValue}>
-                    {money(rows.reduce((total, row) => total + item.cents(row), 0))}
+                    {show(item, rows.reduce((total, row) => total + item.value(row), 0))}
                   </div>
                 </button>
               ))}
@@ -221,7 +341,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                   <div className={classes.yAxis} aria-hidden="true">
                     {ticks.map((tick) => (
                       <span key={tick} className={classes.tick} style={{ top: `${yPercent(tick)}%` }}>
-                        {formatCompactMoney(tick / 100, currency)}
+                        {metric.format === "money" ? formatCompactMoney(tick / 100, currency) : tick}
                       </span>
                     ))}
                   </div>
@@ -255,26 +375,48 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                           vectorEffect="non-scaling-stroke"
                         />
                       ))}
-                      <path d={area} fill="rgb(var(--chart) / 0.1)" />
-                      <path
-                        d={line}
-                        fill="none"
-                        stroke="rgb(var(--chart))"
-                        strokeWidth={2}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
+                      {!bars && (
+                        <>
+                          <path d={area} fill="rgb(var(--chart) / 0.1)" />
+                          <path
+                            d={line}
+                            fill="none"
+                            stroke="rgb(var(--chart))"
+                            strokeWidth={2}
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        </>
+                      )}
                     </svg>
 
-                    {active !== null && (
+                    {bars &&
+                      values.map((value, index) => (
+                        <div
+                          key={periods[index]}
+                          className={`${classes.bar} ${value >= 0 ? classes.barUp : classes.barDown} ${
+                            active !== null && active !== index ? classes.barDim : ""
+                          }`}
+                          style={{
+                            left: `${xPercent(index)}%`,
+                            width: `min(24px, ${(60 / count).toFixed(2)}%)`,
+                            top: `${yPercent(Math.max(value, 0))}%`,
+                            height: `${Math.abs(yPercent(value) - yPercent(0))}%`,
+                          }}
+                        />
+                      ))}
+
+                    {!bars && active !== null && (
                       <div className={classes.crosshair} style={{ left: `${xPercent(active)}%` }} />
                     )}
 
-                    <div
-                      className={classes.dot}
-                      style={{ left: `${xPercent(shown)}%`, top: `${yPercent(values[shown])}%` }}
-                    />
+                    {!bars && (
+                      <div
+                        className={classes.dot}
+                        style={{ left: `${xPercent(shown)}%`, top: `${yPercent(values[shown])}%` }}
+                      />
+                    )}
 
                     {active !== null && (
                       <div
@@ -286,20 +428,30 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                             : { left: `calc(${xPercent(active)}% + 0.75rem)` }
                         }
                       >
-                        <div className={classes.tooltipValue}>{money(values[active])}</div>
+                        <div className={classes.tooltipValue}>{show(metric, values[active])}</div>
                         <div className={classes.tooltipNote}>{periodName(periods[active])}</div>
-                        {shownRow && metric.count && (
-                          <div className={classes.tooltipNote}>{metric.count(shownRow)}</div>
+                        {shownRow && metric.note && (
+                          <div className={classes.tooltipNote}>{metric.note(shownRow)}</div>
                         )}
                       </div>
                     )}
                   </div>
 
-                  <div className={classes.xAxis} aria-hidden="true">
-                    <span>{periodName(periods[0])}</span>
-                    <span>{periodName(periods[Math.floor(last / 2)])}</span>
-                    <span>{periodName(periods[last])}</span>
-                  </div>
+                  {bars && count <= 12 ? (
+                    <div className={classes.xAxisBars} aria-hidden="true">
+                      {periods.map((period) => (
+                        <span key={period} className={classes.xBarLabel}>
+                          {formatChartPeriod(period, "month", locale).split(" ")[0]}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={classes.xAxis} aria-hidden="true">
+                      <span>{periodName(periods[0])}</span>
+                      <span>{periodName(periods[Math.floor(last / 2)])}</span>
+                      <span>{periodName(periods[last])}</span>
+                    </div>
+                  )}
                 </div>
 
                 <details className={classes.table}>
@@ -323,7 +475,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                             <td className={classes.td}>{periodName(row.period)}</td>
                             {metrics.map((item) => (
                               <td key={item.id} className={classes.td}>
-                                {money(item.cents(row))}
+                                {show(item, item.value(row))}
                               </td>
                             ))}
                           </tr>

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  chartPresetRange,
+  customRangeProblem,
+  regionName,
   chartTicks,
   currentSalesMonth,
   formatChartPeriod,
@@ -70,5 +73,38 @@ describe("tax places", () => {
       { currency: "cad", tax_cents: 163 },
       { currency: "usd", tax_cents: 123 },
     ]);
+  });
+});
+
+describe("graph periods", () => {
+  const today = new Date("2026-11-03T15:00:00Z");
+
+  it("counts back from today for the day presets", () => {
+    expect(chartPresetRange("7", today)).toEqual({ from: "2026-10-28", to: "2026-11-03" });
+    expect(chartPresetRange("28", today)).toEqual({ from: "2026-10-07", to: "2026-11-03" });
+  });
+
+  it("covers 12 whole months, or a whole year", () => {
+    expect(chartPresetRange("12m", today)).toEqual({ from: "2025-12-01", to: "2026-11-03" });
+    expect(chartPresetRange("year", today, 2025)).toEqual({ from: "2025-01-01", to: "2025-12-31" });
+  });
+
+  it("refuses typed dates that are backwards, missing or longer than two years", () => {
+    expect(customRangeProblem("2026-10-01", "2026-10-20")).toBeNull();
+    expect(customRangeProblem("2026-10-20", "2026-10-01")).toBe("sales.rangeInvalid");
+    expect(customRangeProblem("", "2026-10-01")).toBe("sales.rangeInvalid");
+    expect(customRangeProblem("2023-01-01", "2026-01-01")).toBe("sales.rangeTooLong");
+  });
+
+  it("keeps a count axis in whole numbers", () => {
+    expect(chartTicks([0, 2, 3], 4)).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe("regions", () => {
+  it("names a province, a state with its country, and an unknown place", () => {
+    expect(regionName("CA", "ON")).toBe("Ontario");
+    expect(regionName("US", "WA")).toBe("WA, United States");
+    expect(regionName("?", "")).toBe("Unknown, check this");
   });
 });

@@ -42,7 +42,7 @@ const AdminSalesTotals = ({ month }: { month: string }) => {
             <Stat
               label="Total sales"
               value={money(totals.sold_cents)}
-              note={`${totals.sales} completed`}
+              note={`${totals.commissions ?? totals.sales} commissions · ${totals.downloads ?? 0} downloads`}
             />
             <Stat
               label="Transactions"

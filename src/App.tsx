@@ -270,9 +270,11 @@ const App = () => {
               element={<EditListing />}
             />
             <Route
-              path="/creator/sales"
+              path="/creator/earnings"
               element={<CreatorSales />}
             />
+            {/* The old address, which emails still link to. */}
+            <Route path="/creator/sales" element={<Navigate to="/creator/earnings" replace />} />
             <Route
               path="/creator/requests"
               element={<CreatorRequests view="active" />}

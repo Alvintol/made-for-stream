@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import AdminSalesChart from "../../components/sales/AdminSalesChart";
 import AdminSalesTotals from "../../components/sales/AdminSalesTotals";
 import { currentSalesMonth } from "../../domain/payments/sales";
 import { useAdminListingMetrics } from "../../hooks/admin/useAdminListingMetrics";
@@ -224,6 +225,8 @@ const AdminDashboard = () => {
         </div>
 
       </div>
+
+      <AdminSalesChart />
     </div>
   );
 };
