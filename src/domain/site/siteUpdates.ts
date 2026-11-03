@@ -30,12 +30,25 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.12.00";
+export const siteVersion = "V0.13.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.13.00",
+    date: "2026-11-03",
+    title: "Tax help for creators",
+    changes: [
+      "The Earnings page has a Tax help section with a year of estimates for your own tax records.",
+      "It shows your earnings for the year and the fees you paid, with the GST/HST in those fees.",
+      "Creators in Canada can see how close they are to the $30,000 GST/HST small supplier limit.",
+      "You can see your sales added up by your buyers' country and province or state.",
+      "Creators in Canada see the GST/HST rate in each buyer's province, and what that rate comes to on their commissions.",
+      "We've updated the Privacy Policy: creators now see where their buyers are, added up by province or state, for payments made after you accept it.",
+    ],
+  },
   {
     version: "V0.12.00",
     date: "2026-11-03",

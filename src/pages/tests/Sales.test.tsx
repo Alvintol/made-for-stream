@@ -10,6 +10,7 @@ import {
   type CreatorChartRow,
   type CreatorSaleRow,
   type CreatorSalesTotals,
+  type CreatorTaxSummary,
   type CreatorTransactionRow,
   type PaymentInvoice as Invoice,
   type SalesChartData,
@@ -27,6 +28,8 @@ const mocks = vi.hoisted(() => ({
   chartQueries: [] as unknown[],
   invoice: null as unknown,
   invoiceError: null as unknown,
+  tax: null as unknown,
+  taxYears: [] as number[],
 }));
 
 vi.mock("../../hooks/payments/useSales", () => ({
@@ -36,6 +39,11 @@ vi.mock("../../hooks/payments/useSales", () => ({
     return { data: mocks.totals, isLoading: false };
   },
   useMyCompletedSales: () => ({ data: { pages: [{ rows: mocks.saleRows }] }, hasNextPage: false }),
+  useMyTaxSummary: (year: number) => {
+    mocks.taxYears.push(year);
+
+    return { data: mocks.tax, error: null, isLoading: false };
+  },
   useMyTransactions: () => ({ data: { pages: [{ rows: mocks.rows }] }, hasNextPage: false }),
   useMySalesChart: (query: unknown) => {
     mocks.chartQueries.push(query);
@@ -122,6 +130,56 @@ const invoice: Invoice = {
   creator_fee_tax_cents: null,
 };
 
+const taxSummary: CreatorTaxSummary = {
+  creator_country: "CA",
+  totals: [
+    { currency: "cad", payments: 6, sold_cents: 219300, fee_cents: 10450, fee_tax_cents: 498, earned_cents: 208850 },
+  ],
+  regions: [
+    {
+      country: "CA",
+      region: "AB",
+      currency: "cad",
+      payments: 4,
+      sold_cents: 200000,
+      earned_cents: 190000,
+      commission_sold_cents: 150000,
+      bps: 500,
+      tax_cents: 7500,
+    },
+    {
+      country: "US",
+      region: "WA",
+      currency: "cad",
+      payments: 1,
+      sold_cents: 12000,
+      earned_cents: 11400,
+      commission_sold_cents: 12000,
+      bps: null,
+      tax_cents: null,
+    },
+    {
+      country: "-",
+      region: "",
+      currency: "cad",
+      payments: 1,
+      sold_cents: 7300,
+      earned_cents: 7000,
+      commission_sold_cents: 7300,
+      bps: null,
+      tax_cents: null,
+    },
+  ],
+  small_supplier: { from: "2026-01-01", sold_cents: 219300 },
+};
+
+const emptyTax: CreatorTaxSummary = {
+  creator_country: "CA",
+  totals: [],
+  regions: [],
+  small_supplier: { from: "2026-01-01", sold_cents: 0 },
+};
+
 const renderInvoice = () =>
   render(
     <MemoryRouter initialEntries={["/payments/invoice/p1"]}>
@@ -147,6 +205,8 @@ beforeEach(() => {
   mocks.chartQueries = [];
   mocks.invoice = invoice;
   mocks.invoiceError = null;
+  mocks.tax = emptyTax;
+  mocks.taxYears = [];
 });
 
 describe("<CreatorSales />", () => {
@@ -230,6 +290,72 @@ describe("<CreatorSales />", () => {
 
     expect(mocks.months.at(-1)).toBe(january);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("tax help", () => {
+  const taxHelp = () => within(screen.getByRole("region", { name: "Tax help" }));
+
+  it("shows the year's earnings and fees, with the GST/HST in the fees", () => {
+    mocks.tax = taxSummary;
+
+    renderPage(<CreatorSales />);
+
+    expect(taxHelp().getByText("Total earnings").nextSibling).toHaveTextContent("$2,088.50");
+    expect(taxHelp().getByText("Fees to Made for Stream").nextSibling).toHaveTextContent("$104.50");
+    expect(taxHelp().getByText(/Includes \$4\.98 GST\/HST/)).toBeInTheDocument();
+    expect(taxHelp().getByText(/isn't tax advice/)).toBeInTheDocument();
+  });
+
+  it("reads an earlier year", () => {
+    renderPage(<CreatorSales />);
+
+    const thisYear = new Date().getUTCFullYear();
+
+    expect(mocks.taxYears.at(-1)).toBe(thisYear);
+
+    fireEvent.change(taxHelp().getByLabelText("Year"), { target: { value: String(thisYear - 1) } });
+
+    expect(mocks.taxYears.at(-1)).toBe(thisYear - 1);
+  });
+
+  it("tracks a creator in Canada against the $30,000 limit, and warns past it", () => {
+    mocks.tax = taxSummary;
+
+    const { unmount } = renderPage(<CreatorSales />);
+
+    expect(taxHelp().getByText("$2,193.00 of $30,000.00")).toBeInTheDocument();
+    expect(taxHelp().getByText(/since January 2026/)).toBeInTheDocument();
+    expect(taxHelp().queryByText(/have passed \$30,000/)).not.toBeInTheDocument();
+
+    unmount();
+    mocks.tax = { ...taxSummary, small_supplier: { from: "2026-01-01", sold_cents: 3_000_000 } };
+    renderPage(<CreatorSales />);
+
+    expect(taxHelp().getByText(/have passed \$30,000/)).toBeInTheDocument();
+  });
+
+  it("adds up sales by the buyer's region, with the GST/HST rate in Canada", () => {
+    mocks.tax = taxSummary;
+
+    renderPage(<CreatorSales />);
+
+    const alberta = taxHelp().getByRole("row", { name: /Alberta/ });
+
+    expect(within(alberta).getByText("5%")).toBeInTheDocument();
+    expect(within(alberta).getByText("$75.00")).toBeInTheDocument();
+    expect(within(taxHelp().getByRole("row", { name: /WA, United States/ })).getAllByText("—")).toHaveLength(2);
+    expect(taxHelp().getByRole("row", { name: /Not shared/ })).toBeInTheDocument();
+  });
+
+  it("leaves out the GST/HST limit and rates for a creator outside Canada", () => {
+    mocks.tax = { ...taxSummary, creator_country: "US" };
+
+    renderPage(<CreatorSales />);
+
+    expect(taxHelp().queryByText("GST/HST small supplier limit")).not.toBeInTheDocument();
+    expect(taxHelp().queryByText("GST/HST rate")).not.toBeInTheDocument();
+    expect(taxHelp().getByRole("row", { name: /Alberta/ })).toBeInTheDocument();
   });
 });
 

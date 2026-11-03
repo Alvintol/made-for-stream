@@ -1438,6 +1438,25 @@ export const es: Record<MessageKey, Message> = {
   "sales.noTransactions": "No hay transacciones este mes.",
   "sales.loadFailed": "No se pudieron cargar tus ventas. Inténtalo de nuevo.",
 
+  // A creator's tax help on the Earnings page (src/components/sales/CreatorTaxHelp.tsx)
+  "tax.title": "Ayuda con impuestos",
+  "tax.note": "Estimaciones según tus ventas en Made for Stream, para ayudarte con tus propios registros fiscales. Suma las ventas que hagas en otros lugares. No es asesoramiento fiscal: consulta con un contador.",
+  "tax.noSales": "No hay ventas este año.",
+  "tax.earningsNote": "Lo que te pagaron este año, menos reembolsos y las comisiones de Made for Stream. Es un ingreso que debes declarar.",
+  "tax.feesNote": "Las comisiones suelen ser un gasto del negocio. Si estás registrado para el GST/HST, normalmente puedes recuperar el GST/HST que incluyen.",
+  "tax.limitTitle": "Límite de pequeño proveedor del GST/HST",
+  "tax.limitValue": "{amount} de {limit}",
+  "tax.limitNote": "Tus ventas en Made for Stream desde {month}, en cuatro trimestres naturales. Cuando tus ventas en todas partes superan 30 000 $ en cuatro trimestres seguidos, debes registrarte para el GST/HST.",
+  "tax.limitPassed": "Tus ventas en Made for Stream superan 30 000 $ en cuatro trimestres. Probablemente debas registrarte para el GST/HST, así que consulta con un contador.",
+  "tax.regionsTitle": "Ventas por región del comprador",
+  "tax.regionsNote": "Dónde estaban los compradores al pagar, sumado por país y provincia o estado. «No compartido» son los pagos hechos antes de que el comprador aceptara la actualización de la Política de privacidad que te comparte su región.",
+  "tax.rateNote": "Si estás registrado para el GST/HST, la última columna aplica la tasa de la provincia del comprador a tus ventas de encargos. Made for Stream paga el GST/HST de las descargas inmediatas, por eso no se incluyen.",
+  "tax.region": "Región",
+  "tax.rate": "Tasa de GST/HST",
+  "tax.atRate": "GST/HST a esta tasa",
+  "tax.notShared": "No compartido",
+  "tax.unknownRegion": "Desconocida",
+
   // One paid payment's invoice (src/pages/payments/PaymentInvoice.tsx)
   "invoice.title": "Factura",
   "invoice.number": "N.º {number}",

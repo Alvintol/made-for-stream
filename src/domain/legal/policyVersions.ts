@@ -19,18 +19,21 @@ export const termsChanges = {
   ],
 } as const;
 
-export const privacyVersion = "2026-11-03-2";
+export const privacyVersion = "2026-11-03-3";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-11-03-2",
+  version: "2026-11-03-3",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "When you buy an instant download, we record each time you download one of its files. The creator doesn't see this record.",
-    "If you dispute an instant download with your bank, we can give the bank that record as evidence.",
+    "When you pay a creator, they can see your country and province or state, added up with their other sales from there, to help with their taxes.",
+    "Creators never see your street address, city or postal code, and never see your region next to your name or a single order.",
+    "This only applies to payments you make after accepting this version.",
+    "Earlier change (version 2026-11-03-2): when you buy an instant download, we record each time you download one of its files. The creator doesn't see this record.",
+    "Earlier change (version 2026-11-03-2): if you dispute an instant download with your bank, we can give the bank that record as evidence.",
     "Earlier change (version 2026-11-02): if you are a creator and choose to show your tax number on invoices, your buyers see that number and your business or legal name.",
     "Earlier change (version 2026-11-02): with each payment we now keep your province or state, not only your country, to work out the GST/HST in our fees.",
     "Earlier change (version 2026-10-29): when you send a commission request, the creator is told whether you have EU (including EEA) or UK consumer rights, so they know you can cancel within 14 days. They are not told your country or address.",
