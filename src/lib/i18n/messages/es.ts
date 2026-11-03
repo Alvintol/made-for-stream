@@ -1457,6 +1457,22 @@ export const es: Record<MessageKey, Message> = {
   "tax.notShared": "No compartido",
   "tax.unknownRegion": "Desconocida",
 
+  // A creator's yearly statement (src/pages/creator/CreatorStatement.tsx)
+  "statement.link": "Resumen anual",
+  "statement.back": "Volver a Ganancias",
+  "statement.title": "Resumen de ganancias {year}",
+  "statement.periodFull": "De enero a diciembre de {year}",
+  "statement.periodSoFar": "{year} hasta ahora, al {date}",
+  "statement.prepared": "Preparado el {date}",
+  "statement.notAForm": "Un registro de tus ventas en Made for Stream para tus propios registros fiscales, antes de los costos de Stripe. No es un formulario fiscal oficial. Suma las ventas que hagas en otros lugares.",
+  "statement.preparedFor": "Preparado para",
+  "statement.preparedBy": "De",
+  "statement.noDetails": "Agrega tu nombre legal y tu dirección en Configuración → Datos personales para mostrarlos aquí.",
+  "statement.summary": "Resumen",
+  "statement.sold": "Ventas, menos reembolsos",
+  "statement.feeTax": "GST/HST incluido en esas comisiones",
+  "statement.invalidYear": "No hay resumen para ese año.",
+
   // One paid payment's invoice (src/pages/payments/PaymentInvoice.tsx)
   "invoice.title": "Factura",
   "invoice.number": "N.º {number}",

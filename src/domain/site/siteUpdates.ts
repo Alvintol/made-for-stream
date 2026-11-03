@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.13.00";
+export const siteVersion = "V0.14.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.14.00",
+    date: "2026-11-03",
+    title: "Yearly earnings statement",
+    changes: [
+      "Creators can open a yearly earnings statement from Tax help on the Earnings page.",
+      "The statement shows your details, the year's sales, fees and earnings, each month, and sales by your buyers' region.",
+      "You can print the statement or save it as a PDF for your own tax records.",
+      "Invoices and statements now print in light colours, even when you use dark mode.",
+    ],
+  },
   {
     version: "V0.13.00",
     date: "2026-11-03",

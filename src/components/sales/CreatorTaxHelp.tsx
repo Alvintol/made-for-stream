@@ -1,19 +1,18 @@
 import { useState } from "react";
-import { formatFeeRateBps, formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
-import {
-  SMALL_SUPPLIER_LIMIT_CENTS,
-  formatSalesMonth,
-  regionName,
-  type CreatorTaxRegionRow,
-} from "../../domain/payments/sales";
+import { Link } from "react-router-dom";
+import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
+import { SMALL_SUPPLIER_LIMIT_CENTS, formatSalesMonth } from "../../domain/payments/sales";
 import { useMyTaxSummary } from "../../hooks/payments/useSales";
 import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
+import CreatorTaxRegions from "./CreatorTaxRegions";
 
 const classes = {
   section: "card space-y-4 p-6",
   header: "flex flex-wrap items-end justify-between gap-3",
   title: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
   note: "mt-0.5 max-w-2xl text-sm text-zinc-500",
+  side: "flex flex-wrap items-end gap-3",
+  link: "btnOutline",
   filter: "space-y-1",
   label: "formLabel block",
   input: "formControl",
@@ -23,12 +22,6 @@ const classes = {
   statValue: "mt-1 font-display text-2xl font-bold tracking-tight text-zinc-900",
   statNote: "mt-0.5 text-xs text-zinc-500",
   meter: "mt-2 h-2 w-full",
-  subTitle: "font-display text-sm font-bold tracking-tight text-zinc-900",
-  text: "text-sm text-zinc-600",
-  tableWrap: "overflow-x-auto",
-  table: "w-full text-left text-sm",
-  th: "border-b border-zinc-200 py-2 pr-4 text-xs font-bold uppercase tracking-wide text-zinc-500",
-  td: "border-b border-zinc-100 py-2 pr-4 tabular-nums text-zinc-800",
   empty: "text-sm text-zinc-500",
   error: "notice noticeError",
   warning: "notice noticeWarning",
@@ -46,13 +39,6 @@ const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
   const inCanada = data?.creator_country === "CA";
   const supplier = data?.small_supplier;
 
-  const placeName = (row: CreatorTaxRegionRow) => {
-    if (row.country === "-") return t("tax.notShared");
-    if (row.country === "?") return t("tax.unknownRegion");
-
-    return regionName(row.country, row.region, locale);
-  };
-
   return (
     <section className={classes.section} aria-labelledby="tax-help-title">
       <div className={classes.header}>
@@ -63,20 +49,26 @@ const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
           <p className={classes.note}>{t("tax.note")}</p>
         </div>
 
-        <label className={classes.filter}>
-          <span className={classes.label}>{t("sales.year")}</span>
-          <select
-            className={classes.input}
-            value={year}
-            onChange={(event) => setYear(Number(event.currentTarget.value))}
-          >
-            {[thisYear, thisYear - 1, thisYear - 2].map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className={classes.side}>
+          <Link className={classes.link} to={`/creator/earnings/statement/${year}`}>
+            {t("statement.link")}
+          </Link>
+
+          <label className={classes.filter}>
+            <span className={classes.label}>{t("sales.year")}</span>
+            <select
+              className={classes.input}
+              value={year}
+              onChange={(event) => setYear(Number(event.currentTarget.value))}
+            >
+              {[thisYear, thisYear - 1, thisYear - 2].map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {error && <div className={classes.error}>{t("sales.loadFailed")}</div>}
@@ -132,46 +124,7 @@ const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
             <div className={classes.warning}>{t("tax.limitPassed")}</div>
           )}
 
-          {data.regions.length > 0 && (
-            <div className="space-y-2">
-              <h3 className={classes.subTitle}>{t("tax.regionsTitle")}</h3>
-              <p className={classes.text}>{t("tax.regionsNote")}</p>
-              {inCanada && <p className={classes.text}>{t("tax.rateNote")}</p>}
-
-              <div className={classes.tableWrap}>
-                <table className={classes.table}>
-                  <thead>
-                    <tr>
-                      <th className={classes.th}>{t("tax.region")}</th>
-                      <th className={classes.th}>{t("sales.payments")}</th>
-                      <th className={classes.th}>{t("sales.amount")}</th>
-                      <th className={classes.th}>{t("sales.earnings")}</th>
-                      {inCanada && <th className={classes.th}>{t("tax.rate")}</th>}
-                      {inCanada && <th className={classes.th}>{t("tax.atRate")}</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.regions.map((row) => (
-                      <tr key={`${row.country}:${row.region}:${row.currency}:${row.bps}`}>
-                        <td className={classes.td}>{placeName(row)}</td>
-                        <td className={classes.td}>{row.payments}</td>
-                        <td className={classes.td}>{formatPaymentCents(row.sold_cents, row.currency)}</td>
-                        <td className={classes.td}>{formatPaymentCents(row.earned_cents, row.currency)}</td>
-                        {inCanada && (
-                          <td className={classes.td}>{row.bps === null ? "—" : formatFeeRateBps(row.bps)}</td>
-                        )}
-                        {inCanada && (
-                          <td className={classes.td}>
-                            {row.tax_cents === null ? "—" : formatPaymentCents(row.tax_cents, row.currency)}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {data.regions.length > 0 && <CreatorTaxRegions regions={data.regions} inCanada={inCanada} />}
         </>
       )}
     </section>
