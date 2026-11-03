@@ -95,8 +95,6 @@ export const classifyTaxLocationEvidence = ({
 export type PaymentTaxDisplayInput = {
   tax_cents: number;
   tax_treatment: "not_collected" | "calculated" | null;
-  tax_jurisdiction_country: string | null;
-  tax_jurisdiction_region: string | null;
 };
 
 // Fee Schedule section 6: tax is identified separately before payment. A
@@ -106,13 +104,5 @@ export const describePaymentTaxLine = (
   payment: PaymentTaxDisplayInput,
   t: Translate = english,
 ): { label: string; pending: boolean } => {
-  if (!payment.tax_treatment) {
-    return { label: t("tax.label"), pending: true };
-  }
-
-  const place = payment.tax_jurisdiction_region
-    ? `${payment.tax_jurisdiction_country}-${payment.tax_jurisdiction_region}`
-    : payment.tax_jurisdiction_country;
-
-  return { label: place ? t("tax.labelPlace", { place }) : t("tax.label"), pending: false };
+  return { label: t("tax.label"), pending: !payment.tax_treatment };
 };

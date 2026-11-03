@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.7.39";
+export const siteVersion = "V0.8.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.8.00",
+    date: "2026-11-02",
+    title: "Sales numbers and invoices",
+    changes: [
+      "Creators have a new Sales page with their monthly sales, earnings and fees.",
+      "Every paid payment now has an invoice you can print or save.",
+      "Creators can choose to show their tax number on invoices.",
+      "The Payment Terms and Privacy Policy are updated to explain how GST/HST works on our fees.",
+    ],
+  },
   {
     version: "V0.7.39",
     date: "2026-11-02",

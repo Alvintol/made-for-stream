@@ -21,9 +21,12 @@ export type AccountDetails = {
   business_legal_name: string | null;
   business_registration_number: string | null;
   tax_number: string | null;
+  // Shown to buyers, unlike everything else here (20261102_180).
+  show_tax_number_on_invoices: boolean;
 };
 
-// What the form holds: every field a string, so an empty box is "".
+// What the form holds: every field a string, so an empty box is "". A ticked
+// box is "true".
 export type AccountDetailsForm = { [K in keyof AccountDetails]: string };
 
 export type AccountDetailsErrors = Partial<Record<keyof AccountDetails, string>>;
@@ -44,6 +47,7 @@ export const emptyAccountDetailsForm: AccountDetailsForm = {
   business_legal_name: "",
   business_registration_number: "",
   tax_number: "",
+  show_tax_number_on_invoices: "",
 };
 
 export const toAccountDetailsForm = (details: AccountDetails | null): AccountDetailsForm =>
@@ -51,7 +55,9 @@ export const toAccountDetailsForm = (details: AccountDetails | null): AccountDet
     ? (Object.fromEntries(
         Object.keys(emptyAccountDetailsForm).map((key) => [
           key,
-          details[key as keyof AccountDetails] ?? "",
+          details[key as keyof AccountDetails] === true
+            ? "true"
+            : (details[key as keyof AccountDetails] || ""),
         ]),
       ) as AccountDetailsForm)
     : emptyAccountDetailsForm;
@@ -96,6 +102,11 @@ const yearsAgo = (years: number, today: Date): string => {
   return date.toISOString().slice(0, 10);
 };
 
+// Nine digits alone is the shape of a social insurance or social security
+// number. The database refuses it too, because buyers would see it.
+export const looksLikePrivateNumber = (value: string): boolean =>
+  /^\d{9}$/.test(value.replace(/[^0-9A-Za-z]/g, ""));
+
 export const validateAccountDetails = (
   form: AccountDetailsForm,
   today = new Date(),
@@ -138,6 +149,13 @@ export const validateAccountDetails = (
     require("business_legal_name", t("account.errorBusiness"));
   }
 
+  if (trimmed.show_tax_number_on_invoices === "true") {
+    if (!trimmed.tax_number) {
+      errors.tax_number = t("account.errorInvoiceNumber");
+    } else if (looksLikePrivateNumber(trimmed.tax_number)) {
+      errors.tax_number = t("account.errorInvoiceNumberPrivate");
+    }
+  }
   if (Object.keys(errors).length > 0) return { values: null, errors };
 
   const optional = (value: string): string | null => value || null;
@@ -158,6 +176,7 @@ export const validateAccountDetails = (
       business_legal_name: optional(trimmed.business_legal_name),
       business_registration_number: optional(trimmed.business_registration_number),
       tax_number: optional(trimmed.tax_number),
+      show_tax_number_on_invoices: trimmed.show_tax_number_on_invoices === "true",
     },
   };
 };

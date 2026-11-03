@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import AdminSalesTotals from "../../components/sales/AdminSalesTotals";
+import { currentSalesMonth } from "../../domain/payments/sales";
 import { useAdminListingMetrics } from "../../hooks/admin/useAdminListingMetrics";
 
 const classes = {
@@ -52,6 +54,17 @@ const AdminDashboard = () => {
       {isLoading && (
         <div className={classes.loadingText}>Loading dashboard metrics…</div>
       )}
+
+      <section className="space-y-2" aria-label="This month's sales">
+        <div className={classes.row}>
+          <h2 className={classes.toolTitle}>This month's sales</h2>
+          <Link className={classes.btnOutline} to="/admin/sales">
+            View sales and tax
+          </Link>
+        </div>
+
+        <AdminSalesTotals month={currentSalesMonth()} />
+      </section>
 
       <div className={classes.statsGrid}>
         <div className={classes.statCard}>

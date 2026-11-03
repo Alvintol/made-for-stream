@@ -250,6 +250,9 @@ const AccountDetailsSettings = () => {
         { label: t("account.businessName"), value: details.business_legal_name },
         { label: t("account.businessNumber"), value: details.business_registration_number },
         { label: t("account.taxNumber"), value: details.tax_number },
+        ...(details.show_tax_number_on_invoices
+          ? [{ label: t("account.invoiceNumber"), value: t("account.invoiceYes") }]
+          : []),
       ]
     : [];
 
@@ -520,6 +523,21 @@ const AccountDetailsSettings = () => {
                 {(props) => <input {...props} {...text("tax_number", "off")} maxLength={60} />}
               </Field>
             </div>
+
+            <label className={classes.optIn}>
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300"
+                checked={form.show_tax_number_on_invoices === "true"}
+                onChange={(event) =>
+                  set("show_tax_number_on_invoices", event.currentTarget.checked ? "true" : "")
+                }
+              />
+              <span>
+                {t("account.invoiceNumber")}
+                <span className="block text-xs text-zinc-500">{t("account.invoiceNumberHint")}</span>
+              </span>
+            </label>
           </div>
 
           {!details && (

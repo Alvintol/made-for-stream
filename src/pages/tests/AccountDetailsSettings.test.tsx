@@ -222,7 +222,9 @@ describe("<AccountDetailsSettings />", () => {
     expect(screen.getByLabelText(/^Legal first name/)).toHaveValue("Ada");
 
     // The email question belongs to the first save only.
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /news, offers and monthly updates/ }),
+    ).not.toBeInTheDocument();
 
     fill(/^City or town/, "Edmonton");
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));

@@ -40,6 +40,12 @@ Refunds reverse tax proportionally, line by line. Money is always
 involved: a tax problem is either a buyer charged the wrong amount or a
 filing that will not reconcile.
 
+**Made for Stream's own fees are not handled here.** Since 2026-11-02 they include
+any GST/HST, nothing is added at checkout, and the tax to set aside is worked out
+after each sale. See [`sales.md`](sales.md). Everything below is about tax added on
+top of a price, and it must stay switched off: setting a country would charge buyers
+tax on the whole price, including the creator's share.
+
 **Collection is off by default.** `STRIPE_TAX_COLLECTION_COUNTRIES` ships
 empty. Every payment is recorded as `tax_treatment = 'not_collected'`
 with its billing country until a tax professional has advised on:
@@ -49,7 +55,8 @@ with its billing country until a tax professional has advised on:
 - whether the platform can be the deemed supplier while the charge is a
   direct charge on the creator's account.
 
-**Rehearsal settings (owner's decision, 2026-10-12; test mode only).** So
+**Rehearsal settings (owner's decision, 2026-10-12; test mode only, retired
+2026-11-02: clear these on the test API so test payments match production).** So
 that the tax path is exercised before launch, the dev environment collects
 in every country the site serves, taxes the project amount and the buyer
 service fee, and does **not** tax the tip or the contribution

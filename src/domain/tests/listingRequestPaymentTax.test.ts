@@ -94,7 +94,7 @@ describe("classifyTaxLocationEvidence", () => {
 });
 
 describe("describePaymentTaxLine", () => {
-  const base = { tax_cents: 0, tax_jurisdiction_country: null, tax_jurisdiction_region: null };
+  const base = { tax_cents: 0 };
 
   it("is pending until tax has been determined", () => {
     expect(describePaymentTaxLine({ ...base, tax_treatment: null })).toEqual({
@@ -103,24 +103,15 @@ describe("describePaymentTaxLine", () => {
     });
   });
 
-  it("labels the jurisdiction, including a region", () => {
+  it("is settled once tax has been worked out", () => {
     expect(
-      describePaymentTaxLine({
-        ...base,
-        tax_cents: 1300,
-        tax_treatment: "calculated",
-        tax_jurisdiction_country: "CA",
-        tax_jurisdiction_region: "ON",
-      }),
-    ).toEqual({ label: "Tax (CA-ON)", pending: false });
+      describePaymentTaxLine({ ...base, tax_cents: 1300, tax_treatment: "calculated" }),
+    ).toEqual({ label: "Tax", pending: false });
 
-    expect(
-      describePaymentTaxLine({
-        ...base,
-        tax_treatment: "not_collected",
-        tax_jurisdiction_country: "US",
-      }),
-    ).toEqual({ label: "Tax (US)", pending: false });
+    expect(describePaymentTaxLine({ ...base, tax_treatment: "not_collected" })).toEqual({
+      label: "Tax",
+      pending: false,
+    });
   });
 });
 

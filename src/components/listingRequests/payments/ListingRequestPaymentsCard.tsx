@@ -160,6 +160,14 @@ const ListingRequestPaymentsCard = ({
                   </div>
                 </div>
 
+                {payment.paid_at && (
+                  <div className={classes.actions}>
+                    <Link className="btnOutline btnSm" to={`/payments/invoice/${payment.id}`}>
+                      {t("invoice.title")}
+                    </Link>
+                  </div>
+                )}
+
                 {payment.creator_tip_cents > 0 && (
                   <p className={classes.feeText}>
                     {t("payments.tipIncluded", {

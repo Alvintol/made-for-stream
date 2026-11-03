@@ -1,14 +1,13 @@
-// Section 6 is interim wording: tax collection is switched off everywhere
-// while the Sprint 7 tax advice is outstanding (docs/support/payments/tax.md).
-// When a country is switched on, rewrite section 6 and bump this version, so
-// buyers accept the change before any tax is charged.
+// Section 6: Made for Stream's fees include any GST/HST, and nothing is added at
+// checkout (docs/support/payments/sales.md). Before tax is ever added to a
+// payment, rewrite section 6 and bump this version, so buyers accept it first.
 export { paymentTermsVersion } from "./policyVersions";
 
 export const paymentTermsSections = [
   {
     "title": "1. What you pay",
     "body": [
-      "The base payment is the agreed amount for a commission, milestone or accepted change order before Made for Stream fees, creator tips, optional platform support and separately identified taxes. The buyer pays the base amount plus the buyer service fee, any voluntarily chosen tip or support contribution, and applicable taxes disclosed before payment. The creator platform fee is deducted from the creator's base proceeds; it is not an additional charge to the buyer.",
+      "The base payment is the agreed amount for a commission, milestone or accepted change order before Made for Stream fees, creator tips and optional platform support. The buyer pays the base amount plus the buyer service fee and any voluntarily chosen tip or support contribution. The creator platform fee is deducted from the creator's base proceeds; it is not an additional charge to the buyer.",
       "Charge: Buyer service fee; Rate: 5% of the base amount; Minimum fee: None",
       "Charge: Creator platform fee; Rate: 5% of the base amount; Minimum fee: None",
       "Charge: Creator tip; Rate: Optional amount chosen by the buyer; Minimum fee: No Made for Stream fee on the tip",
@@ -27,14 +26,14 @@ export const paymentTermsSections = [
   {
     "title": "3. Examples",
     "body": [
-      "These examples exclude tax, currency conversion and Stripe costs.",
+      "These examples exclude currency conversion and Stripe costs. Made for Stream's fees and support already include any GST/HST.",
       "Example: CAD 100 base, no extras; Buyer pays: CAD 105; Creator receives before Stripe costs: CAD 95; Made for Stream allocation: CAD 10",
       "Example: CAD 100 base + CAD 20 tip; Buyer pays: CAD 125; Creator receives before Stripe costs: CAD 115; Made for Stream allocation: CAD 10",
       "Example: CAD 100 base + CAD 20 tip + CAD 3 support; Buyer pays: CAD 128; Creator receives before Stripe costs: CAD 115; Made for Stream allocation: CAD 13",
       "Example: CAD 10 base, one payment; Buyer pays: CAD 10.50; Creator receives before Stripe costs: CAD 9.50; Made for Stream allocation: CAD 1",
       "Example: CAD 20 base, one payment; Buyer pays: CAD 21; Creator receives before Stripe costs: CAD 19; Made for Stream allocation: CAD 2",
       "Example: CAD 20 base, two CAD 10 payments; Buyer pays: CAD 21 total; Creator receives before Stripe costs: CAD 19 total; Made for Stream allocation: CAD 2 total, the same as one payment",
-      "For the CAD 100 base example, refunding CAD 40 of the base also returns CAD 2 of the buyer fee and reverses CAD 2 of the creator fee. Buyer refund: CAD 42, before any separate tip, support or tax adjustment."
+      "For the CAD 100 base example, refunding CAD 40 of the base also returns CAD 2 of the buyer fee and reverses CAD 2 of the creator fee. Buyer refund: CAD 42, before any separate tip or support adjustment."
     ]
   },
   {
@@ -57,10 +56,11 @@ export const paymentTermsSections = [
   {
     "title": "6. Taxes, exchange rates and receipts",
     "body": [
-      "Made for Stream does not currently add sales tax, VAT or GST to any payment. If Made for Stream becomes obliged to collect and remit indirect tax on a payment, including as a marketplace or deemed supplier, it will calculate that tax at checkout, show it as its own line before you pay and remit it — and this schedule will be updated, and you asked to accept the change, before any tax is charged. Creators remain responsible for taxes and filings on their own business income and supplies except where applicable law assigns collection or remittance to Made for Stream or another party, and Made for Stream remains responsible for taxes legally imposed on its own services.",
-      "To work out where tax may apply, Made for Stream records the billing country you choose at checkout and, where available, the country associated with your IP address and the country of the card you pay with. Only the country is recorded. Where tax has been charged on a payment that is refunded in whole or in part, the tax attributable to the refunded amounts is refunded in proportion.",
+      "The buyer service fee, the creator platform fee and any Made for Stream support include any GST/HST that applies to them, so no tax is added to them at checkout. For a customer in Canada, the rate is the one for the province or territory of that customer's account address, which is the buyer's for the buyer service fee and support and the creator's for the creator platform fee. Made for Stream remits that tax itself.",
+      "Made for Stream does not add sales tax, VAT or GST to the creator's price. Creators remain responsible for taxes and filings on their own business income and supplies except where applicable law assigns collection or remittance to Made for Stream or another party. If Made for Stream becomes obliged to add indirect tax to a payment, including as a marketplace or deemed supplier, it will show that tax as its own line before you pay and remit it, and this schedule will be updated, and you asked to accept the change, before any tax is added.",
+      "To work out which tax applies, Made for Stream uses the country and the province or state in your account address and, where available, the country associated with your IP address and the country of the card you pay with. With each payment we keep the country and the province or state, not your street address. When a payment is refunded in whole or in part, the tax included in Made for Stream's refunded fees is reversed in proportion.",
       "Payments and refunds are denominated in the transaction currency shown on the receipt. A bank or payment provider may convert that amount and apply its own rates or charges, so a converted refund can differ from the original converted debit. Made for Stream does not promise a particular external exchange rate.",
-      "The payment record separately identifies base price, buyer fee, creator tip, support contribution, tax and total. The creator's statement also identifies the creator fee and any available provider deductions. The seller's identity must be available before purchase."
+      "Each paid payment has an invoice that separately identifies the base price, buyer fee, creator tip, support contribution and total, and the GST/HST included in Made for Stream's fees. The creator's invoice also identifies the creator fee and the GST/HST included in it, but not the buyer's rate or location. A creator can choose to show their tax number on invoices, together with their business or legal name. The seller's identity must be available before purchase."
     ]
   },
   {

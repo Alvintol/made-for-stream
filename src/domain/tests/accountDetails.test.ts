@@ -126,6 +126,34 @@ describe("validateAccountDetails", () => {
       validateAccountDetails({ ...business, business_legal_name: "Ada Art Inc." }, today).values,
     ).toMatchObject({ account_type: "business", tax_number: "123456789 RT0001" });
   });
+
+  it("only shows a tax number on invoices when one is given", () => {
+    expect(
+      validateAccountDetails({ ...valid, show_tax_number_on_invoices: "true" }, today).errors.tax_number,
+    ).toBe("Enter your tax number to show it on invoices.");
+
+    expect(
+      validateAccountDetails(
+        { ...valid, tax_number: "123456789 RT0001", show_tax_number_on_invoices: "true" },
+        today,
+      ).values?.show_tax_number_on_invoices,
+    ).toBe(true);
+
+    expect(validateAccountDetails(valid, today).values?.show_tax_number_on_invoices).toBe(false);
+  });
+
+  it.each(["123456789", "123 456 789", "123-45-6789"])(
+    "refuses to show %s, because buyers would see a private number",
+    (tax_number) => {
+      expect(
+        validateAccountDetails({ ...valid, tax_number, show_tax_number_on_invoices: "true" }, today).errors
+          .tax_number,
+      ).toMatch(/social insurance/);
+
+      // Only showing it is refused. Kept private, it stays allowed.
+      expect(validateAccountDetails({ ...valid, tax_number }, today).errors.tax_number).toBeUndefined();
+    },
+  );
 });
 
 describe("account details helpers", () => {

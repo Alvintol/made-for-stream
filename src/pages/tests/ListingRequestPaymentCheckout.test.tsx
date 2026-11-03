@@ -75,8 +75,6 @@ describe("ListingRequestPaymentCheckout", () => {
       platform_support_cents: 0,
       tax_cents: 0,
       tax_treatment: null,
-      tax_jurisdiction_country: null,
-      tax_jurisdiction_region: null,
       total_checkout_cents: 10500,
       metadata: {},
     };
@@ -99,18 +97,17 @@ describe("ListingRequestPaymentCheckout", () => {
     expect(screen.getByText("Calculated before payment")).toBeInTheDocument();
   });
 
-  it("shows calculated tax as a separate line with its jurisdiction", () => {
+  it("shows calculated tax as a separate line", () => {
     mocks.payment = {
       ...mocks.payment,
       tax_cents: 2100,
       tax_treatment: "calculated",
-      tax_jurisdiction_country: "GB",
       total_checkout_cents: 12600,
     };
 
     renderCheckout();
 
-    expect(screen.getByText("Tax (GB)")).toBeInTheDocument();
+    expect(screen.getByText("Tax")).toBeInTheDocument();
     expect(screen.getByText("$21.00")).toBeInTheDocument();
     expect(screen.getByText("$126.00")).toBeInTheDocument();
   });
