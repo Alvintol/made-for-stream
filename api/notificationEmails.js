@@ -18,10 +18,16 @@ export const getListingRequestUrl = (appOrigin, listingRequestId, viewer) =>
 // Chat emails open the conversation itself, the same page for both sides.
 const CONVERSATION_KINDS = new Set(["conversation_started", "message_received"]);
 
+// An instant download has no commission page: its emails open the buyer's
+// downloads or the creator's sales (20261103_183).
+const PAGE_BY_KIND = { purchase_receipt: "/downloads", instant_sale: "/creator/sales" };
+
 // The page an email's button opens. `row` is a listing_request_notifications
 // row; `buyerUserId` is the commission's buyer, when there is a commission.
 export const getNotificationUrl = (appOrigin, row, buyerUserId) =>
-  row.conversation_id && (CONVERSATION_KINDS.has(row.kind) || !row.listing_request_id)
+  PAGE_BY_KIND[row.kind]
+    ? `${appOrigin}${PAGE_BY_KIND[row.kind]}`
+    : row.conversation_id && (CONVERSATION_KINDS.has(row.kind) || !row.listing_request_id)
     ? `${appOrigin}/messages/${row.conversation_id}`
     : getListingRequestUrl(
         appOrigin,
@@ -48,6 +54,30 @@ const formatCents = (cents, currency) =>
     : null;
 
 const amountOf = (payload) => formatCents(payload.amount_cents, payload.currency);
+const paidOn = (payload, locale = "en-US") =>
+  payload.paid_at
+    ? new Date(payload.paid_at).toLocaleDateString(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : null;
+
+// A receipt's amounts line: "Receipt A581F954, paid November 3, 2026: $20.00
+// CAD for the item, $1.00 CAD buyer service fee, $21.00 CAD in total".
+const receiptLine = (payload) => {
+  const total = amountOf(payload);
+  const item = formatCents(payload.item_cents, payload.currency);
+  const fee = formatCents(payload.fee_cents, payload.currency);
+  const paid = paidOn(payload);
+
+  return [
+    `Receipt${payload.number ? ` ${payload.number}` : ""}${paid ? `, paid ${paid}` : ""}`,
+    total ? `: ${item ? `${item} for the item, ` : ""}${fee ? `${fee} buyer service fee, ` : ""}${total} in total` : "",
+    ". Prices include any GST/HST.",
+  ].join("");
+};
 const named = (payload, fallback) => (payload.title ? `"${payload.title}"` : fallback);
 const waited = (payload) =>
   payload.waiting_days ? `for ${payload.waiting_days} days` : "for a while";
@@ -201,6 +231,26 @@ export const NOTIFICATION_EMAILS = {
       "You can carry on with the next step of the project.",
     ],
     cta: "Open commission",
+  }),
+  purchase_receipt: (t, p, n) => ({
+    subject: `Your receipt for "${t}"`,
+    title: "Thanks for your purchase",
+    lines: [
+      `You bought "${t}" from ${n.creator}.`,
+      receiptLine(p),
+      "This is a final sale. When you bought it, you agreed it can't be cancelled or refunded, except where the law requires it.",
+      "Your files are on your Downloads page, ready whenever you need them. Your invoice is there too.",
+    ],
+    cta: "Go to your downloads",
+  }),
+  instant_sale: (t, p, n) => ({
+    subject: `New sale: "${t}"`,
+    title: `${n.Buyer} bought your download`,
+    lines: [
+      `${n.Buyer} bought "${t}"${amountOf(p) ? ` for ${amountOf(p)} before fees` : ""}. The files opened for them straight away.`,
+      "It's on your Sales page.",
+    ],
+    cta: "View your sales",
   }),
   payment_refunded: (t, p) => ({
     subject: `Refund on "${t}"`,
@@ -471,6 +521,9 @@ const reasonText = (reason, pack) => {
 // What a translated email works out from the row (emailTextFr.js).
 const translatedHelpers = (payload, pack) => ({
   amount: amountOf(payload),
+  item: formatCents(payload.item_cents, payload.currency),
+  fee: formatCents(payload.fee_cents, payload.currency),
+  paidOn: paidOn(payload, pack?.locale),
   waited: pack.waited(payload.waiting_days),
   deadline: deadline(payload, pack),
   reason: reasonText(payload.reason, pack),

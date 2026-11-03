@@ -7,7 +7,7 @@ import {
 } from "../../domain/listings/instantDownloads";
 import { getProductFileDownloadUrl, useMyDownloads } from "../../hooks/listings/useInstantDownloads";
 import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
-import { formatFileSize } from "../../lib/listings/deliveryFiles";
+import { productFileMeta } from "../../components/listings/productFileMeta";
 
 const classes = {
   page: "space-y-6",
@@ -107,7 +107,7 @@ const Downloads = () => {
                 <li key={file.path ?? file.name} className={classes.item}>
                   <span className={classes.name}>{productFileDisplayName(file.name)}</span>
                   <span className={classes.row}>
-                    <span className={classes.size}>{formatFileSize(file.size_bytes, t)}</span>
+                    <span className={classes.size}>{productFileMeta(file, t)}</span>
                     {file.path && (
                       <button
                         type="button"

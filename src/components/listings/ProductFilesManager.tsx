@@ -15,7 +15,8 @@ import {
   useUploadProductFile,
 } from "../../hooks/listings/useInstantDownloads";
 import { useT } from "../../lib/i18n/i18n";
-import { DELIVERY_FILE_MAX_BYTES, formatFileSize, isZipFile } from "../../lib/listings/deliveryFiles";
+import { DELIVERY_FILE_MAX_BYTES, isZipFile } from "../../lib/listings/deliveryFiles";
+import { productFileMeta } from "./productFileMeta";
 import { listZipEntryNames } from "../../lib/zip";
 
 const classes = {
@@ -138,7 +139,7 @@ const ProductFilesManager = ({ listingId }: { listingId: string }) => {
               <li key={file.path ?? file.name} className={classes.item}>
                 <span className={classes.name}>{name}</span>
                 <span className={classes.row}>
-                  <span className={classes.size}>{formatFileSize(file.size_bytes, t)}</span>
+                  <span className={classes.size}>{productFileMeta(file, t)}</span>
                   {file.path && (
                     <button
                       type="button"

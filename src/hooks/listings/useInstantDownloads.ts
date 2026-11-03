@@ -7,6 +7,7 @@ import {
   type ProductFile,
 } from "../../domain/listings/instantDownloads";
 import { toUniqueStorageFileName } from "../../lib/listings/deliveryFiles";
+import { measureProductFile } from "../../lib/listings/productFileDetails";
 import { supabase } from "../../lib/supabaseClient";
 
 // What's included, and whether the viewer owns it or has a payment waiting.
@@ -84,11 +85,15 @@ export const useUploadProductFile = (listingId: string) => {
 
   return useMutation({
     mutationFn: async (file: File) => {
+      // Shown to buyers with the file (20261103_183).
+      const details = await measureProductFile(file);
+
       const { error } = await supabase.storage
         .from(PRODUCT_FILES_BUCKET)
         .upload(`${listingId}/${toUniqueStorageFileName(file.name)}`, file, {
           contentType: file.type || "application/octet-stream",
           upsert: false,
+          ...(details ? { metadata: { details } } : {}),
         });
 
       if (error) throw error;
@@ -119,6 +124,8 @@ export const useInstantPurchaseDownloads = (listingRequestId: string | undefined
       downloads: number;
       first_downloaded_at: string | null;
       last_downloaded_at: string | null;
+      // When the buyer ticked the final-sale box, at which Refund Policy version.
+      final_sale: { accepted_at: string; version: string } | null;
     }> => {
       const { data, error } = await supabase.rpc("get_instant_purchase_downloads", {
         p_listing_request_id: listingRequestId,

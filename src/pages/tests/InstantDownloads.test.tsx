@@ -59,7 +59,7 @@ describe("<InstantPurchasePanel />", () => {
 
     expect(screen.getByText("Licence: Streaming use")).toBeInTheDocument();
     expect(screen.getByText("overlay_pack.zip")).toBeInTheDocument();
-    expect(screen.getByText(/the sale is final/)).toBeInTheDocument();
+    expect(screen.getByText(/Final sale: no cancellations or refunds/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Buy now" }));
 

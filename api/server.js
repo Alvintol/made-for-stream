@@ -3063,6 +3063,19 @@ app.post("/api/stripe/checkout/session", async (req, res) => {
         ...(payment.tax_treatment === "calculated"
           ? { billing_address_collection: "required" }
           : {}),
+        // An instant download (Refund Policy section 12): the buyer has
+        // already ticked the final-sale box; this repeats it beside the
+        // Pay button, which is evidence if the payment is disputed.
+        ...(payment.metadata?.instant === true
+          ? {
+              custom_text: {
+                submit: {
+                  message:
+                    "Final sale: instant downloads can't be cancelled or refunded, except where the law requires it.",
+                },
+              },
+            }
+          : {}),
         payment_intent_data: {
           application_fee_amount: payment.application_fee_cents,
           metadata,

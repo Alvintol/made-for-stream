@@ -217,6 +217,26 @@ export const fr = {
       ],
       cta: "Ouvrir la commande",
     }),
+    purchase_receipt: (t, p, n, h) => ({
+      subject: `Votre reçu pour ${q(t)}`,
+      title: "Merci pour votre achat",
+      lines: [
+        `Vous avez acheté ${q(t)} auprès de ${n.creator}.`,
+        `Reçu${p.number ? ` ${p.number}` : ""}${h.paidOn ? `, payé le ${h.paidOn}` : ""}${h.amount ? ` : ${h.item ? `${h.item} pour l’article, ` : ""}${h.fee ? `${h.fee} de frais de service, ` : ""}${h.amount} au total` : ""}. Les prix comprennent la TPS/TVH applicable.`,
+        "Il s’agit d’une vente finale. Au moment de l’achat, vous avez accepté qu’elle ne puisse être ni annulée ni remboursée, sauf si la loi l’exige.",
+        "Vos fichiers sont sur votre page Téléchargements, prêts quand vous en avez besoin. Votre facture s’y trouve aussi.",
+      ],
+      cta: "Aller à vos téléchargements",
+    }),
+    instant_sale: (t, p, n, h) => ({
+      subject: `Nouvelle vente : ${q(t)}`,
+      title: `${n.Buyer} a acheté votre téléchargement`,
+      lines: [
+        `${n.Buyer} a acheté ${q(t)}${h.amount ? ` pour ${h.amount} avant les frais` : ""}. Les fichiers se sont ouverts tout de suite.`,
+        "La vente figure sur votre page Ventes.",
+      ],
+      cta: "Voir vos ventes",
+    }),
     payment_refunded: (t, p) => ({
       subject: `Remboursement sur ${q(t)}`,
       title: "Un paiement a été remboursé",
