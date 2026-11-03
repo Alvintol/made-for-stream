@@ -22,6 +22,6 @@
 //                              versioned with the document that defines it
 export const CHECKOUT_POLICY_VERSIONS = {
   refund: "2026-10-07",
-  payment_terms: "2026-09-23",
+  payment_terms: "2026-11-02",
   early_service_request: "2026-10-07",
 };

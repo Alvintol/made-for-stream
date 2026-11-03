@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
 const COLUMNS =
-  "account_type, legal_first_name, legal_last_name, date_of_birth, address_line1, address_line2, city, region, postal_code, country_code, business_legal_name, business_registration_number, tax_number";
+  "account_type, legal_first_name, legal_last_name, date_of_birth, address_line1, address_line2, city, region, postal_code, country_code, business_legal_name, business_registration_number, tax_number, show_tax_number_on_invoices";
 
 // The signed-in person's private account details, or null when they have
 // not filled them in yet. A row only exists once it is complete

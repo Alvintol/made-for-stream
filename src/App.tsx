@@ -36,6 +36,7 @@ const AdminRequestDetails = lazy(() => import("./pages/admin/AdminRequestDetails
 const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
 const AdminStorage = lazy(() => import("./pages/admin/AdminStorage"));
 const AdminTaxReporting = lazy(() => import("./pages/admin/AdminTaxReporting"));
+const AdminSales = lazy(() => import("./pages/admin/AdminSales"));
 const BuyerRequestDetails = lazy(() => import("./pages/buyer/BuyerRequestDetails"));
 const BuyerRequests = lazy(() => import("./pages/buyer/BuyerRequests"));
 const ApplyCreator = lazy(() => import("./pages/creator/ApplyCreator"));
@@ -66,6 +67,8 @@ const MessageDetails = lazy(() => import("./pages/messages/MessageDetails"));
 const MessagesInbox = lazy(() => import("./pages/messages/MessagesInbox"));
 const MyReports = lazy(() => import("./pages/reports/MyReports"));
 const PaymentReturn = lazy(() => import("./pages/payments/PaymentReturn"));
+const PaymentInvoice = lazy(() => import("./pages/payments/PaymentInvoice"));
+const CreatorSales = lazy(() => import("./pages/creator/CreatorSales"));
 const ListingRequestPaymentCheckout = lazy(() => import("./pages/payments/ListingRequestPaymentCheckout"));
 
 const App = () => {
@@ -169,6 +172,13 @@ const App = () => {
                 <PaymentReturn />
               }
             />
+
+            <Route
+              path="/payments/invoice/:paymentId"
+              element={
+                <PaymentInvoice />
+              }
+            />
           </Route>
 
           <Route element={<RequireAdminAccess />}>
@@ -225,6 +235,10 @@ const App = () => {
               path="/admin/tax-reporting"
               element={<AdminTaxReporting />}
             />
+            <Route
+              path="/admin/sales"
+              element={<AdminSales />}
+            />
           </Route>
 
           <Route element={<RequireCreatorAccess />}>
@@ -251,6 +265,10 @@ const App = () => {
             <Route
               path="/creator/listings/:id/edit"
               element={<EditListing />}
+            />
+            <Route
+              path="/creator/sales"
+              element={<CreatorSales />}
             />
             <Route
               path="/creator/requests"

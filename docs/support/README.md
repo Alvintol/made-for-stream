@@ -146,6 +146,7 @@ how it fails.
 | Payments | [`payments/tax.md`](payments/tax.md) |
 | Payments | [`payments/display-currency.md`](payments/display-currency.md) |
 | Discovery | [`discovery/twitch-live.md`](discovery/twitch-live.md) |
+| Payments | [`payments/sales.md`](payments/sales.md) — sales numbers, GST/HST in our fees, invoices |
 | Operations | [`operations/alerting.md`](operations/alerting.md) — scheduled jobs and ops alerts |
 | Operations | [`operations/rate-limits.md`](operations/rate-limits.md) — API request limits |
 

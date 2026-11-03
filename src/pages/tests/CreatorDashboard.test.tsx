@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   unread: 0,
   paymentAccount: { payouts_enabled: true } as { payouts_enabled: boolean } | null,
   requestedPageSize: 0,
+  sales: [] as unknown[],
 }));
 
 vi.mock("../../hooks/creatorRequests/useMyCreatorRequests", () => ({
@@ -24,6 +25,10 @@ vi.mock("../../hooks/creatorRequests/useCreatorDashboardCounts", () => ({
 
 vi.mock("../../hooks/conversations/useMessagesInbox", () => ({
   useMessagesInbox: () => ({ data: { items: [], totalUnreadCount: mocks.unread } }),
+}));
+
+vi.mock("../../hooks/payments/useSales", () => ({
+  useMySalesSummary: () => ({ data: mocks.sales, isLoading: false }),
 }));
 
 vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({

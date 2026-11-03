@@ -42,6 +42,12 @@ own digital products. That matches the "creator is the seller" row above. It is 
 a written ruling. It does not settle a creator outside Canada selling to a Canadian
 buyer (brief, P3), where a platform can be liable for a sale it doesn't charge for.
 
+**Owner's decision (2026-11-02).** Tax is absorbed, not added: fees, contributions and
+downloads keep their prices, and the tax comes out of what Made for Stream keeps, at
+the rate for the customer's province. Built for fees in `payments/sales.md`. On a
+download the tax is on the whole price, so a sale to an HST province loses money: about
+$0.47 on a $20 download sold to Ontario.
+
 ## B. What kind of sale each listing is (questions 5 to 9)
 
 | Answer | What changes | Size |

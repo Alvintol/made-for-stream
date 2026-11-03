@@ -598,3 +598,11 @@
     animation: none;
   }
 }
+
+/* An invoice prints without the site around it. */
+@media print {
+  header,
+  footer {
+    display: none;
+  }
+}

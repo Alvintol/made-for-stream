@@ -966,8 +966,17 @@ Build order (each its own branch):
       **2026-11-02:** the owner phoned the CRA, who said GST/HST applies only to
       what Made for Stream itself charges: its fees, subscriptions and its own
       digital products. This backs the plan, but it is phone advice, not a
-      ruling, and the officer's name and reference are not recorded here. The
-      buyer fee needs settings only; the creator fee needs a tax line built.
+      ruling, and the officer's name and reference are not recorded here.
+      **Owner's decision:** absorb the tax, at each customer's provincial rate,
+      with nothing added at checkout.
+- [x] **Sales numbers, GST/HST in our fees and invoices** (V0.8.00, migration
+      `20261102_180`). Creator and admin Sales pages, tax to set aside by province,
+      an invoice for every paid payment, and a creator's opt-in to show their tax
+      number. The buyer's tax location is no longer readable from the browser. See
+      `payments/sales.md`.
+- [ ] **Instant digital downloads.** Next, on its own branch. Owner's decisions:
+      Made for Stream absorbs the tax on the whole price, and sales are final once
+      downloaded, except for a faulty file or one that was never downloaded.
 - [ ] **UK Online Safety Act risk assessments and Digital Services Act
       gaps** (report form fields, statements of reasons, contact points).
       Built on `feat/online-safety-report-statement`: report forms ask why
@@ -1060,6 +1069,14 @@ Owner's steps, outside the code:
       date (TAX-008 lists them); DAC7 once the first EU creator is paid.
 - [ ] Tell us if the GST/HST return is filed quarterly or monthly: the
       reminders assume annual.
+- [ ] Set `VITE_PLATFORM_TAX_NUMBER` in Cloudflare so invoices show the GST/HST
+      number. Use the full number, ending in RT0001.
+- [ ] Clear `STRIPE_TAX_COLLECTION_COUNTRIES` on the test API, and never set it on
+      the production API.
+- [ ] Have the lawyer review Payment Terms section 6 and the Privacy Policy change.
+- [ ] Ask the accountant whether a US creator selling to a Canadian buyer makes
+      the platform liable, whether fees to US users are zero-rated and what proof to
+      keep, and whether BC, Manitoba or Saskatchewan sales tax applies.
 
 Found while writing the brief, 2026-10-13:
 
