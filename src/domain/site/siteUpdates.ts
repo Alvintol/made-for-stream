@@ -30,12 +30,20 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.14.00";
+export const siteVersion = "V0.14.01";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.14.01",
+    date: "2026-11-03",
+    title: "Accepting project agreements",
+    changes: [
+      "Buyers can accept project agreements again after ticking the box to let work start early.",
+    ],
+  },
   {
     version: "V0.14.00",
     date: "2026-11-03",
