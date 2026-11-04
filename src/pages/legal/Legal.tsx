@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import BackLink from "../../components/layout/BackLink";
 
 const classes = {
   page: "space-y-6",
@@ -20,6 +21,8 @@ const classes = {
 const Legal = () => {
   return (
     <div className={classes.page}>
+      <BackLink fallback="/" />
+
       <div className={classes.header}>
         <h1 className={classes.h1}>Legal</h1>
 

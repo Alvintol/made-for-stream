@@ -30,12 +30,25 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.14.01";
+export const siteVersion = "V0.15.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.15.00",
+    date: "2026-11-03",
+    title: "A tidier creator dashboard",
+    changes: [
+      "The creator dashboard puts your earnings chart beside what needs your attention, your latest commissions and the month's totals.",
+      "A bar under the dashboard heading links to your listings, commissions, earnings and creator application.",
+      "Links the top bar already has are gone from the dashboard.",
+      "Pages without a way back now have a Back link, for phones without a back button.",
+      "Long chats open faster: they show the newest 100 messages, and Show earlier messages loads the rest.",
+      "My listings and creator profiles show 24 listings at a time, with Load more.",
+    ],
+  },
   {
     version: "V0.14.01",
     date: "2026-11-03",

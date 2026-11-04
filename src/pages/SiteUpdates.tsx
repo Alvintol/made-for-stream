@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { siteUpdates, siteUpdatesPageSize, siteVersion } from "../domain/site/siteUpdates";
 import { useLanguage, useT } from "../lib/i18n/i18n";
+import BackLink from "../components/layout/BackLink";
 const classes = {
   shell: "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6",
   title: "pageTitle",
@@ -43,6 +44,8 @@ const SiteUpdates = () => {
 
   return (
     <div className={classes.shell}>
+      <BackLink fallback="/" />
+
       <div>
         <h1 className={classes.title}>{t("whatsNew.title")}</h1>
         <p className={classes.text}>{t("whatsNew.intro", { version: siteVersion })}</p>

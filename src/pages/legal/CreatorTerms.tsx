@@ -1,4 +1,5 @@
 import { creatorTermsSections, creatorTermsVersion } from "../../domain/legal/creatorTerms";
+import BackLink from "../../components/layout/BackLink";
 
 const classes = {
   page: "space-y-6",
@@ -17,6 +18,8 @@ const classes = {
 const CreatorTerms = () => {
   return (
     <div className={classes.page}>
+      <BackLink fallback="/legal" />
+
       <div className={classes.header}>
         <h1 className={classes.h1}>Creator Terms</h1>
         <p className={classes.sub}>

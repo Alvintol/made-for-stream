@@ -1,4 +1,5 @@
 import { termsSections, termsVersion } from "../../domain/legal/termsOfService";
+import BackLink from "../../components/layout/BackLink";
 
 const classes = {
   page: "space-y-6",
@@ -17,6 +18,8 @@ const classes = {
 const Terms = () => {
   return (
     <div className={classes.page}>
+      <BackLink fallback="/legal" />
+
       <div className={classes.header}>
         <h1 className={classes.h1}>Terms of Service</h1>
         <p className={classes.sub}>Platform-wide terms for Made for Stream.</p>

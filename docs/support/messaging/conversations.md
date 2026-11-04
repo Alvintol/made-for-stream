@@ -244,7 +244,9 @@ disappear, the dispute record is unreliable, and that undermines the product's
 central promise. The claim needs verifying against the database directly rather
 than being explained away — and the first two causes are cheap to rule out.
 
-**Fix.** Confirm against the stored rows before concluding anything.
+**Fix.** First ask whether the chat has over 100 messages and they used Show
+earlier messages at the top of it: older messages load only then. Otherwise,
+confirm against the stored rows before concluding anything.
 
 **Money impact.** None directly. A compromised evidence record affects every
 dispute.
@@ -326,8 +328,11 @@ If someone reports that a line is "on the wrong side", check its
 
 ## How a chat updates (2026-11-02)
 
-An open chat reads the whole history once, then asks only for messages from the
-minute before the newest one it has. Messages never change once sent, so nothing
+An open chat reads its newest 100 messages once (since V0.15.00; before, the
+whole history), then asks only for messages from the minute before the newest
+one it has. If there are older ones, Show earlier messages at the top of the
+chat reads the 100 before them. Messages sent in one transaction share a time,
+so that read includes the oldest loaded time and drops the repeats. Messages never change once sent, so nothing
 else needs reading again. The look-back catches a message that appears a moment
 after a newer one, and anything repeated is ignored.
 

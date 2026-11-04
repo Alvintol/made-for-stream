@@ -55,6 +55,10 @@ const AdminSales = () => {
   const transactionRows = transactions.data?.pages.flatMap((page) => page.rows) ?? [];
   return (
     <div className={classes.page}>
+      <Link to="/admin/dashboard" className="backLink">
+        ← Back to admin dashboard
+      </Link>
+
       <div>
         <h1 className={classes.h1}>Sales</h1>
         <p className={classes.sub}>

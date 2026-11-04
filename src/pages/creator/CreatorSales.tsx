@@ -37,6 +37,10 @@ const CreatorSales = () => {
 
   return (
     <div className={classes.page}>
+      <Link to="/creator/dashboard" className="backLink">
+        ← {t("myListings.back")}
+      </Link>
+
       <div>
         <h1 className={classes.h1}>{t("sales.title")}</h1>
         <p className={classes.sub}>{t("sales.sub")}</p>

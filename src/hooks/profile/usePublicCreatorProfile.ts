@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import type { ProfilePlatformAccountRow } from "./useProfilePlatformAccounts";
 
@@ -32,13 +32,11 @@ export type PublicCreatorListing = {
 export type PublicCreatorProfilePayload = {
   profile: PublicCreatorProfile | null;
   platformAccounts: ProfilePlatformAccountRow[];
-  listings: PublicCreatorListing[];
 };
 
 const emptyResult: PublicCreatorProfilePayload = {
   profile: null,
   platformAccounts: [],
-  listings: [],
 };
 
 const fetchPublicCreatorProfile = async (
@@ -53,65 +51,33 @@ const fetchPublicCreatorProfile = async (
   if (profileError) throw profileError;
   if (!profile?.user_id) return emptyResult;
 
-  const [
-    { data: platformAccounts, error: platformError },
-    { data: listings, error: listingsError },
-  ] = await Promise.all([
-    supabase
-      .from("profile_platform_accounts")
-      .select(`
-        id,
-        profile_user_id,
-        platform,
-        platform_user_id,
-        platform_login,
-        platform_display_name,
-        profile_url,
-        account_created_at,
-        connected_at,
-        last_activity_at,
-        activity_checked_at,
-        is_active_recently,
-        metadata,
-        created_at,
-        updated_at
-      `)
-      .eq("profile_user_id", profile.user_id)
-      .order("connected_at", { ascending: false }),
-
-    supabase
-      .from("listings")
-      .select(`
-        id,
-        user_id,
-        title,
-        short,
-        preview_url,
-        offering_type,
-        category,
-        video_subtype,
-        price_type,
-        price_min,
-        price_max,
-        currency,
-        deliverables,
-        tags,
-        status,
-        is_active
-      `)
-      .eq("user_id", profile.user_id)
-      .eq("status", "published")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false }),
-  ]);
+  const { data: platformAccounts, error: platformError } = await supabase
+    .from("profile_platform_accounts")
+    .select(`
+      id,
+      profile_user_id,
+      platform,
+      platform_user_id,
+      platform_login,
+      platform_display_name,
+      profile_url,
+      account_created_at,
+      connected_at,
+      last_activity_at,
+      activity_checked_at,
+      is_active_recently,
+      metadata,
+      created_at,
+      updated_at
+    `)
+    .eq("profile_user_id", profile.user_id)
+    .order("connected_at", { ascending: false });
 
   if (platformError) throw platformError;
-  if (listingsError) throw listingsError;
 
   return {
     profile: profile as PublicCreatorProfile,
     platformAccounts: (platformAccounts ?? []) as ProfilePlatformAccountRow[],
-    listings: (listings ?? []) as PublicCreatorListing[],
   };
 };
 
@@ -120,5 +86,66 @@ export const usePublicCreatorProfile = (handle: string | null) =>
     queryKey: ["publicCreatorProfile", handle],
     enabled: Boolean(handle),
     queryFn: () => (handle ? fetchPublicCreatorProfile(handle) : Promise.resolve(emptyResult)),
+    staleTime: 30_000,
+  });
+
+// A creator profile shows this many live listings at a time, newest first.
+export const PROFILE_LISTINGS_PAGE_SIZE = 24;
+
+type PublicCreatorListingsPage = { rows: PublicCreatorListing[]; nextOffset: number | null };
+
+const fetchPublicCreatorListings = async (
+  userId: string,
+  offset: number
+): Promise<PublicCreatorListingsPage> => {
+  const { data, error } = await supabase
+    .from("listings")
+    .select(`
+      id,
+      user_id,
+      title,
+      short,
+      preview_url,
+      offering_type,
+      category,
+      video_subtype,
+      price_type,
+      price_min,
+      price_max,
+      currency,
+      deliverables,
+      tags,
+      status,
+      is_active
+    `)
+    .eq("user_id", userId)
+    .eq("status", "published")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    // One more than a page, to know whether there is another.
+    .range(offset, offset + PROFILE_LISTINGS_PAGE_SIZE);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as PublicCreatorListing[];
+  const hasMore = rows.length > PROFILE_LISTINGS_PAGE_SIZE;
+
+  return {
+    rows: hasMore ? rows.slice(0, PROFILE_LISTINGS_PAGE_SIZE) : rows,
+    nextOffset: hasMore ? offset + PROFILE_LISTINGS_PAGE_SIZE : null,
+  };
+};
+
+export const usePublicCreatorListings = (userId: string | null) =>
+  useInfiniteQuery({
+    queryKey: ["publicCreatorListings", userId],
+    enabled: Boolean(userId),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      userId
+        ? fetchPublicCreatorListings(userId, pageParam)
+        : Promise.resolve<PublicCreatorListingsPage>({ rows: [], nextOffset: null }),
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
     staleTime: 30_000,
   });

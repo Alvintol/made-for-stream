@@ -75,7 +75,8 @@ const updatedText = (value: string, locale: string | undefined): string => {
 const CreatorListings = () => {
   const t = useT();
   const locale = dateLocale(useLanguage());
-  const { data, isLoading, error } = useMyListings();
+  const { data: pages, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage } = useMyListings();
+  const data = pages?.pages.flatMap((page) => page.rows);
 
   const deleteDraftMutation = useDeleteListingDraft();
 
@@ -250,6 +251,19 @@ const CreatorListings = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {hasNextPage && (
+        <div className={classes.row}>
+          <button
+            className={classes.btnOutline}
+            type="button"
+            onClick={() => void fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {t(isFetchingNextPage ? "common.loading" : "common.loadMore")}
+          </button>
         </div>
       )}
     </div>

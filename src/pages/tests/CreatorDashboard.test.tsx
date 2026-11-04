@@ -23,8 +23,9 @@ vi.mock("../../hooks/creatorRequests/useCreatorDashboardCounts", () => ({
   useCreatorDashboardCounts: () => ({ data: mocks.counts }),
 }));
 
-vi.mock("../../hooks/conversations/useMessagesInbox", () => ({
-  useMessagesInbox: () => ({ data: { items: [], totalUnreadCount: mocks.unread } }),
+// The same one-number read as the top bar: never the inbox itself.
+vi.mock("../../hooks/conversations/useUnreadMessageCount", () => ({
+  useUnreadMessageCount: () => ({ data: mocks.unread }),
 }));
 
 vi.mock("../../hooks/payments/useSales", () => ({
@@ -109,6 +110,19 @@ describe("<CreatorDashboard />", () => {
     expect(attention.getByText("Finish payout setup")).toBeInTheDocument();
     expect(attention.getByText("2 new commission requests")).toBeInTheDocument();
     expect(attention.getByText("1 unread message")).toBeInTheDocument();
+  });
+
+  it("links only to creator pages the top bar does not have", () => {
+    renderPage();
+
+    const pages = within(screen.getByRole("navigation", { name: "Creator pages" }));
+
+    expect(pages.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
+      "/creator/listings",
+      "/creator/requests",
+      "/creator/earnings",
+      "/apply/creator",
+    ]);
   });
 
   it("says so when nothing is waiting and nothing is active", () => {
