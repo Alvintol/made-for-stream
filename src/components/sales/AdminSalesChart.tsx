@@ -39,7 +39,6 @@ const TEXT: SalesChartText = {
   year: "Year",
   from: "From",
   to: "To",
-  apply: "Show",
   rangeInvalid: "Choose a start date on or before the end date.",
   rangeTooLong: "Choose up to two years.",
   currency: "Currency",

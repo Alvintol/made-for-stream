@@ -43,7 +43,6 @@ const CreatorEarningsChart = () => {
     year: t("sales.year"),
     from: t("sales.from"),
     to: t("sales.to"),
-    apply: t("sales.apply"),
     rangeInvalid: t("sales.rangeInvalid"),
     rangeTooLong: t("sales.rangeTooLong"),
     currency: t("sales.currency"),

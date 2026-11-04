@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   paymentAccount: { payouts_enabled: true } as { payouts_enabled: boolean } | null,
   requestedPageSize: 0,
   sales: [] as unknown[],
+  salesMonths: [] as string[],
 }));
 
 vi.mock("../../hooks/creatorRequests/useMyCreatorRequests", () => ({
@@ -29,7 +30,11 @@ vi.mock("../../hooks/conversations/useUnreadMessageCount", () => ({
 }));
 
 vi.mock("../../hooks/payments/useSales", () => ({
-  useMySalesSummary: () => ({ data: mocks.sales, isLoading: false }),
+  useMySalesSummary: (month: string) => {
+    mocks.salesMonths.push(month);
+
+    return { data: mocks.sales, isLoading: false };
+  },
   useMySalesChart: () => ({ data: { unit: "day", periods: [], rows: [] }, error: null, isPlaceholderData: false }),
 }));
 
@@ -40,6 +45,7 @@ vi.mock("../../hooks/payments/useCreatorPaymentAccount", () => ({
 }));
 
 import CreatorDashboard from "../creator/CreatorDashboard";
+import { currentSalesMonth } from "../../domain/payments/sales";
 
 const commission = (id: string, status: string, hasUnread = false) => ({
   request: {
@@ -123,6 +129,16 @@ describe("<CreatorDashboard />", () => {
       "/creator/earnings",
       "/apply/creator",
     ]);
+  });
+
+  it("totals this month beside the chart, with no month to choose", () => {
+    mocks.salesMonths = [];
+
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "This month's sales" })).toBeInTheDocument();
+    expect(screen.queryByText("Month")).not.toBeInTheDocument();
+    expect(new Set(mocks.salesMonths)).toEqual(new Set([currentSalesMonth()]));
   });
 
   it("says so when nothing is waiting and nothing is active", () => {

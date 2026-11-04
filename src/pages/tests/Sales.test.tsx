@@ -426,18 +426,22 @@ describe("the earnings graph", () => {
     expect(lastQuery()).toMatchObject({ from: `${year - 1}-01-01`, to: `${year - 1}-12-31` });
   });
 
-  it("reads exact dates, and refuses an end before the start", () => {
+  it("reads exact dates as soon as they make a range, and refuses an end before the start", () => {
     renderPage(<CreatorEarningsChart />);
 
     fireEvent.change(screen.getByLabelText("Period"), { target: { value: "custom" } });
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-10-10" } });
+
+    const valid = lastQuery();
+
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2026-10-01" } });
 
     expect(screen.getByText("Choose a start date on or before the end date.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show" })).toBeDisabled();
+    // The chart keeps the last good range; there is no button to press.
+    expect(lastQuery()).toEqual(valid);
+    expect(screen.queryByRole("button", { name: "Show" })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2026-10-20" } });
-    fireEvent.click(screen.getByRole("button", { name: "Show" }));
 
     expect(lastQuery()).toEqual({ from: "2026-10-10", to: "2026-10-20", kind: "all" });
   });
