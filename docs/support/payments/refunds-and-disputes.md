@@ -307,14 +307,35 @@ escalate_with:
 ```
 
 **Detection.** `charge.dispute.closed` is now recorded — the event id lands in
-the payment's `stripe_event_ids`, so a repeat delivery does not reprocess it —
-but the outcome (won, lost, the final amount) is deliberately **not** mirrored
-into a column. Read it live from Stripe with the payment's `stripe_dispute_id`
-rather than trusting a stored copy that could go stale if Stripe's own record
-changes after the fact.
+the payment's `stripe_event_ids`, so a repeat delivery does not reprocess it.
+Since V0.16.05 (migration 187) a **lost** dispute also sets the payment's
+`dispute_lost_at`. Won and warning-closed disputes leave it empty. The rest of
+the outcome (the final amount, any fees) is still read live from Stripe with the
+payment's `stripe_dispute_id`.
 
-**Fix.** Manual. The outcome decides what happens to the project, and nothing in
-the product reflects it automatically.
+**What a lost chargeback does to sales.** `sale_movements()` adds a
+`chargeback` movement on the day it was lost. It takes off everything of the
+payment not already refunded: price, tip, both fees, the contribution and the
+GST/HST in them, worked out the same way as a refund. So the creator's sales
+list, earnings, graphs and tax estimates, and Admin → Sales, drop it in the
+month it was lost. The row is labelled "Chargeback lost". The original sale
+still shows in its own month, as a refund would leave it. Nothing else changes.
+The project, milestones and payment status stay as they are. If the creator
+was already paid out, recovering that money is still the creator recovery
+balance process (see `creator-recovery-balances.md`).
+
+Limits:
+- It takes the whole unrefunded amount. Stripe can lose a dispute for less. If
+  that happens, the figures overstate the loss. Check against Stripe, then
+  raise it as a bug so the amount gets stored.
+- A payment already fully refunded gets no chargeback row.
+- A dispute lost before migration 187 was not recorded. To find one, look for
+  payments with a `stripe_dispute_id` and an empty `dispute_lost_at`. Check
+  each in Stripe. For a lost one, set `dispute_lost_at` to the date Stripe
+  closed it. That's an owner data change, never done by an agent.
+
+**Fix.** Manual. Sales now reflect a lost dispute, but the project's fate
+(cancel, complete, recover a payout) is still decided by hand.
 
 ---
 

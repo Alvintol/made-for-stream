@@ -138,7 +138,9 @@ const CreatorSales = () => {
                       >
                         {row.title ?? t("sales.untitled")}
                       </Link>
-                      {row.kind === "refund" && <span className={classes.refund}> {t("sales.refund")}</span>}
+                      {row.kind !== "sale" && (
+                        <span className={classes.refund}> {t(row.kind === "chargeback" ? "sales.chargeback" : "sales.refund")}</span>
+                      )}
                     </td>
                     <td className={classes.td}>{formatPaymentCents(row.sold_cents, row.currency)}</td>
                     <td className={classes.td}>{formatPaymentCents(row.fee_cents, row.currency)}</td>

@@ -1466,6 +1466,7 @@ export const fr: Record<MessageKey, Message> = {
   "sales.fee": "Frais",
   "sales.earnings": "Gains",
   "sales.refund": "Remboursement",
+  "sales.chargeback": "Rétrofacturation perdue",
   "sales.untitled": "Sans titre",
   "sales.loadMore": "Afficher plus",
   "sales.loading": "Chargement…",

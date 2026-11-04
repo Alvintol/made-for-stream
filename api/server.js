@@ -1629,7 +1629,8 @@ const getPaymentForStripeChargeEvent = async (chargeObjectOrId) => {
     stripe_refund_id,
     stripe_dispute_id,
     refunded_at,
-    disputed_at
+    disputed_at,
+    dispute_lost_at
   `;
 
   if (chargeId) {
@@ -1768,11 +1769,11 @@ const recordChargeDisputeCreatedFromWebhook = async ({ dispute, event }) => {
   }
 };
 
-// Closed just records that the event was seen -- launch-scope.md section 6.1
-// scopes automated dispute response as out, and the outcome (won/lost, any
-// refund already issued) is read live from Stripe on the admin surface
-// rather than mirrored into a column here, so there is nothing derived to
-// get out of step in the meantime.
+// Closed records when a dispute was lost, since that money is gone and
+// sale_movements takes it off the sales (migration 187). Won and
+// warning-closed disputes change nothing. launch-scope.md section 6.1 scopes
+// automated dispute response as out; the admin surface reads the rest of the
+// outcome live from Stripe.
 const recordChargeDisputeClosedFromWebhook = async ({ dispute, event }) => {
   const payment = await getPaymentForStripeChargeEvent(dispute.charge);
 
@@ -1784,9 +1785,12 @@ const recordChargeDisputeClosedFromWebhook = async ({ dispute, event }) => {
     return;
   }
 
+  const lost = dispute.status === "lost";
+
   const { error } = await supabaseAdmin
     .from("listing_request_payments")
     .update({
+      ...(lost && { dispute_lost_at: payment.dispute_lost_at || getStripeEventTimestamp(event) }),
       stripe_event_ids: getNextStripeEventIds(payment, event.id),
       updated_at: new Date().toISOString(),
     })

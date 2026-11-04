@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.16.04";
+export const siteVersion = "V0.16.05";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.16.05",
+    date: "2026-11-04",
+    title: "Lost chargebacks in earnings",
+    changes: [
+      "A chargeback the buyer's bank decides against you now comes off your earnings in the month it was decided.",
+      "Your sales list marks it as \"Chargeback lost\".",
+    ],
+  },
   {
     version: "V0.16.04",
     date: "2026-11-04",

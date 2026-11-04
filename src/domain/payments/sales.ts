@@ -38,7 +38,7 @@ export type CreatorTransactionRow = {
   listing_request_id: string;
   listing_id: string;
   instant: boolean;
-  kind: "sale" | "refund";
+  kind: "sale" | "refund" | "chargeback";
   happened_at: string;
   title: string | null;
   currency: string;
@@ -144,7 +144,7 @@ export type AdminTransactionRow = {
   listing_request_id: string;
   listing_id: string;
   instant: boolean;
-  kind: "sale" | "refund";
+  kind: "sale" | "refund" | "chargeback";
   happened_at: string;
   title: string | null;
   creator_handle: string | null;

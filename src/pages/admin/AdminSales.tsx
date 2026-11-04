@@ -256,7 +256,9 @@ const AdminSales = () => {
                       <Link className={classes.link} to={`/admin/requests/${row.listing_request_id}`}>
                         {row.title ?? "Untitled"}
                       </Link>
-                      {row.kind === "refund" && <span className={classes.refund}> Refund</span>}
+                      {row.kind !== "sale" && (
+                        <span className={classes.refund}> {row.kind === "chargeback" ? "Chargeback lost" : "Refund"}</span>
+                      )}
                     </td>
                     <td className={classes.td}>{row.creator_handle ? `@${row.creator_handle}` : "—"}</td>
                     <td className={classes.td}>{formatPaymentCents(row.sold_cents, row.currency)}</td>

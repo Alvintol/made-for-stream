@@ -1487,6 +1487,7 @@ export const en = {
   "sales.fee": "Fee",
   "sales.earnings": "Earnings",
   "sales.refund": "Refund",
+  "sales.chargeback": "Chargeback lost",
   "sales.untitled": "Untitled",
   "sales.loadMore": "Load more",
   "sales.loading": "Loading…",

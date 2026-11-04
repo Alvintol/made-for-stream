@@ -266,6 +266,25 @@ describe("<CreatorSales />", () => {
     );
   });
 
+  it("marks a lost chargeback", () => {
+    mocks.rows = [
+      transaction,
+      {
+        ...transaction,
+        movement_id: "m3",
+        kind: "chargeback",
+        sold_cents: -10000,
+        fee_cents: -500,
+        earned_cents: -9500,
+      },
+    ];
+
+    renderPage(<CreatorSales />);
+
+    expect(screen.getByText("Chargeback lost")).toBeInTheDocument();
+    expect(screen.queryByText("Refund")).not.toBeInTheDocument();
+  });
+
   it("picks a month from a calendar, and can't pick one that hasn't happened", () => {
     renderPage(<CreatorSales />);
 
