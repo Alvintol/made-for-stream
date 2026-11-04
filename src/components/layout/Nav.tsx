@@ -15,6 +15,7 @@ import { useUnreadMessageCount } from '../../hooks/conversations/useUnreadMessag
 import { useCollapsed, useFitCount } from "../../hooks/useCollapsed";
 import { useT } from "../../lib/i18n/i18n";
 import type { MessageKey } from "../../lib/i18n/messages/en";
+import BrandLogo from "./BrandLogo";
 import RegionPicker from "./RegionPicker";
 import ThemeToggle from "./ThemeToggle";
 
@@ -23,20 +24,13 @@ type CategoryLink = {
   label: string;
 };
 
-const brand = {
-  markSrc: "/made-for-stream-mark.svg",
-  alt: "",
-} as const;
-
 const classes = {
   header: "topbar",
 
   topRow: "container mx-auto flex h-12 items-center gap-3 px-4 py-0 sm:px-6",
   brandLink: "shrink-0 text-lg font-black tracking-tight",
-  brandWrap: "inline-flex items-center gap-2 whitespace-nowrap",
-  brandImg: "brandMark h-7 w-7 shrink-0",
-  brandText: "hidden font-display text-base font-extrabold tracking-tight sm:inline",
-  brandAccent: "text-[rgb(var(--brand))]",
+  // The M on phones, the full logo from 640px (BrandLogo).
+  brandImg: "block h-7 w-7 sm:h-9 sm:w-auto",
 
   form: "flex min-w-0 w-full items-center gap-2",
   searchInput: "searchInput h-8 py-0",
@@ -374,18 +368,7 @@ const Nav = () => {
     >
       <div className={classes.topRow} ref={topRowRef}>
         <Link to="/" className={classes.brandLink}>
-          <span className={classes.brandWrap}>
-            <img
-              src={brand.markSrc}
-              alt={brand.alt}
-              className={classes.brandImg}
-              draggable={false}
-            />
-
-            <span className={classes.brandText}>
-              Made for <span className={classes.brandAccent}>Stream</span>
-            </span>
-          </span>
+          <BrandLogo compact className={classes.brandImg} />
         </Link>
 
         <form className={classes.form} onSubmit={onSubmit} data-flexible>

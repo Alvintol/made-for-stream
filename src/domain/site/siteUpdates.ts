@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.15.01";
+export const siteVersion = "V0.16.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.16.00",
+    date: "2026-11-03",
+    title: "A new logo",
+    changes: [
+      "Made for Stream has a new logo: a play-button M in violet and orange.",
+      "The logo changes to softer colours in dark mode.",
+      "Browser tabs and home-screen shortcuts use the new icon.",
+    ],
+  },
   {
     version: "V0.15.01",
     date: "2026-11-03",
