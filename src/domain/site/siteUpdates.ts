@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.16.00";
+export const siteVersion = "V0.16.01";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.16.01",
+    date: "2026-11-03",
+    title: "A steadier earnings graph",
+    changes: [
+      "The earnings graph no longer moves when you choose a year or your own dates: those fields appear beside Show and Period.",
+      "On the creator dashboard, Needs your attention fills the space beside the graph, above this month's sales.",
+      "Latest active commissions now run across the full width, below the graph.",
+      "Emails can show the new logo in white.",
+    ],
+  },
   {
     version: "V0.16.00",
     date: "2026-11-03",

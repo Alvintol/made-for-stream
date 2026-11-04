@@ -2069,8 +2069,10 @@ so none of them is in the eight sprints above — but they should not be lost.
 - [ ] **Rebrand assets — logos, favicons, site imagery.** The product rebranded
       (2026-09-23) and needs new logo files, favicons, and site imagery
       throughout. **Done in V0.16.00:** the site logo, favicons and home-screen
-      icons (`docs/rebranding.md`). **Still open:** an email logo, which needs
-      a white version because the email header is already a gradient; a social
+      icons (`docs/rebranding.md`). **Done in V0.16.01:** a white email logo
+      (`public/brand/logo-white.png`). **Owner step:** once the site is live,
+      set the API's `EMAIL_LOGO_URL` to
+      `https://madeforstream.com/brand/logo-white.png`. **Still open:** a social
       sharing image (`og:image`), which the site doesn't have yet; and
       uploading the mark to Stripe and Twitch branding. Cosmetic, not launch-blocking. Specific hooks already built
       and waiting for real assets rather than requiring code changes later:

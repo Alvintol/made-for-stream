@@ -28,9 +28,16 @@ const classes = {
   pages: "card flex flex-wrap gap-1 p-1.5",
   pageLink: "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-[rgb(var(--ink)/0.04)] hover:text-zinc-900",
 
-  columns: "grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+  // The chart sets the height of the first row; the column beside it fills
+  // that height without adding to it, so This month's sales lines up with the
+  // bottom of the chart. Latest commissions run full width below.
+  columns: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
   // On a phone, what needs the creator comes before the chart.
-  side: "order-first space-y-4 lg:order-none",
+  side: "order-first flex flex-col gap-4 lg:order-none lg:h-0 lg:min-h-full",
+  // Needs your attention takes the room left, and scrolls if it runs out.
+  attention: "card flex min-h-0 flex-col overflow-hidden hover:shadow-[var(--shadow-md)] lg:flex-1",
+  attentionRows: "min-h-0 divide-y divide-[var(--hairline)] overflow-y-auto border-t border-[var(--hairline)]",
+  latest: "card overflow-hidden hover:shadow-[var(--shadow-md)] lg:col-span-2",
   earnings: "min-w-0 space-y-3",
   earningsTitle: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
   earningsNote: "mt-0.5 max-w-2xl text-sm text-zinc-500",
@@ -176,13 +183,13 @@ const CreatorDashboard = () => {
         </section>
 
         <div className={classes.side}>
-          <section className={classes.card} aria-label={t("dashboard.attention")}>
+          <section className={classes.attention} aria-label={t("dashboard.attention")}>
             <div className={classes.cardHead}>
               <h2 className={classes.cardTitle}>{t("dashboard.attention")}</h2>
             </div>
 
             {attention.length > 0 ? (
-              <ul className={classes.rows}>
+              <ul className={classes.attentionRows}>
                 {attention.map((entry) => (
                   <li key={entry.key}>
                     <Link className={classes.row} to={entry.to}>
@@ -202,50 +209,50 @@ const CreatorDashboard = () => {
             )}
           </section>
 
-          <section className={classes.card} aria-label={t("buyerRequests.tabActive")}>
-            <div className={classes.cardHead}>
-              <h2 className={classes.cardTitle}>{t("dashboard.latest")}</h2>
-              <Link className={classes.cardLink} to="/creator/requests">
-                {t("dashboard.viewAll")}
-              </Link>
-            </div>
-
-            {active.length > 0 ? (
-              <ul className={classes.rows}>
-                {active.map((item) => (
-                  <li key={item.request.id}>
-                    <Link className={classes.row} to={`/creator/requests/${item.request.id}`}>
-                      <span className={classes.rowMain}>
-                        <span className={`block ${classes.rowTitle}`}>
-                          {item.request.request_title || item.request.listing_snapshot.title}
-                        </span>
-                        <span className={`block ${classes.rowSub}`}>
-                          {item.buyer?.handle ? `@${item.buyer.handle}` : item.buyer?.display_name ?? t("dashboard.buyerFallback")}
-                          {" · "}
-                          {item.request.listing_snapshot.title}
-                        </span>
-                      </span>
-                      {item.conversation.has_unread && <span className={classes.pillNew}>{t("buyerRequests.newMessage")}</span>}
-                      <span className={classes.pill}>
-                        {getListingRequestStatusLabel(item.request.status, undefined, undefined, t)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className={classes.empty}>
-                {t(activeRequests.isLoading ? "buyerRequests.loading" : "dashboard.noActive")}
-              </p>
-            )}
-          </section>
-
           {/* Always this month: the chart beside it covers any other period. */}
           <section className={classes.month} aria-label={t("dashboard.thisMonth")}>
             <h2 className={classes.monthTitle}>{t("dashboard.thisMonth")}</h2>
             <CreatorSalesTotals month={currentSalesMonth()} stacked />
           </section>
         </div>
+
+        <section className={classes.latest} aria-label={t("buyerRequests.tabActive")}>
+          <div className={classes.cardHead}>
+            <h2 className={classes.cardTitle}>{t("dashboard.latest")}</h2>
+            <Link className={classes.cardLink} to="/creator/requests">
+              {t("dashboard.viewAll")}
+            </Link>
+          </div>
+
+          {active.length > 0 ? (
+            <ul className={classes.rows}>
+              {active.map((item) => (
+                <li key={item.request.id}>
+                  <Link className={classes.row} to={`/creator/requests/${item.request.id}`}>
+                    <span className={classes.rowMain}>
+                      <span className={`block ${classes.rowTitle}`}>
+                        {item.request.request_title || item.request.listing_snapshot.title}
+                      </span>
+                      <span className={`block ${classes.rowSub}`}>
+                        {item.buyer?.handle ? `@${item.buyer.handle}` : item.buyer?.display_name ?? t("dashboard.buyerFallback")}
+                        {" · "}
+                        {item.request.listing_snapshot.title}
+                      </span>
+                    </span>
+                    {item.conversation.has_unread && <span className={classes.pillNew}>{t("buyerRequests.newMessage")}</span>}
+                    <span className={classes.pill}>
+                      {getListingRequestStatusLabel(item.request.status, undefined, undefined, t)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={classes.empty}>
+              {t(activeRequests.isLoading ? "buyerRequests.loading" : "dashboard.noActive")}
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );
