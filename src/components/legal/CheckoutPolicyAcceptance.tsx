@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   checkoutPolicyTypes,
@@ -15,9 +15,11 @@ import PolicyAcceptanceCheckbox from "./PolicyAcceptanceCheckbox";
 import { useLanguage, useT } from "../../lib/i18n/i18n";
 type CheckoutPolicyAcceptanceProps = {
   listingRequestId: string;
-  // Set for an instant download: the buyer reviews the listing rather than
-  // an agreement, and the express consent is to download straight away.
+  // Set for an instant download: the buyer sees what they're buying (its
+  // licence and files) instead of project terms, and the express consent is
+  // to download straight away.
   instantListingId?: string | null;
+  instantDetails?: ReactNode;
   onAccepted: () => void;
 };
 
@@ -48,7 +50,7 @@ const formatAcceptedDate = (value: string, language: string): string =>
 // It is first recorded when the buyer accepts the agreement (20260923_138),
 // so here it only reappears if the Refund Policy has changed since.
 const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
-  const { listingRequestId, instantListingId = null, onAccepted } = props;
+  const { listingRequestId, instantListingId = null, instantDetails = null, onAccepted } = props;
   const instant = Boolean(instantListingId);
 
   const acceptancesQuery = usePolicyAcceptances({
@@ -76,8 +78,14 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
   if (hasAccepted) {
     return (
       <section className={classes.card}>
+        {instant && (
+          <div className={classes.group}>
+            <h2 className={classes.heading}>{t("checkoutTerms.instantHeading")}</h2>
+            {instantDetails}
+          </div>
+        )}
         <p className={classes.text}>
-          {t("checkoutTerms.acceptedStart")}{" "}
+          {t(instant ? "checkoutTerms.instantAcceptedStart" : "checkoutTerms.acceptedStart")}{" "}
           <Link className={classes.link} to="/policies/fees" target="_blank" rel="noopener">
             {t("checkoutTerms.feeSchedule")}
           </Link>{" "}
@@ -86,8 +94,10 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
             {t("checkoutTerms.refundPolicy")}
           </Link>{" "}
           {acceptedAt
-            ? t("checkoutTerms.acceptedEndOn", { date: formatAcceptedDate(acceptedAt, language) })
-            : t("checkoutTerms.acceptedEnd")}
+            ? t(instant ? "checkoutTerms.instantAcceptedEndOn" : "checkoutTerms.acceptedEndOn", {
+                date: formatAcceptedDate(acceptedAt, language),
+              })
+            : t(instant ? "checkoutTerms.instantAcceptedEnd" : "checkoutTerms.acceptedEnd")}
         </p>
       </section>
     );
@@ -116,15 +126,11 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
   return (
     <section className={classes.card} aria-label={t("checkoutTerms.label")}>
       <div className={classes.group}>
-        <h2 className={classes.heading}>{t("checkoutTerms.heading")}</h2>
+        <h2 className={classes.heading}>
+          {t(instant ? "checkoutTerms.instantHeading" : "checkoutTerms.heading")}
+        </h2>
         {instant ? (
-          <p className={classes.text}>
-            {t("checkoutTerms.reviewListingStart")}{" "}
-            <Link className={classes.link} to={`/listing/${instantListingId}`}>
-              {t("checkoutTerms.listingLink")}
-            </Link>{" "}
-            {t("checkoutTerms.reviewListingEnd")}
-          </p>
+          instantDetails
         ) : (
           <p className={classes.text}>
             {t("checkoutTerms.reviewStart")}{" "}
@@ -141,15 +147,15 @@ const CheckoutPolicyAcceptance = (props: CheckoutPolicyAcceptanceProps) => {
           onChange={setTermsAgreed}
           disabled={isBusy}
         >
-          {t("checkoutTerms.agreeStart")}{" "}
+          {t(instant ? "checkoutTerms.instantAgreeStart" : "checkoutTerms.agreeStart")}{" "}
           <Link className={classes.link} to="/policies/fees" target="_blank" rel="noopener">
             {t("checkoutTerms.feeSchedule")}
           </Link>{" "}
           {t("checkoutTerms.agreeAnd")}{" "}
           <Link className={classes.link} to="/policies/refunds" target="_blank" rel="noopener">
             {t("checkoutTerms.refundPolicy")}
-          </Link>{" "}
-          {t("checkoutTerms.agreeEnd")}
+          </Link>
+          {instant ? t("checkoutTerms.instantAgreeEnd") : <> {t("checkoutTerms.agreeEnd")}</>}
         </PolicyAcceptanceCheckbox>
       </div>
 
