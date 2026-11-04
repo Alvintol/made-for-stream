@@ -8,6 +8,14 @@ const mocks = vi.hoisted(() => ({
   createCheckout: vi.fn(),
 }));
 
+vi.mock("../../providers/AuthProvider", () => ({
+  useAuth: () => ({ user: { id: "buyer-1" }, loading: false }),
+}));
+
+vi.mock("../../hooks/listings/useInstantDownloads", () => ({
+  useInstantListing: () => ({ data: { files: [], owned: false, pending_payment_id: null } }),
+}));
+
 vi.mock("../../hooks/payments/useListingRequestPayments", () => ({
   useListingRequestPayment: mocks.useListingRequestPayment,
 }));

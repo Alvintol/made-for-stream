@@ -66,6 +66,28 @@ describe("CheckoutPolicyAcceptance", () => {
     expect(screen.getByRole("link", { name: "project agreement" })).toHaveAttribute("href", "/requests/request-1");
   });
 
+  it("shows a download's licence and files instead of project terms", () => {
+    render(
+      <MemoryRouter>
+        <CheckoutPolicyAcceptance
+          listingRequestId="request-1"
+          instantListingId="listing-1"
+          instantDetails={<p>Licence: Personal use · emotes.zip 2.1 MB</p>}
+          onAccepted={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "What you're buying" })).toBeInTheDocument();
+    expect(screen.getByText("Licence: Personal use · emotes.zip 2.1 MB")).toBeInTheDocument();
+    expect(screen.queryByText(/Project terms|project scope|payment schedule/)).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /I agree to this licence/ }).closest("label")).toHaveTextContent(
+      "I agree to this licence, the Fee Schedule and Refund, Cancellation and Dispute Policy.",
+    );
+    // The final-sale consent is unchanged and still separate.
+    expect(screen.getByRole("checkbox", { name: /I understand this is a final sale/ })).not.toBeChecked();
+  });
+
   it("requires both the agreement and the early-start request", () => {
     renderAcceptance();
 

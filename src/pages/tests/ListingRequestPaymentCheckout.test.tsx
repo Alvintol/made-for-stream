@@ -18,6 +18,14 @@ vi.mock("../../hooks/settings/useAccountDetails", () => ({
   }),
 }));
 
+vi.mock("../../providers/AuthProvider", () => ({
+  useAuth: () => ({ user: { id: "buyer-1" }, loading: false }),
+}));
+
+vi.mock("../../hooks/listings/useInstantDownloads", () => ({
+  useInstantListing: () => ({ data: { files: [], owned: false, pending_payment_id: null } }),
+}));
+
 vi.mock("../../hooks/payments/useListingRequestPayments", () => ({
   useListingRequestPayment: () => ({ data: mocks.payment, isLoading: false, isError: false }),
 }));

@@ -70,6 +70,16 @@ a purchase directly, and no request can switch between commission and purchase.
 rate (owner's decision, 2026-11-02). There is no creator-side tax on a download.
 See [`../payments/sales.md`](../payments/sales.md).
 
+**At checkout** (since V0.16.04). Instead of a commission's project terms, the terms
+card is headed "What you're buying": the licence as it was when the purchase
+started (`metadata.instant_licence` on the payment) and each file with its size and
+measured dimensions or length (`get_instant_listing`, the same list as the listing
+page, `InstantItemDetails.tsx`). The buyer ticks "I agree to this licence, the Fee
+Schedule and Refund, Cancellation and Dispute Policy", which records the usual
+`refund` and `payment_terms` acceptances, then the final-sale box below. If the
+file list is empty at checkout, the listing's files were removed after the
+purchase started: treat it as `DL-002`.
+
 **Refunds: final sale.** Refund Policy section 12 (version 2026-11-03-2). Every
 instant download is a final sale, and the buyer ticks a separate checkbox giving up
 any right to cancel or get a refund before checkout opens. It's recorded as an

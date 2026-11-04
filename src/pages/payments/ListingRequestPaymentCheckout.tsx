@@ -6,6 +6,9 @@ import type { Stripe } from "@stripe/stripe-js";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import CheckoutPolicyAcceptance from "../../components/legal/CheckoutPolicyAcceptance";
+import InstantItemDetails from "../../components/listings/InstantItemDetails";
+import { useInstantListing } from "../../hooks/listings/useInstantDownloads";
+import { useAuth } from "../../providers/AuthProvider";
 import { getBillingCountryOptions } from "../../domain/payments/billingCountries";
 import {
   describeBuyerServiceFee,
@@ -129,6 +132,7 @@ const ListingRequestPaymentCheckout = () => {
   const { paymentId = "" } = useParams<{ paymentId: string }>();
   const t = useT();
   const language = useLanguage();
+  const { user } = useAuth();
   const { mutateAsync: createCheckout } = useCreateListingRequestPaymentCheckout();
   const setTipAndSupport = useSetListingRequestPaymentTipAndSupport();
   const paymentQuery = useListingRequestPayment(paymentId);
@@ -138,6 +142,11 @@ const ListingRequestPaymentCheckout = () => {
   const isInstant = payment?.metadata?.instant === true;
   const instantListingId =
     typeof payment?.metadata?.listing_id === "string" ? payment.metadata.listing_id : null;
+  // The licence as it was when the purchase started, and the files it gives.
+  const instantLicence =
+    typeof payment?.metadata?.instant_licence === "string" ? payment.metadata.instant_licence : null;
+  const instantFiles =
+    useInstantListing(isInstant ? instantListingId : null, user?.id ?? null).data?.files ?? [];
   // launch-scope.md section 4: both default to zero and require an
   // affirmative choice before checkout opens -- entered as whole-currency-unit
   // strings so the buyer never sees "0" pre-filled as if it were a suggestion.
@@ -484,6 +493,7 @@ const ListingRequestPaymentCheckout = () => {
         <CheckoutPolicyAcceptance
           listingRequestId={payment.listing_request_id}
           instantListingId={isInstant ? instantListingId : null}
+          instantDetails={isInstant ? <InstantItemDetails licence={instantLicence} files={instantFiles} /> : null}
           onAccepted={onPoliciesAccepted}
         />
       )}

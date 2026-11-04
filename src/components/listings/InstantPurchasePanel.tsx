@@ -1,24 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
-import {
-  instantLicenceLabel,
-  instantLicenceText,
-  isInstantLicence,
-  productFileDisplayName,
-} from "../../domain/listings/instantDownloads";
+import { isInstantLicence } from "../../domain/listings/instantDownloads";
 import { useInstantListing, useStartInstantPurchase } from "../../hooks/listings/useInstantDownloads";
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { useT } from "../../lib/i18n/i18n";
-import { productFileMeta } from "./productFileMeta";
+import InstantItemDetails from "./InstantItemDetails";
 
 const classes = {
   panel: "space-y-3",
   title: "font-semibold",
   text: "text-sm leading-6 text-zinc-600",
-  heading: "text-xs font-semibold uppercase tracking-wide text-zinc-500",
-  files: "space-y-1 text-sm",
-  file: "flex flex-col",
-  fileName: "min-w-0 break-all text-zinc-800",
-  fileSize: "shrink-0 text-zinc-500",
   button: "btnPrimary inline-flex",
   link: "btnPrimary inline-flex",
   note: "text-xs leading-5 text-zinc-500",
@@ -54,29 +44,7 @@ const InstantPurchasePanel = ({ listingId, licence, userId, isOwnListing }: Prop
       <div className={classes.title}>{t("listing.instantTitle")}</div>
       <p className={classes.text}>{t("listing.instantText")}</p>
 
-      {isInstantLicence(licence) && (
-        <div>
-          <div className={classes.heading}>
-            {t("instant.licenceLabel")}: {t(instantLicenceLabel(licence))}
-          </div>
-          <p className={classes.text}>{t(instantLicenceText(licence))}</p>
-        </div>
-      )}
-
-      {files.length > 0 && (
-        <div>
-          <div className={classes.heading}>{t("instant.included")}</div>
-          <ul className={classes.files}>
-            {files.map((file) => (
-              <li key={file.name} className={classes.file}>
-                <span className={classes.fileName}>{productFileDisplayName(file.name)}</span>
-                <span className={classes.fileSize}>{productFileMeta(file, t)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className={classes.note}>{t("fileDetails.measured")}</p>
-        </div>
-      )}
+      <InstantItemDetails licence={licence} files={files} />
 
       {state.isLoading ? (
         <p className={classes.text}>{t("common.loading")}</p>
