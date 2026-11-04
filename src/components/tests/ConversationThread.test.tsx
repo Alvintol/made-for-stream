@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   idle: () => ({ isPending: false, error: null, mutateAsync: vi.fn() }),
+  hasEarlier: false,
+  loadEarlier: vi.fn(),
   currentUserId: "buyer-1",
   messages: [
     {
@@ -36,6 +38,9 @@ vi.mock("../../hooks/conversations/useConversationMessages", () => ({
     error: null,
     currentUserId: mocks.currentUserId,
     sendMessageMutation: mocks.idle(),
+    hasEarlier: mocks.hasEarlier,
+    earlierCount: 0,
+    loadEarlierMutation: { isPending: false, mutate: mocks.loadEarlier },
   }),
 }));
 vi.mock("../../hooks/conversations/useCloseConversation", () => ({
@@ -133,5 +138,19 @@ describe("<ConversationThread />", () => {
 
     expect(rowOf(sent)).toHaveAttribute("data-side", "own");
     expect(rowOf(declined)).toHaveAttribute("data-side", "other");
+  });
+
+  it("offers earlier messages only when there are some", () => {
+    const { unmount } = renderThread("buyer");
+
+    expect(screen.queryByRole("button", { name: "Show earlier messages" })).not.toBeInTheDocument();
+
+    unmount();
+    mocks.hasEarlier = true;
+    renderThread("buyer");
+    fireEvent.click(screen.getByRole("button", { name: "Show earlier messages" }));
+
+    expect(mocks.loadEarlier).toHaveBeenCalledTimes(1);
+    mocks.hasEarlier = false;
   });
 });

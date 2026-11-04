@@ -5,6 +5,7 @@ import {
 } from "../../domain/payments/listingRequestPaymentDisplay";
 import { usePaymentInvoice } from "../../hooks/payments/useSales";
 import { useT } from "../../lib/i18n/i18n";
+import BackLink from "../../components/layout/BackLink";
 
 const classes = {
   page: "mx-auto max-w-2xl space-y-4",
@@ -44,6 +45,8 @@ const PaymentInvoice = () => {
 
   return (
     <div className={classes.page}>
+      <BackLink fallback="/" />
+
       <article className={classes.card}>
         <div className={classes.header}>
           <div>

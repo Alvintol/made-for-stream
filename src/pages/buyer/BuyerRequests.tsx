@@ -159,6 +159,10 @@ const BuyerRequests = ({
 
   return (
     <div className={classes.page}>
+      <Link to="/messages" className="backLink">
+        ← {t("messages.back")}
+      </Link>
+
       <div className={classes.header}>
         <h1 className={classes.h1}>
           {t(content.title)}

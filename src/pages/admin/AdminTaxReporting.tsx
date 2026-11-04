@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState } from "react";
 
 import {
@@ -239,6 +240,10 @@ const AdminTaxReporting = () => {
 
   return (
     <div className={classes.page}>
+      <Link to="/admin/dashboard" className="backLink">
+        ← Back to admin dashboard
+      </Link>
+
       <div className={classes.header}>
         <h1 className={classes.h1}>Tax reporting</h1>
         <p className={classes.sub}>

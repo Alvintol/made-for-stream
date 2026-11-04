@@ -1,3 +1,4 @@
+import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -20,7 +21,7 @@ const versionsShown = () =>
 
 describe("<SiteUpdates />", () => {
   it("lists the ten latest versions with their dates, the latest one open", () => {
-    render(<SiteUpdates />);
+    render(<MemoryRouter><SiteUpdates /></MemoryRouter>);
 
     const rows = screen.getAllByRole("group");
 
@@ -34,7 +35,7 @@ describe("<SiteUpdates />", () => {
   });
 
   it("moves to the next ten, then the rest, with the arrow, and back again", () => {
-    render(<SiteUpdates />);
+    render(<MemoryRouter><SiteUpdates /></MemoryRouter>);
 
     const older = screen.getByRole("button", { name: "Older versions" });
 

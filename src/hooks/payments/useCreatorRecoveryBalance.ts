@@ -52,6 +52,8 @@ export const useCreatorRecoveryBalance = (creatorUserId?: string | null) => {
   });
 };
 
+export const RECOVERY_HISTORY_LIMIT = 20;
+
 export const useCreatorRecoveryEntries = (creatorUserId?: string | null) => {
   const { user } = useAuth();
   const targetUserId = creatorUserId ?? user?.id ?? null;
@@ -68,7 +70,10 @@ export const useCreatorRecoveryEntries = (creatorUserId?: string | null) => {
           "id, creator_user_id, entry_type, amount_cents, currency, reason, related_refund_id, related_payment_id, actor_user_id, created_at",
         )
         .eq("creator_user_id", targetUserId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // ponytail: the latest entries only, under a balance the database
+        // totals; add "Load more" if creators need the older ones here.
+        .limit(RECOVERY_HISTORY_LIMIT);
 
       if (error) {
         throw error;

@@ -14,6 +14,14 @@ surfaces:
   - src/hooks/listings/useMarketListings.ts
   - src/hooks/useCreatorDirectory.ts
   - src/hooks/conversations/useUnreadMessageCount.ts
+  - src/hooks/conversations/useConversationMessages.ts
+  - src/hooks/listings/useMyListings.ts
+  - src/hooks/profile/usePublicCreatorProfile.ts
+  - src/hooks/payments/useCreatorRecoveryBalance.ts
+  - src/pages/creator/CreatorDashboard.tsx
+  - src/pages/listings/CreatorListings.tsx
+  - src/pages/creator/CreatorProfile.tsx
+  - src/components/conversations/ConversationThread.tsx
   - src/hooks/useTwitchStreams.ts
   - src/lib/pageOfRows.ts
   - src/lib/useDebouncedValue.ts
@@ -28,7 +36,8 @@ unmatched_tier: 2
 # Page-at-a-time reads — Support Playbook
 
 Public pages used to load whole tables into each visitor's browser and filter
-them there. Now each asks the database for one small page.
+them there. Now each asks the database for one small page. Since V0.15.00 the
+same is true of the lists that grow with someone's own use.
 
 | Where | What it reads |
 | --- | --- |
@@ -37,7 +46,11 @@ them there. Now each asks the database for one small page.
 | Creators | 24 creators at a time, with a summary of their listings |
 | Live | The 48 most-watched live creators |
 | Top bar | One unread number a minute, paused while the tab is hidden |
-| Open chat | Only new messages, see [`conversations.md`](../messaging/conversations.md) |
+| Open chat | The newest 100 messages, then only new ones; older ones with Show earlier messages. See [`conversations.md`](../messaging/conversations.md) |
+| Creator dashboard | Counts worked out by the database, the top bar's unread number, and 5 commissions |
+| My listings | 24 listings at a time, most recently changed first |
+| A creator's profile | 24 live listings at a time, newest first |
+| Settings, recovery balance | The 20 latest entries, under the balance the database totals |
 | Who is live | One shared answer from the API, see [`twitch-live.md`](../discovery/twitch-live.md) |
 
 Nothing here touches money. If it breaks, people cannot browse: that blocks new
@@ -74,6 +87,8 @@ Otherwise the lists fail with `READ-001`.
 | A new listing is not showing | Expected for up to a minute: the site keeps a page for 60 seconds. Reloading shows it |
 | The unread number is behind | Expected for up to a minute. Opening the inbox updates it |
 | "There's no Load more button" | Expected: everything that matches is already showing |
+| "Old messages are missing from a chat" | Expected past 100 messages: Show earlier messages at the top of the chat loads them. If they still don't appear, it's [`MSG-005`](../messaging/conversations.md#msg-005--reported-missing-messages) |
+| "My older recovery entries aren't listed" | Expected: only the 20 latest are listed. The balance still counts every entry |
 
 ---
 

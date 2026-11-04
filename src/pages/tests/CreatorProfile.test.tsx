@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../../hooks/profile/usePublicCreatorProfile", () => ({
   usePublicCreatorProfile: mocks.usePublicCreatorProfile,
+  usePublicCreatorListings: () => ({ data: { pages: [{ rows: [], nextOffset: null }] }, isLoading: false }),
 }));
 
 vi.mock("../../hooks/useTwitchStreams", () => ({
@@ -46,7 +47,6 @@ const createCreatorProfileData = () => ({
     bio: "I make emotes and stream overlays.",
   },
   platformAccounts: [],
-  listings: [],
 });
 
 const renderPage = () =>

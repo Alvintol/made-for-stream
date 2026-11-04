@@ -3,7 +3,10 @@ import { hasMessage, useT } from "../../lib/i18n/i18n";
 import { Collapse } from "../../lib/motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { normalizeTwitchLogin } from "../../domain/twitch";
-import { usePublicCreatorProfile } from "../../hooks/profile/usePublicCreatorProfile";
+import {
+  usePublicCreatorListings,
+  usePublicCreatorProfile,
+} from "../../hooks/profile/usePublicCreatorProfile";
 import { useTwitchStreams } from "../../hooks/useTwitchStreams";
 import { useState } from 'react';
 import { ConversationInitiationReasonCode, conversationInitiationReasonOptions } from '../../domain/conversations/conversations';
@@ -186,6 +189,8 @@ const CreatorProfile = () => {
 
   const profile = data?.profile ?? null;
   const profileUserId = profile?.user_id ?? null;
+  const listingPages = usePublicCreatorListings(profileUserId);
+  const listings = listingPages.data?.pages.flatMap((page) => page.rows) ?? [];
 
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryTopic, setInquiryTopic] =
@@ -252,7 +257,7 @@ const CreatorProfile = () => {
 
   if (error || !profile || !data) return <CreatorNotFound />;
 
-  const { platformAccounts, listings } = data;
+  const { platformAccounts } = data;
 
   const twitchAccount =
     platformAccounts.find((account) => account.platform === "twitch") ?? null;
@@ -475,7 +480,9 @@ const CreatorProfile = () => {
       <section className={classes.listingsSection}>
         <h2 className={classes.h2}>{t("creatorProfile.listings")}</h2>
 
-        {listings.length === 0 ? (
+        {listingPages.isLoading ? (
+          <p className={classes.emptyText}>{t("common.loading")}</p>
+        ) : listings.length === 0 ? (
           <p className={classes.emptyText}>{t("creatorProfile.noListings")}</p>
         ) : (
           <div className={classes.grid}>
@@ -518,6 +525,17 @@ const CreatorProfile = () => {
               );
             })}
           </div>
+        )}
+
+        {listingPages.hasNextPage && (
+          <button
+            className={classes.btnOutline}
+            type="button"
+            onClick={() => void listingPages.fetchNextPage()}
+            disabled={listingPages.isFetchingNextPage}
+          >
+            {t(listingPages.isFetchingNextPage ? "common.loading" : "common.loadMore")}
+          </button>
         )}
       </section>
       <div className={classes.reportCard}>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useAdminSellerApplications } from "../../hooks/admin/useAdminSellerApplications";
 import {
@@ -261,6 +262,10 @@ const AdminCreatorApplications = () => {
 
   return (
     <div className={classes.page}>
+      <Link to="/admin/dashboard" className="backLink">
+        ← Back to admin dashboard
+      </Link>
+
       <div className={classes.header}>
         <h1 className={classes.h1}>Creator application review</h1>
 

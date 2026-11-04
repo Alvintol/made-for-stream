@@ -1,17 +1,18 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import CreatorEarningsChart from "../../components/sales/CreatorEarningsChart";
-import CreatorMonthEarnings from "../../components/sales/CreatorMonthEarnings";
+import CreatorSalesTotals from "../../components/sales/CreatorSalesTotals";
+import MonthPicker from "../../components/sales/MonthPicker";
 import { currentSalesMonth } from "../../domain/payments/sales";
 import { getListingRequestStatusLabel } from "../../domain/listings/listingRequests";
-import { useMessagesInbox } from "../../hooks/conversations/useMessagesInbox";
+import { useUnreadMessageCount } from "../../hooks/conversations/useUnreadMessageCount";
 import { useCreatorDashboardCounts } from "../../hooks/creatorRequests/useCreatorDashboardCounts";
 import { useMyCreatorRequests } from "../../hooks/creatorRequests/useMyCreatorRequests";
 import {
   getCreatorPaymentAccountIsReady,
   useCreatorPaymentAccount,
 } from "../../hooks/payments/useCreatorPaymentAccount";
-import { useT } from "../../lib/i18n/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-4",
   header: "flex flex-wrap items-end justify-between gap-3",
@@ -24,7 +25,17 @@ const classes = {
   statValue: "mt-1 font-display text-3xl font-bold tabular-nums tracking-tight text-zinc-900",
   statNote: "mt-0.5 text-xs text-zinc-500",
 
+  // Creator pages the top bar doesn't link to.
+  pages: "card flex flex-wrap gap-1 p-1.5",
+  pageLink: "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-[rgb(var(--ink)/0.04)] hover:text-zinc-900",
+
   columns: "grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+  // On a phone, what needs the creator comes before the chart.
+  side: "order-first space-y-4 lg:order-none",
+  earnings: "min-w-0 space-y-3",
+  earningsTitle: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
+  earningsNote: "mt-0.5 max-w-2xl text-sm text-zinc-500",
+  month: "space-y-3",
   card: "card overflow-hidden hover:shadow-[var(--shadow-md)]",
   cardHead: "flex items-center justify-between gap-3 px-4 py-3",
   cardTitle: "font-display text-sm font-bold tracking-tight text-zinc-900",
@@ -38,14 +49,13 @@ const classes = {
   pillNew: "shrink-0 rounded-full bg-[rgb(var(--brand-deep))] px-2 py-0.5 text-[11px] font-semibold text-white",
   empty: "border-t border-[var(--hairline)] px-4 py-6 text-sm text-zinc-500",
 
-  links: "grid gap-1 border-t border-[var(--hairline)] p-2",
-  link: "rounded-lg px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-[rgb(var(--ink)/0.04)] hover:text-zinc-900",
 } as const;
 
 // The dashboard downloads only the few commissions it lists. Every number on
-// it is a count worked out by the database (useCreatorDashboardCounts), so
-// opening it costs the same for a creator with five commissions or five
-// thousand. The full lists are a click away and are paged.
+// it is worked out by the database (useCreatorDashboardCounts, the unread
+// count the top bar already reads, and the sales totals), so opening it costs
+// the same for a creator with five commissions or five thousand. The full
+// lists are a click away and are paged.
 const LISTED_COMMISSIONS = 5;
 
 const Stat = ({ to, label, value, note }: { to: string; label: string; value: ReactNode; note: string }) => (
@@ -61,6 +71,7 @@ const count = (value: number | undefined) => (value === undefined ? "–" : valu
 // and the way to everything else.
 const CreatorDashboard = () => {
   const t = useT();
+  const language = useLanguage();
   const [earningsMonth, setEarningsMonth] = useState(currentSalesMonth);
   const counts = useCreatorDashboardCounts().data;
   const activeRequests = useMyCreatorRequests({
@@ -68,11 +79,11 @@ const CreatorDashboard = () => {
     page: 1,
     pageSize: LISTED_COMMISSIONS,
   });
-  const inbox = useMessagesInbox();
+  const unread = useUnreadMessageCount();
   const { data: paymentAccount = null, isLoading: isPaymentAccountLoading } = useCreatorPaymentAccount();
 
   const active = activeRequests.data?.items ?? [];
-  const unreadMessages = inbox.data?.totalUnreadCount ?? 0;
+  const unreadMessages = unread.data ?? 0;
   const payoutsReady = getCreatorPaymentAccountIsReady(paymentAccount);
 
   // What needs the creator, most urgent first.
@@ -122,6 +133,13 @@ const CreatorDashboard = () => {
         </Link>
       </div>
 
+      <nav className={classes.pages} aria-label={t("dashboard.pages")}>
+        <Link className={classes.pageLink} to="/creator/listings">{t("dashboard.linkListings")}</Link>
+        <Link className={classes.pageLink} to="/creator/requests">{t("dashboard.linkCommissions")}</Link>
+        <Link className={classes.pageLink} to="/creator/earnings">{t("dashboard.linkSales")}</Link>
+        <Link className={classes.pageLink} to="/apply/creator">{t("dashboard.linkApplication")}</Link>
+      </nav>
+
       <div className={classes.stats}>
         <Stat
           to="/creator/requests"
@@ -138,7 +156,7 @@ const CreatorDashboard = () => {
         <Stat
           to="/messages"
           label={t("dashboard.statUnread")}
-          value={count(inbox.data?.totalUnreadCount)}
+          value={count(unread.data)}
           note={t("dashboard.statUnreadNote")}
         />
         <Stat
@@ -149,14 +167,17 @@ const CreatorDashboard = () => {
         />
       </div>
 
-      <CreatorMonthEarnings month={earningsMonth} onMonthChange={setEarningsMonth}>
-        <Link className={classes.cardLink} to="/creator/earnings">
-          {t("dashboard.viewEarnings")}
-        </Link>
-      </CreatorMonthEarnings>
-
       <div className={classes.columns}>
-        <div className="space-y-4">
+        <section className={classes.earnings} aria-label={t("dashboard.earnings")}>
+          <div>
+            <h2 className={classes.earningsTitle}>{t("dashboard.earnings")}</h2>
+            <p className={classes.earningsNote}>{t("sales.monthNote")}</p>
+          </div>
+
+          <CreatorEarningsChart />
+        </section>
+
+        <div className={classes.side}>
           <section className={classes.card} aria-label={t("dashboard.attention")}>
             <div className={classes.cardHead}>
               <h2 className={classes.cardTitle}>{t("dashboard.attention")}</h2>
@@ -220,26 +241,22 @@ const CreatorDashboard = () => {
               </p>
             )}
           </section>
+
+          <section className={classes.month} aria-label={t("dashboard.thisMonth")}>
+            <MonthPicker
+              value={earningsMonth}
+              onChange={setEarningsMonth}
+              locale={dateLocale(language)}
+              text={{
+                label: t("sales.month"),
+                previousYear: t("sales.previousYear"),
+                nextYear: t("sales.nextYear"),
+              }}
+            />
+            <CreatorSalesTotals month={earningsMonth} stacked />
+          </section>
         </div>
-
-        <nav className={classes.card} aria-label={t("dashboard.pages")}>
-          <div className={classes.cardHead}>
-            <h2 className={classes.cardTitle}>{t("dashboard.goTo")}</h2>
-          </div>
-          <div className={classes.links}>
-            <Link className={classes.link} to="/creator/listings">{t("dashboard.linkListings")}</Link>
-            <Link className={classes.link} to="/creator/requests">{t("dashboard.linkCommissions")}</Link>
-            <Link className={classes.link} to="/creator/earnings">{t("dashboard.linkSales")}</Link>
-            <Link className={classes.link} to="/creator/requests/completed">{t("inbox.folder.completed_commissions")}</Link>
-            <Link className={classes.link} to="/messages">{t("inbox.title")}</Link>
-            <Link className={classes.link} to="/settings/profile">{t("dashboard.linkProfile")}</Link>
-            <Link className={classes.link} to="/apply/creator">{t("dashboard.linkApplication")}</Link>
-            <Link className={classes.link} to="/market">{t("dashboard.linkMarket")}</Link>
-          </div>
-        </nav>
       </div>
-
-      <CreatorEarningsChart />
     </div>
   );
 };

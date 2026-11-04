@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
@@ -29,9 +29,12 @@ export type MyListingRow = {
   admin_hidden_report_id: string | null;
 };
 
-const emptyResult: MyListingRow[] = [];
+// My listings shows this many at a time, most recently changed first.
+export const MY_LISTINGS_PAGE_SIZE = 24;
 
-const fetchMyListings = async (userId: string): Promise<MyListingRow[]> => {
+export type MyListingsPage = { rows: MyListingRow[]; nextOffset: number | null };
+
+const fetchMyListings = async (userId: string, offset: number): Promise<MyListingsPage> => {
   const { data, error } = await supabase
     .from("listings")
     .select(`
@@ -60,21 +63,34 @@ const fetchMyListings = async (userId: string): Promise<MyListingRow[]> => {
       admin_hidden_report_id
     `)
     .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .order("id", { ascending: true })
+    // One more than a page, to know whether there is another.
+    .range(offset, offset + MY_LISTINGS_PAGE_SIZE);
 
   if (error) throw error;
 
-  return (data ?? []) as MyListingRow[];
+  const rows = (data ?? []) as MyListingRow[];
+  const hasMore = rows.length > MY_LISTINGS_PAGE_SIZE;
+
+  return {
+    rows: hasMore ? rows.slice(0, MY_LISTINGS_PAGE_SIZE) : rows,
+    nextOffset: hasMore ? offset + MY_LISTINGS_PAGE_SIZE : null,
+  };
 };
 
 export const useMyListings = () => {
   const { user } = useAuth();
 
-  return useQuery<MyListingRow[]>({
+  return useInfiniteQuery({
     queryKey: ["myListings", user?.id ?? null],
     enabled: Boolean(user?.id),
-    queryFn: () =>
-      user?.id ? fetchMyListings(user.id) : Promise.resolve(emptyResult),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      user?.id
+        ? fetchMyListings(user.id, pageParam)
+        : Promise.resolve<MyListingsPage>({ rows: [], nextOffset: null }),
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
     staleTime: 15_000,
   });
 };

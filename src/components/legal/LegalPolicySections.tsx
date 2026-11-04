@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { Link } from "react-router-dom";
+import BackLink from "../layout/BackLink";
 
 /**
  * Shared renderer for the `{ title, body: string[] }[]` shape used by every
@@ -144,6 +145,8 @@ const LegalPolicySections = ({
 
   return (
     <div className={classes.page}>
+      <BackLink fallback="/legal" />
+
       <div className={classes.header}>
         <h1 className={classes.h1}>{title}</h1>
         <p className={classes.sub}>{subtitle}</p>

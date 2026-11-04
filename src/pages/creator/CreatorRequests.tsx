@@ -161,6 +161,10 @@ const CreatorRequests = ({
 
   return (
     <div className={classes.page}>
+      <Link to="/creator/dashboard" className="backLink">
+        ← {t("myListings.back")}
+      </Link>
+
       <div className={classes.header}>
         <h1 className={classes.h1}>
           {t(content.title)}

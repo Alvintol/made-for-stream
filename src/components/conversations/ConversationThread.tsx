@@ -95,6 +95,7 @@ const classes = {
 
   thread:
     "max-h-[34rem] min-h-[12rem] space-y-5 overflow-y-auto rounded-2xl bg-zinc-50/80 p-4 ring-1 ring-inset ring-zinc-100 sm:p-5",
+  earlier: "flex justify-center",
   empty:
     "flex min-h-[12rem] items-center justify-center rounded-2xl bg-zinc-50/80 px-4 text-center text-sm text-zinc-500 ring-1 ring-inset ring-zinc-100",
   adminNote:
@@ -296,6 +297,9 @@ const ConversationThread = ({
     error: messagesError,
     currentUserId,
     sendMessageMutation,
+    hasEarlier,
+    earlierCount,
+    loadEarlierMutation,
   } = useConversationMessages(conversation.id);
 
   const closeConversationMutation = useCloseConversation();
@@ -307,7 +311,8 @@ const ConversationThread = ({
   const { data: myReports = [] } = useMyModerationReports();
   const { data: participants = [] } = useConversationParticipants(conversation.id);
 
-  useStaggerIn(threadRef, messages.length, {
+  // Older messages loaded on request don't count as new ones arriving.
+  useStaggerIn(threadRef, messages.length - earlierCount, {
     resetKey: conversation.id,
     scrollToEnd: true,
   });
@@ -890,6 +895,19 @@ const ConversationThread = ({
           <div className={classes.errorNotice}>{t("chat.loadFailed")}</div>
         ) : messages.length > 0 ? (
           <div ref={threadRef} className={classes.thread}>
+            {hasEarlier && (
+              <div className={classes.earlier}>
+                <button
+                  type="button"
+                  className="btnOutline btnSm"
+                  onClick={() => loadEarlierMutation.mutate()}
+                  disabled={loadEarlierMutation.isPending}
+                >
+                  {t(loadEarlierMutation.isPending ? "chat.loadingEarlier" : "chat.showEarlier")}
+                </button>
+              </div>
+            )}
+
             {messages.map((message, index) => {
               const daySeparator = startsNewConversationDay(
                 messages[index - 1]?.created_at ?? null,
