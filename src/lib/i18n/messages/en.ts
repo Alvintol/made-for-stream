@@ -1493,11 +1493,12 @@ export const en = {
   "sales.loadFailed": "Your sales could not be loaded. Please try again.",
 
   // A creator's tax help on the Earnings page (src/components/sales/CreatorTaxHelp.tsx)
-  "tax.title": "Tax help",
+  "tax.title": "Tax estimates",
   "tax.note": "Estimates from your Made for Stream sales, to help with your own tax records. Add any sales you make elsewhere. This isn't tax advice, so check with an accountant.",
   "tax.noSales": "No sales this year.",
   "tax.earningsNote": "What you were paid this year, less refunds and Made for Stream's fees. This is income to report.",
   "tax.feesNote": "Fees are usually a business expense. If you're registered for GST/HST, you can usually claim back the GST/HST in them.",
+  "tax.feesNoteGeneral": "Fees are usually a business expense you can deduct.",
   "tax.limitTitle": "GST/HST small supplier limit",
   "tax.limitValue": "{amount} of {limit}",
   "tax.limitNote": "Your Made for Stream sales since {month}, over four calendar quarters. Once your sales everywhere pass $30,000 in four quarters in a row, you have to register for GST/HST.",

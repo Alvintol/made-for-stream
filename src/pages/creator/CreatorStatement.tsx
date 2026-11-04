@@ -160,10 +160,13 @@ const CreatorStatement = ({ today = new Date() }: { today?: Date }) => {
                     <span>{t("sales.totalFees")}</span>
                     <span>−{money(total.fee_cents)}</span>
                   </div>
-                  <div className={classes.sub}>
-                    <span>{t("statement.feeTax")}</span>
-                    <span>{money(total.fee_tax_cents)}</span>
-                  </div>
+                  {/* GST/HST is charged on fees to creators in Canada only. */}
+                  {creator_country === "CA" && (
+                    <div className={classes.sub}>
+                      <span>{t("statement.feeTax")}</span>
+                      <span>{money(total.fee_tax_cents)}</span>
+                    </div>
+                  )}
                   <div className={classes.total}>
                     <span>{t("sales.totalEarnings")}</span>
                     <span>{money(total.earned_cents)}</span>

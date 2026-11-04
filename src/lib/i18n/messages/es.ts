@@ -1442,11 +1442,12 @@ export const es: Record<MessageKey, Message> = {
   "sales.loadFailed": "No se pudieron cargar tus ventas. Inténtalo de nuevo.",
 
   // A creator's tax help on the Earnings page (src/components/sales/CreatorTaxHelp.tsx)
-  "tax.title": "Ayuda con impuestos",
+  "tax.title": "Estimaciones de impuestos",
   "tax.note": "Estimaciones según tus ventas en Made for Stream, para ayudarte con tus propios registros fiscales. Suma las ventas que hagas en otros lugares. No es asesoramiento fiscal: consulta con un contador.",
   "tax.noSales": "No hay ventas este año.",
   "tax.earningsNote": "Lo que te pagaron este año, menos reembolsos y las comisiones de Made for Stream. Es un ingreso que debes declarar.",
   "tax.feesNote": "Las comisiones suelen ser un gasto del negocio. Si estás registrado para el GST/HST, normalmente puedes recuperar el GST/HST que incluyen.",
+  "tax.feesNoteGeneral": "Las comisiones suelen ser un gasto del negocio que puedes deducir.",
   "tax.limitTitle": "Límite de pequeño proveedor del GST/HST",
   "tax.limitValue": "{amount} de {limit}",
   "tax.limitNote": "Tus ventas en Made for Stream desde {month}, en cuatro trimestres naturales. Cuando tus ventas en todas partes superan 30 000 $ en cuatro trimestres seguidos, debes registrarte para el GST/HST.",

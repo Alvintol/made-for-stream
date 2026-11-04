@@ -128,6 +128,15 @@ describe("<CreatorStatement />", () => {
     expect(within(screen.getByRole("row", { name: /January 2026/ })).getAllByText("$0.00")).toHaveLength(3);
   });
 
+  it("leaves out the GST/HST line for a creator outside Canada", () => {
+    mocks.tax = { ...tax, creator_country: "US" };
+
+    renderYear("2026");
+
+    expect(screen.queryByText("GST/HST in those fees")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Total earnings")[0].nextSibling).toHaveTextContent("$2,088.50");
+  });
+
   it("includes sales by the buyer's region", () => {
     renderYear("2026");
 

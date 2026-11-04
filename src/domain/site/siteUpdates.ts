@@ -30,12 +30,21 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.16.02";
+export const siteVersion = "V0.16.03";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.16.03",
+    date: "2026-11-04",
+    title: "Tax estimates",
+    changes: [
+      "Tax help on the Earnings page is now called Tax estimates.",
+      "Creators outside Canada no longer see GST/HST lines in their tax estimates or yearly statement.",
+    ],
+  },
   {
     version: "V0.16.02",
     date: "2026-11-03",

@@ -995,7 +995,10 @@ Build order (each its own branch):
       commissions or downloads, any dates and whole years by month, and admin sales
       by country and state or province.
 - [ ] Ask the accountant which US states' sales tax limits to watch, using the
-      admin page's sales by region.
+      admin page's sales by region, and whether Made for Stream counts as a
+      "marketplace facilitator" that must collect state sales tax on buyers'
+      purchases itself. Creators outside Canada get no sales tax estimates until
+      that's answered (`docs/support/payments/sales.md`, Known gaps).
 - [x] **Tax help for creators** (V0.13.00, migration `20261103_185`, Privacy Policy
       2026-11-03-3). A year of earnings and fees with their GST/HST, the $30,000
       small supplier tracker, and sales by the buyer's region with the GST/HST rate.
