@@ -21,12 +21,14 @@ const classes = {
   section: "space-y-3",
   header: "flex flex-wrap items-end justify-between gap-3",
   title: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
-  filters: "ml-auto flex flex-wrap items-end justify-end gap-3",
+  filters: "ml-auto flex flex-row-reverse flex-wrap-reverse items-end gap-3",
+  fixed: "flex items-end gap-3",
   extras: "flex flex-wrap items-end justify-end gap-3",
   filter: "space-y-1",
   label: "formLabel block",
-  input: "formControl",
-  problem: "formError basis-full text-right",
+  // One height for dropdowns and date fields, so adding dates doesn't grow the row.
+  input: "formControl h-10",
+  problem: "formError mt-1",
   card: "card overflow-hidden",
   tabs: "flex flex-wrap border-b border-[var(--hairline)]",
   tab: "min-w-36 flex-1 border-b-2 px-4 py-3 text-left transition",
@@ -202,116 +204,119 @@ const SalesChart = <Row extends { period: string; currency: string }>({
   return (
     <section className={classes.section}>
       <div className={classes.header}>
-        <h2 className={classes.title}>{text.title}</h2>
+        <div>
+          <h2 className={classes.title}>{text.title}</h2>
+          {preset === "custom" && draftProblem && (
+            <p className={classes.problem} role="alert">
+              {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
+            </p>
+          )}
+        </div>
 
+        {/* Show and Period stay at the right. The fields a choice adds go to
+            their left, or above them when the row is full, never pushing them. */}
         <div className={classes.filters}>
-          <label className={classes.filter}>
-            <span className={classes.label}>{text.show}</span>
-            <select
-              className={classes.input}
-              value={kind}
-              onChange={(event) => {
-                setActive(null);
-                setKind(event.currentTarget.value as SalesKind);
-              }}
-            >
-              {salesKinds.map((item) => (
-                <option key={item} value={item}>
-                  {text.kinds[item]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className={classes.fixed}>
+            <label className={classes.filter}>
+              <span className={classes.label}>{text.show}</span>
+              <select
+                className={classes.input}
+                value={kind}
+                onChange={(event) => {
+                  setActive(null);
+                  setKind(event.currentTarget.value as SalesKind);
+                }}
+              >
+                {salesKinds.map((item) => (
+                  <option key={item} value={item}>
+                    {text.kinds[item]}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className={classes.filter}>
-            <span className={classes.label}>{text.period}</span>
-            <select
-              className={classes.input}
-              value={preset}
-              onChange={(event) => {
-                setActive(null);
-                setPreset(event.currentTarget.value as SalesChartPreset);
-              }}
-            >
-              {PRESETS.map((item) => (
-                <option key={item} value={item}>
-                  {text.presets[item]}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className={classes.filter}>
+              <span className={classes.label}>{text.period}</span>
+              <select
+                className={classes.input}
+                value={preset}
+                onChange={(event) => {
+                  setActive(null);
+                  setPreset(event.currentTarget.value as SalesChartPreset);
+                }}
+              >
+                {PRESETS.map((item) => (
+                  <option key={item} value={item}>
+                    {text.presets[item]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className={classes.extras}>
+            {preset === "year" && (
+              <label className={classes.filter}>
+                <span className={classes.label}>{text.year}</span>
+                <select
+                  className={classes.input}
+                  value={year}
+                  onChange={(event) => setYear(Number(event.currentTarget.value))}
+                >
+                  {years.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {preset === "custom" && (
+              <>
+                <label className={classes.filter}>
+                  <span className={classes.label}>{text.from}</span>
+                  <input
+                    className={classes.input}
+                    type="date"
+                    max={customDraft.to || undefined}
+                    value={customDraft.from}
+                    onChange={(event) => changeCustom({ ...customDraft, from: event.currentTarget.value })}
+                  />
+                </label>
+                <label className={classes.filter}>
+                  <span className={classes.label}>{text.to}</span>
+                  <input
+                    className={classes.input}
+                    type="date"
+                    min={customDraft.from || undefined}
+                    max={chartPresetRange("7", today).to}
+                    value={customDraft.to}
+                    onChange={(event) => changeCustom({ ...customDraft, to: event.currentTarget.value })}
+                  />
+                </label>
+              </>
+            )}
+
+            {currencies.length > 1 && (
+              <label className={classes.filter}>
+                <span className={classes.label}>{text.currency}</span>
+                <select
+                  className={classes.input}
+                  value={currency}
+                  onChange={(event) => setChosenCurrency(event.currentTarget.value)}
+                >
+                  {currencies.map((item) => (
+                    <option key={item} value={item}>
+                      {item.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Below Show and Period, so those two never move. */}
-      {(preset === "year" || preset === "custom" || currencies.length > 1) && (
-        <div className={classes.extras}>
-          {preset === "year" && (
-            <label className={classes.filter}>
-              <span className={classes.label}>{text.year}</span>
-              <select
-                className={classes.input}
-                value={year}
-                onChange={(event) => setYear(Number(event.currentTarget.value))}
-              >
-                {years.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {preset === "custom" && (
-            <>
-              <label className={classes.filter}>
-                <span className={classes.label}>{text.from}</span>
-                <input
-                  className={classes.input}
-                  type="date"
-                  max={customDraft.to || undefined}
-                  value={customDraft.from}
-                  onChange={(event) => changeCustom({ ...customDraft, from: event.currentTarget.value })}
-                />
-              </label>
-              <label className={classes.filter}>
-                <span className={classes.label}>{text.to}</span>
-                <input
-                  className={classes.input}
-                  type="date"
-                  min={customDraft.from || undefined}
-                  max={chartPresetRange("7", today).to}
-                  value={customDraft.to}
-                  onChange={(event) => changeCustom({ ...customDraft, to: event.currentTarget.value })}
-                />
-              </label>
-              {draftProblem && (
-                <span className={classes.problem}>
-                  {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
-                </span>
-              )}
-            </>
-          )}
-
-          {currencies.length > 1 && (
-            <label className={classes.filter}>
-              <span className={classes.label}>{text.currency}</span>
-              <select
-                className={classes.input}
-                value={currency}
-                onChange={(event) => setChosenCurrency(event.currentTarget.value)}
-              >
-                {currencies.map((item) => (
-                  <option key={item} value={item}>
-                    {item.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      )}
 
       {error ? (
         <div className={classes.error}>{text.failed}</div>

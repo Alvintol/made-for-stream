@@ -34,10 +34,13 @@ the icons change. Someone who still sees the old icon can reload the page or
 reopen the tab; an installed home-screen icon updates when the phone next
 refreshes it, or when they add it again.
 
-**Email.** The email header is itself a violet-to-orange gradient, so the logo
-would disappear into it, and `EMAIL_LOGO_URL` stays blank (a text wordmark).
-Adding a logo there needs a one-colour (white) version of the logo, or a plain
-header.
+**Email (V0.16.01).** The email header is itself a violet-to-orange gradient,
+so emails use an all-white logo: `public/brand/logo-white.png`, 552 × 160, shown
+at 138 × 40. Email apps don't reliably show SVG, hence a PNG; it was drawn from
+`public/brand/logo-white.svg` (the dark logo with every colour set to white).
+It appears once the API's `EMAIL_LOGO_URL` is
+`https://madeforstream.com/brand/logo-white.png`; blank, emails show the name
+as text. Set it only after that address loads, or emails show a broken image.
 
 ## Compatibility
 

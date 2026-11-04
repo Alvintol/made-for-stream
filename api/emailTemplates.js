@@ -78,7 +78,8 @@ const wrap = (title, bodyHtml, ctaUrl, ctaLabel, language = "en") => `<!doctype 
             <tr><td bgcolor="#6b34e0" style="background-color:#6b34e0;background-image:linear-gradient(120deg,#6b34e0 0%,#a0459c 55%,#f05828 100%);border-radius:10px 10px 0 0;padding:22px 32px;">
               ${
                 LOGO_URL
-                  ? `<img src="${LOGO_URL}" alt="${BRAND_NAME}" height="28" style="display:block;border:0;" />`
+                  ? // public/brand/logo-white.png is 552 × 160: four times this size, for sharp screens.
+                    `<img src="${LOGO_URL}" alt="${BRAND_NAME}" width="138" height="40" style="display:block;border:0;width:138px;height:40px;" />`
                   : `<p style="margin:0;font-size:17px;font-weight:bold;letter-spacing:0.01em;color:#ffffff;">${BRAND_NAME}</p>`
               }
             </td></tr>
