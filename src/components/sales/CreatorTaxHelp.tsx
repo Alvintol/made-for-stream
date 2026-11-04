@@ -30,6 +30,8 @@ const classes = {
 // A creator's year of numbers for their own taxes, on the Earnings page
 // (20261103_185): earnings and fees, the $30,000 small supplier limit for
 // creators in Canada, and sales by the buyer's region. Estimates only.
+// Everything GST/HST is for creators in Canada: Made for Stream charges it on
+// fees only to them (zero-rated outside Canada, 20261102_180).
 const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
   const t = useT();
   const locale = dateLocale(useLanguage());
@@ -40,10 +42,10 @@ const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
   const supplier = data?.small_supplier;
 
   return (
-    <section className={classes.section} aria-labelledby="tax-help-title">
+    <section className={classes.section} aria-labelledby="tax-estimates-title">
       <div className={classes.header}>
         <div>
-          <h2 id="tax-help-title" className={classes.title}>
+          <h2 id="tax-estimates-title" className={classes.title}>
             {t("tax.title")}
           </h2>
           <p className={classes.note}>{t("tax.note")}</p>
@@ -89,10 +91,12 @@ const CreatorTaxHelp = ({ today = new Date() }: { today?: Date }) => {
               <div className={classes.stat}>
                 <div className={classes.statLabel}>{t("sales.totalFees")}</div>
                 <div className={classes.statValue}>{formatPaymentCents(totals.fee_cents, totals.currency)}</div>
-                <div className={classes.statNote}>
-                  {t("sales.feesIncludeTax", { amount: formatPaymentCents(totals.fee_tax_cents, totals.currency) })}
-                </div>
-                <div className={classes.statNote}>{t("tax.feesNote")}</div>
+                {inCanada && (
+                  <div className={classes.statNote}>
+                    {t("sales.feesIncludeTax", { amount: formatPaymentCents(totals.fee_tax_cents, totals.currency) })}
+                  </div>
+                )}
+                <div className={classes.statNote}>{t(inCanada ? "tax.feesNote" : "tax.feesNoteGeneral")}</div>
               </div>
             </div>
           ))}

@@ -116,11 +116,16 @@ checkout, or else the buyer's address at that date, which may have changed. US s
 tax is owed by state once sales there pass that state's limit, so these totals are
 what to watch; nothing here charges US tax.
 
-**Tax help for creators.** At the bottom of the Earnings page, `my_tax_summary()` gives a
-creator a year of estimates for their own tax records:
+**Tax estimates for creators** (called Tax help before V0.16.03). At the bottom of the
+Earnings page, `my_tax_summary()` gives a creator a year of estimates for their own tax
+records:
 
-- Earnings for the year, and the fees Made for Stream charged with the GST/HST inside them.
-  A registered creator can usually claim that GST/HST back; the fees are a business expense.
+- Earnings for the year, and the fees Made for Stream charged. For a creator in Canada,
+  the card also shows the GST/HST inside the fees, which a registered creator can usually
+  claim back. Outside Canada the fees carry no GST/HST (zero-rated, `20261102_180`), so
+  the card and the yearly statement leave every GST/HST line out and just say the fees
+  are usually a deductible business expense. Nothing replaces it for other countries:
+  US sales tax, VAT and the like aren't estimated (see Known gaps).
 - For a creator whose account country is Canada, their Canadian-dollar sales over the last
   four calendar quarters against the $30,000 small supplier limit, with a warning past it.
   It counts Made for Stream sales only, downloads included.
@@ -135,7 +140,7 @@ version 2026-11-03-3, which is what tells buyers creators see their region.
 a refund follows its payment. Those payments still count in every total. It refuses a
 year before 2020 or after this one ("Choose a year from 2020 to this one.", 22023).
 
-**Yearly statement.** Tax help's **Yearly statement** button opens
+**Yearly statement.** Tax estimates' **Yearly statement** button opens
 `/creator/earnings/statement/:year`, one page to print or save as a PDF. It shows the
 creator's legal or business name, address and tax number from their own personal
 details, the year's totals from `my_tax_summary()`, each month from `my_sales_chart()`
@@ -328,10 +333,14 @@ taxable amount. See [`../listings/instant-downloads.md`](../listings/instant-dow
   the tens of thousands of sales a month. Past that, keep daily totals in a table.
 - **A refund changes an old month's sale.** Total sales shows each project as it stands
   now. Transactions and tax don't change: a refund counts in the month it was made.
-- **Tax help is an estimate.** It leaves out sales made elsewhere, provincial sales tax and
+- **Only Canada's taxes are estimated.** Creators elsewhere (in the beta, the US) get
+  earnings, fees and sales by buyer's state, but nothing about US state sales tax or
+  income tax. Whether Made for Stream, as the marketplace, has to collect US state sales
+  tax on buyers' purchases is on the accountant's list in the launch checklist.
+- **Tax estimates are estimates.** They leave out sales made elsewhere, provincial sales tax and
   income tax, and treats GST/HST as on top of the price. Whether a creator's commissions
   are taxable, and how, is for their accountant.
-- **Tax help is by calendar year only.** A creator who files GST/HST quarterly or monthly
+- **Tax estimates are by calendar year only.** A creator who files GST/HST quarterly or monthly
   adds up the Earnings page's months instead.
 - **Province names stay in English** in the creator's region table, in every language.
 - **There's no monthly statement for creators by email.** The Sales page and each

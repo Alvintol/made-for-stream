@@ -1472,11 +1472,12 @@ export const fr: Record<MessageKey, Message> = {
   "sales.loadFailed": "Vos ventes n’ont pas pu être chargées. Veuillez réessayer.",
 
   // A creator's tax help on the Earnings page (src/components/sales/CreatorTaxHelp.tsx)
-  "tax.title": "Aide fiscale",
+  "tax.title": "Estimations fiscales",
   "tax.note": "Des estimations d’après vos ventes sur Made for Stream, pour vous aider à tenir vos propres registres fiscaux. Ajoutez les ventes que vous faites ailleurs. Ce n’est pas un conseil fiscal : vérifiez auprès d’un comptable.",
   "tax.noSales": "Aucune vente cette année.",
   "tax.earningsNote": "Ce qui vous a été payé cette année, moins les remboursements et les frais de Made for Stream. C’est un revenu à déclarer.",
   "tax.feesNote": "Les frais sont généralement une dépense d’entreprise. Si vous êtes inscrit à la TPS/TVH, vous pouvez généralement récupérer la TPS/TVH qu’ils contiennent.",
+  "tax.feesNoteGeneral": "Les frais sont généralement une dépense d’entreprise que vous pouvez déduire.",
   "tax.limitTitle": "Seuil de petit fournisseur pour la TPS/TVH",
   "tax.limitValue": "{amount} sur {limit}",
   "tax.limitNote": "Vos ventes sur Made for Stream depuis {month}, sur quatre trimestres civils. Dès que vos ventes, toutes sources confondues, dépassent 30 000 $ sur quatre trimestres consécutifs, vous devez vous inscrire à la TPS/TVH.",

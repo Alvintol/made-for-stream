@@ -294,7 +294,7 @@ describe("<CreatorSales />", () => {
 });
 
 describe("tax help", () => {
-  const taxHelp = () => within(screen.getByRole("region", { name: "Tax help" }));
+  const taxHelp = () => within(screen.getByRole("region", { name: "Tax estimates" }));
 
   it("shows the year's earnings and fees, with the GST/HST in the fees", () => {
     mocks.tax = taxSummary;
@@ -352,13 +352,13 @@ describe("tax help", () => {
     expect(taxHelp().getByRole("row", { name: /Not shared/ })).toBeInTheDocument();
   });
 
-  it("leaves out the GST/HST limit and rates for a creator outside Canada", () => {
+  it("leaves out everything GST/HST for a creator outside Canada", () => {
     mocks.tax = { ...taxSummary, creator_country: "US" };
 
     renderPage(<CreatorSales />);
 
-    expect(taxHelp().queryByText("GST/HST small supplier limit")).not.toBeInTheDocument();
-    expect(taxHelp().queryByText("GST/HST rate")).not.toBeInTheDocument();
+    expect(taxHelp().queryByText(/GST\/HST/)).not.toBeInTheDocument();
+    expect(taxHelp().getByText("Fees are usually a business expense you can deduct.")).toBeInTheDocument();
     expect(taxHelp().getByRole("row", { name: /Alberta/ })).toBeInTheDocument();
   });
 });
