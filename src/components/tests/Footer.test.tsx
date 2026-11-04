@@ -3,28 +3,50 @@ import { MemoryRouter } from "react-router-dom";
 import CookieConsent from "../legal/CookieConsent";
 import Footer from "../layout/Footer";
 import CookiePreferencesProvider from "../../providers/CookiePreferencesProvider";
-import { describe, expect, it } from 'vitest';
+import ThemeProvider from "../../providers/ThemeProvider";
+import { THEME_STORAGE_KEY } from "../../lib/theme/theme";
+import { afterEach, describe, expect, it } from 'vitest';
 
 describe("<Footer />", () => {
-  it("renders Made for Stream text", () => {
-    render(
+  afterEach(() => window.localStorage.removeItem(THEME_STORAGE_KEY));
+
+  it("shows the logo in the colours for the theme", () => {
+    const { unmount } = render(
       <MemoryRouter>
-        <CookiePreferencesProvider>
-          <Footer />
-        </CookiePreferencesProvider>
+        <ThemeProvider>
+          <CookiePreferencesProvider>
+            <Footer />
+          </CookiePreferencesProvider>
+        </ThemeProvider>
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Made for Stream/i)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Made for Stream" })).toHaveAttribute("src", "/brand/logo-light.svg");
+
+    unmount();
+    window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    render(
+      <MemoryRouter>
+        <ThemeProvider>
+          <CookiePreferencesProvider>
+            <Footer />
+          </CookiePreferencesProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("img", { name: "Made for Stream" })).toHaveAttribute("src", "/brand/logo-dark.svg");
   });
 
   it("opens Cookie settings from the footer", () => {
     render(
       <MemoryRouter>
-        <CookiePreferencesProvider>
-          <Footer />
-          <CookieConsent />
-        </CookiePreferencesProvider>
+        <ThemeProvider>
+          <CookiePreferencesProvider>
+            <Footer />
+            <CookieConsent />
+          </CookiePreferencesProvider>
+        </ThemeProvider>
       </MemoryRouter>
     );
 

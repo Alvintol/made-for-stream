@@ -2,15 +2,14 @@ import { Link } from "react-router-dom";
 import { siteVersion } from "../../domain/site/siteUpdates";
 import { useT } from "../../lib/i18n/i18n";
 import { useCookiePreferences } from "../../providers/CookiePreferencesProvider";
+import BrandLogo from "./BrandLogo";
 
 const classes = {
   footer: "mt-16 border-t border-[var(--hairline)] bg-[rgb(var(--surface)/0.55)]",
   inner: "container mx-auto grid gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]",
   brand: "space-y-3",
-  brandRow: "inline-flex items-center gap-2.5",
-  brandMark: "brandMark h-8 w-8",
-  brandText: "font-display text-lg font-extrabold tracking-tight",
-  brandAccent: "text-[rgb(var(--brand))]",
+  brandRow: "inline-flex",
+  brandLogo: "block h-12 w-auto",
   tagline: "max-w-xs text-sm leading-6 text-zinc-600",
   column: "space-y-3",
   columnTitle: "text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500",
@@ -33,10 +32,7 @@ const Footer = () => {
       <div className={classes.inner}>
         <div className={classes.brand}>
           <Link to="/" className={classes.brandRow} aria-label={t("footer.home")}>
-            <img src="/made-for-stream-mark.svg" alt="" className={classes.brandMark} draggable={false} />
-            <span className={classes.brandText}>
-              Made for <span className={classes.brandAccent}>Stream</span>
-            </span>
+            <BrandLogo className={classes.brandLogo} />
           </Link>
 
           <p className={classes.tagline}>{t("footer.tagline")}</p>

@@ -2068,7 +2068,11 @@ so none of them is in the eight sprints above — but they should not be lost.
       but the route handlers themselves are still untested.
 - [ ] **Rebrand assets — logos, favicons, site imagery.** The product rebranded
       (2026-09-23) and needs new logo files, favicons, and site imagery
-      throughout. Cosmetic, not launch-blocking. Specific hooks already built
+      throughout. **Done in V0.16.00:** the site logo, favicons and home-screen
+      icons (`docs/rebranding.md`). **Still open:** an email logo, which needs
+      a white version because the email header is already a gradient; a social
+      sharing image (`og:image`), which the site doesn't have yet; and
+      uploading the mark to Stripe and Twitch branding. Cosmetic, not launch-blocking. Specific hooks already built
       and waiting for real assets rather than requiring code changes later:
       `api/emailTemplates.js` reads `EMAIL_LOGO_URL` (a hosted image URL —
       logo falls back to a plain text wordmark until set),

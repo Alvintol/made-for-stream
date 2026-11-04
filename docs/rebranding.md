@@ -3,8 +3,41 @@
 Public name: **Made for Stream**. Tagline: **For creators, by creators.**
 
 The application, payment descriptions, policy text, metadata, install manifest,
-icons and support documentation use this name. The SVG mark is a simple M/play
-symbol; raster favicons and install icons are exports of this source.
+icons and support documentation use this name.
+
+## Logo and icons (V0.16.00)
+
+The logo is a play-button M with a violet-to-orange gradient, beside "Made for
+Stream" lettering. Each file is drawn as vector shapes: no embedded images, no
+fonts, no scripts.
+
+| File | Use |
+| --- | --- |
+| `public/brand/logo-light.svg`, `logo-dark.svg` | Full logo for light and dark backgrounds. The footer, and the header from 640px wide |
+| `public/brand/mark-light.svg`, `mark-dark.svg` | The M alone. The header on phones |
+| `public/favicon.svg`, `favicon.ico`, `favicon-*.png` | Browser tab icons, in the light colours so they show on light and dark tabs |
+| `public/apple-touch-icon.png`, `android-chrome-*.png` | Home-screen icons on charcoal; the maskable one has room to be cropped |
+| `public/made-for-stream-mark.svg` | The old mark's address, now holding the new light mark, so anything outside the site that still links to it shows the new logo |
+
+`src/components/layout/BrandLogo.tsx` picks the light or dark file from the
+site's theme, so only one downloads. Each full logo is 56 KB compressed, the M
+12 KB; both are cached after the first visit.
+
+| Theme | Gradient start | Gradient end | "Made for" |
+| --- | --- | --- | --- |
+| Light | `#8043ED` | `#F46B45` | `#181333` |
+| Dark | `#B9AFE3` | `#FF805C` | `#F3F1F8` |
+
+**An old icon still shows.** Browsers keep tab and home-screen icons for a long
+time. `index.html` links them with `?v=mfs-gradient-1`: change that whenever
+the icons change. Someone who still sees the old icon can reload the page or
+reopen the tab; an installed home-screen icon updates when the phone next
+refreshes it, or when they add it again.
+
+**Email.** The email header is itself a violet-to-orange gradient, so the logo
+would disappear into it, and `EMAIL_LOGO_URL` stays blank (a text wordmark).
+Adding a logo there needs a one-colour (white) version of the logo, or a plain
+header.
 
 ## Compatibility
 
