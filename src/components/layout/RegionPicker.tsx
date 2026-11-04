@@ -5,7 +5,7 @@ import DisplayCurrencySettings from "../settings/DisplayCurrencySettings";
 
 const classes = {
   button: "regionButton",
-  dialog: "regionDialog",
+  dialog: "appDialog",
   body: "flex flex-col gap-4 p-5",
   header: "flex items-center justify-between gap-3",
   title: "font-display text-lg font-extrabold tracking-tight",

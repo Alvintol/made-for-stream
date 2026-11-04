@@ -442,7 +442,7 @@
     @apply px-3 py-1.5 text-sm;
   }
 
-  /* Language and currency button in the top bar, and its dialog. */
+  /* Language and currency button in the top bar. */
   .regionButton {
     @apply inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2 text-xs font-semibold whitespace-nowrap transition duration-200;
     color: rgb(var(--ink) / 0.72);
@@ -457,14 +457,18 @@
     outline: none;
     box-shadow: var(--ring);
   }
-  .regionDialog {
-    @apply m-auto w-[min(34rem,calc(100vw-2rem))] rounded-2xl p-0;
+  /* Every modal: the region picker and src/components/ui/Dialog.tsx. */
+  .appDialog {
+    @apply w-[min(34rem,calc(100vw-2rem))] rounded-2xl p-0;
+    /* Centred on screen, even inside a space-y-* parent, whose spacing would
+       otherwise replace the auto margin and pin the modal to the top. */
+    margin: auto !important;
     color: rgb(var(--ink));
     background: rgb(var(--surface));
     border: 1px solid var(--hairline-strong);
     box-shadow: var(--shadow-md);
   }
-  .regionDialog::backdrop {
+  .appDialog::backdrop {
     background: rgb(0 0 0 / 0.45);
   }
 

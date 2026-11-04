@@ -94,11 +94,15 @@ region and the lists. Months are chosen from a calendar, so a typed month like
 
 **The graphs.** They show the last 7, 28 or 90 days, the last 12 months, a whole year,
 or any dates up to two years apart. Up to 92 days is a line by day; longer is bars by
-month. A filter shows commissions, instant downloads or both. Show and Period stay in
-place at the right; the year, the From and To dates and the currency appear to
-their left in the same row (above them on a narrow screen), all the same height,
-so the graph never moves. Dates apply as soon as they make a valid range, with no button; an
-invalid pair keeps the last good range on the graph and says what is wrong. They read the same totals
+month. A filter shows commissions, instant downloads or both. Since V0.16.02 the graph
+never changes size. Show and Period are its only fields: the Period list holds the
+rolling periods, the last three years and Custom dates. Custom dates open a modal
+with From, To and Use these dates; until they're used, or if the modal is
+cancelled, the graph keeps its period, and the chosen dates show under "Over
+time" with a Change link. A second currency is chosen in the totals row, and Show
+as a table opens the table in a modal. An empty period keeps the totals row (with
+"–") and the graph's height. The dashboard's month cards are always the same
+two; sales in other currencies are a link to the Earnings page. They read the same totals
 as the month cards. A graph shows one currency at a time, and a refund can take a day
 below zero. `sales_chart_window()` refuses an end before the start ("Choose a start
 date before the end date.") and `check_sales_kind()` refuses any other kind ("Choose
