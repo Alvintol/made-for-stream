@@ -62,6 +62,7 @@ const FeeSchedule = lazy(() => import("./pages/legal/FeeSchedule"));
 const Legal = lazy(() => import("./pages/legal/Legal"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const SiteUpdates = lazy(() => import("./pages/SiteUpdates"));
+const Guide = lazy(() => import("./pages/Guide"));
 const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy"));
 const Terms = lazy(() => import("./pages/legal/Terms"));
 const MessageDetails = lazy(() => import("./pages/messages/MessageDetails"));
@@ -97,6 +98,8 @@ const App = () => {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/updates" element={<SiteUpdates />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/guide/:track" element={<Guide />} />
           <Route
             path="/terms/creator"
             element={<CreatorTerms />}

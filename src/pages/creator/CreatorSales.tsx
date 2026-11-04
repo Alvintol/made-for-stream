@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import CreatorMonthEarnings from "../../components/sales/CreatorMonthEarnings";
 import CreatorTaxHelp from "../../components/sales/CreatorTaxHelp";
 import { formatPaymentCents } from "../../domain/payments/listingRequestPaymentDisplay";
@@ -44,11 +45,14 @@ const CreatorSales = () => {
       <div>
         <h1 className={classes.h1}>{t("sales.title")}</h1>
         <p className={classes.sub}>{t("sales.sub")}</p>
+        <GuideHelpLink track="creators" step="earnings" tour="earnings" />
       </div>
 
-      <CreatorMonthEarnings month={month} onMonthChange={setMonth} />
+      <div data-tour="earnings-month">
+        <CreatorMonthEarnings month={month} onMonthChange={setMonth} />
+      </div>
 
-      <section className={classes.card}>
+      <section className={classes.card} data-tour="earnings-sales">
         <h2 className={classes.title}>{t("sales.eachSale")}</h2>
 
         {sales.error && <div className={classes.error}>{t("sales.loadFailed")}</div>}
@@ -103,7 +107,7 @@ const CreatorSales = () => {
         )}
       </section>
 
-      <section className={classes.card}>
+      <section className={classes.card} data-tour="earnings-transactions">
         <h2 className={classes.title}>{t("sales.eachTransaction")}</h2>
 
         {transactions.error && <div className={classes.error}>{t("sales.loadFailed")}</div>}
@@ -169,7 +173,9 @@ const CreatorSales = () => {
         )}
       </section>
 
-      <CreatorTaxHelp />
+      <div data-tour="earnings-tax">
+        <CreatorTaxHelp />
+      </div>
     </div>
   );
 };

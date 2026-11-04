@@ -1,6 +1,7 @@
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 import {
@@ -521,10 +522,11 @@ const CreateListing = () => {
         <h1 className={classes.h1}>{t("listingForm.createTitle")}</h1>
 
         <p className={classes.sub}>{t("listingForm.createText")}</p>
+        <GuideHelpLink track="creators" step="listing" tour="newListing" />
       </div>
 
       <div className={classes.layout}>
-      <aside className={classes.aside} aria-label={t("listingForm.checklist")}>
+      <aside className={classes.aside} aria-label={t("listingForm.checklist")} data-tour="listing-checklist">
         <h2 className={classes.asideTitle}>{t("listingForm.checklist")}</h2>
 
         <div className={classes.asideStatus} role="status">
@@ -850,7 +852,7 @@ const CreateListing = () => {
             </div>
           </div>
         ) : (
-        <div className={classes.section}>
+        <div className={classes.section} data-tour="listing-pricing">
           <div>
             <h2 className={classes.sectionTitle}>{t("listingForm.pricing")}</h2>
             <p className={classes.sectionText}>
@@ -1007,7 +1009,7 @@ const CreateListing = () => {
           </div>
         </div>
 
-        <div className={classes.section}>
+        <div className={classes.section} data-tour="listing-preview">
           <div>
             <h2 className={classes.sectionTitle}>{t("listingForm.preview")}</h2>
             <p className={classes.sectionText}>

@@ -133,19 +133,20 @@ const CreatorDashboard = () => {
           <p className={classes.sub}>{t("dashboard.sub")}</p>
         </div>
 
-        <Link className="btnPrimary" to="/creator/listings/new">
+        <Link className="btnPrimary" to="/creator/listings/new" data-tour="dashboard-create">
           {t("dashboard.create")}
         </Link>
       </div>
 
-      <nav className={classes.pages} aria-label={t("dashboard.pages")}>
+      <nav className={classes.pages} aria-label={t("dashboard.pages")} data-tour="dashboard-pages">
         <Link className={classes.pageLink} to="/creator/listings">{t("dashboard.linkListings")}</Link>
         <Link className={classes.pageLink} to="/creator/requests">{t("dashboard.linkCommissions")}</Link>
         <Link className={classes.pageLink} to="/creator/earnings">{t("dashboard.linkSales")}</Link>
         <Link className={classes.pageLink} to="/apply/creator">{t("dashboard.linkApplication")}</Link>
+        <Link className={classes.pageLink} to="/guide/creators">{t("dashboard.linkGuide")}</Link>
       </nav>
 
-      <div className={classes.stats}>
+      <div className={classes.stats} data-tour="dashboard-stats">
         <Stat
           to="/creator/requests"
           label={t("dashboard.statNew")}
@@ -173,7 +174,7 @@ const CreatorDashboard = () => {
       </div>
 
       <div className={classes.columns}>
-        <section className={classes.earnings} aria-label={t("dashboard.earnings")}>
+        <section className={classes.earnings} aria-label={t("dashboard.earnings")} data-tour="dashboard-chart">
           <div>
             <h2 className={classes.earningsTitle}>{t("dashboard.earnings")}</h2>
             <p className={classes.earningsNote}>{t("sales.monthNote")}</p>
@@ -183,7 +184,7 @@ const CreatorDashboard = () => {
         </section>
 
         <div className={classes.side}>
-          <section className={classes.attention} aria-label={t("dashboard.attention")}>
+          <section className={classes.attention} aria-label={t("dashboard.attention")} data-tour="dashboard-attention">
             <div className={classes.cardHead}>
               <h2 className={classes.cardTitle}>{t("dashboard.attention")}</h2>
             </div>
@@ -210,13 +211,13 @@ const CreatorDashboard = () => {
           </section>
 
           {/* Always this month: the chart beside it covers any other period. */}
-          <section className={classes.month} aria-label={t("dashboard.thisMonth")}>
+          <section className={classes.month} aria-label={t("dashboard.thisMonth")} data-tour="dashboard-month">
             <h2 className={classes.monthTitle}>{t("dashboard.thisMonth")}</h2>
             <CreatorSalesTotals month={currentSalesMonth()} stacked />
           </section>
         </div>
 
-        <section className={classes.latest} aria-label={t("buyerRequests.tabActive")}>
+        <section className={classes.latest} aria-label={t("buyerRequests.tabActive")} data-tour="dashboard-latest">
           <div className={classes.cardHead}>
             <h2 className={classes.cardTitle}>{t("dashboard.latest")}</h2>
             <Link className={classes.cardLink} to="/creator/requests">

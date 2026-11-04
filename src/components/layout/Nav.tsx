@@ -290,7 +290,7 @@ const Nav = () => {
         {t("nav.market")}
       </NavLink>
 
-      <NavLink to="/creators" className={({ isActive }) => getPillClass(isActive)}>
+      <NavLink to="/creators" data-tour="nav-creators" className={({ isActive }) => getPillClass(isActive)}>
         {t("nav.creators")}
       </NavLink>
 

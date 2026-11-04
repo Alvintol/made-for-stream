@@ -2,6 +2,7 @@ import { Collapse } from "../../lib/motion";
 import { dateLocale, useLanguage, useT, type Translate } from "../../lib/i18n/i18n";
 import { useCreatorPaymentAccount } from "../../hooks/payments/useCreatorPaymentAccount";
 import { Link, useParams } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import { useCreatorRequest } from "../../hooks/creatorRequests/useCreatorRequest";
 import { useUpdateCreatorListingRequestStatus } from "../../hooks/creatorRequests/useUpdateCreatorListingRequestStatus";
 import {
@@ -1035,6 +1036,7 @@ const CreatorRequestDetails = () => {
 
   return (
     <RequestWorkspace
+      help={<GuideHelpLink track="creators" step="agreement" tour="creatorRequest" />}
       header={
         <StatusHeader
           backTo={backTo}

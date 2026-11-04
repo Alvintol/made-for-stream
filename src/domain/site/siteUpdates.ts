@@ -30,12 +30,25 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.16.06";
+export const siteVersion = "V0.17.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.17.00",
+    date: "2026-11-04",
+    title: "A guide to the site",
+    changes: [
+      "A new Guide walks through the site step by step, with one guide for creators and one for buyers.",
+      "Steps tick themselves off as you do them, such as publishing a listing or paying for a commission.",
+      "\"Show me\" opens the page a step is about and points out each part of it.",
+      "Commission, checkout, new listing, earnings and downloads pages have a \"How this works\" link to the right step.",
+      "A welcome window offers the guide once, the next time you sign in.",
+      "The Guide is linked at the bottom of every page and on the creator dashboard.",
+    ],
+  },
   {
     version: "V0.16.06",
     date: "2026-11-04",
