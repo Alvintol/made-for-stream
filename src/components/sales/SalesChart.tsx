@@ -12,8 +12,10 @@ import {
   type SalesKind,
 } from "../../domain/payments/sales";
 import { formatCompactMoney } from "../../lib/formatMoney";
+import Dialog from "../ui/Dialog";
 
-const PRESETS: readonly SalesChartPreset[] = ["7", "28", "90", "12m", "year", "custom"];
+// The rolling periods; whole years and custom dates follow them in the list.
+const ROLLING: readonly SalesChartPreset[] = ["7", "28", "90", "12m"];
 const WIDTH = 1000;
 const HEIGHT = 260;
 
@@ -21,16 +23,18 @@ const classes = {
   section: "space-y-3",
   header: "flex flex-wrap items-end justify-between gap-3",
   title: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
-  filters: "ml-auto flex flex-row-reverse flex-wrap-reverse items-end gap-3",
-  fixed: "flex items-end gap-3",
-  extras: "flex flex-wrap items-end justify-end gap-3",
+  filters: "ml-auto flex items-end gap-3",
+  change: "mt-0.5 block text-sm font-semibold text-[rgb(var(--accent-text))] hover:underline",
   filter: "space-y-1",
   label: "formLabel block",
-  // One height for dropdowns and date fields, so adding dates doesn't grow the row.
   input: "formControl h-10",
-  problem: "formError mt-1",
+  problem: "formError",
+  dates: "grid gap-3 sm:grid-cols-2",
+  actions: "flex flex-wrap justify-end gap-2",
   card: "card overflow-hidden",
-  tabs: "flex flex-wrap border-b border-[var(--hairline)]",
+  // Always drawn, with or without sales, so the card keeps one height.
+  tabs: "flex items-stretch overflow-x-auto border-b border-[var(--hairline)]",
+  currency: "flex shrink-0 items-center px-3",
   tab: "min-w-36 flex-1 border-b-2 px-4 py-3 text-left transition",
   tabOn: "border-[rgb(var(--chart))]",
   tabOff: "border-transparent hover:bg-[rgb(var(--ink)/0.03)]",
@@ -56,10 +60,11 @@ const classes = {
   xAxis: "col-start-2 mt-2 flex justify-between text-xs text-zinc-500",
   xAxisBars: "col-start-2 mt-2 flex text-xs text-zinc-500",
   xBarLabel: "flex-1 truncate text-center",
-  empty: "grid h-64 place-items-center text-sm text-zinc-500",
-  table: "mt-3 text-sm",
-  summary: "cursor-pointer font-semibold text-[rgb(var(--accent-text))]",
-  tableWrap: "mt-2 max-h-72 overflow-auto",
+  // The height of a drawn graph and its dates, so an empty period doesn't
+  // shrink the card.
+  empty: "grid h-[17.5rem] place-items-center text-sm text-zinc-500",
+  tableButton: "mt-3 text-sm font-semibold text-[rgb(var(--accent-text))] hover:underline disabled:cursor-default disabled:text-zinc-400 disabled:no-underline",
+  tableWrap: "max-h-[60vh] overflow-auto",
   grid: "w-full text-left",
   th: "border-b border-zinc-200 py-2 pr-4 text-xs font-bold uppercase tracking-wide text-zinc-500",
   td: "border-b border-zinc-100 py-2 pr-4 tabular-nums text-zinc-800",
@@ -81,9 +86,13 @@ export type SalesChartText = {
   kinds: Record<SalesKind, string>;
   period: string;
   presets: Record<SalesChartPreset, string>;
-  year: string;
   from: string;
   to: string;
+  datesTitle: string;
+  applyDates: string;
+  cancel: string;
+  changeDates: string;
+  close: string;
   rangeInvalid: string;
   rangeTooLong: string;
   currency: string;
@@ -91,6 +100,7 @@ export type SalesChartText = {
   empty: string;
   failed: string;
   table: string;
+  tableTitle: string;
   date: string;
 };
 
@@ -113,6 +123,8 @@ type Props<Row> = {
 // page: a line by day, or bars by month for longer periods and whole years.
 // Filters choose commissions, instant downloads or both, and the dates.
 // Amounts in different currencies can't be added, so it shows one at a time.
+// It never changes size: custom dates and the table open in a modal, and an
+// empty period takes the same room as a drawn one.
 // Admin pages stay in English, so every word comes from the page.
 const SalesChart = <Row extends { period: string; currency: string }>({
   useChart,
@@ -130,20 +142,47 @@ const SalesChart = <Row extends { period: string; currency: string }>({
   const [metricId, setMetricId] = useState(metrics[0].id);
   const [chosenCurrency, setChosenCurrency] = useState<string | null>(null);
   const [active, setActive] = useState<number | null>(null);
+  const [datesOpen, setDatesOpen] = useState(false);
+  const [tableOpen, setTableOpen] = useState(false);
 
   const range = preset === "custom" ? custom : chartPresetRange(preset, today, year);
   const { data, error, isPlaceholderData } = useChart({ ...range, kind });
   const draftProblem = customRangeProblem(customDraft.from, customDraft.to);
 
-  // Dates apply as soon as they make a valid range; until then the chart keeps
-  // the last good one and says what is wrong.
-  const changeCustom = (next: typeof customDraft) => {
-    setCustomDraft(next);
+  const dayText = (day: string) =>
+    new Date(`${day}T00:00:00Z`).toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  const customText = `${dayText(custom.from)} – ${dayText(custom.to)}`;
 
-    if (customRangeProblem(next.from, next.to) === null) {
-      setActive(null);
-      setCustom(next);
+  const openDates = () => {
+    setCustomDraft(custom);
+    setDatesOpen(true);
+  };
+
+  const choosePeriod = (value: string) => {
+    setActive(null);
+
+    // Custom dates are chosen in the modal; the period changes only when
+    // they're used.
+    if (value === "custom") return openDates();
+
+    if (value.startsWith("year-")) {
+      setYear(Number(value.slice(5)));
+      setPreset("year");
+      return;
     }
+
+    setPreset(value as SalesChartPreset);
+  };
+
+  const useDates = () => {
+    setCustom(customDraft);
+    setPreset("custom");
+    setDatesOpen(false);
   };
 
   const allRows = data?.rows ?? [];
@@ -206,124 +245,104 @@ const SalesChart = <Row extends { period: string; currency: string }>({
       <div className={classes.header}>
         <div>
           <h2 className={classes.title}>{text.title}</h2>
-          {preset === "custom" && draftProblem && (
-            <p className={classes.problem} role="alert">
-              {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
-            </p>
+          {preset === "custom" && (
+            <button type="button" className={classes.change} onClick={openDates}>
+              {customText} · {text.changeDates}
+            </button>
           )}
         </div>
 
-        {/* Show and Period stay at the right. The fields a choice adds go to
-            their left, or above them when the row is full, never pushing them. */}
+        {/* Only these two, always in this place. */}
         <div className={classes.filters}>
-          <div className={classes.fixed}>
-            <label className={classes.filter}>
-              <span className={classes.label}>{text.show}</span>
-              <select
-                className={classes.input}
-                value={kind}
-                onChange={(event) => {
-                  setActive(null);
-                  setKind(event.currentTarget.value as SalesKind);
-                }}
-              >
-                {salesKinds.map((item) => (
-                  <option key={item} value={item}>
-                    {text.kinds[item]}
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.show}</span>
+            <select
+              className={classes.input}
+              value={kind}
+              onChange={(event) => {
+                setActive(null);
+                setKind(event.currentTarget.value as SalesKind);
+              }}
+            >
+              {salesKinds.map((item) => (
+                <option key={item} value={item}>
+                  {text.kinds[item]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.period}</span>
+            <select
+              className={classes.input}
+              value={preset === "year" ? `year-${year}` : preset}
+              onChange={(event) => choosePeriod(event.currentTarget.value)}
+            >
+              {ROLLING.map((item) => (
+                <option key={item} value={item}>
+                  {text.presets[item]}
+                </option>
+              ))}
+              <optgroup label={text.presets.year}>
+                {years.map((item) => (
+                  <option key={item} value={`year-${item}`}>
+                    {item}
                   </option>
                 ))}
-              </select>
-            </label>
-
-            <label className={classes.filter}>
-              <span className={classes.label}>{text.period}</span>
-              <select
-                className={classes.input}
-                value={preset}
-                onChange={(event) => {
-                  setActive(null);
-                  setPreset(event.currentTarget.value as SalesChartPreset);
-                }}
-              >
-                {PRESETS.map((item) => (
-                  <option key={item} value={item}>
-                    {text.presets[item]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className={classes.extras}>
-            {preset === "year" && (
-              <label className={classes.filter}>
-                <span className={classes.label}>{text.year}</span>
-                <select
-                  className={classes.input}
-                  value={year}
-                  onChange={(event) => setYear(Number(event.currentTarget.value))}
-                >
-                  {years.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-
-            {preset === "custom" && (
-              <>
-                <label className={classes.filter}>
-                  <span className={classes.label}>{text.from}</span>
-                  <input
-                    className={classes.input}
-                    type="date"
-                    max={customDraft.to || undefined}
-                    value={customDraft.from}
-                    onChange={(event) => changeCustom({ ...customDraft, from: event.currentTarget.value })}
-                  />
-                </label>
-                <label className={classes.filter}>
-                  <span className={classes.label}>{text.to}</span>
-                  <input
-                    className={classes.input}
-                    type="date"
-                    min={customDraft.from || undefined}
-                    max={chartPresetRange("7", today).to}
-                    value={customDraft.to}
-                    onChange={(event) => changeCustom({ ...customDraft, to: event.currentTarget.value })}
-                  />
-                </label>
-              </>
-            )}
-
-            {currencies.length > 1 && (
-              <label className={classes.filter}>
-                <span className={classes.label}>{text.currency}</span>
-                <select
-                  className={classes.input}
-                  value={currency}
-                  onChange={(event) => setChosenCurrency(event.currentTarget.value)}
-                >
-                  {currencies.map((item) => (
-                    <option key={item} value={item}>
-                      {item.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
+              </optgroup>
+              <option value="custom">{text.presets.custom}</option>
+            </select>
+          </label>
         </div>
       </div>
+
+      <Dialog open={datesOpen} onClose={() => setDatesOpen(false)} title={text.datesTitle} closeLabel={text.close}>
+        <div className={classes.dates}>
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.from}</span>
+            <input
+              className={classes.input}
+              type="date"
+              max={customDraft.to || undefined}
+              value={customDraft.from}
+              onChange={(event) => setCustomDraft({ ...customDraft, from: event.currentTarget.value })}
+            />
+          </label>
+          <label className={classes.filter}>
+            <span className={classes.label}>{text.to}</span>
+            <input
+              className={classes.input}
+              type="date"
+              min={customDraft.from || undefined}
+              max={chartPresetRange("7", today).to}
+              value={customDraft.to}
+              onChange={(event) => setCustomDraft({ ...customDraft, to: event.currentTarget.value })}
+            />
+          </label>
+        </div>
+
+        {draftProblem && (
+          <p className={classes.problem} role="alert">
+            {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
+          </p>
+        )}
+
+        <div className={classes.actions}>
+          <button type="button" className="btnOutline" onClick={() => setDatesOpen(false)}>
+            {text.cancel}
+          </button>
+          <button type="button" className="btnPrimary" disabled={draftProblem !== null} onClick={useDates}>
+            {text.applyDates}
+          </button>
+        </div>
+      </Dialog>
 
       {error ? (
         <div className={classes.error}>{text.failed}</div>
       ) : (
         <div className={classes.card}>
-          {hasData && (
-            <div className={classes.tabs}>
+          <div className={classes.tabs}>
               {metrics.map((item) => (
                 <button
                   key={item.id}
@@ -334,12 +353,29 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                 >
                   <div className={classes.tabLabel}>{item.label}</div>
                   <div className={classes.tabValue}>
-                    {show(item, rows.reduce((total, row) => total + item.value(row), 0))}
+                    {/* No sales, no currency to show an amount in. */}
+                    {rows.length > 0 ? show(item, rows.reduce((total, row) => total + item.value(row), 0)) : "–"}
                   </div>
                 </button>
               ))}
+
+              {currencies.length > 1 && (
+                <label className={classes.currency}>
+                  <span className="sr-only">{text.currency}</span>
+                  <select
+                    className={classes.input}
+                    value={currency}
+                    onChange={(event) => setChosenCurrency(event.currentTarget.value)}
+                  >
+                    {currencies.map((item) => (
+                      <option key={item} value={item}>
+                        {item.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
-          )}
 
           <div className={classes.body}>
             {!hasData ? (
@@ -463,38 +499,42 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                   )}
                 </div>
 
-                <details className={classes.table}>
-                  <summary className={classes.summary}>{text.table}</summary>
-
-                  <div className={classes.tableWrap}>
-                    <table className={classes.grid}>
-                      <thead>
-                        <tr>
-                          <th className={classes.th}>{text.date}</th>
-                          {metrics.map((item) => (
-                            <th key={item.id} className={classes.th}>
-                              {item.label}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((row) => (
-                          <tr key={row.period}>
-                            <td className={classes.td}>{periodName(row.period)}</td>
-                            {metrics.map((item) => (
-                              <td key={item.id} className={classes.td}>
-                                {show(item, item.value(row))}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
               </>
             )}
+
+            {/* Always here, so the card is the same height with or without sales. */}
+            <button type="button" className={classes.tableButton} disabled={!hasData} onClick={() => setTableOpen(true)}>
+              {text.table}
+            </button>
+
+            <Dialog open={tableOpen} onClose={() => setTableOpen(false)} title={text.tableTitle} closeLabel={text.close}>
+              <div className={classes.tableWrap}>
+                <table className={classes.grid}>
+                  <thead>
+                    <tr>
+                      <th className={classes.th}>{text.date}</th>
+                      {metrics.map((item) => (
+                        <th key={item.id} className={classes.th}>
+                          {item.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.period}>
+                        <td className={classes.td}>{periodName(row.period)}</td>
+                        {metrics.map((item) => (
+                          <td key={item.id} className={classes.td}>
+                            {show(item, item.value(row))}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Dialog>
           </div>
         </div>
       )}

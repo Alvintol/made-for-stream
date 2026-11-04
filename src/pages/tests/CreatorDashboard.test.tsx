@@ -141,6 +141,28 @@ describe("<CreatorDashboard />", () => {
     expect(new Set(mocks.salesMonths)).toEqual(new Set([currentSalesMonth()]));
   });
 
+  it("keeps the same two month cards, and sends other currencies to Earnings", () => {
+    mocks.sales = [];
+
+    const { unmount } = renderPage();
+    const month = () => within(screen.getByRole("region", { name: "This month's sales" }));
+
+    expect(month().getByText("Total earnings").nextSibling).toHaveTextContent("–");
+    expect(month().getByText("No sales this month.")).toBeInTheDocument();
+
+    unmount();
+    mocks.sales = [
+      { currency: "cad", earned_cents: 200000, sales: 1, commissions: 1, downloads: 0 },
+      { currency: "usd", earned_cents: 5000, sales: 1, commissions: 1, downloads: 0 },
+    ];
+    renderPage();
+
+    expect(month().getAllByText("Total earnings")).toHaveLength(1);
+    expect(month().getByText("$2,000.00")).toBeInTheDocument();
+    expect(month().getByRole("link", { name: /1 other currency/ })).toHaveAttribute("href", "/creator/earnings");
+    mocks.sales = [];
+  });
+
   it("says so when nothing is waiting and nothing is active", () => {
     renderPage();
 

@@ -30,12 +30,24 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.16.01";
+export const siteVersion = "V0.16.02";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.16.02",
+    date: "2026-11-03",
+    title: "A dashboard that stays put",
+    changes: [
+      "Whole years are now in the earnings graph's Period list.",
+      "Custom dates open in a window of their own.",
+      "Show as a table opens the table in a window instead of under the graph.",
+      "The graph keeps its size when a period has no sales.",
+      "The dashboard's month cards stay the same two cards, with a link to Earnings for sales in other currencies.",
+    ],
+  },
   {
     version: "V0.16.01",
     date: "2026-11-03",

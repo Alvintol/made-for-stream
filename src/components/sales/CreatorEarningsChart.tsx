@@ -40,9 +40,13 @@ const CreatorEarningsChart = () => {
       year: t("sales.rangeYear"),
       custom: t("sales.rangeCustom"),
     },
-    year: t("sales.year"),
     from: t("sales.from"),
     to: t("sales.to"),
+    datesTitle: t("sales.datesTitle"),
+    applyDates: t("sales.applyDates"),
+    cancel: t("common.cancel"),
+    changeDates: t("sales.changeDates"),
+    close: t("sales.close"),
     rangeInvalid: t("sales.rangeInvalid"),
     rangeTooLong: t("sales.rangeTooLong"),
     currency: t("sales.currency"),
@@ -50,6 +54,7 @@ const CreatorEarningsChart = () => {
     empty: t("sales.noPeriod"),
     failed: t("sales.loadFailed"),
     table: t("sales.showTable"),
+    tableTitle: t("sales.tableTitle"),
     date: t("sales.date"),
   };
 

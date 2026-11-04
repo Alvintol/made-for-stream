@@ -412,38 +412,53 @@ describe("the earnings graph", () => {
     expect(lastQuery().kind).toBe("instant");
   });
 
-  it("reads a whole year by month", () => {
+  it("reads a whole year by month, chosen in the period list itself", () => {
     renderPage(<CreatorEarningsChart />);
-
-    fireEvent.change(screen.getByLabelText("Period"), { target: { value: "year" } });
 
     const year = new Date().getUTCFullYear();
 
-    expect(lastQuery()).toMatchObject({ from: `${year}-01-01`, to: `${year}-12-31` });
-
-    fireEvent.change(screen.getByLabelText("Year"), { target: { value: String(year - 1) } });
+    fireEvent.change(screen.getByLabelText("Period"), { target: { value: `year-${year - 1}` } });
 
     expect(lastQuery()).toMatchObject({ from: `${year - 1}-01-01`, to: `${year - 1}-12-31` });
+    // No extra field appears beside the period: nothing on the page moves.
+    expect(screen.queryByLabelText("Year")).not.toBeInTheDocument();
   });
 
-  it("reads exact dates as soon as they make a range, and refuses an end before the start", () => {
+  it("chooses exact dates in a modal, and refuses an end before the start", () => {
     renderPage(<CreatorEarningsChart />);
 
+    const before = lastQuery();
+
     fireEvent.change(screen.getByLabelText("Period"), { target: { value: "custom" } });
-    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-10-10" } });
 
-    const valid = lastQuery();
+    const dates = within(screen.getByRole("dialog", { name: "Choose dates" }));
 
-    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2026-10-01" } });
+    fireEvent.change(dates.getByLabelText("From"), { target: { value: "2026-10-10" } });
+    fireEvent.change(dates.getByLabelText("To"), { target: { value: "2026-10-01" } });
 
-    expect(screen.getByText("Choose a start date on or before the end date.")).toBeInTheDocument();
-    // The chart keeps the last good range; there is no button to press.
-    expect(lastQuery()).toEqual(valid);
-    expect(screen.queryByRole("button", { name: "Show" })).not.toBeInTheDocument();
+    expect(dates.getByText("Choose a start date on or before the end date.")).toBeInTheDocument();
+    expect(dates.getByRole("button", { name: "Use these dates" })).toBeDisabled();
+    // Nothing changes until the dates are used.
+    expect(lastQuery()).toEqual(before);
 
-    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2026-10-20" } });
+    fireEvent.change(dates.getByLabelText("To"), { target: { value: "2026-10-20" } });
+    fireEvent.click(dates.getByRole("button", { name: "Use these dates" }));
 
     expect(lastQuery()).toEqual({ from: "2026-10-10", to: "2026-10-20", kind: "all" });
+    expect(screen.queryByRole("dialog", { name: "Choose dates" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Oct 10, 2026 – Oct 20, 2026 · Change/ })).toBeInTheDocument();
+  });
+
+  it("keeps the period when the date modal is cancelled", () => {
+    renderPage(<CreatorEarningsChart />);
+
+    const before = lastQuery();
+
+    fireEvent.change(screen.getByLabelText("Period"), { target: { value: "custom" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(lastQuery()).toEqual(before);
+    expect(screen.getByLabelText("Period")).toHaveValue("28");
   });
 
   it("draws months as bars, with each month named", () => {
@@ -484,15 +499,21 @@ describe("the earnings graph", () => {
 
     const { unmount } = renderPage(<CreatorEarningsChart />);
 
-    expect(
-      within(screen.getAllByRole("table", { hidden: true })[0]).getAllByRole("row", { hidden: true }),
-    ).toHaveLength(3);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show as a table" }));
+
+    const table = within(screen.getByRole("dialog", { name: "By date" }));
+
+    expect(table.getAllByRole("row")).toHaveLength(3);
 
     unmount();
     mocks.chart = { ...chart, rows: [] };
     renderPage(<CreatorEarningsChart />);
 
     expect(screen.getByText("No sales or transactions in this period.")).toBeInTheDocument();
+    // The button and the totals stay, so an empty period takes the same room.
+    expect(screen.getByRole("button", { name: "Show as a table" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Total earnings/ })).toHaveTextContent("–");
   });
 });
 

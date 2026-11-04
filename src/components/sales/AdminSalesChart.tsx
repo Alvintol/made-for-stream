@@ -36,9 +36,13 @@ const TEXT: SalesChartText = {
     year: "By year",
     custom: "Custom dates",
   },
-  year: "Year",
   from: "From",
   to: "To",
+  datesTitle: "Choose dates",
+  applyDates: "Use these dates",
+  cancel: "Cancel",
+  changeDates: "Change",
+  close: "Close",
   rangeInvalid: "Choose a start date on or before the end date.",
   rangeTooLong: "Choose up to two years.",
   currency: "Currency",
@@ -46,6 +50,7 @@ const TEXT: SalesChartText = {
   empty: "No sales or transactions in this period.",
   failed: "Sales could not be loaded.",
   table: "Show as a table",
+  tableTitle: "By date",
   date: "Date",
 };
 
