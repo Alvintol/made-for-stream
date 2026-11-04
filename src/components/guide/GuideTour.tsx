@@ -8,10 +8,14 @@ import type { MessageKey } from "../../lib/i18n/messages/en";
 
 const classes = {
   blocker: "fixed inset-0 z-[70]",
-  dim: "fixed inset-0 z-[70] bg-black/55",
-  spot:
-    "pointer-events-none fixed z-[71] rounded-xl ring-2 ring-[rgb(var(--accent))] shadow-[0_0_0_9999px_rgb(0_0_0/0.55)] transition-all duration-200 motion-reduce:transition-none",
+  // The dim, the ring and the glow are all its shadow (ui.css).
+  spot: "tourSpot pointer-events-none fixed z-[71] rounded-xl",
+  // Between steps the spotlight and card slide to their new places. While
+  // the page scrolls under a settled step they follow it straight away.
+  glide:
+    "transition-[top,left,width,height,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
   card: "card fixed z-[72] w-[min(22rem,calc(100vw-2rem))] space-y-3 p-5 shadow-lg outline-none",
+  text: "tourStepIn space-y-3",
   count: "text-xs font-semibold uppercase tracking-wide text-zinc-500",
   title: "font-display text-base font-extrabold tracking-tight",
   body: "text-sm leading-6 text-zinc-700",
@@ -71,6 +75,7 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
   const tour = tours[id];
   const [index, setIndex] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
+  const [gliding, setGliding] = useState(true);
   const [cardSize, setCardSize] = useState({ width: 352, height: 200 });
   const cardRef = useRef<HTMLDivElement>(null);
   const targetRef = useRef<HTMLElement | null>(null);
@@ -79,11 +84,19 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
   const last = index === tour.steps.length - 1;
 
   // Find this step's element. Pages load their data after they appear, so
-  // look again for a moment before settling for a centred card.
+  // look again for a moment before settling for a centred card. The old
+  // spotlight stays put meanwhile, so it slides from there.
   useEffect(() => {
     let tries = 0;
     let timer = 0;
+    let settle = 0;
     targetRef.current = null;
+
+    // Long enough for the page's own smooth scroll to finish.
+    const arrive = (next: Box | null) => {
+      setBox(next);
+      settle = window.setTimeout(() => setGliding(false), 900);
+    };
 
     const look = () => {
       const element = findTarget(step.target);
@@ -92,16 +105,19 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
         targetRef.current = element;
         const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
         element.scrollIntoView?.({ block: "center", behavior: reduce ? "auto" : "smooth" });
-        setBox(boxOf(element));
-        return;
+        return arrive(boxOf(element));
       }
 
       tries += 1;
       if (step.target && tries < 10) timer = window.setTimeout(look, 150);
+      else arrive(null);
     };
 
     timer = window.setTimeout(look, 0);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(settle);
+    };
   }, [step.target]);
 
   // Follow the element while the page scrolls, resizes or settles.
@@ -140,12 +156,12 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
 
   const back = useCallback(() => {
     if (index === 0) return;
-    setBox(null);
+    setGliding(true);
     setIndex(index - 1);
   }, [index]);
   const next = useCallback(() => {
     if (last) return onClose();
-    setBox(null);
+    setGliding(true);
     setIndex((current) => current + 1);
   }, [last, onClose]);
 
@@ -161,22 +177,28 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
   }, [onClose, next, back]);
 
   const position = cardPosition(box, cardSize);
+  const glide = gliding ? classes.glide : "";
+  // With nothing to point at, the spotlight shrinks to a point in the middle
+  // and its shadow dims the whole page, so it can grow out again.
+  const spot = box ?? { top: window.innerHeight / 2, left: window.innerWidth / 2, width: 0, height: 0 };
 
   return createPortal(
     <>
       {/* The page stays visible but can't be clicked until the tour ends. */}
-      <div className={box ? classes.blocker : classes.dim} aria-hidden="true" />
-      {box && (
-        <div
-          className={classes.spot}
-          aria-hidden="true"
-          style={{ top: box.top, left: box.left, width: box.width, height: box.height }}
-        />
-      )}
+      <div className={classes.blocker} aria-hidden="true" />
+      <div
+        className={`${classes.spot} ${box ? "isLit" : ""} ${glide}`}
+        aria-hidden="true"
+        data-spotlight=""
+        style={spot}
+      >
+        {/* Once it lands, a ripple draws the eye; a new key per step replays it. */}
+        {box && !gliding && <div key={index} className="tourSpotPulse" data-spotlight-pulse="" />}
+      </div>
 
       <div
         ref={cardRef}
-        className={classes.card}
+        className={`${classes.card} ${glide}`}
         style={{ top: position.top, left: position.left }}
         role="dialog"
         aria-modal="true"
@@ -192,10 +214,13 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
           </button>
         </div>
 
-        <h2 id={titleId} className={classes.title}>
-          {t(`tour.${id}.${step.key}` as MessageKey)}
-        </h2>
-        <p className={classes.body}>{t(`tour.${id}.${step.key}Text` as MessageKey)}</p>
+        {/* A new key per step replays the fade-in. */}
+        <div key={index} className={classes.text}>
+          <h2 id={titleId} className={classes.title}>
+            {t(`tour.${id}.${step.key}` as MessageKey)}
+          </h2>
+          <p className={classes.body}>{t(`tour.${id}.${step.key}Text` as MessageKey)}</p>
+        </div>
 
         <div className={classes.row}>
           <span />

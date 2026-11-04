@@ -5,7 +5,7 @@ surfaces:
   - src/pages/Guide.tsx                                      # /guide, /guide/creators, /guide/buyers
   - src/domain/guide/guide.ts                                # the steps and what ticks each one
   - src/domain/guide/tours.ts                                # the spotlight tours and what they point at
-  - src/components/guide/GuideTour.tsx:218                   # runs ?tour=<id> on any page
+  - src/components/guide/GuideTour.tsx:243                   # runs ?tour=<id> on any page
   - src/components/guide/GuideWelcome.tsx:29                 # the once-per-account welcome window
   - src/components/guide/GuideHelpLink.tsx                   # "How this works" on workflow pages
   - src/components/layout/ScrollToTop.tsx                    # ignores ?tour= and #step-…
@@ -33,7 +33,10 @@ The site explains itself in three parts (since V0.17.00):
   ticks. Steps that are only worth knowing have no badge.
 - **Spotlight tours.** "Show me" on a step opens the page it's about with
   `?tour=<id>` in the address. The page dims, and a card walks through its
-  parts with Back, Next and Done. Escape or "End tour" stops it, and the
+  parts with Back, Next and Done. The highlight and card slide from one
+  part to the next, and the highlighted part glows and pulses twice when the
+  highlight lands (since V0.17.01). People who turn on reduced motion get
+  the glow with no sliding or pulse. Escape or "End tour" stops it, and the
   page can't be clicked until it ends. Commission pages need an id, so
   their tours start from the "Show me around this page" link on the page
   itself. "How this works" links on the workflow pages go to the matching

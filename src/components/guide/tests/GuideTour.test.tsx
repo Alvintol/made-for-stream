@@ -38,6 +38,30 @@ describe("<GuideTour />", () => {
     expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
   });
 
+  it("keeps one spotlight across steps, so it slides instead of popping", () => {
+    renderAt("/downloads?tour=downloads");
+    const spotlight = document.querySelector("[data-spotlight]");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(spotlight).not.toBeNull();
+    expect(document.querySelector("[data-spotlight]")).toBe(spotlight);
+  });
+
+  it("lights up and pulses once the spotlight lands on its part", async () => {
+    // jsdom draws nothing, so give the target a box to be found by.
+    const button = () => screen.getByRole("button", { name: "A purchase" });
+    renderAt("/downloads?tour=downloads");
+    button().getClientRects = () => [new DOMRect(10, 10, 100, 40)] as unknown as DOMRectList;
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() => expect(document.querySelector("[data-spotlight]")).toHaveClass("isLit"));
+    await waitFor(() => expect(document.querySelector("[data-spotlight-pulse]")).not.toBeNull(), {
+      timeout: 2000,
+    });
+  });
+
   it("ends on Done, taking the tour out of the address and keeping the rest", async () => {
     renderAt("/downloads?folder=all&tour=downloads");
 

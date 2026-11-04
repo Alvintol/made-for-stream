@@ -599,6 +599,54 @@
   }
 }
 
+/* A tour step's words fade in as the card slides to its new place
+   (GuideTour). */
+.tourStepIn {
+  animation: tourStepIn 0.35s ease-out;
+}
+
+@keyframes tourStepIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* The tour's spotlight. Its huge shadow dims the page around it; once it
+   points at something it also gets a ring and a soft glow. Both states
+   list three shadows so the glow fades in as the spotlight slides. */
+.tourSpot {
+  box-shadow:
+    0 0 0 0 rgb(var(--accent) / 0),
+    0 0 0 0 rgb(var(--accent) / 0),
+    0 0 0 9999px rgb(0 0 0 / 0.55);
+}
+
+.tourSpot.isLit {
+  box-shadow:
+    0 0 0 2px rgb(var(--accent)),
+    0 0 24px 6px rgb(var(--accent) / 0.55),
+    0 0 0 9999px rgb(0 0 0 / 0.55);
+}
+
+/* Two ripples out from the ring when the spotlight settles. */
+.tourSpotPulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: tourSpotPulse 1.2s ease-out 2;
+}
+
+@keyframes tourSpotPulse {
+  from { box-shadow: 0 0 0 0 rgb(var(--accent) / 0.7); }
+  to { box-shadow: 0 0 0 16px rgb(var(--accent) / 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tourStepIn,
+  .tourSpotPulse {
+    animation: none;
+  }
+}
+
 /* An invoice prints without the site around it. */
 @media print {
   header,
