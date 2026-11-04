@@ -2031,7 +2031,12 @@ in [`environments.md`](environments.md).
       your decision.
 - [ ] **The dev database holds real people's details** (seeded creator profiles
       from friends). Replace them with made-up data before more testers are
-      added.
+      added. *(2026-11-04: the seed script and tests now use seven made-up
+      creators, and their channel links use "mfsdemo" names that aren't real
+      channels. A one-off script renames the seven existing dev accounts in
+      place, so their listings stay attached. It is kept out of git because it
+      names the people. A rolled-back dry run left no trace of the old names.
+      Tick this once the owner has run it on dev.)*
 - [ ] **Prod environment:** not built. `environments.md` lists what it needs,
       including a clean replay of every migration on an empty database first.
 

@@ -31,112 +31,114 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
 const avatarUrl = (seed) =>
   `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(seed)}`;
 
-// Current creator seed data, aligned to your latest creator list
+// Made-up creators for dev. Never seed real people: these profiles are
+// public on the dev site. The "mfsdemo" channel names don't point at real
+// Twitch or YouTube channels.
 const creators = [
   {
-    key: "creator-sadine",
-    email: "dev+sadine@creatorhub.local",
-    handle: "Sadine",
-    displayName: "Sadine",
-    bio: "mom, gamer",
+    key: "creator-fernpixel",
+    email: "dev+fernpixel@madeforstream.test",
+    handle: "FernPixel",
+    displayName: "FernPixel",
+    bio: "Demo creator. Cozy stream art, panels and badges.",
     platforms: {
       twitch: {
-        login: "Sadine",
-        profileUrl: "https://twitch.tv/Sadine",
+        login: "mfsdemo_fernpixel",
+        profileUrl: "https://twitch.tv/mfsdemo_fernpixel",
       },
       youtube: {
-        handle: "@Sadine",
-        profileUrl: "https://youtube.com/@Sadine",
+        handle: "@mfsdemo-fernpixel",
+        profileUrl: "https://youtube.com/@mfsdemo-fernpixel",
       },
     },
   },
   {
-    key: "creator-amatrine",
-    email: "dev+amatrine@creatorhub.local",
-    handle: "Amatrine",
-    displayName: "Amatrine",
-    bio: "I'm a freelance artist from Ottawa, Canada who works on emote and other Twitch asset design, film editing, video game design, painting and probably other things",
+    key: "creator-inkwellotter",
+    email: "dev+inkwellotter@madeforstream.test",
+    handle: "InkwellOtter",
+    displayName: "InkwellOtter",
+    bio: "Demo creator. Emotes, overlays and other stream assets.",
     platforms: {
       twitch: {
-        login: "Amatrine",
-        profileUrl: "https://twitch.tv/Amatrine",
+        login: "mfsdemo_inkwellotter",
+        profileUrl: "https://twitch.tv/mfsdemo_inkwellotter",
       },
       youtube: {
-        handle: "@Amatrine",
-        profileUrl: "https://youtube.com/@Amatrine",
+        handle: "@mfsdemo-inkwellotter",
+        profileUrl: "https://youtube.com/@mfsdemo-inkwellotter",
       },
     },
   },
   {
-    key: "creator-Guffball",
-    email: "dev+guffball@creatorhub.local",
-    handle: "Guffball",
-    displayName: "Guffball",
-    bio: "I'm a freelance artist from the UK, who works on emote and other Twitch asset design, film editing, video game design, painting and probably other things",
+    key: "creator-mossylantern",
+    email: "dev+mossylantern@madeforstream.test",
+    handle: "MossyLantern",
+    displayName: "MossyLantern",
+    bio: "Demo creator. Emotes, sub badges and channel art.",
     platforms: {
       twitch: {
-        login: "Guffball",
-        profileUrl: "https://twitch.tv/Guffball",
+        login: "mfsdemo_mossylantern",
+        profileUrl: "https://twitch.tv/mfsdemo_mossylantern",
       },
       youtube: {
-        handle: "@Guffball",
-        profileUrl: "https://youtube.com/@Guffball",
+        handle: "@mfsdemo-mossylantern",
+        profileUrl: "https://youtube.com/@mfsdemo-mossylantern",
       },
     },
   },
   {
-    key: "creator-byrinth",
-    email: "dev+byrinth@creatorhub.local",
-    handle: "byrinth",
-    displayName: "byrinth",
-    bio: "I'm a freelance artist from America, who works on emote and other Twitch asset design, film editing, video game design, painting and probably other things",
+    key: "creator-quietcomet",
+    email: "dev+quietcomet@madeforstream.test",
+    handle: "QuietComet",
+    displayName: "QuietComet",
+    bio: "Demo creator. Illustration, banners and offline screens.",
     platforms: {
       twitch: {
-        login: "byrinth",
-        profileUrl: "https://twitch.tv/byrinth",
+        login: "mfsdemo_quietcomet",
+        profileUrl: "https://twitch.tv/mfsdemo_quietcomet",
       },
       youtube: {
-        handle: "@byrinth",
-        profileUrl: "https://youtube.com/@byrinth",
+        handle: "@mfsdemo-quietcomet",
+        profileUrl: "https://youtube.com/@mfsdemo-quietcomet",
       },
     },
   },
   {
-    key: "creator-horrorhourlore",
-    email: "dev+horrorhourlore@creatorhub.local",
-    handle: "horrorhourlore",
-    displayName: "horrorhourlore",
-    bio: "PNG-tuber + VTuber model workflow and rigging support.",
+    key: "creator-papermoth",
+    email: "dev+papermoth@madeforstream.test",
+    handle: "PaperMoth",
+    displayName: "PaperMoth",
+    bio: "Demo creator. PNG-tuber and VTuber models, and rigging help.",
     platforms: {
       youtube: {
-        handle: "@horrorhourlore",
-        profileUrl: "https://youtube.com/@horrorhourlore",
+        handle: "@mfsdemo-papermoth",
+        profileUrl: "https://youtube.com/@mfsdemo-papermoth",
       },
     },
   },
   {
-    key: "creator-What_Up_Duck",
-    email: "dev+whatupduck@creatorhub.local",
-    handle: "What_Up_Duck",
-    displayName: "What_Up_Duck",
-    bio: "Clips/VOD/Short-form editing + captions + pacing.",
+    key: "creator-clipheron",
+    email: "dev+clipheron@madeforstream.test",
+    handle: "ClipHeron",
+    displayName: "ClipHeron",
+    bio: "Demo creator. Clips, VOD and short-form editing with captions.",
     platforms: {
       twitch: {
-        login: "What_Up_Duck",
-        profileUrl: "https://twitch.tv/What_Up_Duck",
+        login: "mfsdemo_clipheron",
+        profileUrl: "https://twitch.tv/mfsdemo_clipheron",
       },
     },
   },
   {
-    key: "creator-LeSqueech",
-    email: "dev+lesqueech@creatorhub.local",
-    handle: "LeSqueech",
-    displayName: "LeSqueech",
-    bio: "Mic chain, OBS filters, routing, noise, Discord/Twitch setup.",
+    key: "creator-signalfox",
+    email: "dev+signalfox@madeforstream.test",
+    handle: "SignalFox",
+    displayName: "SignalFox",
+    bio: "Demo creator. Mic chains, OBS filters, audio routing and noise cleanup.",
     platforms: {
       twitch: {
-        login: "LeSqueech",
-        profileUrl: "https://twitch.tv/LeSqueech",
+        login: "mfsdemo_signalfox",
+        profileUrl: "https://twitch.tv/mfsdemo_signalfox",
       },
     },
   },
@@ -146,7 +148,7 @@ const creators = [
 const listings = [
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb001",
-    creatorKey: "creator-amatrine",
+    creatorKey: "creator-inkwellotter",
     title: "Cozy Emote Pack (12)",
     short: "12 emotes + variants. Includes PNG + licence notes.",
     offering_type: "digital",
@@ -163,7 +165,7 @@ const listings = [
   },
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb002",
-    creatorKey: "creator-amatrine",
+    creatorKey: "creator-inkwellotter",
     title: "Custom Stream Overlay Package",
     short: "Panels, starting soon, alerts styling. Handoff-ready.",
     offering_type: "commission",
@@ -180,7 +182,7 @@ const listings = [
   },
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb003",
-    creatorKey: "creator-horrorhourlore",
+    creatorKey: "creator-papermoth",
     title: "PNG-tuber Model (Full Set)",
     short: "Expressions + layers with clean naming and export plan.",
     offering_type: "commission",
@@ -197,7 +199,7 @@ const listings = [
   },
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb004",
-    creatorKey: "creator-What_Up_Duck",
+    creatorKey: "creator-clipheron",
     title: "Short-form Edit (1–3 videos)",
     short: "Captions, pacing, sound design. Ready for TikTok/Reels/Shorts.",
     offering_type: "service",
@@ -214,7 +216,7 @@ const listings = [
   },
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb005",
-    creatorKey: "creator-LeSqueech",
+    creatorKey: "creator-signalfox",
     title: "Audio Troubleshooting Call (45 min)",
     short: "Mic chain, OBS filters, routing, noise cleanup — live help.",
     offering_type: "service",
@@ -231,7 +233,7 @@ const listings = [
   },
   {
     id: "3b7c0e6c-4f1c-4f2b-9331-5e957c9cb006",
-    creatorKey: "creator-horrorhourlore",
+    creatorKey: "creator-papermoth",
     title: "PNG/VTuber Rigging Help (Live Session)",
     short: "Rig troubleshooting, export pipeline, naming, physics basics, handoff checklist.",
     offering_type: "service",
