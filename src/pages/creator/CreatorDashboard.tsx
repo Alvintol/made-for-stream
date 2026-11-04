@@ -1,8 +1,7 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import CreatorEarningsChart from "../../components/sales/CreatorEarningsChart";
 import CreatorSalesTotals from "../../components/sales/CreatorSalesTotals";
-import MonthPicker from "../../components/sales/MonthPicker";
 import { currentSalesMonth } from "../../domain/payments/sales";
 import { getListingRequestStatusLabel } from "../../domain/listings/listingRequests";
 import { useUnreadMessageCount } from "../../hooks/conversations/useUnreadMessageCount";
@@ -12,7 +11,7 @@ import {
   getCreatorPaymentAccountIsReady,
   useCreatorPaymentAccount,
 } from "../../hooks/payments/useCreatorPaymentAccount";
-import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
+import { useT } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-4",
   header: "flex flex-wrap items-end justify-between gap-3",
@@ -36,6 +35,7 @@ const classes = {
   earningsTitle: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
   earningsNote: "mt-0.5 max-w-2xl text-sm text-zinc-500",
   month: "space-y-3",
+  monthTitle: "font-display text-sm font-bold tracking-tight text-zinc-900",
   card: "card overflow-hidden hover:shadow-[var(--shadow-md)]",
   cardHead: "flex items-center justify-between gap-3 px-4 py-3",
   cardTitle: "font-display text-sm font-bold tracking-tight text-zinc-900",
@@ -71,8 +71,6 @@ const count = (value: number | undefined) => (value === undefined ? "–" : valu
 // and the way to everything else.
 const CreatorDashboard = () => {
   const t = useT();
-  const language = useLanguage();
-  const [earningsMonth, setEarningsMonth] = useState(currentSalesMonth);
   const counts = useCreatorDashboardCounts().data;
   const activeRequests = useMyCreatorRequests({
     view: "active",
@@ -242,18 +240,10 @@ const CreatorDashboard = () => {
             )}
           </section>
 
+          {/* Always this month: the chart beside it covers any other period. */}
           <section className={classes.month} aria-label={t("dashboard.thisMonth")}>
-            <MonthPicker
-              value={earningsMonth}
-              onChange={setEarningsMonth}
-              locale={dateLocale(language)}
-              text={{
-                label: t("sales.month"),
-                previousYear: t("sales.previousYear"),
-                nextYear: t("sales.nextYear"),
-              }}
-            />
-            <CreatorSalesTotals month={earningsMonth} stacked />
+            <h2 className={classes.monthTitle}>{t("dashboard.thisMonth")}</h2>
+            <CreatorSalesTotals month={currentSalesMonth()} stacked />
           </section>
         </div>
       </div>

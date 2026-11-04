@@ -1424,7 +1424,6 @@ export const fr: Record<MessageKey, Message> = {
   "sales.year": "Année",
   "sales.from": "Du",
   "sales.to": "Au",
-  "sales.apply": "Afficher",
   "sales.rangeInvalid": "Choisissez une date de début au plus tard à la date de fin.",
   "sales.rangeTooLong": "Choisissez au plus deux ans.",
   "sales.previousYear": "Année précédente",

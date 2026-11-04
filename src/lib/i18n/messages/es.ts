@@ -1394,7 +1394,6 @@ export const es: Record<MessageKey, Message> = {
   "sales.year": "Año",
   "sales.from": "Desde",
   "sales.to": "Hasta",
-  "sales.apply": "Mostrar",
   "sales.rangeInvalid": "Elige una fecha de inicio igual o anterior a la fecha final.",
   "sales.rangeTooLong": "Elige como máximo dos años.",
   "sales.previousYear": "Año anterior",

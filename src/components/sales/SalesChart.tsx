@@ -21,11 +21,11 @@ const classes = {
   section: "space-y-3",
   header: "flex flex-wrap items-end justify-between gap-3",
   title: "font-display text-lg font-extrabold tracking-tight text-zinc-900",
-  filters: "flex flex-wrap items-end gap-3",
+  filters: "ml-auto flex flex-wrap items-end justify-end gap-3",
+  extras: "flex flex-wrap items-end justify-end gap-3",
   filter: "space-y-1",
   label: "formLabel block",
   input: "formControl",
-  apply: "btnOutline",
   problem: "formError basis-full text-right",
   card: "card overflow-hidden",
   tabs: "flex flex-wrap border-b border-[var(--hairline)]",
@@ -82,7 +82,6 @@ export type SalesChartText = {
   year: string;
   from: string;
   to: string;
-  apply: string;
   rangeInvalid: string;
   rangeTooLong: string;
   currency: string;
@@ -133,6 +132,17 @@ const SalesChart = <Row extends { period: string; currency: string }>({
   const range = preset === "custom" ? custom : chartPresetRange(preset, today, year);
   const { data, error, isPlaceholderData } = useChart({ ...range, kind });
   const draftProblem = customRangeProblem(customDraft.from, customDraft.to);
+
+  // Dates apply as soon as they make a valid range; until then the chart keeps
+  // the last good one and says what is wrong.
+  const changeCustom = (next: typeof customDraft) => {
+    setCustomDraft(next);
+
+    if (customRangeProblem(next.from, next.to) === null) {
+      setActive(null);
+      setCustom(next);
+    }
+  };
 
   const allRows = data?.rows ?? [];
   const currencies = [...new Set(allRows.map((row) => row.currency))].sort();
@@ -230,7 +240,12 @@ const SalesChart = <Row extends { period: string; currency: string }>({
               ))}
             </select>
           </label>
+        </div>
+      </div>
 
+      {/* Below Show and Period, so those two never move. */}
+      {(preset === "year" || preset === "custom" || currencies.length > 1) && (
+        <div className={classes.extras}>
           {preset === "year" && (
             <label className={classes.filter}>
               <span className={classes.label}>{text.year}</span>
@@ -257,7 +272,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                   type="date"
                   max={customDraft.to || undefined}
                   value={customDraft.from}
-                  onChange={(event) => setCustomDraft({ ...customDraft, from: event.currentTarget.value })}
+                  onChange={(event) => changeCustom({ ...customDraft, from: event.currentTarget.value })}
                 />
               </label>
               <label className={classes.filter}>
@@ -268,20 +283,9 @@ const SalesChart = <Row extends { period: string; currency: string }>({
                   min={customDraft.from || undefined}
                   max={chartPresetRange("7", today).to}
                   value={customDraft.to}
-                  onChange={(event) => setCustomDraft({ ...customDraft, to: event.currentTarget.value })}
+                  onChange={(event) => changeCustom({ ...customDraft, to: event.currentTarget.value })}
                 />
               </label>
-              <button
-                type="button"
-                className={classes.apply}
-                disabled={draftProblem !== null}
-                onClick={() => {
-                  setActive(null);
-                  setCustom(customDraft);
-                }}
-              >
-                {text.apply}
-              </button>
               {draftProblem && (
                 <span className={classes.problem}>
                   {draftProblem === "sales.rangeTooLong" ? text.rangeTooLong : text.rangeInvalid}
@@ -307,7 +311,7 @@ const SalesChart = <Row extends { period: string; currency: string }>({
             </label>
           )}
         </div>
-      </div>
+      )}
 
       {error ? (
         <div className={classes.error}>{text.failed}</div>

@@ -82,8 +82,9 @@ address or rate never rewrites an old sale.
 | Admin: Tax to set aside | The GST/HST inside those fees |
 | Admin: Total earnings | Fees and support less that tax, before your own costs |
 
-**Where things are.** A creator's dashboard shows the month's earnings and completed
-count at the top, and the graph at the bottom. Their **Earnings** page (`/creator/earnings`;
+**Where things are.** A creator's dashboard shows the graph, with this month's
+earnings and completed count beside it. That card is always the current month
+(since V0.15.01): other months are on the graph and the Earnings page. Their **Earnings** page (`/creator/earnings`;
 the old `/creator/sales` address sends people there) has each completed sale with its
 fee and each transaction. The fee total isn't shown as a card. The admin dashboard has
 the month's cards and the graph; the admin Sales page has the tax table, sales by
@@ -92,7 +93,10 @@ region and the lists. Months are chosen from a calendar, so a typed month like
 
 **The graphs.** They show the last 7, 28 or 90 days, the last 12 months, a whole year,
 or any dates up to two years apart. Up to 92 days is a line by day; longer is bars by
-month. A filter shows commissions, instant downloads or both. They read the same totals
+month. A filter shows commissions, instant downloads or both. Show and Period stay in
+place at the right; the year, the From and To dates and the currency appear on a
+row below them. Dates apply as soon as they make a valid range, with no button; an
+invalid pair keeps the last good range on the graph and says what is wrong. They read the same totals
 as the month cards. A graph shows one currency at a time, and a refund can take a day
 below zero. `sales_chart_window()` refuses an end before the start ("Choose a start
 date before the end date.") and `check_sales_kind()` refuses any other kind ("Choose

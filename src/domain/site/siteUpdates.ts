@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.15.00";
+export const siteVersion = "V0.15.01";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.15.01",
+    date: "2026-11-03",
+    title: "Simpler earnings graph filters",
+    changes: [
+      "Show and Period stay in place on the earnings graph; the year, dates and currency appear on a row below them.",
+      "Custom dates update the graph as soon as you pick them, so there is no Show button to press.",
+      "The dashboard's earnings cards always show this month, beside the graph.",
+    ],
+  },
   {
     version: "V0.15.00",
     date: "2026-11-03",

@@ -1445,7 +1445,6 @@ export const en = {
   "sales.year": "Year",
   "sales.from": "From",
   "sales.to": "To",
-  "sales.apply": "Show",
   "sales.rangeInvalid": "Choose a start date on or before the end date.",
   "sales.rangeTooLong": "Choose up to two years.",
   "sales.previousYear": "Previous year",
