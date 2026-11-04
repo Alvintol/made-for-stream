@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.17.00";
+export const siteVersion = "V0.17.01";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.17.01",
+    date: "2026-11-04",
+    title: "Smoother guided tours",
+    changes: [
+      "The tour's highlight now slides from one part of the page to the next instead of jumping.",
+      "The tour's card glides along with it, and each step's words fade in.",
+      "The highlighted part now glows, and pulses when the highlight lands on it.",
+    ],
+  },
   {
     version: "V0.17.00",
     date: "2026-11-04",
