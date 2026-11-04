@@ -3,6 +3,8 @@ import { useT } from "../../../lib/i18n/i18n";
 import { useWorkspace, WorkspaceProvider, type WorkspaceMobileTab } from "./WorkspaceContext";
 type RequestWorkspaceProps = {
   header: ReactNode;
+  // A "How this works" line under the header (GuideHelpLink).
+  help?: ReactNode;
   nextStep: ReactNode;
   conversation: ReactNode;
   sections: ReactNode;
@@ -29,15 +31,16 @@ const tabs = [
   { id: "project", label: "workspace.project" },
 ] as const satisfies readonly { id: WorkspaceMobileTab; label: string }[];
 
-const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: RequestWorkspaceProps) => {
+const WorkspaceBody = ({ header, help, nextStep, conversation, sections, footer }: RequestWorkspaceProps) => {
   const t = useT();
   const { mobileTab, setMobileTab } = useWorkspace();
   return (
     <div className={classes.page}>
       {header}
+      {help}
 
       <div className={classes.grid}>
-        <div className={classes.next}>{nextStep}</div>
+        <div className={classes.next} data-tour="request-next">{nextStep}</div>
 
         <div className={classes.tabs} role="tablist" aria-label={t("workspace.views")}>
           {tabs.map((tab) => (
@@ -55,7 +58,7 @@ const WorkspaceBody = ({ header, nextStep, conversation, sections, footer }: Req
         </div>
 
         {/* Both panes stay mounted on mobile so switching tabs never loses a draft message or form. */}
-        <div className={`${classes.main} ${mobileTab === "messages" ? "" : "max-lg:hidden"}`}>
+        <div className={`${classes.main} ${mobileTab === "messages" ? "" : "max-lg:hidden"}`} data-tour="request-chat">
           {conversation}
         </div>
 

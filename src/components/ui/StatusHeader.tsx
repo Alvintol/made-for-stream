@@ -94,7 +94,7 @@ const StatusHeader = ({
         <div className={classes.eyebrow}>{eyebrow}</div>
 
         <div className={classes.side}>
-          {actions && <div className={classes.actions}>{actions}</div>}
+          {actions && <div className={classes.actions} data-tour="request-manage">{actions}</div>}
 
           {meta.length > 0 && (
             <div className={classes.meta}>

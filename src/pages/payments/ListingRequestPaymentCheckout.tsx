@@ -5,6 +5,7 @@ import {
 import type { Stripe } from "@stripe/stripe-js";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import CheckoutPolicyAcceptance from "../../components/legal/CheckoutPolicyAcceptance";
 import InstantItemDetails from "../../components/listings/InstantItemDetails";
 import { useInstantListing } from "../../hooks/listings/useInstantDownloads";
@@ -310,6 +311,7 @@ const ListingRequestPaymentCheckout = () => {
       <section className={classes.card}>
         <h1 className={classes.title}>{t("checkout.title")}</h1>
         <p className={classes.text}>{t(isInstant ? "checkout.instantIntro" : "checkout.intro")}</p>
+        <GuideHelpLink track="buyers" step={isInstant ? "downloads" : "pay"} />
       </section>
 
       {paymentQuery.isLoading && (

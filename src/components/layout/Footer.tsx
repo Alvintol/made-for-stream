@@ -45,6 +45,7 @@ const Footer = () => {
             <Link className={classes.link} to="/creators">{t("nav.creators")}</Link>
             <Link className={classes.link} to="/live">{t("footer.liveNow")}</Link>
             <Link className={classes.link} to="/about">{t("footer.about")}</Link>
+            <Link className={classes.link} to="/guide">{t("footer.guide")}</Link>
           </nav>
         </div>
 

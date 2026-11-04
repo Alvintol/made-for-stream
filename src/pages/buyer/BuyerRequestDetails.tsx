@@ -2,6 +2,7 @@ import { hasErrorMessage } from "../../lib/errorMessage";
 import { FadeIn } from "../../lib/motion";
 import { dateLocale, useLanguage, useT } from "../../lib/i18n/i18n";
 import { Link, useParams } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import { useBuyerRequest } from "../../hooks/creatorRequests/useBuyerRequest";
 import {
   getListingRequestStatusLabel,
@@ -747,6 +748,7 @@ const BuyerRequestDetails = () => {
 
   return (
     <RequestWorkspace
+      help={<GuideHelpLink track="buyers" step="agreement" tour="buyerRequest" />}
       header={
         <StatusHeader
           backTo={backTo}

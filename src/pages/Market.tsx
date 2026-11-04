@@ -107,7 +107,7 @@ const Market = ({ forceFree = false }: MarketProps) => {
         </p>
       </div>
 
-      <div className={classes.filtersGrid}>
+      <div className={classes.filtersGrid} data-tour="market-filters">
         <input
           className={classes.input}
           value={filters.q}
@@ -169,10 +169,11 @@ const Market = ({ forceFree = false }: MarketProps) => {
       )}
 
       {!isLoading && !error && listings.length === 0 && (
-        <div className={classes.emptyText}>{t("market.empty")}</div>
+        <div className={classes.emptyText} data-tour="market-listings">{t("market.empty")}</div>
       )}
 
       <StaggerGroup
+        tour="market-listings"
         className={classes.grid}
         itemCount={listings.length}
         resetKey={search}

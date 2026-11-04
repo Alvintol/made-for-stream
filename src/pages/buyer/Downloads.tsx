@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import GuideHelpLink from "../../components/guide/GuideHelpLink";
 import {
   instantLicenceLabel,
   isInstantLicence,
@@ -65,6 +66,7 @@ const Downloads = () => {
       <div>
         <h1 className={classes.h1}>{t("downloads.title")}</h1>
         <p className={classes.sub}>{t("downloads.sub")}</p>
+        <GuideHelpLink track="buyers" step="downloads" tour="downloads" />
       </div>
 
       <p className={classes.note}>{t("downloads.finalNote")}</p>
@@ -74,11 +76,15 @@ const Downloads = () => {
       {downloads.isLoading && <p className={classes.empty}>{t("common.loading")}</p>}
 
       {downloads.data && downloads.data.length === 0 && (
-        <p className={classes.empty}>{t("downloads.empty")}</p>
+        <p className={classes.empty} data-tour="downloads-list">{t("downloads.empty")}</p>
       )}
 
-      {downloads.data?.map((item) => (
-        <section key={item.listing_request_id} className={classes.card}>
+      {downloads.data?.map((item, index) => (
+        <section
+          key={item.listing_request_id}
+          className={classes.card}
+          data-tour={index === 0 ? "downloads-list" : undefined}
+        >
           <div className={classes.head}>
             <div>
               <h2 className={classes.title}>{item.title ?? t("sales.untitled")}</h2>

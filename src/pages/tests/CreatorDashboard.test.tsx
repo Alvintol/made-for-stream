@@ -128,6 +128,7 @@ describe("<CreatorDashboard />", () => {
       "/creator/requests",
       "/creator/earnings",
       "/apply/creator",
+      "/guide/creators",
     ]);
   });
 

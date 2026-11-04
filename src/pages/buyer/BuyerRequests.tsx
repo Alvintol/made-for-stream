@@ -173,7 +173,7 @@ const BuyerRequests = ({
         </p>
       </div>
 
-      <div className={classes.row}>
+      <div className={classes.row} data-tour="requests-folders">
         <Link
           className={
             view === "active"
@@ -235,7 +235,7 @@ const BuyerRequests = ({
       {!isLoading &&
         !error &&
         items.length === 0 && (
-          <div className={classes.card}>
+          <div className={classes.card} data-tour="requests-list">
             <p className={classes.text}>
               {t(content.emptyMessage)}
             </p>
@@ -246,7 +246,7 @@ const BuyerRequests = ({
         !error &&
         items.length > 0 && (
           <>
-            <StaggerGroup className={classes.grid} itemCount={items.length} resetKey={String(page)}>
+            <StaggerGroup tour="requests-list" className={classes.grid} itemCount={items.length} resetKey={String(page)}>
               {items.map((item) => {
                 const snapshot = item.request.listing_snapshot;
                 const offeringKey = `offering.${snapshot.offering_type}`;

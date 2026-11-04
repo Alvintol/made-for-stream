@@ -246,7 +246,7 @@ const MessagesInbox = () => {
       </div>
 
       <div className={classes.body}>
-        <nav className={classes.folders} aria-label={t("inbox.folders")}>
+        <nav className={classes.folders} aria-label={t("inbox.folders")} data-tour="inbox-folders">
           {inboxFolders.map((entry) => (
             <button
               key={entry.key}
@@ -334,7 +334,7 @@ const MessagesInbox = () => {
           )}
 
           {!listLoading && !error && visibleItems.length === 0 && (
-            <div className={classes.emptyCard}>
+            <div className={classes.emptyCard} data-tour="inbox-list">
               <p className={classes.text}>
                 {t(isFiltered ? "inbox.noMatch" : "inbox.none")}
               </p>
@@ -342,7 +342,7 @@ const MessagesInbox = () => {
           )}
 
           {!listLoading && !error && visibleItems.length > 0 && (
-            <div ref={listRef} className={classes.list}>
+            <div ref={listRef} className={classes.list} data-tour="inbox-list">
               {visibleItems.map((item) => {
                 const otherParticipantText = profileText(
                   item.otherParticipant,
