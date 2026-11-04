@@ -90,9 +90,9 @@ const renderWithProviders = (
 const createCreator = (
   overrides?: Partial<CreatorCardModel>
 ): CreatorCardModel => ({
-  id: "creator-amatrine",
-  handle: "Amatrine",
-  displayName: "Amatrine",
+  id: "creator-inkwellotter",
+  handle: "InkwellOtter",
+  displayName: "InkwellOtter",
   verified: true,
   bio: "Freelance artist for emotes and overlays.",
   tags: ["emotes", "overlays"],
@@ -100,12 +100,12 @@ const createCreator = (
   commissionStatus: "open",
   platforms: {
     twitch: {
-      login: "Amatrine",
-      userId: "twitch-amatrine",
+      login: "InkwellOtter",
+      userId: "twitch-inkwellotter",
     },
   },
   links: {
-    twitch: "https://twitch.tv/Amatrine",
+    twitch: "https://twitch.tv/InkwellOtter",
   },
   live: {
     isLive: false,
@@ -128,7 +128,7 @@ describe("CreatorCard", () => {
 
     renderWithProviders(<CreatorCard creator={creator} />);
 
-    expect(screen.getByText("Amatrine")).toBeInTheDocument();
+    expect(screen.getByText("InkwellOtter")).toBeInTheDocument();
     expect(
       screen.getByText("Freelance artist for emotes and overlays.")
     ).toBeInTheDocument();

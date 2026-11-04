@@ -617,7 +617,7 @@ Record the request id per currency: CAD `4fb4b602-73f1-474f-9ef8-7d55ce1cfa9a` (
 - [ ] **Free listing:** the buyer requests the CA creator's free listing. It is
       accepted without touching Stripe (no `CON-007` refusal).
 - [ ] **Not-ready creator:** the buyer tries to request a listing from a seeded
-      creator who has no Stripe account (use Amatrine's "Cozy Emote Pack (12)";
+      creator who has no Stripe account (use InkwellOtter's "Cozy Emote Pack (12)";
       the database refused it in a rolled-back dry run on 2026-10-07). Refused with `CON-007`'s buyer message
       ("This creator can't take new paid work right now…").
 - [ ] **Ops alert:** an alert email arrives at `ops@` for anything this run

@@ -50,6 +50,12 @@ export const siteUpdates: readonly SiteUpdate[] = [
     ],
   },
   {
+    version: "V0.16.06",
+    date: "2026-11-04",
+    title: "Behind the scenes",
+    changes: ["Fixes and behind-the-scenes improvements."],
+  },
+  {
     version: "V0.16.05",
     date: "2026-11-04",
     title: "Lost chargebacks in earnings",
