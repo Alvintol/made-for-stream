@@ -59,7 +59,7 @@ describe("hubReducer", () => {
       type: "favourites/set",
       favourites: {
         creators: {
-          "creator-amatrine": true,
+          "creator-inkwellotter": true,
         },
         listings: {
           "listing-emotes-01": true,
@@ -67,7 +67,7 @@ describe("hubReducer", () => {
       },
     });
 
-    expect(next.favourites.creators["creator-amatrine"]).toBe(true);
+    expect(next.favourites.creators["creator-inkwellotter"]).toBe(true);
     expect(next.favourites.listings["listing-emotes-01"]).toBe(true);
   });
 

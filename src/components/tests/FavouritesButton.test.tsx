@@ -68,7 +68,7 @@ describe("FavouriteButton", () => {
 
   it("renders an unfavourited creator button by default", () => {
     renderWithHub(
-      <FavouriteButton kind="creator" targetId="creator-amatrine" />
+      <FavouriteButton kind="creator" targetId="creator-inkwellotter" />
     );
 
     const button = screen.getByRole("button", { name: "Add favourite" });
@@ -80,7 +80,7 @@ describe("FavouriteButton", () => {
 
   it("renders the heart inside a standard SVG view box", () => {
     renderWithHub(
-      <FavouriteButton kind="creator" targetId="creator-amatrine" />
+      <FavouriteButton kind="creator" targetId="creator-inkwellotter" />
     );
 
     const heart = screen
@@ -93,11 +93,11 @@ describe("FavouriteButton", () => {
 
   it("renders a favourited creator button when the creator is in state", () => {
     renderWithHub(
-      <FavouriteButton kind="creator" targetId="creator-amatrine" />,
+      <FavouriteButton kind="creator" targetId="creator-inkwellotter" />,
       {
         favourites: {
           creators: {
-            "creator-amatrine": true,
+            "creator-inkwellotter": true,
           },
           listings: {},
         },

@@ -96,7 +96,7 @@ const createListing = (
 const createCreator = (
   overrides?: Partial<ListingCardCreator>
 ): ListingCardCreator => ({
-  name: "Amatrine",
+  name: "InkwellOtter",
   isLive: false,
   ...overrides,
 });
