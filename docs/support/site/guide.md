@@ -5,7 +5,7 @@ surfaces:
   - src/pages/Guide.tsx                                      # /guide, /guide/creators, /guide/buyers
   - src/domain/guide/guide.ts                                # the steps and what ticks each one
   - src/domain/guide/tours.ts                                # the spotlight tours and what they point at
-  - src/components/guide/GuideTour.tsx:243                   # runs ?tour=<id> on any page
+  - src/components/guide/GuideTour.tsx:268                   # runs ?tour=<id> on any page
   - src/components/guide/GuideWelcome.tsx:29                 # the once-per-account welcome window
   - src/components/guide/GuideHelpLink.tsx                   # "How this works" on workflow pages
   - src/components/layout/ScrollToTop.tsx                    # ignores ?tour= and #step-…
@@ -41,8 +41,10 @@ The site explains itself in three parts (since V0.17.00):
   parts with Back, Next and Done. The highlight and card slide from one
   part to the next, and the highlighted part glows and pulses twice when the
   highlight lands (since V0.17.01). People who turn on reduced motion get
-  the glow with no sliding or pulse. Escape or "End tour" stops it, and the
-  page can't be clicked until it ends. Commission pages need an id, so
+  the glow with no sliding or pulse. Done, "End tour" or Escape ends it
+  (since V0.19.00): the spotlight slides down to the footer's Guide link
+  (`data-tour="footer-guide"`) with "The guide is always here", and "Got
+  it" or a second Escape closes it. The page can't be clicked until then. Commission pages need an id, so
   their tours start from the "Show me around this page" link on the page
   itself. "How this works" links on the workflow pages go to the matching
   step (`/guide/<track>#step-<key>`).
@@ -220,18 +222,21 @@ signals:
     where: "src/components/guide/GuideTour.tsx"
 auto_fix: none
 verify:
-  - "the address has no tour= after Done, End tour or Escape"
+  - "the address has no tour= after Got it on the last card, or Escape twice"
 ```
 
 **Cause.** By design while a tour runs: a clear layer over the page stops
 clicks, so the tour can't be lost halfway through. Done, "End tour" or Escape
-removes `tour=` from the address and the layer goes with it. A shared or
-bookmarked link with `?tour=` starts the tour again.
+moves to a last card at the footer's Guide link. "Got it" there, or a second
+Escape, removes `tour=` from the address and the layer goes with it. A
+shared or bookmarked link with `?tour=` starts the tour again. If the
+footer link can't be found, the last card shows in the middle of the screen
+instead, and it closes the same way.
 
 **What the user sees.** A dimmed page with a card on it.
 
-**Fix.** Tell them to press "End tour" on the card, or Escape, or to open the
-address without `?tour=…`.
+**Fix.** Tell them to press "End tour" and then "Got it" on the card, or
+Escape twice, or to open the address without `?tour=…`.
 
 **Money impact.** None.
 

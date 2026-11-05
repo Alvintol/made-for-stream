@@ -80,8 +80,13 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const targetRef = useRef<HTMLElement | null>(null);
 
+  // However a tour ends (Done, End tour, Escape), the spotlight first slides
+  // down to the footer's Guide link, so people know where to find it again.
+  const [ending, setEnding] = useState(false);
+
   const step = tour.steps[index];
   const last = index === tour.steps.length - 1;
+  const target = ending ? '[data-tour="footer-guide"]' : step.target;
 
   // Find this step's element. Pages load their data after they appear, so
   // look again for a moment before settling for a centred card. The old
@@ -100,7 +105,7 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
     };
 
     const look = () => {
-      const element = findTarget(step.target);
+      const element = findTarget(target);
 
       if (element) {
         targetRef.current = element;
@@ -110,7 +115,7 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
       }
 
       tries += 1;
-      if (step.target && tries < 10) timer = window.setTimeout(look, 150);
+      if (target && tries < 10) timer = window.setTimeout(look, 150);
       else arrive(null);
     };
 
@@ -119,7 +124,7 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
       window.clearTimeout(timer);
       window.clearTimeout(settle);
     };
-  }, [step.target]);
+  }, [target]);
 
   // Follow the element while the page scrolls, resizes or settles.
   useEffect(() => {
@@ -153,29 +158,35 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
   // starts from its buttons.
   useEffect(() => {
     cardRef.current?.focus();
-  }, [index]);
+  }, [index, ending]);
 
+  const finish = useCallback(() => {
+    setGliding(true);
+    setEnding(true);
+  }, []);
   const back = useCallback(() => {
-    if (index === 0) return;
+    if (index === 0 || ending) return;
     setGliding(true);
     setIndex(index - 1);
-  }, [index]);
+  }, [index, ending]);
   const next = useCallback(() => {
-    if (last) return onClose();
+    if (ending) return;
+    if (last) return finish();
     setGliding(true);
     setIndex((current) => current + 1);
-  }, [last, onClose]);
+  }, [last, ending, finish]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      // A second Escape, on the footer step, closes it straight away.
+      if (event.key === "Escape") (ending ? onClose : finish)();
       if (event.key === "ArrowRight") next();
       if (event.key === "ArrowLeft") back();
     };
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, next, back]);
+  }, [onClose, finish, ending, next, back]);
 
   const position = cardPosition(box, cardSize);
   const glide = gliding ? classes.glide : "";
@@ -194,7 +205,7 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
         style={spot}
       >
         {/* Once it lands, a ripple draws the eye; a new key per step replays it. */}
-        {box && !gliding && <div key={index} className="tourSpotPulse" data-spotlight-pulse="" />}
+        {box && !gliding && <div key={ending ? "end" : index} className="tourSpotPulse" data-spotlight-pulse="" />}
       </div>
 
       <div
@@ -206,35 +217,45 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <div className={classes.row}>
-          <span className={classes.count}>
-            {t("tour.step", { current: index + 1, total: tour.steps.length })}
-          </span>
-          <button type="button" className={classes.end} onClick={onClose}>
-            {t("tour.end")}
-          </button>
-        </div>
+        {!ending && (
+          <div className={classes.row}>
+            <span className={classes.count}>
+              {t("tour.step", { current: index + 1, total: tour.steps.length })}
+            </span>
+            <button type="button" className={classes.end} onClick={finish}>
+              {t("tour.end")}
+            </button>
+          </div>
+        )}
 
         {/* A new key per step replays the fade-in. */}
-        <div key={index} className={classes.text}>
+        <div key={ending ? "end" : index} className={classes.text}>
           <h2 id={titleId} className={classes.title}>
-            {t(`tour.${id}.${step.key}` as MessageKey)}
+            {ending ? t("tour.outroTitle") : t(`tour.${id}.${step.key}` as MessageKey)}
           </h2>
-          <p className={classes.body}>{t(`tour.${id}.${step.key}Text` as MessageKey)}</p>
+          <p className={classes.body}>
+            {ending ? t("tour.outroText") : t(`tour.${id}.${step.key}Text` as MessageKey)}
+          </p>
         </div>
 
         <div className={classes.row}>
           <span />
-          <div className={classes.buttons}>
-            {index > 0 && (
-              <button type="button" className="btnOutline btnSm" onClick={back}>
-                {t("tour.back")}
-              </button>
-            )}
-            <button type="button" className="btnPrimary btnSm" onClick={next}>
-              {t(last ? "tour.done" : "tour.next")}
+          {ending ? (
+            <button type="button" className="btnPrimary btnSm" onClick={onClose}>
+              {t("tour.gotIt")}
             </button>
-          </div>
+          ) : (
+            <div className={classes.buttons}>
+              {index > 0 && (
+                <button type="button" className="btnOutline btnSm" onClick={back}>
+                  {t("tour.back")}
+                </button>
+              )}
+              <button type="button" className="btnPrimary btnSm" onClick={next}>
+                {t(last ? "tour.done" : "tour.next")}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>,

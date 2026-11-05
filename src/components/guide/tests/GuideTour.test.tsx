@@ -12,6 +12,9 @@ const renderAt = (entry: string) =>
       <button type="button" data-tour="downloads-list">
         A purchase
       </button>
+      <a href="/guide" data-tour="footer-guide">
+        Guide
+      </a>
       <GuideTour />
       <Address />
     </MemoryRouter>,
@@ -62,21 +65,41 @@ describe("<GuideTour />", () => {
     });
   });
 
-  it("ends on Done, taking the tour out of the address and keeping the rest", async () => {
+  it("ends on Done by pointing out the footer's Guide link, then takes the tour out of the address", async () => {
     renderAt("/downloads?folder=all&tour=downloads");
+    // jsdom draws nothing, so give the link a box to be found by.
+    screen.getByRole("link", { name: "Guide" }).getClientRects = () =>
+      [new DOMRect(10, 500, 60, 20)] as unknown as DOMRectList;
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(screen.getByRole("dialog", { name: "The guide is always here" })).toBeInTheDocument();
+    expect(screen.queryByText(/Step \d of/)).not.toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector("[data-spotlight]")).toHaveClass("isLit"));
+    expect(screen.getByTestId("address")).toHaveTextContent("tour=downloads");
+
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.getByTestId("address")).toHaveTextContent("?folder=all");
   });
 
-  it("ends on Escape", async () => {
+  it("ends the same way from End tour, partway through", () => {
+    renderAt("/downloads?tour=downloads");
+
+    fireEvent.click(screen.getByRole("button", { name: "End tour" }));
+
+    expect(screen.getByRole("dialog", { name: "The guide is always here" })).toBeInTheDocument();
+  });
+
+  it("ends on Escape, and a second Escape skips the footer step", async () => {
     renderAt("/downloads?tour=downloads");
 
     fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.getByRole("dialog", { name: "The guide is always here" })).toBeInTheDocument();
 
+    fireEvent.keyDown(window, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
