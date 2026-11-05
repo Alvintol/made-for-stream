@@ -1,8 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GuideFacts } from "../../domain/guide/guide";
+import { THEME_STORAGE_KEY } from "../../lib/theme/theme";
+import ThemeProvider from "../../providers/ThemeProvider";
 
 const mocks = vi.hoisted(() => ({
   facts: null as unknown as GuideFacts,
@@ -16,12 +18,14 @@ import Guide from "../Guide";
 
 const renderAt = (entry: string) =>
   render(
-    <MemoryRouter initialEntries={[entry]}>
-      <Routes>
-        <Route path="/guide" element={<Guide />} />
-        <Route path="/guide/:track" element={<Guide />} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[entry]}>
+        <Routes>
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/guide/:track" element={<Guide />} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 
 const step = (key: string) => within(document.getElementById(`step-${key}`) as HTMLElement);
@@ -51,6 +55,20 @@ describe("<Guide />", () => {
     expect(step("profile").getByText("Done")).toBeInTheDocument();
     expect(step("apply").getByText("Waiting for review")).toBeInTheDocument();
     expect(step("payouts").getByText("To do")).toBeInTheDocument();
+  });
+
+  it("starts both guides with light or dark, changed right there", () => {
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+    renderAt("/guide/buyers");
+
+    expect(screen.getAllByRole("listitem")[0]).toHaveAttribute("id", "step-look");
+    expect(step("look").getByRole("button", { name: "Match my device" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(step("look").getByRole("button", { name: "Dark" }));
+
+    expect(step("look").getByRole("button", { name: "Dark" })).toHaveAttribute("aria-pressed", "true");
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
   });
 
   it("offers a tour only of pages this person can open", () => {

@@ -44,6 +44,8 @@ export type GuideStep = {
   key: string;
   tour?: TourId;
   link?: { to: string; label: MessageKey };
+  // A setting changed right in the step (Guide.tsx draws it).
+  control?: "theme";
   state: (facts: GuideFacts) => GuideStepState;
 };
 
@@ -51,8 +53,13 @@ const read = () => "read" as const;
 const when = (done: boolean): GuideStepState => (done ? "done" : "todo");
 const did = (key: keyof GuideProgress) => (facts: GuideFacts) => when(Boolean(facts.progress?.[key]));
 
+// First in both guides: works signed out too, and makes the rest easier on
+// the eyes.
+const look: GuideStep = { key: "look", control: "theme", state: read };
+
 export const guideSteps: Record<GuideTrack, readonly GuideStep[]> = {
   creators: [
+    look,
     {
       key: "profile",
       tour: "profile",
@@ -109,6 +116,7 @@ export const guideSteps: Record<GuideTrack, readonly GuideStep[]> = {
     },
   ],
   buyers: [
+    look,
     {
       key: "profile",
       tour: "profile",

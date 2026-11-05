@@ -15,6 +15,8 @@ import { tourHref } from "../domain/guide/tours";
 import { useGuideFacts } from "../hooks/guide/useGuide";
 import { useT } from "../lib/i18n/i18n";
 import type { MessageKey } from "../lib/i18n/messages/en";
+import type { ThemePreference } from "../lib/theme/theme";
+import { useTheme } from "../providers/ThemeProvider";
 
 const classes = {
   shell: "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6",
@@ -41,6 +43,31 @@ const badgeTone: Record<Exclude<GuideStepState, "read">, string> = {
   done: "border border-emerald-200 bg-emerald-50 text-emerald-800",
   waiting: "border border-amber-200 bg-amber-50 text-amber-800",
   todo: "border border-[var(--hairline-strong)] text-zinc-600",
+};
+
+const themeChoices: readonly ThemePreference[] = ["light", "dark", "system"];
+
+// The same setting as the sun/moon button in the top bar, plus "match my
+// device". Saved on this device only.
+const ThemeChoice = () => {
+  const t = useT();
+  const { preference, setPreference } = useTheme();
+
+  return (
+    <div className={classes.actions} role="group" aria-label={t("guide.theme.label")}>
+      {themeChoices.map((choice) => (
+        <button
+          key={choice}
+          type="button"
+          className={preference === choice ? "btnPrimary btnSm" : "btnOutline btnSm"}
+          aria-pressed={preference === choice}
+          onClick={() => setPreference(choice)}
+        >
+          {t(`guide.theme.${choice}`)}
+        </button>
+      ))}
+    </div>
+  );
 };
 
 // /guide: the two guides. /guide/creators and /guide/buyers: the steps, each
@@ -123,6 +150,8 @@ const Guide = () => {
                     <p key={paragraph}>{paragraph}</p>
                   ))}
               </div>
+
+              {entry.control === "theme" && <ThemeChoice />}
 
               {(entry.tour || entry.link) && (
                 <div className={classes.actions}>
