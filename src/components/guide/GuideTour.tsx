@@ -13,7 +13,7 @@ const classes = {
   // Between steps the spotlight and card slide to their new places. While
   // the page scrolls under a settled step they follow it straight away.
   glide:
-    "transition-[top,left,width,height,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+    "transition-[top,left,width,height,box-shadow] duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
   card: "card fixed z-[72] w-[min(22rem,calc(100vw-2rem))] space-y-3 p-5 shadow-lg outline-none",
   text: "tourStepIn space-y-3",
   count: "text-xs font-semibold uppercase tracking-wide text-zinc-500",
@@ -92,10 +92,11 @@ const TourRunner = ({ id, onClose }: { id: TourId; onClose: () => void }) => {
     let settle = 0;
     targetRef.current = null;
 
-    // Long enough for the page's own smooth scroll to finish.
+    // Just after the 1s slide (classes.glide) and the page's own smooth
+    // scroll have finished; the pulse starts then.
     const arrive = (next: Box | null) => {
       setBox(next);
-      settle = window.setTimeout(() => setGliding(false), 900);
+      settle = window.setTimeout(() => setGliding(false), 1100);
     };
 
     const look = () => {
