@@ -10,6 +10,7 @@ surfaces:
   - src/components/guide/GuideHelpLink.tsx                   # "How this works" on workflow pages
   - src/components/layout/ScrollToTop.tsx                    # ignores ?tour= and #step-…
   - src/hooks/guide/useGuide.ts
+  - src/lib/theme/theme.ts                                   # the light/dark step's setting
   - public.user_site_update_preferences.guide_welcome_seen_at
   - my_guide_progress()
   - supabase/migrations/20261104_188_add_guide_progress.sql
@@ -30,7 +31,11 @@ The site explains itself in three parts (since V0.17.00):
   list the steps in order. Anyone can read them. Signed in, each step shows
   **Done**, **Waiting for review** (an application under review) or **To do**.
   These come from what the account has actually done, never a box someone
-  ticks. Steps that are only worth knowing have no badge.
+  ticks. Steps that are only worth knowing have no badge. The first step
+  in both (since V0.18.00) is "Pick light or dark": Light, Dark or "Match
+  my device", the same setting as the sun/moon button in the top bar. It's
+  saved in the browser (`creatorhub-theme` in local storage), not on the
+  account, so each device keeps its own.
 - **Spotlight tours.** "Show me" on a step opens the page it's about with
   `?tour=<id>` in the address. The page dims, and a card walks through its
   parts with Back, Next and Done. The highlight and card slide from one
@@ -66,6 +71,7 @@ broken guide means people get less help, not that they're blocked.
 | "A step says To do but I've done it" | [`GDE-002`](#gde-002--a-step-isnt-ticked) |
 | "The tour is pointing at nothing / the middle of the screen" | [`GDE-003`](#gde-003--a-tour-step-shows-in-the-middle-of-the-screen) |
 | "There's no Show me button" | [`GDE-004`](#gde-004--no-show-me-button) |
+| "My light/dark choice didn't stick" | [`GDE-006`](#gde-006--lightdark-choice-doesnt-stick) |
 | "I can't click anything" | [`GDE-005`](#gde-005--the-page-cant-be-clicked) |
 
 ---
@@ -226,6 +232,39 @@ bookmarked link with `?tour=` starts the tour again.
 
 **Fix.** Tell them to press "End tour" on the card, or Escape, or to open the
 address without `?tour=…`.
+
+**Money impact.** None.
+
+---
+
+## `GDE-006` — Light/dark choice doesn't stick
+
+```yaml
+id: GDE-006
+tier: 1
+signals:
+  - source: client
+    match: "none: no error is raised; writeStoredPreference swallows a storage failure"
+    where: "src/lib/theme/theme.ts (writeStoredPreference)"
+auto_fix: none
+verify:
+  - "the same browser, not a private window, and site data not cleared on close"
+```
+
+**Cause.** By design the choice lives in the browser, not the account. It
+comes back as "Match my device" when:
+- they're on another device or browser;
+- they're in a private window;
+- the browser clears site data, or blocks storage for the site.
+
+A storage failure is ignored on purpose, so the site still works. The
+choice then lasts only until the page reloads.
+
+**What the user sees.** The site back in the other mode on their next
+visit, or on their phone.
+
+**Fix.** Explain that each device keeps its own choice, and check for a
+private window or cleared storage. Nothing to repair.
 
 **Money impact.** None.
 

@@ -30,12 +30,20 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.17.02";
+export const siteVersion = "V0.18.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.18.00",
+    date: "2026-11-04",
+    title: "Light or dark, from the guide",
+    changes: [
+      "Both guides now start by letting you pick light mode, dark mode or matching your device.",
+    ],
+  },
   {
     version: "V0.17.02",
     date: "2026-11-04",
