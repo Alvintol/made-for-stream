@@ -19,6 +19,7 @@ surfaces:
   - src/components/listings/ListingAnimatedPreview.tsx
   - storage bucket listing-animations
   - supabase/migrations/20261006_144_add_listing_animated_previews.sql
+  - supabase/migrations/20261105_189_close_public_storage_and_profile_gaps.sql   # LST-007
 unmatched_tier: 2
 ---
 
@@ -41,6 +42,7 @@ about Stripe being stale.
 | "I saved my listing but buyers can't see it" | The listing's page has a status banner. "Draft: only you can see this" means it was never published; "Deactivated" means it was switched off. Neither is a fault. |
 | "I can't add a picture to my listing" / "my listing won't save since I added an image" | [`LST-004`](#lst-004--preview-image-cannot-be-added) |
 | "My GIF won't upload" / "my animation doesn't play" / "someone copied my GIF" | [`LST-005`](#lst-005--animated-preview-gif-or-video-problems) |
+| "My free file won't upload" | [`LST-007`](#lst-007--free-file-or-listing-image-refused-by-storage) |
 | "My listing disappeared" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
 | "Buyers say the listing is unavailable" | [`LST-003`](#lst-003--listing-not-found-or-unavailable) |
 | "I can't restore my listing" | [`LST-002`](#lst-002--listing-hidden-by-moderation) |
@@ -358,6 +360,53 @@ existed) has no stored file; it is put back to draft with the link cleared,
 on the same schedule. A draft that was never published is never tracked.
 
 **Money impact.** None directly. A listing that is not live cannot sell.
+
+---
+
+## `LST-007` — Free file or listing image refused by storage
+
+```yaml
+id: LST-007
+tier: 1
+signals:
+  - source: ui
+    match: "That file is larger than the 200MB limit for free downloads."
+    where: "validateListing (src/domain/listings/listings.ts), before any upload"
+  - source: storage
+    match: "/exceeded the maximum allowed size/"
+    where: "Supabase Storage, uploading to free-assets (200MB since 20261105_189)"
+  - source: storage
+    match: "/row-level security/"
+    where: "Supabase Storage, uploading to free-assets, listing-previews or listing-animations"
+auto_fix: none
+verify:
+  - "select public.is_approved_seller('<user id>') is true"
+  - "the file is under 200MB"
+```
+
+**Cause.** Since `20261105_189` the three public buckets (`free-assets`,
+`listing-previews`, `listing-animations`) only take uploads from **approved
+creators**, into their own folder, and `free-assets` refuses anything over
+200MB. Before that, any signed-in account could upload any size, which made
+the public bucket free file hosting for anyone. The website checks the 200MB
+limit before uploading, so the storage size refusal only appears when the two
+drift apart or for a hand-made request.
+
+A "row-level security" refusal means one of:
+- the account isn't an approved creator (`seller_applications.status` is not
+  `approved`), including one whose approval was withdrawn; or
+- the upload isn't inside the creator's own `<user id>/` folder, which the
+  page never does.
+
+**What the user sees.** The listing form's error box, and the listing isn't
+saved.
+
+**Fix.** Check `is_approved_seller` for the account. If they should be a
+creator, sort out their application (`creators/applications.md`). For size,
+ask for a smaller file or an external link. Deleting their own files still
+works whatever their status.
+
+**Money impact.** None.
 
 ---
 

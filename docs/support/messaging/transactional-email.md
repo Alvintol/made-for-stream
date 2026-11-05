@@ -13,7 +13,7 @@ surfaces:
   - public.listing_request_notices
   - public.email_suppressions
   - POST /api/notices/:noticeId/send-email
-  - POST /api/webhooks/email
+  - POST /api/webhooks/email               # EMAIL-006: needs EMAIL_WEBHOOK_SECRET
 unmatched_tier: 2
 ---
 
@@ -109,6 +109,7 @@ same sender (`sendTransactionalEmail`), so `EMAIL-001`, `EMAIL-002` and
 | "My emails to this platform bounce" (creator/buyer side) | [`EMAIL-002`](#email-002--hard-bounce-suppresses-the-address) |
 | Notices stopped sending for everyone | [`EMAIL-004`](#email-004--sending-domain-not-onboarded-or-quota-exceeded) |
 | "My emails are in the wrong language" | [`EMAIL-005`](#email-005--email-in-the-wrong-language) |
+| Bounces stop being recorded; the API logs `EMAIL-006` | [`EMAIL-006`](#email-006--email-webhook-refused-not-authorized) |
 ---
 
 ## `EMAIL-001` — Send failed or silently dropped
@@ -346,6 +347,46 @@ but see `EMAIL-003` if one is disputed.
 
 ---
 
+## `EMAIL-006` — Email webhook refused (not authorized)
+
+```yaml
+id: EMAIL-006
+tier: 2
+signals:
+  - source: api
+    match: "EMAIL-006: email webhook call was not authorized."
+    where: "POST /api/webhooks/email (api/server.js), answered 401 Not authorized."
+auto_fix: none
+reason_not_automatable: "needs the secret set on the API and in the email provider's webhook settings"
+escalate_with:
+  - "whether EMAIL_WEBHOOK_SECRET is set on Cloud Run (never its value)"
+  - "how the provider's webhook is configured to send it"
+```
+
+**Cause.** Since 2026-11-05 the bounce/complaint webhook only accepts calls that
+send `Authorization: Bearer <EMAIL_WEBHOOK_SECRET>`. It checks with the same
+constant-time helper as the ops jobs (`isAuthorizedOpsRequest`). Before that
+it accepted anyone's call, and the repo is public. So anyone could have marked
+any address as bounced, which silently stops every notice and receipt to it
+(`EMAIL-002`). Cloudflare's own signing scheme still couldn't be confirmed, so
+a shared secret stands in for it. The secret must be at least 32 characters.
+**Unset or shorter, every call is refused** and bounces aren't recorded, but
+sending is unaffected.
+
+**What the user sees.** Nothing. Bounced addresses keep being retried instead
+of being suppressed.
+
+**Fix.** Set `EMAIL_WEBHOOK_SECRET` on the API (a random value, 32+
+characters, from a password generator; never paste it into chat or a doc). Set
+the same value as the webhook's `Authorization: Bearer …` header in the email
+provider. If the provider can't send a custom header, the check needs changing
+to whatever the provider can sign with, which is a code change. Don't put the
+secret in the URL instead: request logs keep URLs.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
 
 - **Sign-in and account emails are English only.** They are Supabase's, and
@@ -360,7 +401,13 @@ but see `EMAIL-003` if one is disputed.
   `listing_request_notices.email_delivered_at` in
   `supabase/migrations/20260922_131_add_listing_request_notices.sql`.
 - **`POST /api/webhooks/email`'s payload parsing is unverified** against a real
-  Cloudflare payload (see `EMAIL-002`) and has no signature verification.
+  Cloudflare payload (see `EMAIL-002`). It has no provider signature check;
+  a shared secret stands in for one (`EMAIL-006`). **Nothing calls it yet.**
+  Cloudflare Email Service does not post bounces to a URL: it publishes
+  `message.bounced` / `message.complained` to a Cloudflare Queue (event
+  subscriptions), and it already suppresses hard bounces and complaints on its
+  own. Wiring this up means a small Worker that reads that queue and calls the
+  webhook with the secret; until then `EMAIL_WEBHOOK_SECRET` can stay unset.
 - **Payment receipt and payout-released emails have no row to check delivery
   status against** the way notices do — they are fire-and-forget, logged to
   stderr on failure only. If receipt delivery ever needs the same auditability

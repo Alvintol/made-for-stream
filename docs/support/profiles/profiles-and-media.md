@@ -3,6 +3,8 @@ feature: profiles
 status: active
 surfaces:
   - public.profiles
+  - src/hooks/profile/useMyProfile.ts
+  - supabase/migrations/20261105_189_close_public_storage_and_profile_gaps.sql   # PRF-004
   - public.profile_platform_accounts
   - src/domain/profileMedia.ts
   - src/pages/ProfileSettings.tsx
@@ -24,6 +26,7 @@ Admins can mark a profile under review, which affects its visibility.
 | "My profile won't save" | [`PRF-002`](#prf-002--profile-update-rejected) |
 | "My avatar/banner won't upload" | [`PRF-001`](#prf-001--media-upload-failed) |
 | "My profile isn't visible" | [`PRF-003`](#prf-003--profile-under-review) |
+| A page or the profile form fails to load after a profiles change | [`PRF-004`](#prf-004--a-query-asks-for-a-hidden-profile-column) |
 | "My Twitch link is gone" | [`auth/twitch-linking.md`](../auth/twitch-linking.md) |
 
 ---
@@ -126,6 +129,45 @@ clear a review.
 than by being told. See [`messaging/moderation.md`](../messaging/moderation.md).
 
 **Money impact.** None directly. An invisible profile earns nothing.
+
+---
+
+## `PRF-004` — A query asks for a hidden profile column
+
+```yaml
+id: PRF-004
+tier: 2
+signals:
+  - source: db
+    match: "permission denied for table profiles"
+    where: "any read of public.profiles through the API (supabase-js .from(\"profiles\").select(...))"
+auto_fix: none
+reason_not_automatable: "the query or the grant is wrong; needs a code change or a migration"
+escalate_with:
+  - "the page, and the columns the failing query selects"
+```
+
+**Cause.** Since `20261105_189`, `profiles` can't be read whole. Everyone,
+signed in or not, can read every column **except** `country_code`,
+`timezone` and `auth_provider_last_used`. Before that, anyone could read
+every person's country, timezone and sign-in method. The site still writes
+those three, and the database's own functions can read them, but no page can.
+
+Postgres refuses the **whole** query, with "permission denied for table
+profiles", when it names one of those three or uses `select *`. The same
+happens for **a column added to profiles later** until it's added to the grant.
+
+**What the user sees.** Whatever that query fills stays empty or shows its
+error. For `useMyProfile`, that's the profile form and the first-time setup.
+
+**Fix.** Take the hidden column out of the query, or name the columns instead
+of `*`. For a new column that should be public, a migration adds it:
+`grant select (<column>) on public.profiles to anon, authenticated;`. Never
+grant the three hidden ones back. A page that needs the person's own value
+should get it from a `security definer` function that only answers for
+`auth.uid()`.
+
+**Money impact.** None.
 
 ---
 

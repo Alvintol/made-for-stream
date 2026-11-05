@@ -181,6 +181,8 @@ const STRIPE_ACCOUNT_EVENTS_WEBHOOK_SECRET =
 // OPS_ALERT_EMAIL receives the alert digest. See
 // docs/support/operations/alerting.md.
 const OPS_CRON_SECRET = process.env.OPS_CRON_SECRET || "";
+// The email provider's bounce webhook sends this the same way (EMAIL-006).
+const EMAIL_WEBHOOK_SECRET = process.env.EMAIL_WEBHOOK_SECRET || "";
 const OPS_ALERT_EMAIL = process.env.OPS_ALERT_EMAIL || "ops@madeforstream.com";
 const OPS_RESYNC_BATCH_SIZE = Math.min(
   Math.max(Number(process.env.OPS_RESYNC_BATCH_SIZE) || 100, 1),
@@ -3932,12 +3934,16 @@ app.post("/api/creator-applications/:applicationId/send-decision-email", async (
 // this in production** -- see
 // docs/support/messaging/transactional-email.md.
 //
-// No signature verification implemented for the same reason (the signing
-// scheme cannot be confirmed without a real account). Treat this endpoint's
-// URL as unguessable-but-not-secret until that is added; it can only ever
-// suppress an email address or mark a notice bounced, neither of which
-// moves money.
+// The provider's own signing scheme could not be confirmed either, so the
+// caller must send "Authorization: Bearer <EMAIL_WEBHOOK_SECRET>" (at least
+// 32 characters). Unset, every call is refused: otherwise anyone could
+// suppress any address and stop its notices. Playbook: EMAIL-006.
 app.post("/api/webhooks/email", async (req, res) => {
+  if (!isAuthorizedOpsRequest(req.headers.authorization, EMAIL_WEBHOOK_SECRET, crypto.timingSafeEqual)) {
+    console.warn("EMAIL-006: email webhook call was not authorized.");
+    return res.status(401).json({ error: "Not authorized." });
+  }
+
   try {
     const body = req.body || {};
     const eventType = String(
