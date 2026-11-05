@@ -14,7 +14,8 @@ const classes = {
   column: "space-y-3",
   columnTitle: "text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500",
   nav: "flex flex-col gap-2 text-sm",
-  link: "text-zinc-600 transition hover:text-[rgb(var(--accent-text))]",
+  // w-fit: as wide as the words, so the tour's spotlight on Guide fits it.
+  link: "w-fit text-zinc-600 transition hover:text-[rgb(var(--accent-text))]",
   linkButton: "text-left text-zinc-600 transition hover:text-[rgb(var(--accent-text))]",
   bottom:
     "container mx-auto flex flex-col gap-2 border-t border-[var(--hairline)] px-4 py-5 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6",

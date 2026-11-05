@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
 
-export type AuthProviderKey = "email" | "google" | "twitch";
 export type ProfileVisibility = "private" | "public";
 
 export type ProfileRow = {
@@ -18,9 +17,8 @@ export type ProfileRow = {
   banner_url: string | null;
   website_url: string | null;
 
-  // Optional account context
-  country_code: string | null;
-  timezone: string | null;
+  // country_code, timezone and auth_provider_last_used are stored but not
+  // readable through the API (migration 189), so they are not here.
 
   // Visibility / communication
   profile_visibility: ProfileVisibility;
@@ -30,9 +28,6 @@ export type ProfileRow = {
   profile_setup_seen: boolean;
   profile_setup_completed_at: string | null;
   onboarding_version: number;
-
-  // Auth context
-  auth_provider_last_used: AuthProviderKey | null;
 
   // Timestamps
   created_at: string;
@@ -52,14 +47,11 @@ const fetchMyProfile = async (userId: string): Promise<ProfileRow | null> => {
       avatar_url,
       banner_url,
       website_url,
-      country_code,
-      timezone,
       profile_visibility,
       messaging_enabled,
       profile_setup_seen,
       profile_setup_completed_at,
       onboarding_version,
-      auth_provider_last_used,
       created_at,
       updated_at
     `)
@@ -67,7 +59,6 @@ const fetchMyProfile = async (userId: string): Promise<ProfileRow | null> => {
     .maybeSingle();
 
   if (error) throw error;
-  console.log({ profileData: data })
   return (data as ProfileRow | null) ?? null;
 };
 

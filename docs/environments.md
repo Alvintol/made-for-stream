@@ -30,8 +30,9 @@ records exist on the domain.
    user, auto-confirm on). Check from outside: `GET /auth/v1/settings` with
    the publishable key must report `"disable_signup": true`.
 
-The API itself is public on Cloud Run. Every route needs a Supabase session, a
-Stripe signature, or the ops cron secret.
+The API itself is public on Cloud Run. Every route that changes anything needs a
+Supabase session, a Stripe signature, or a shared secret (the ops cron
+secret, or `EMAIL_WEBHOOK_SECRET` for the email webhook).
 
 ## Deploying
 
@@ -41,6 +42,9 @@ Stripe signature, or the ops cron secret.
   `VITE_STRIPE_PUBLISHABLE_KEY_DEV` must come from the **same Stripe sandbox**
   as the API's `STRIPE_SECRET_KEY_DEV`, or payout setup fails
   (`support/payments/connect-onboarding.md` `CON-008`).
+  `.env` is **not** in git (since 2026-11-05; it is ignored and was
+  untracked), so the build only gets what is set there. Every `VITE_*` the
+  site reads must be a build variable.
 - **API:** by hand after each API merge. Merging does not deploy.
 
   ```bash
