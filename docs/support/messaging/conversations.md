@@ -40,6 +40,7 @@ gate is deliberate: it stops unsolicited image sending to creators.
 | "I can't upload an image" | [`MSG-004`](#msg-004--image-upload-access-not-granted) |
 | "Messages are missing" | [`MSG-005`](#msg-005--reported-missing-messages) |
 | "New messages only show after a while or a refresh" | [`MSG-007`](#msg-007--chat-or-commission-pages-do-not-update-live) |
+| "The unread number is too high" or "it stays after I read the chat" | [`MSG-008`](#msg-008--unread-number-too-high-or-slow-to-clear) |
 
 ---
 
@@ -306,9 +307,69 @@ select c.relname from pg_inherits i join pg_class c on c.oid = i.inhrelid
 where i.inhparent = 'realtime.messages'::regclass order by 1;
 ```
 
+**Signal 3 (no connection at all).** Signals are being sent (rows in
+`realtime.messages` a few milliseconds after each message) but the person's
+chat still refreshes every 15 seconds. Check whether browsers open the
+websocket: in the Supabase logs (Logs → API, or `edge_logs`), a working tab
+makes a `GET | 101 | .../realtime/v1/websocket` request when the page loads.
+None from a browser means the site that person is running does not have
+live updates: an old build (Cloudflare → Workers & Pages → the Worker →
+Deployments), or a cached copy (hard reload). Found 2026-11-06: signals were
+sent for every test message, and no browser connected.
+
 **Fix.** Tier 2. Apply `20261105_190_add_live_updates.sql` if the policy or
 triggers are missing. A signal never blocks the message or step it describes:
 both trigger functions swallow their own errors.
+
+**Money impact.** None.
+
+---
+
+## `MSG-008` — Unread number too high, or slow to clear
+
+```yaml
+id: MSG-008
+tier: 2
+signals:
+  - source: user_report
+    match: "the unread number counts a message I already saw"
+  - source: user_report
+    match: "the unread number stays after I open the chat"
+auto_fix: none
+reason_not_automatable: "nothing to repair; opening the chat marks it read"
+escalate_with:
+  - "the conversation id and the person's last_read_at (query below)"
+```
+
+**How it works.** The number is `my_unread_message_count()` (`20261102_178`):
+every message from someone else that arrived after the person's
+`conversation_participants.last_read_at`. It counts messages, not
+conversations. An open chat calls `mark_conversation_read` when a new message
+from the other person is on screen (`ConversationThread.tsx`).
+
+**Fixed 2026-11-06, two causes.** (1) Marking read did not refresh the
+number, so it stayed until the next check, up to five minutes
+(`useMarkConversationRead.ts` now refreshes the inbox and the number). (2) The
+chat decided whether to mark read from the conversation row, which can lag
+behind the messages on screen. A message seen before the row caught up, or
+answered straight away, was never marked read and was counted again with
+the next one. The chat now goes by the messages it shows.
+
+**Check** whether a count is right:
+
+```sql
+select p.last_read_at, count(m.id) as unread
+from public.conversation_participants p
+left join public.conversation_messages m
+  on m.conversation_id = p.conversation_id
+  and m.sender_user_id <> p.user_id
+  and m.created_at > coalesce(p.last_read_at, '-infinity')
+where p.conversation_id = '<conversation id>' and p.user_id = '<user id>'
+group by p.last_read_at;
+```
+
+**Fix.** Ask the person to open the conversation. If the number is still
+wrong with the chat open, escalate with the query result.
 
 **Money impact.** None.
 
@@ -415,6 +476,6 @@ they click back into the tab or reload.
   requires assembling exactly this, by hand, under a deadline.
 - **Chat UI is duplicated** (`RequestConversationThread` and `MessageDetails`),
   which is a plausible source of `MSG-005` reports and is a known refactor.
-- **Read receipts and unread counts** have no documented failure modes.
+- **Read receipts** have no documented failure modes. Unread counts: `MSG-008`.
 - **No retention policy** for conversations on completed requests, which matters
   because they are the dispute record.
