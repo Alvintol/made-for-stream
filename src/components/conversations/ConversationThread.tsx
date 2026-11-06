@@ -482,26 +482,28 @@ const ConversationThread = ({
     return revealPanel(closePanelRef.current, "closeReason");
   }, [showCloseForm]);
 
+  // The newest message from the other person that is on screen. Read from the
+  // loaded messages, not the conversation row, which can lag behind them: a
+  // message seen before the row caught up, or answered straight away, was
+  // never marked read and stayed in the unread number.
+  const latestFromOtherAt =
+    messages
+      .filter((message) => message.sender_user_id && message.sender_user_id !== currentUserId)
+      .at(-1)?.created_at ?? null;
+
   useEffect(() => {
-    if (isAdmin || !currentUserId) return;
-
-    const latestMessageAt = conversation.last_message_at;
-    const latestSenderUserId = conversation.last_message_sender_user_id;
-
-    if (!latestMessageAt || !latestSenderUserId) return;
-    if (latestSenderUserId === currentUserId) return;
-    if (lastMarkedReadMessageAtRef.current === latestMessageAt) return;
+    if (isAdmin || !currentUserId || !latestFromOtherAt) return;
+    if (lastMarkedReadMessageAtRef.current === latestFromOtherAt) return;
     if (markConversationReadMutation.isPending) return;
 
-    lastMarkedReadMessageAtRef.current = latestMessageAt;
+    lastMarkedReadMessageAtRef.current = latestFromOtherAt;
 
     void markConversationReadMutation.mutateAsync({
       conversationId: conversation.id,
     });
   }, [
     conversation.id,
-    conversation.last_message_at,
-    conversation.last_message_sender_user_id,
+    latestFromOtherAt,
     currentUserId,
     isAdmin,
     markConversationReadMutation,

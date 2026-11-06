@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   idle: () => ({ isPending: false, error: null, mutateAsync: vi.fn() }),
+  markRead: { isPending: false, error: null, mutateAsync: vi.fn() },
   hasEarlier: false,
   loadEarlier: vi.fn(),
   currentUserId: "buyer-1",
@@ -55,7 +56,7 @@ vi.mock("../../hooks/conversations/useConversationParticipants", () => ({
   useConversationParticipants: () => ({ data: [] }),
 }));
 vi.mock("../../hooks/conversations/useMarkConversationRead", () => ({
-  useMarkConversationRead: mocks.idle,
+  useMarkConversationRead: () => mocks.markRead,
 }));
 vi.mock("../../hooks/moderation/useMyModerationReports", () => ({
   useMyModerationReports: () => ({ data: [] }),
@@ -106,6 +107,17 @@ const renderThread = (viewer: "buyer" | "creator") => {
 const rowOf = (text: string) => screen.getByText(text).parentElement as HTMLElement;
 
 describe("<ConversationThread />", () => {
+  // The buyer answered after the creator's last message, and the conversation
+  // row (last_message_*: null) has not caught up. The creator's message is on
+  // screen, so it is read.
+  it("marks the chat read from the messages on screen, not the conversation row", () => {
+    mocks.markRead.mutateAsync.mockClear();
+    renderThread("buyer");
+
+    expect(mocks.markRead.mutateAsync).toHaveBeenCalledTimes(1);
+    expect(mocks.markRead.mutateAsync).toHaveBeenCalledWith({ conversationId: "conversation-1" });
+  });
+
   it("shows each day once and only the time on each line", () => {
     renderThread("buyer");
 

@@ -35,6 +35,10 @@ export const useMarkConversationRead = () => {
         queryClient.invalidateQueries({
           queryKey: ["conversationParticipants"],
         }),
+        // The inbox and the unread number on the top bar (its key sits under it).
+        queryClient.invalidateQueries({
+          queryKey: ["messagesInbox"],
+        }),
       ]);
     },
   });
