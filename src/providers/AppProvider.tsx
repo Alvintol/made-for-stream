@@ -1,15 +1,28 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import ActionFailedNotice from "../components/app/ActionFailedNotice";
 import { reportFailure } from "../lib/failures/reportFailure";
 import { nudgeNotificationEmails } from "../lib/notifications/nudgeNotificationEmails";
 import { startPresenceReporting } from "../lib/presence/presence";
-import AuthProvider from "./AuthProvider";
+import { startLiveUpdates } from "../lib/realtime/liveUpdates";
+import AuthProvider, { useAuth } from "./AuthProvider";
 import CookiePreferencesProvider from "./CookiePreferencesProvider";
 import ThemeProvider from "./ThemeProvider";
 import HubProvider from "./hub/HubProvider";
 
 type AppProvidersProps = { children: ReactNode };
+
+// Live chat and commission updates for whoever is signed in
+// (lib/realtime/liveUpdates.ts).
+const LiveUpdates = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const userId = user?.id;
+
+  useEffect(() => (userId ? startLiveUpdates(queryClient, userId) : undefined), [queryClient, userId]);
+
+  return null;
+};
 
 const AppProviders = (props: AppProvidersProps) => {
   const { children } = props;
@@ -54,6 +67,7 @@ const AppProviders = (props: AppProvidersProps) => {
       <CookiePreferencesProvider>
         <QueryClientProvider client={client}>
           <AuthProvider>
+            <LiveUpdates />
             <HubProvider>{children}</HubProvider>
             {actionFailed && <ActionFailedNotice onDismiss={() => setActionFailed(false)} />}
           </AuthProvider>

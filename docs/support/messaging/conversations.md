@@ -8,6 +8,10 @@ surfaces:
   - public.system_line_for
   - src/components/conversations/
   - src/hooks/conversations/chatPolling.ts
+  - src/lib/realtime/liveUpdates.ts
+  - realtime.messages
+  - public.broadcast_conversation_message
+  - public.broadcast_listing_request_notification
 unmatched_tier: 2
 ---
 
@@ -35,6 +39,7 @@ gate is deliberate: it stops unsolicited image sending to creators.
 | "The chat is locked" | [`MSG-003`](#msg-003--conversation-is-closed-or-locked) |
 | "I can't upload an image" | [`MSG-004`](#msg-004--image-upload-access-not-granted) |
 | "Messages are missing" | [`MSG-005`](#msg-005--reported-missing-messages) |
+| "New messages only show after a while or a refresh" | [`MSG-007`](#msg-007--chat-or-commission-pages-do-not-update-live) |
 
 ---
 
@@ -250,6 +255,62 @@ confirm against the stored rows before concluding anything.
 
 **Money impact.** None directly. A compromised evidence record affects every
 dispute.
+
+---
+
+## `MSG-007` — Chat or commission pages do not update live
+
+```yaml
+id: MSG-007
+tier: 2
+signals:
+  - source: browser_console
+    match: "MSG-007: live updates unavailable"
+    where: "src/lib/realtime/liveUpdates.ts, when the Realtime channel reports CHANNEL_ERROR or TIMED_OUT"
+  - source: postgres_log
+    match: "WarnSendingBroadcastMessage"
+    where: "realtime.send, called by broadcast_conversation_message / broadcast_listing_request_notification (20261105_190)"
+  - source: user_report
+    match: "new messages only appear after a few minutes or a refresh"
+auto_fix: none
+reason_not_automatable: "the cause is in Supabase Realtime's settings or service, not in our data"
+escalate_with:
+  - "the console line, including the text after it"
+  - "whether realtime.messages has partitions for today (query below)"
+  - "whether the policy \"live updates read own topic\" exists on realtime.messages"
+```
+
+**How it works.** Since 2026-11-05 each signed-in tab keeps one websocket
+open to Supabase Realtime, on the private topic `user:<their id>`. Database
+triggers send a short signal there when a message is added to one of their
+conversations (`message`) or a commission notification is queued for them
+(`notification`). The signal holds only ids and a notification kind, never
+message text; the site then reloads that part the usual way. While connected,
+chat polling slows to every five minutes; if the connection drops, the normal
+polling (15 seconds in an open chat) comes back by itself. **Nothing is lost
+when live updates fail: messages still arrive, only later.**
+
+**Signal 1 (console).** `CHANNEL_ERROR` with "Unauthorized" in the text means
+the policy on `realtime.messages` is missing (migration 190 not applied) or
+the site asked for someone else's topic. `TIMED_OUT` is usually the person's
+network or a Realtime outage (status.supabase.com).
+
+**Signal 2 (database log).** `WarnSendingBroadcastMessage: no partition of
+relation "messages" found for row`: Realtime stores signals in daily
+partitions that it creates itself while clients are connected. On a project
+nobody has connected to for days they can run out. They come back as soon as
+anyone opens the site. Check:
+
+```sql
+select c.relname from pg_inherits i join pg_class c on c.oid = i.inhrelid
+where i.inhparent = 'realtime.messages'::regclass order by 1;
+```
+
+**Fix.** Tier 2. Apply `20261105_190_add_live_updates.sql` if the policy or
+triggers are missing. A signal never blocks the message or step it describes:
+both trigger functions swallow their own errors.
+
+**Money impact.** None.
 
 ---
 
