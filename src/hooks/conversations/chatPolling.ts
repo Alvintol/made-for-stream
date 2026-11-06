@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { isLiveConnected } from "../../lib/realtime/liveUpdates";
 
 const MINUTE = 60_000;
 
@@ -8,7 +9,10 @@ const MESSAGE_OVERLAP_MS = MINUTE;
 
 // How often an open chat checks for news. Quick while it is active, slower once
 // it goes quiet, and it stops after an hour (OPS-005: database timers must end).
-export const chatPollMs = (idleMs: number, activeMs = 15_000): number | false => {
+// While live updates are connected (lib/realtime/liveUpdates.ts) news arrives
+// on its own, so this is only a safety net: every five minutes at most.
+export const chatPollMs = (idleMs: number, activeMs = 15_000, live = false): number | false => {
+  if (live) activeMs = Math.max(activeMs, 5 * MINUTE);
   if (idleMs < 10 * MINUTE) return activeMs;
   if (idleMs < 60 * MINUTE) return Math.max(activeMs, MINUTE);
 
@@ -32,7 +36,8 @@ export const useChatPoll = (activeMs?: number) => {
     (lastMessageAt?: string | null) =>
       chatPollMs(
         Date.now() - Math.max(activeAt, lastMessageAt ? Date.parse(lastMessageAt) : 0),
-        activeMs
+        activeMs,
+        isLiveConnected()
       ),
     [activeAt, activeMs]
   );

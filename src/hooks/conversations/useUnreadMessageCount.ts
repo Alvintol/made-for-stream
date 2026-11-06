@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../providers/AuthProvider";
 import { supabase } from "../../lib/supabaseClient";
+import { isLiveConnected } from "../../lib/realtime/liveUpdates";
 
-// The number on the top bar, which is on every page. One small read a minute,
-// paused while the tab is hidden. The key sits under "messagesInbox" so anything
+// The number on the top bar, which is on every page. Refreshed live, with one
+// small read every few minutes as a safety net, paused while the tab is hidden. The key sits under "messagesInbox" so anything
 // that refreshes the inbox refreshes this too.
 export const useUnreadMessageCount = () => {
   const { user, loading } = useAuth();
@@ -19,7 +20,9 @@ export const useUnreadMessageCount = () => {
 
       return (data as number | null) ?? 0;
     },
-    refetchInterval: 60_000,
+    // A live update refreshes it the moment a message arrives; this is the
+    // safety net (lib/realtime/liveUpdates.ts).
+    refetchInterval: () => (isLiveConnected() ? 5 * 60_000 : 60_000),
     refetchIntervalInBackground: false,
   });
 };

@@ -18,6 +18,12 @@ describe("chatPollMs", () => {
     expect(chatPollMs(10 * MINUTE, 30_000)).toBe(MINUTE);
     expect(chatPollMs(10 * MINUTE, 2 * MINUTE)).toBe(2 * MINUTE);
   });
+
+  it("is only a five-minute safety net while live updates are connected", () => {
+    expect(chatPollMs(MINUTE, 15_000, true)).toBe(5 * MINUTE);
+    expect(chatPollMs(30 * MINUTE, 15_000, true)).toBe(5 * MINUTE);
+    expect(chatPollMs(60 * MINUTE, 15_000, true)).toBe(false);
+  });
 });
 
 describe("messagesSince", () => {

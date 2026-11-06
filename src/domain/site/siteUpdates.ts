@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.19.01";
+export const siteVersion = "V0.20.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.20.00",
+    date: "2026-11-05",
+    title: "Messages arrive as they are sent",
+    changes: [
+      "New messages appear in an open chat as soon as they are sent.",
+      "Your inbox and the unread number on the top bar update straight away.",
+      "Commission pages update by themselves when the other person takes a step.",
+    ],
+  },
   {
     version: "V0.19.01",
     date: "2026-11-05",
