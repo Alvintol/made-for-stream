@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   idle: () => ({ isPending: false, error: null, mutateAsync: vi.fn() }),
   markRead: { isPending: false, error: null, mutateAsync: vi.fn() },
+  typing: { otherTyping: false, notifyTyping: vi.fn(), notifyStopped: vi.fn() },
   hasEarlier: false,
   loadEarlier: vi.fn(),
   currentUserId: "buyer-1",
@@ -58,6 +59,9 @@ vi.mock("../../hooks/conversations/useConversationParticipants", () => ({
 vi.mock("../../hooks/conversations/useMarkConversationRead", () => ({
   useMarkConversationRead: () => mocks.markRead,
 }));
+vi.mock("../../hooks/conversations/useTypingIndicator", () => ({
+  useTypingIndicator: () => mocks.typing,
+}));
 vi.mock("../../hooks/moderation/useMyModerationReports", () => ({
   useMyModerationReports: () => ({ data: [] }),
 }));
@@ -107,6 +111,20 @@ const renderThread = (viewer: "buyer" | "creator") => {
 const rowOf = (text: string) => screen.getByText(text).parentElement as HTMLElement;
 
 describe("<ConversationThread />", () => {
+  it("says the other person is typing, and tells the hook when you type", () => {
+    mocks.typing.otherTyping = true;
+    renderThread("buyer");
+    mocks.typing.otherTyping = false;
+
+    expect(screen.getByText("meowington is typing")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Hi" } });
+    expect(mocks.typing.notifyTyping).toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "" } });
+    expect(mocks.typing.notifyStopped).toHaveBeenCalled();
+  });
+
   // The buyer answered after the creator's last message, and the conversation
   // row (last_message_*: null) has not caught up. The creator's message is on
   // screen, so it is read.

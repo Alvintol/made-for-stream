@@ -9,6 +9,7 @@ surfaces:
   - src/components/conversations/
   - src/hooks/conversations/chatPolling.ts
   - src/lib/realtime/liveUpdates.ts
+  - src/hooks/conversations/useTypingIndicator.ts
   - realtime.messages
   - public.broadcast_conversation_message
   - public.broadcast_listing_request_notification
@@ -41,6 +42,7 @@ gate is deliberate: it stops unsolicited image sending to creators.
 | "Messages are missing" | [`MSG-005`](#msg-005--reported-missing-messages) |
 | "New messages only show after a while or a refresh" | [`MSG-007`](#msg-007--chat-or-commission-pages-do-not-update-live) |
 | "The unread number is too high" or "it stays after I read the chat" | [`MSG-008`](#msg-008--unread-number-too-high-or-slow-to-clear) |
+| "I never see that the other person is typing" | [`MSG-009`](#msg-009--no-typing-dots-in-a-chat) |
 
 ---
 
@@ -370,6 +372,52 @@ group by p.last_read_at;
 
 **Fix.** Ask the person to open the conversation. If the number is still
 wrong with the chat open, escalate with the query result.
+
+**Money impact.** None.
+
+---
+
+## `MSG-009` — No typing dots in a chat
+
+```yaml
+id: MSG-009
+tier: 2
+signals:
+  - source: user_report
+    match: "I never see that the other person is typing"
+  - source: user_report
+    match: "it says they are typing but nothing arrives"
+auto_fix: none
+reason_not_automatable: "the cause is the Realtime connection or its rules, not our data; nothing is stored to repair"
+escalate_with:
+  - "whether both policies from 20261106_191 exist on realtime.messages (query below)"
+  - "whether MSG-007 live updates work for the same two people"
+```
+
+**How it works.** Since 2026-11-06 an open chat also joins the private topic
+`conversation:<id>` (`useTypingIndicator.ts`). While someone types, their tab
+sends a `typing` signal at most every 2 seconds, and `stopped` when the box
+is emptied or the message is sent. The other person's chat shows
+"… <name> is typing" under the messages, and hides it 5 seconds after the
+last signal if `stopped` never comes. Signals go browser to browser through
+Supabase Realtime; nothing is written to our tables. Only the two
+participants can join the topic (`20261106_191`). Admins reading a chat, and
+closed or read-only chats, have no dots.
+
+**Check.** No dots at all, for anyone: the rules are missing.
+
+```sql
+select policyname from pg_policies
+where schemaname = 'realtime' and tablename = 'messages' and policyname like 'chat typing%';
+```
+
+Two rows are expected. If live updates (`MSG-007`) also fail for that person,
+the websocket itself is down: work `MSG-007` first. "Typing" that never
+turns into a message is the other person deleting what they wrote, not a
+fault.
+
+**Fix.** Tier 2. Apply `20261106_191_add_chat_typing_indicator.sql` if the
+rules are missing. A failed signal never affects sending a message.
 
 **Money impact.** None.
 
