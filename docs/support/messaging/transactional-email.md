@@ -14,6 +14,9 @@ surfaces:
   - public.email_suppressions
   - POST /api/notices/:noticeId/send-email
   - POST /api/webhooks/email               # EMAIL-006: needs EMAIL_WEBHOOK_SECRET
+  - workers/email-events/index.js          # reads the email-events queue, EMAIL-009
+  - workers/email-events/wrangler.jsonc    # Worker made-for-stream-email-events
+  - Cloudflare Queue email-events          # subscribed to message.bounced, message.complained
 unmatched_tier: 2
 ---
 
@@ -23,16 +26,15 @@ Launch-scope.md section 7.1: the first outbound email the product sends beyond
 Supabase's own auth mail. Four templates ship at launch — payment receipt, first
 notice, final notice, payout released — plus the creator-application decision
 emails (approved, needs changes, rejected; `creators/applications.md` `APP-006`), all sent over authenticated SMTP against
-Cloudflare Email Service from `api/email.js`. No Workers code is involved; the
+Cloudflare Email Service from `api/email.js`. Sending needs no Workers code; the
 Express API sends directly.
 
 **Status: SMTP send path verified live, 2026-09-23.** `send.madeforstream.com` is
 onboarded, Workers Paid is active, and a real send through `api/email.js` against
 Cloudflare's SMTP endpoint was confirmed end to end (accepted with a provider
-message id). **Still not verified:** the bounce/complaint webhook
-(`POST /api/webhooks/email`, `EMAIL-002`) — its payload-parsing is still a
-best-effort guess and needs a real bounce to confirm the actual field names,
-since a successful send doesn't exercise that path. Domain warming (Sprint 6
+message id). **Still not verified:** a real bounce travelling the whole bounce
+path (`EMAIL-002`). Since 2026-11-09 it reads Cloudflare's documented event
+format, but a successful send doesn't exercise that path. Domain warming (Sprint 6
 checklist) has also not started in earnest — this was a single test send, not
 production volume.
 
@@ -110,6 +112,9 @@ same sender (`sendTransactionalEmail`), so `EMAIL-001`, `EMAIL-002` and
 | Notices stopped sending for everyone | [`EMAIL-004`](#email-004--sending-domain-not-onboarded-or-quota-exceeded) |
 | "My emails are in the wrong language" | [`EMAIL-005`](#email-005--email-in-the-wrong-language) |
 | Bounces stop being recorded; the API logs `EMAIL-006` | [`EMAIL-006`](#email-006--email-webhook-refused-not-authorized) |
+| The API logs `EMAIL-007` | [`EMAIL-007`](#email-007--email-event-not-recognised) |
+| The API logs `EMAIL-008` | [`EMAIL-008`](#email-008--email-event-could-not-be-recorded) |
+| The email-events Worker logs `EMAIL-009` | [`EMAIL-009`](#email-009--worker-could-not-pass-an-email-event-to-the-api) |
 ---
 
 ## `EMAIL-001` — Send failed or silently dropped
@@ -184,14 +189,25 @@ escalate_if:
 bounce or complaint event. Every future send checks this table first
 (`isEmailSuppressed` in `api/email.js`) and refuses rather than re-attempting.
 
-**IMPORTANT — this webhook's payload parsing is unverified.** Cloudflare Email
-Service's actual bounce/complaint webhook field names could not be confirmed
-against a real account in the session that built this (the sending domain was
-not onboarded yet). `api/server.js`'s handler guesses at common field names
-(`type`/`event`, `email`/`recipient`/`to`, `messageId`/`message_id`) and drops
-anything it cannot parse. **Before relying on this in production**, send a real
-bounce through the configured provider and confirm the actual payload shape
-matches, updating the parser if it does not.
+**How a bounce gets here.** Cloudflare Email Service doesn't call a URL. It
+publishes `message.bounced` and `message.complained` events for
+`send.madeforstream.com` to the Cloudflare Queue `email-events`. The Worker
+`made-for-stream-email-events` (`workers/email-events/`) reads the queue and
+posts each event, unchanged, to the webhook with the shared secret. There,
+`parseEmailEvent` (`api/email.js`) suppresses the address on a **hard** bounce
+or a complaint. A **soft** bounce (Cloudflare ran out of retries on a temporary
+failure) is ignored, because the address may still work. Cloudflare also
+suppresses hard bounces and complaints on its own side, so a gap here does not
+mean mail keeps going to a dead address.
+
+**Not verified yet:** the parser follows Cloudflare's published example events
+(tested in `api/tests/emailEvents.test.js`), but no real bounce has gone
+through it. Marking the matching notice `bounced` also needs Cloudflare's
+`messageId` to equal the id we stored when sending
+(`email_provider_message_id`, nodemailer's `messageId`). That hasn't been
+checked. If they differ, the address is still suppressed, but the notice keeps
+its old status. To check, send to a dead address and compare the event's
+`payload.messageId` (Worker logs) with the stored id.
 
 **What the user sees.** The affected party stops receiving notices/receipts with
 no visible error — check `email_suppressions` first whenever "they never got
@@ -357,10 +373,10 @@ signals:
     match: "EMAIL-006: email webhook call was not authorized."
     where: "POST /api/webhooks/email (api/server.js), answered 401 Not authorized."
 auto_fix: none
-reason_not_automatable: "needs the secret set on the API and in the email provider's webhook settings"
+reason_not_automatable: "needs the same secret set on the API and on the email-events Worker"
 escalate_with:
   - "whether EMAIL_WEBHOOK_SECRET is set on Cloud Run (never its value)"
-  - "how the provider's webhook is configured to send it"
+  - "whether EMAIL_WEBHOOK_SECRET is set on Worker made-for-stream-email-events (never its value)"
 ```
 
 **Cause.** Since 2026-11-05 the bounce/complaint webhook only accepts calls that
@@ -373,17 +389,135 @@ a shared secret stands in for it. The secret must be at least 32 characters.
 **Unset or shorter, every call is refused** and bounces aren't recorded, but
 sending is unaffected.
 
-**What the user sees.** Nothing. Bounced addresses keep being retried instead
-of being suppressed.
+**What the user sees.** Nothing. The Worker retries each refused event for
+about 50 minutes (`EMAIL-009`), then drops it. Cloudflare still suppresses the
+address on its side.
 
-**Fix.** Set `EMAIL_WEBHOOK_SECRET` on the API (a random value, 32+
-characters, from a password generator; never paste it into chat or a doc). Set
-the same value as the webhook's `Authorization: Bearer …` header in the email
-provider. If the provider can't send a custom header, the check needs changing
-to whatever the provider can sign with, which is a code change. Don't put the
-secret in the URL instead: request logs keep URLs.
+**Fix.** The secret lives in Secret Manager as `EMAIL_WEBHOOK_SECRET`. Both the
+API and the Worker read that one value, so it is never typed or shown. See
+[Setting up the bounce path](#setting-up-the-bounce-path). If the two values no
+longer match, rerun its step 3. If the API still refuses a call that has the
+right secret, the stored value probably has a hidden carriage return at the
+end: `gcloud secrets versions access latest --secret EMAIL_WEBHOOK_SECRET | wc -c`
+prints 65 instead of 64. To fix it, add a clean version with
+`tr -d '\r\n'`, disable the old version, then start a new API version so it
+reads the new value (this happened on 2026-11-10).
 
 **Money impact.** None.
+
+---
+
+## `EMAIL-007` — Email event not recognised
+
+```yaml
+id: EMAIL-007
+tier: 2
+signals:
+  - source: api
+    match: "EMAIL-007: unrecognised email event."
+    where: "POST /api/webhooks/email (api/server.js), answered 400; the Worker drops the event"
+auto_fix: none
+reason_not_automatable: "means Cloudflare changed its event format; the parser needs a code change"
+escalate_with:
+  - "the event type logged after the message"
+```
+
+**Cause.** An event arrived with no `type` or no `payload.recipient`. The code
+reads Cloudflare's `eventSchemaVersion` 1 format. A new version, or an event the
+queue was never meant to receive, ends up here.
+
+**What the user sees.** Nothing. That one bounce isn't recorded here, though
+Cloudflare still suppresses the address on its side.
+
+**Fix.** Compare the event with Cloudflare's current
+[event reference](https://developers.cloudflare.com/email-service/reference/event-subscriptions/)
+and update `parseEmailEvent` and the check in front of it.
+
+**Money impact.** None.
+
+---
+
+## `EMAIL-008` — Email event could not be recorded
+
+```yaml
+id: EMAIL-008
+tier: 2
+signals:
+  - source: api
+    match: "EMAIL-008: could not record an email event."
+    where: "POST /api/webhooks/email (api/server.js), answered 500; the Worker retries"
+auto_fix: none
+reason_not_automatable: "a database write failed; the cause is in the error after the message"
+escalate_with:
+  - "the error text logged after the message"
+```
+
+**Cause.** Writing to `email_suppressions` failed, for example because the
+database was unreachable. The Worker retries the event (`EMAIL-009`), so a short
+outage fixes itself.
+
+**What the user sees.** Nothing.
+
+**Fix.** Fix whatever the logged error names. An event that runs out of
+retries is gone, but Cloudflare still suppresses that address on its side.
+
+**Money impact.** None.
+
+---
+
+## `EMAIL-009` — Worker could not pass an email event to the API
+
+```yaml
+id: EMAIL-009
+tier: 2
+signals:
+  - source: worker
+    match: "EMAIL-009: email event not passed to the API"
+    where: "Worker made-for-stream-email-events (workers/email-events/index.js) logs; the status follows in brackets"
+auto_fix: none
+reason_not_automatable: "the cause is on the API side; the status in brackets says which"
+escalate_with:
+  - "the status in brackets"
+  - "whether the API is up"
+```
+
+**Cause.** The API didn't accept the event. `401` means `EMAIL-006` (the secret
+is missing or different). `500` means `EMAIL-008`. `network error` means the
+API couldn't be reached. Each event is retried every 5 minutes, up to 10 times
+(`workers/email-events/wrangler.jsonc`), then dropped.
+
+**What the user sees.** Nothing.
+
+**Fix.** Follow the issue the status points to.
+
+**Money impact.** None.
+
+---
+
+## Setting up the bounce path
+
+Alvin's steps, once per environment, in this order. Deploy the API first: the
+API from before 2026-11-09 reads a different format and would drop these
+events.
+
+1. Deploy the API: `gcloud run deploy made-for-stream-api --source api --region us-central1`.
+2. Create the secret straight into Secret Manager, where it's never shown, and
+   attach it to the API. Use the same commands as `OPS_CRON_SECRET` in
+   [`../operations/alerting.md`](../operations/alerting.md), with the name
+   `EMAIL_WEBHOOK_SECRET`.
+3. From the repository root, deploy the Worker with
+   `npx wrangler deploy --config workers/email-events/wrangler.jsonc`. Then pipe
+   the same secret into it:
+   `gcloud secrets versions access latest --secret EMAIL_WEBHOOK_SECRET | npx wrangler secret put EMAIL_WEBHOOK_SECRET --config workers/email-events/wrangler.jsonc`.
+4. In the Cloudflare dashboard, go to **Queues**. Create `email-events` if step 3
+   didn't already create it. Open it, then **Subscriptions → Subscribe to
+   events**. Choose source **Email Sending**, domain `send.madeforstream.com`,
+   and the events `message.bounced` and `message.complained`.
+
+**Prod.** The subscription is per sending domain, and the Worker points at one
+API (`API_BASE` in `wrangler.jsonc`). If prod sends from the same domain, its
+bounces reach whichever API this Worker points at. Before prod opens, give prod
+its own sending subdomain, queue and Worker.
 
 ---
 
@@ -395,19 +529,14 @@ secret in the URL instead: request logs keep URLs.
   `POST /api/notices/:noticeId/send-email` again by hand (or writing a one-off
   script) — there is no admin button yet.
 - **No true delivery confirmation**, only "accepted by SMTP" (`email_status =
-  'sent'`) and a best-effort bounce webhook. If Cloudflare Email Service later
+  'sent'`) and bounce/complaint events (`EMAIL-002`). If Cloudflare Email Service later
   offers a positive delivery-confirmation event, wire it in to distinguish
   "sent" from "confirmed delivered" — see the comment on
   `listing_request_notices.email_delivered_at` in
   `supabase/migrations/20260922_131_add_listing_request_notices.sql`.
-- **`POST /api/webhooks/email`'s payload parsing is unverified** against a real
-  Cloudflare payload (see `EMAIL-002`). It has no provider signature check;
-  a shared secret stands in for one (`EMAIL-006`). **Nothing calls it yet.**
-  Cloudflare Email Service does not post bounces to a URL: it publishes
-  `message.bounced` / `message.complained` to a Cloudflare Queue (event
-  subscriptions), and it already suppresses hard bounces and complaints on its
-  own. Wiring this up means a small Worker that reads that queue and calls the
-  webhook with the secret; until then `EMAIL_WEBHOOK_SECRET` can stay unset.
+- **The bounce path hasn't seen a real bounce yet** (`EMAIL-002`). It does
+  nothing until [Setting up the bounce path](#setting-up-the-bounce-path) is
+  done.
 - **Payment receipt and payout-released emails have no row to check delivery
   status against** the way notices do — they are fire-and-forget, logged to
   stderr on failure only. If receipt delivery ever needs the same auditability

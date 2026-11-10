@@ -19,7 +19,7 @@ import {
   isSupportedCurrency,
 } from "./supportedCurrencies.js";
 import { computeCumulativeRefund } from "./refundArithmetic.js";
-import { sendTransactionalEmail, suppressEmail } from "./email.js";
+import { parseEmailEvent, sendTransactionalEmail, suppressEmail } from "./email.js";
 import { getEmailLanguage } from "./emailLanguage.js";
 import {
   getBellLine,
@@ -3931,75 +3931,66 @@ app.post("/api/creator-applications/:applicationId/send-decision-email", async (
 
 // Sprint 6 (launch-scope.md section 7.1): "Suppression-list handling, so a
 // hard bounce does not silently restart a notice clock that nobody
-// received." Cloudflare Email Service's exact bounce/complaint webhook
-// payload could not be verified against real account configuration in this
-// session (the domain is not onboarded yet -- see the Sprint 6 checklist),
-// so this parses a handful of plausible field names defensively and drops
-// anything it cannot make sense of rather than guessing. **Re-verify the
-// actual field names against a real Cloudflare payload before relying on
-// this in production** -- see
-// docs/support/messaging/transactional-email.md.
+// received." Cloudflare Email Service publishes bounce and complaint events
+// to a Cloudflare Queue, not to a URL; the email-events Worker
+// (workers/email-events) reads that queue and posts each event here as is.
+// parseEmailEvent (api/email.js) decides what to suppress. Cloudflare also
+// suppresses these addresses on its side; keeping our own record means we
+// refuse the send ourselves and can mark the notice bounced.
 //
-// The provider's own signing scheme could not be confirmed either, so the
-// caller must send "Authorization: Bearer <EMAIL_WEBHOOK_SECRET>" (at least
-// 32 characters). Unset, every call is refused: otherwise anyone could
+// The caller must send "Authorization: Bearer <EMAIL_WEBHOOK_SECRET>" (at
+// least 32 characters). Unset, every call is refused: otherwise anyone could
 // suppress any address and stop its notices. Playbook: EMAIL-006.
+//
+// 400 means "never retry this event"; 500 means "try again later" (the
+// Worker retries it).
 app.post("/api/webhooks/email", async (req, res) => {
   if (!isAuthorizedOpsRequest(req.headers.authorization, EMAIL_WEBHOOK_SECRET, crypto.timingSafeEqual)) {
     console.warn("EMAIL-006: email webhook call was not authorized.");
     return res.status(401).json({ error: "Not authorized." });
   }
 
+  const body = req.body || {};
+
+  if (!body.type || !body.payload?.recipient) {
+    console.warn("EMAIL-007: unrecognised email event.", String(body.type || ""));
+    return res
+      .status(400)
+      .json({ error: "Unrecognised email webhook payload." });
+  }
+
   try {
-    const body = req.body || {};
-    const eventType = String(
-      body.type || body.event || body.EventType || "",
-    ).toLowerCase();
-    const email = String(
-      body.email || body.recipient || body.to || "",
-    ).trim();
-    const providerMessageId = String(
-      body.messageId || body.message_id || body.MessageID || "",
-    ).trim() || null;
-    const detail = String(body.reason || body.detail || "").trim() || null;
+    const event = parseEmailEvent(body);
 
-    if (!email || !eventType) {
-      return res
-        .status(400)
-        .json({ error: "Unrecognised email webhook payload." });
-    }
-
-    const isBounce = /bounce|failed|undelivered/.test(eventType);
-    const isComplaint = /complaint|spam|abuse/.test(eventType);
-
-    if (isBounce || isComplaint) {
+    if (event) {
       await suppressEmail(supabaseAdmin, {
-        email,
-        reason: isComplaint ? "complaint" : "hard_bounce",
-        detail,
-        sourceProviderMessageId: providerMessageId,
+        email: event.email,
+        reason: event.reason,
+        detail: event.detail,
+        sourceProviderMessageId: event.providerMessageId,
       });
 
-      // Only correlate back to a specific notice when the provider gave us
-      // its message id -- recipient_user_id is a uuid, not an email
-      // address, so there is no other reliable join key here. Without a
-      // message id the suppression above still protects future sends;
-      // this specific notice's status just stays whatever it was.
-      if (providerMessageId) {
+      // Only correlate back to a specific notice when the event carries a
+      // message id -- recipient_user_id is a uuid, not an email address, so
+      // there is no other reliable join key here. Without a match the
+      // suppression above still protects future sends; this specific
+      // notice's status just stays whatever it was.
+      if (event.providerMessageId) {
         await supabaseAdmin
           .from("listing_request_notices")
           .update({
             email_status: "bounced",
-            email_failed_reason: detail || eventType,
+            email_failed_reason: event.detail || event.reason,
           })
-          .eq("email_provider_message_id", providerMessageId)
+          .eq("email_provider_message_id", event.providerMessageId)
           .neq("email_status", "bounced");
       }
     }
 
     return res.json({ ok: true });
   } catch (err) {
-    return res.status(400).json({ error: String(err?.message || err) });
+    console.error("EMAIL-008: could not record an email event.", String(err?.message || err));
+    return res.status(500).json({ error: "Could not record the email event." });
   }
 });
 

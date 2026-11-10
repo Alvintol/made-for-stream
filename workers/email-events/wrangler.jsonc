@@ -1,0 +1,26 @@
+// Cloudflare Worker that passes email bounce and complaint events from the
+// email-events queue to the API. Not served on any address. Deployed by hand
+// from the repository root:
+//   npx wrangler deploy --config workers/email-events/wrangler.jsonc
+// EMAIL_WEBHOOK_SECRET is a secret on this Worker, the same value as the
+// API's. See docs/support/messaging/transactional-email.md.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "made-for-stream-email-events",
+  "main": "index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "vars": {
+    "API_BASE": "https://made-for-stream-api-422533033771.us-central1.run.app"
+  },
+  "queues": {
+    "consumers": [
+      {
+        "queue": "email-events",
+        // About 50 minutes of retries, well inside the queue's 24-hour hold.
+        "max_retries": 10,
+        "retry_delay": 300
+      }
+    ]
+  }
+}

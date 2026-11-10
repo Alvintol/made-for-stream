@@ -20,9 +20,9 @@
 // Verified live 2026-09-23: send.madeforstream.com onboarded, Workers Paid
 // active, a real send through this module's sendTransactionalEmail was
 // accepted by Cloudflare's SMTP endpoint end to end. Not yet verified:
-// production volume (this was one test send, not domain warming) and the
-// bounce/complaint webhook's payload shape (POST /api/webhooks/email in
-// api/server.js) -- see docs/support/messaging/transactional-email.md.
+// production volume (this was one test send, not domain warming) and a real
+// bounce arriving through the queue (parseEmailEvent below) -- see
+// docs/support/messaging/transactional-email.md.
 // Every call site treats a send failure as non-fatal to the workflow it's
 // attached to.
 
@@ -106,6 +106,31 @@ export const suppressEmail = async (
   if (error) {
     throw new Error(error.message);
   }
+};
+
+// Reads one Cloudflare Email Sending event, as published to the
+// email-events queue and forwarded by workers/email-events
+// (developers.cloudflare.com/email-service/reference/event-subscriptions/).
+// Returns what to suppress, or null when the address should stay: a soft
+// bounce (retries ran out on a temporary failure) is not a dead address.
+export const parseEmailEvent = (event) => {
+  const type = String(event?.type || "");
+  const payload = event?.payload || {};
+  const email = String(payload.recipient || "").trim();
+  const isComplaint = type === "cf.email.sending.message.complained";
+  const isHardBounce =
+    type === "cf.email.sending.message.bounced" && payload.bounce?.type === "hard";
+
+  if (!email || (!isComplaint && !isHardBounce)) {
+    return null;
+  }
+
+  return {
+    email,
+    reason: isComplaint ? "complaint" : "hard_bounce",
+    detail: String(payload.bounce?.reason || payload.delivery?.smtpResponse || "").trim() || null,
+    providerMessageId: String(payload.messageId || "").trim() || null,
+  };
 };
 
 // Returns { status, providerMessageId, failedReason }. Never throws --
