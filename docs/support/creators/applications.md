@@ -14,6 +14,8 @@ surfaces:
   - src/domain/links/externalLinks.ts              # how sample links are shown to admins
   - src/pages/admin/AdminCreatorApplications.tsx   # SampleLink
   - supabase/migrations/20261005_141_require_web_links_for_application_samples.sql
+  - supabase/migrations/20261110_193_add_pre_launch_payment_lock.sql   # audience minimums, 18+, queue of 100
+  - check_seller_application_submission()          # trigger seller_applications_check_submission
 unmatched_tier: 2
 ---
 
@@ -36,6 +38,7 @@ agent is explicitly forbidden from writing `seller_applications`.
 | "I can't submit my application" | [`APP-002`](#app-002--application-not-in-a-submittable-state) |
 | "My form won't save" | [`APP-003`](#app-003--field-validation-rejected) |
 | "I've heard nothing back" | [`APP-004`](#app-004--application-waiting-too-long) |
+| "It says I don't have enough followers" | [`APP-007`](#app-007--below-the-audience-minimum-or-18-not-confirmed) |
 | "I'm approved but can't publish" | [`connect-onboarding.md`](../payments/connect-onboarding.md) |
 
 ---
@@ -55,7 +58,10 @@ escalate_with:
   - "how many are pending review versus already resolved"
 ```
 
-**Cause.** A deliberate cap on open applications, working as designed.
+**Cause.** A deliberate cap on open applications, working as designed. It was
+raised from 10 to 100 on 2026-11-10 for TwitchCon sign-ups
+(`submit_seller_application` and `get_creator_application_queue_state`, which
+must agree).
 
 **What the user sees.** A closed door, with no indication of when it reopens.
 
@@ -278,7 +284,49 @@ creators are unlisted inventory.
 
 ---
 
+## `APP-007` — Below the audience minimum, or 18+ not confirmed
+
+```yaml
+id: APP-007
+tier: 2
+signals:
+  - source: db
+    match: "To apply you need Twitch Affiliate or Partner with at least 300 followers, or at least 500 YouTube subscribers."
+    where: "trigger seller_applications_check_submission (check_seller_application_submission), on submitting"
+  - source: db
+    match: "You must confirm you are at least 18 to apply."
+    where: "trigger seller_applications_check_submission, on submitting"
+auto_fix: none
+reason_not_automatable: "the minimums are a business rule, and the numbers are the applicant's own"
+escalate_with:
+  - "the applicant's twitch_status, twitch_follower_count and youtube_subscriber_count"
+```
+
+**Cause.** Since 2026-11-10 an application can only be submitted with Twitch
+Affiliate or Partner and at least 300 followers, or with at least 500 YouTube
+subscribers, and with the 18+ agreement ticked. The applicant types in these
+numbers. The database refuses a submission below them, because the update
+policy would otherwise let an applicant submit without going through
+`submit_seller_application`.
+
+**What the user sees.** On the form, the "Your audience" box and a line in the
+checklist ("Twitch Affiliate with 300+ followers, or 500+ YouTube
+subscribers"). Submit stays disabled until it's met. The database messages
+above only appear if something gets past the form.
+
+**Manual fix.** None; the minimums apply to everyone. **When reviewing, check
+the numbers against the linked channel.** They're shown in the review queue,
+and nothing verifies them automatically. Typing false numbers breaks Terms
+section 3.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
+
+- **Audience numbers aren't verified automatically.** They're checked by hand
+  at review, on purpose, so bots can't game them.
 
 - **No queue-age alerting.** `APP-004` has to be run by hand.
 - **No applicant-facing status visibility** beyond the raw state, so "how long

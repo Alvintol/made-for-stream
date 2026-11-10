@@ -2352,6 +2352,20 @@ const assertCheckoutLocationAllowed = async ({ req, userId }) => {
   }
 };
 
+// Before launch nothing can be paid (20261110_193, LAUNCH-002). The switch
+// lives in the database so the API, the site and the database rules can't
+// disagree. Fails closed: if it can't be read, payments stay shut.
+const PAYMENTS_CLOSED_MESSAGE =
+  "Payments aren't open yet, so this can't go ahead. There's no date yet for when they will open in your region.";
+
+const assertPaymentsLive = async () => {
+  const { data, error } = await supabaseAdmin.rpc("payments_are_live");
+
+  if (error || data !== true) {
+    throw new Error(PAYMENTS_CLOSED_MESSAGE);
+  }
+};
+
 const applyCheckoutTax = async ({ stripeClient, payment, req, userId }) => {
   if (TAX_CONFIG.configError) {
     throw new Error(TAX_CONFIG.configError);
@@ -2990,6 +3004,7 @@ app.post("/api/stripe/checkout/session", async (req, res) => {
   try {
     const stripeClient = requireStripe();
     const userId = await requireSupabaseUserId(req);
+    await assertPaymentsLive();
     const paymentId = String(req.body?.paymentId || "").trim();
 
     if (!paymentId) {
@@ -4003,6 +4018,7 @@ app.post("/api/stripe/recovery/settlement-session", async (req, res) => {
   try {
     const stripeClient = requireStripe();
     const userId = await requireSupabaseUserId(req);
+    await assertPaymentsLive();
     const amountCents = Math.round(Number(req.body?.amountCents));
 
     if (!Number.isFinite(amountCents) || amountCents <= 0) {
@@ -4637,6 +4653,7 @@ app.post("/api/stripe/connect/account-session", async (req, res) => {
   try {
     const stripeClient = requireStripe();
     const userId = await requireSupabaseUserId(req);
+    await assertPaymentsLive();
 
     if (!stripeClient?.v2?.core?.accounts?.create) {
       return res.status(500).json({

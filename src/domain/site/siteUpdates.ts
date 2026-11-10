@@ -30,12 +30,26 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.22.01";
+export const siteVersion = "V0.23.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.23.00",
+    date: "2026-11-10",
+    title: "Getting ready to launch",
+    changes: [
+      "A banner on every page says Made for Stream is getting ready to launch and payments aren't open yet.",
+      "Creators can publish listings before setting up payouts.",
+      "Buyers can send commission requests and chat with creators, but requests can't be accepted or paid for yet.",
+      "Commissions and chats remind both people that any deal made before launch is between them alone.",
+      "Signing in now asks you to confirm you are at least 18.",
+      "Creator applications now ask for your Twitch or YouTube audience, with a minimum to apply.",
+      "The Terms of Service have a new version to accept.",
+    ],
+  },
   {
     version: "V0.22.01",
     date: "2026-11-10",

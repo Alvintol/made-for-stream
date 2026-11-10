@@ -104,9 +104,26 @@ export const isRequiredRecentUploadSample = (sample: WorkSample): boolean =>
   sample.sample_type === "link" &&
   sample.title.trim().toLowerCase() === REQUIRED_RECENT_UPLOAD_TITLE.toLowerCase();
 
+// Audience minimums (decided 2026-11-10; enforced again by
+// check_seller_application_submission, 20261110_193). Self-reported;
+// checked by hand at review.
+export const MIN_TWITCH_FOLLOWERS = 300;
+export const MIN_YOUTUBE_SUBSCRIBERS = 500;
+
+export type ApplicationAudience = {
+  twitchStatus: "none" | "affiliate" | "partner" | null;
+  twitchFollowers: number | null;
+  youtubeSubscribers: number | null;
+};
+
+export const meetsAudienceMinimum = ({ twitchStatus, twitchFollowers, youtubeSubscribers }: ApplicationAudience) =>
+  ((twitchStatus === "affiliate" || twitchStatus === "partner") && (twitchFollowers ?? 0) >= MIN_TWITCH_FOLLOWERS) ||
+  (youtubeSubscribers ?? 0) >= MIN_YOUTUBE_SUBSCRIBERS;
+
 export type CreatorApplicationRequirementKey =
   | "profile"
   | "platform"
+  | "audience"
   | "recentUpload"
   | "samples"
   | "agreements";
@@ -122,6 +139,7 @@ export type CreatorApplicationRequirement = {
 export type CreatorApplicationReadinessInput = {
   profileReady: boolean;
   hasLinkedPlatform: boolean;
+  audience: ApplicationAudience;
   samples: WorkSample[];
   agreementsAccepted: boolean;
 };
@@ -156,6 +174,12 @@ export const getCreatorApplicationRequirements = (
       label: t("apply.reqPlatform"),
       done: input.hasLinkedPlatform,
       blocker: t("apply.reqPlatformBlock"),
+    },
+    {
+      key: "audience",
+      label: t("apply.reqAudience", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
+      done: meetsAudienceMinimum(input.audience),
+      blocker: t("apply.reqAudienceBlock", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
     },
     {
       key: "recentUpload",

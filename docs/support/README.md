@@ -149,6 +149,7 @@ how it fails.
 | Payments | [`payments/sales.md`](payments/sales.md) — sales numbers, GST/HST in our fees, invoices |
 | Operations | [`operations/alerting.md`](operations/alerting.md) — scheduled jobs and ops alerts |
 | Operations | [`operations/rate-limits.md`](operations/rate-limits.md) — API request limits |
+| Operations | [`operations/pre-launch.md`](operations/pre-launch.md) — payments closed until launch |
 
 Several playbooks record gaps that were product decisions rather than support
 problems — cancellation, refunds, abandonment, currency scope. **Those decisions are

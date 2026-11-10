@@ -3,6 +3,7 @@ import { isInstantLicence } from "../../domain/listings/instantDownloads";
 import { useInstantListing, useStartInstantPurchase } from "../../hooks/listings/useInstantDownloads";
 import { hasErrorMessage } from "../../lib/errorMessage";
 import { useT } from "../../lib/i18n/i18n";
+import { usePaymentsLive } from "../../hooks/site/usePaymentsLive";
 import InstantItemDetails from "./InstantItemDetails";
 
 const classes = {
@@ -29,6 +30,7 @@ const InstantPurchasePanel = ({ listingId, licence, userId, isOwnListing }: Prop
   const navigate = useNavigate();
   const state = useInstantListing(listingId, userId);
   const start = useStartInstantPurchase();
+  const paymentsLive = usePaymentsLive();
 
   const files = state.data?.files ?? [];
   const ready = files.length > 0 && isInstantLicence(licence);
@@ -57,6 +59,8 @@ const InstantPurchasePanel = ({ listingId, licence, userId, isOwnListing }: Prop
             {t("instant.goToDownloads")}
           </Link>
         </>
+      ) : !paymentsLive ? (
+        <p className={classes.note}>{t("launch.buyClosed")}</p>
       ) : !ready ? (
         <p className={classes.note}>{t("instant.notReady")}</p>
       ) : !userId ? (

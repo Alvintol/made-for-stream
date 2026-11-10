@@ -11,6 +11,8 @@ import {
 } from "../../hooks/creatorApplication/useSellerApplicationSamples";
 import {
   MAX_WORK_SAMPLES,
+  MIN_TWITCH_FOLLOWERS,
+  MIN_YOUTUBE_SUBSCRIBERS,
   MIN_WORK_SAMPLES,
   getCreatorApplicationPhase,
   getCreatorApplicationRequirements,
@@ -20,6 +22,8 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   isValidPublicUrl,
+  meetsAudienceMinimum,
+  type ApplicationAudience,
   normaliseUrlInput,
   type CreatorApplicationRequirementKey,
 } from "../../domain/creatorApplication/creatorApplication";
@@ -135,6 +139,7 @@ const AgreementCopy = ({ agreement }: { agreement: AgreementKey }) => {
 const requirementSection: Record<CreatorApplicationRequirementKey, SectionKey> = {
   profile: "basics",
   platform: "basics",
+  audience: "basics",
   recentUpload: "recent",
   samples: "samples",
   agreements: "agreements",
@@ -226,6 +231,25 @@ const ApplyCreator = () => {
     setAgreements(savedAgreements);
   }
 
+  const savedAudience: ApplicationAudience = {
+    twitchStatus: sellerApplication?.twitch_status ?? null,
+    twitchFollowers: sellerApplication?.twitch_follower_count ?? null,
+    youtubeSubscribers: sellerApplication?.youtube_subscriber_count ?? null,
+  };
+  const savedAudienceKey = JSON.stringify(savedAudience);
+  const [audience, setAudience] = useState<ApplicationAudience>(savedAudience);
+  const [audienceFor, setAudienceFor] = useState<string | null>(null);
+  if (savedAudienceKey !== audienceFor) {
+    setAudienceFor(savedAudienceKey);
+    setAudience(savedAudience);
+  }
+
+  // Empty or not a whole number is "not answered".
+  const toCount = (value: string): number | null => {
+    const count = Number.parseInt(value.replace(/[^0-9]/g, ""), 10);
+    return Number.isFinite(count) ? count : null;
+  };
+
   const recentUploadSample = useMemo(
     () => samples.find(isRequiredRecentUploadSample) ?? null,
     [samples]
@@ -249,6 +273,7 @@ const ApplyCreator = () => {
   const requirements = getCreatorApplicationRequirements({
     profileReady,
     hasLinkedPlatform: hasLinkedCreatorPlatform,
+    audience,
     samples,
     agreementsAccepted,
   }, t);
@@ -288,6 +313,9 @@ const ApplyCreator = () => {
     agreed_to_original_work: agreements.originalWork,
     agreed_to_manual_review: agreements.manualReview,
     agreed_to_age_and_capacity: agreements.ageAndCapacity,
+    twitch_status: audience.twitchStatus,
+    twitch_follower_count: audience.twitchFollowers,
+    youtube_subscriber_count: audience.youtubeSubscribers,
   };
 
   const onStartDraft = async () => {
@@ -429,13 +457,13 @@ const ApplyCreator = () => {
     );
   }
 
-  const basicsDone = profileReady && hasLinkedCreatorPlatform;
+  const basicsDone = profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience);
 
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
     const steps = [
       { key: "basics", label: t("apply.stepBasics"), done: basicsDone || inReviewOrLater },
-      { key: "samples", label: t("apply.stepSamples"), done: requirements.slice(2, 4).every((item) => item.done) || inReviewOrLater },
+      { key: "samples", label: t("apply.stepSamples"), done: requirements.filter((item) => item.key === "recentUpload" || item.key === "samples").every((item) => item.done) || inReviewOrLater },
       { key: "agreements", label: t("apply.stepAgreements"), done: agreementsAccepted || inReviewOrLater },
       {
         key: "review",
@@ -558,6 +586,7 @@ const ApplyCreator = () => {
             {[
               { done: profileReady, label: t("apply.needHandle") },
               { done: hasLinkedCreatorPlatform, label: t("apply.needPlatform") },
+              { done: false, label: t("apply.reqAudience", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }) },
               { done: false, label: t("apply.needRecent") },
               { done: false, label: t("apply.needLinks", { min: MIN_WORK_SAMPLES, max: MAX_WORK_SAMPLES }) },
             ].map((item) => (
@@ -674,7 +703,58 @@ const ApplyCreator = () => {
                 </div>
               </li>
             </ul>
-            {!basicsDone && (
+            <fieldset className={classes.addForm} disabled={!canEdit}>
+              <legend className={classes.addTitle}>{t("apply.audienceTitle")}</legend>
+              <p className={classes.small}>
+                {t("apply.audienceHint", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS })}
+              </p>
+              <div className={classes.grid}>
+                <label className={classes.field}>
+                  <span className={classes.label}>{t("apply.twitchStatus")}</span>
+                  <select
+                    className={classes.input}
+                    value={audience.twitchStatus ?? ""}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setAudience((current) => ({
+                        ...current,
+                        twitchStatus: value === "affiliate" || value === "partner" || value === "none" ? value : null,
+                      }));
+                    }}
+                  >
+                    <option value="">{t("apply.twitchStatusPick")}</option>
+                    <option value="none">{t("apply.twitchStatusNone")}</option>
+                    <option value="affiliate">{t("apply.twitchStatusAffiliate")}</option>
+                    <option value="partner">{t("apply.twitchStatusPartner")}</option>
+                  </select>
+                </label>
+                <label className={classes.field}>
+                  <span className={classes.label}>{t("apply.twitchFollowers")}</span>
+                  <input
+                    className={classes.input}
+                    inputMode="numeric"
+                    value={audience.twitchFollowers ?? ""}
+                    onChange={(event) => {
+                      const value = toCount(event.currentTarget.value);
+                      setAudience((current) => ({ ...current, twitchFollowers: value }));
+                    }}
+                  />
+                </label>
+                <label className={classes.field}>
+                  <span className={classes.label}>{t("apply.youtubeSubscribers")}</span>
+                  <input
+                    className={classes.input}
+                    inputMode="numeric"
+                    value={audience.youtubeSubscribers ?? ""}
+                    onChange={(event) => {
+                      const value = toCount(event.currentTarget.value);
+                      setAudience((current) => ({ ...current, youtubeSubscribers: value }));
+                    }}
+                  />
+                </label>
+              </div>
+            </fieldset>
+            {!(profileReady && hasLinkedCreatorPlatform) && (
               <Link className={classes.btnOutline} to="/settings/profile">
                 {t("apply.openSettings")}
               </Link>
