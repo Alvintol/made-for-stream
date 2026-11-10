@@ -26,6 +26,7 @@ import {
 import { useConversationMessages } from "../../hooks/conversations/useConversationMessages";
 import { useConversationParticipants } from "../../hooks/conversations/useConversationParticipants";
 import { useMarkConversationRead } from "../../hooks/conversations/useMarkConversationRead";
+import { useTypingIndicator } from "../../hooks/conversations/useTypingIndicator";
 import type { RequestConversationRow } from "../../hooks/conversations/useRequestConversation";
 import {
   useMyModerationReports,
@@ -126,6 +127,10 @@ const classes = {
   systemMessageNeutral: "text-center",
   systemMeta: "mb-1 px-1 text-[11px] text-zinc-500",
   readReceipt: "mt-1 px-1 text-[11px] font-medium text-zinc-500",
+  // "… name is typing" under the messages while the other person types.
+  typingRow: "-mt-2 flex h-5 items-center gap-2 px-1 text-xs text-zinc-500",
+  typingDots: "inline-flex items-center gap-1",
+  typingDot: "h-1.5 w-1.5 rounded-full bg-zinc-400 motion-safe:animate-bounce",
   messageActions: "mt-1 px-1",
   messageActionsHidden:
     "mt-1 px-1 sm:opacity-0 sm:transition sm:group-hover:opacity-100 sm:focus-within:opacity-100",
@@ -322,6 +327,12 @@ const ConversationThread = ({
   const readOnly =
     isAdmin || isRestrictedByParent || isConversationReadOnly(conversation.status);
 
+  const {
+    otherTyping,
+    notifyTyping,
+    notifyStopped,
+  } = useTypingIndicator(conversation.id, currentUserId ?? null, !readOnly);
+
   const trimmedBody = body.trim();
   const closeReasonDetailsTrimmed = closeReasonDetails.trim();
   const isOtherCloseReason = closeReasonCode === "other";
@@ -515,6 +526,7 @@ const ConversationThread = ({
     try {
       await sendMessageMutation.mutateAsync(trimmedBody);
       setBody("");
+      notifyStopped();
     } catch {
       // Error is surfaced below
     }
@@ -1042,6 +1054,22 @@ const ConversationThread = ({
           <div className={classes.empty}>{emptyText ?? t("chat.empty")}</div>
         )}
 
+        {/* Always takes its line, so the chat does not jump when the dots come and go. */}
+        {!readOnly && (
+          <div className={classes.typingRow} role="status">
+            {otherTyping && otherParticipantUserId && (
+              <>
+                <span className={classes.typingDots} aria-hidden="true">
+                  {[0, 150, 300].map((delay) => (
+                    <span key={delay} className={classes.typingDot} style={{ animationDelay: `${delay}ms` }} />
+                  ))}
+                </span>
+                {t("chat.typing", { name: senderLabelText(otherParticipantUserId) })}
+              </>
+            )}
+          </div>
+        )}
+
         {sendMessageMutation.error && (
           <FadeIn className={classes.errorNotice}>
             {t("chat.sendFailed")}
@@ -1110,7 +1138,12 @@ const ConversationThread = ({
                 aria-label={t("chat.message")}
                 className={classes.composerTextarea}
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
+                onChange={(event) => {
+                  setBody(event.target.value);
+
+                  if (event.target.value.trim()) notifyTyping();
+                  else notifyStopped();
+                }}
                 placeholder={composerPlaceholder ?? t("chat.placeholder")}
                 maxLength={2000}
                 disabled={sendMessageMutation.isPending}

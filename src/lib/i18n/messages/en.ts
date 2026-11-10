@@ -1289,6 +1289,7 @@ export const en = {
   "modReport.summary.dismissed": "This report was reviewed and dismissed.",
   "chat.empty": "No messages yet.",
   "chat.placeholder": "Write a message…",
+  "chat.typing": "{name} is typing",
   "chat.reportStatus": "Status: {status}",
   "chat.lastUpdate": "Last update: {date}",
   "chat.moreDetail": "Please give more detail.",

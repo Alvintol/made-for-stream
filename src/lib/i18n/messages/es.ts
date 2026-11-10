@@ -1240,6 +1240,7 @@ export const es: Record<MessageKey, Message> = {
   "modReport.summary.dismissed": "Este reporte fue revisado y descartado.",
   "chat.empty": "Todavía no hay mensajes.",
   "chat.placeholder": "Escribe un mensaje…",
+  "chat.typing": "{name} está escribiendo",
   "chat.reportStatus": "Estado: {status}",
   "chat.lastUpdate": "Última actualización: {date}",
   "chat.moreDetail": "Da más detalles.",

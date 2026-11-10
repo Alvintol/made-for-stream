@@ -1268,6 +1268,7 @@ export const fr: Record<MessageKey, Message> = {
   "modReport.summary.dismissed": "Ce signalement a été examiné et rejeté.",
   "chat.empty": "Aucun message pour l’instant.",
   "chat.placeholder": "Écrire un message…",
+  "chat.typing": "{name} est en train d’écrire",
   "chat.reportStatus": "Statut : {status}",
   "chat.lastUpdate": "Dernière mise à jour : {date}",
   "chat.moreDetail": "Veuillez donner plus de détails.",
