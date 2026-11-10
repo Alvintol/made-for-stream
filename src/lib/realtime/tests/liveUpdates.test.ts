@@ -27,6 +27,10 @@ describe("refreshesOnNotification", () => {
     expect(refreshesOnNotification(["listingRequestPayments", "r1"])).toBe(true);
   });
 
+  it("reloads the bell", () => {
+    expect(refreshesOnNotification(["notifications", "u1"])).toBe(true);
+  });
+
   it("leaves unrelated pages alone", () => {
     expect(refreshesOnNotification(["marketListings"])).toBe(false);
     expect(refreshesOnNotification(["conversationMessages", "c1"])).toBe(false);

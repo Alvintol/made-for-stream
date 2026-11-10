@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   NOTIFICATION_EMAILS,
+  getBellLine,
   getListingRequestUrl,
   getNotificationNames,
   getNotificationUrl,
@@ -226,5 +227,21 @@ describe("commission notification emails", () => {
     expect(email.subject).toContain("October 17, 2026");
     expect(email.text).toContain("10-day cancellation timer");
     expect(email.text).toContain("Please pay");
+  });
+});
+
+describe("getBellLine", () => {
+  it("gives a commission row its subject and the page it opens, without the site address", () => {
+    const row = { kind: "request_accepted", listing_request_id: "r1", recipient_user_id: "b1" };
+
+    expect(getBellLine(row, "Accepted: \"Logo\"", "b1")).toEqual({
+      title: "Accepted: \"Logo\"",
+      link_path: "/requests/r1",
+    });
+    expect(getBellLine({ ...row, recipient_user_id: "c1" }, "x", "b1").link_path).toBe("/creator/requests/r1");
+  });
+
+  it("leaves chat rows out of the bell", () => {
+    expect(getBellLine({ kind: "message_received", conversation_id: "c" }, "New message", null)).toEqual({});
   });
 });

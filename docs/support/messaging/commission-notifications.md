@@ -20,6 +20,11 @@ surfaces:
   - api/server.js                                               # drainListingRequestNotifications, POST /api/notifications/drain, POST /api/internal/ops/alerts/run
   - src/lib/notifications/nudgeNotificationEmails.ts
   - src/providers/AppProvider.tsx
+  - supabase/migrations/20261109_192_add_notification_bell.sql  # title, link_path, read_at; the bell's policies
+  - api/notificationEmails.js                                   # getBellLine
+  - src/hooks/notifications/useNotifications.ts                 # the bell's rows and "mark read"
+  - src/components/layout/NotificationBell.tsx
+  - src/components/layout/Nav.tsx
 unmatched_tier: 2
 ---
 
@@ -56,6 +61,26 @@ asks "who is this email about?" can match the handle to the commission page.
 A failed send is retried up to three times, at least ten minutes apart.
 Queuing never blocks the step it describes: `enqueue_listing_request_notification`
 swallows its own errors and raises a warning (`NOTIF-003`).
+
+## The bell on the site (2026-11-09)
+
+The same rows also show in a bell on the top bar, next to the inbox.
+
+- **The API writes the line.** When the drain renders a row's email, it also
+  saves `title` (the email's subject, in the reader's language) and
+  `link_path` (the page the email's button opens), using `getBellLine`. It
+  saves them even if the email then fails to send.
+- **Only rows with a `title` show.** Chat rows (`message_received`,
+  `conversation_started`) get no title, because the inbox has its own number.
+  Rows from before `20261109_192` have none either.
+- **Live.** The insert signal (`20261105_190`) comes before the title exists,
+  so a second trigger sends the same signal once the title is written.
+- **Who sees what.** Row-level security returns only the person's own rows,
+  and only the columns `id, kind, title, link_path, created_at, read_at`.
+  Delivery details stay service-role only. The one thing a person can change
+  is `read_at`.
+- **Read.** Opening the bell marks every listed row read. The number counts
+  unread rows among the latest 20 and shows "9+" above nine.
 
 ## What is sent
 
@@ -137,6 +162,8 @@ payout emails ([`transactional-email.md`](transactional-email.md)).
 | A row is `failed` with "no email template" | [`NOTIF-002`](#notif-002--a-kind-has-no-template) |
 | "The link in the email goes to a page that does not exist" | [`NOTIF-004`](#notif-004--email-link-opens-a-missing-page) |
 | "I was on the site and still got a message email" / "I was away and got none" | [`NOTIF-005`](#notif-005--message-email-sent-or-not-sent-against-expectation) |
+| "I got the email but it isn't in the bell" | [`NOTIF-006`](#notif-006--an-update-is-missing-from-the-bell) |
+| The bell is empty or its number never clears, for everyone | [`NOTIF-007`](#notif-007--the-bell-does-not-load-or-does-not-clear) |
 
 ---
 
@@ -325,6 +352,80 @@ and treat it as a defect.
 
 ---
 
+## `NOTIF-006` — An update is missing from the bell
+
+```yaml
+id: NOTIF-006
+tier: 2
+signals:
+  - source: api
+    match: "/NOTIF-001: could not record a send: /"
+    where: "drainListingRequestNotifications (api/server.js): the row's update, which also writes title and link_path, failed"
+  - source: api
+    match: "/NOTIF-002: no email template for kind \".+\"\\./"
+    where: "drainListingRequestNotifications: no email, so no line for the bell either"
+auto_fix: none
+reason_not_automatable: "each cause needs a different fix; one is a deploy-order mistake"
+escalate_with:
+  - "the row's kind, created_at, email_status and whether title is null (never the payload)"
+```
+
+**Cause.** The row has no `title`. One of these:
+
+- *It's a chat row* (`message_received`, `conversation_started`). Working as
+  designed: the inbox counts those.
+- *It's from before `20261109_192`.* Working as designed.
+- *The drain hasn't reached it yet.* `email_status` is `pending`. It shows
+  within about an hour at most (`NOTIF-001` if longer).
+- *The row's update failed* and the API logged `NOTIF-001: could not record a
+  send: Could not find the 'title' column of 'listing_request_notifications'
+  in the schema cache` (or `'link_path'`). The API was deployed before the
+  migration. In that case the email went out but the row stays `sending`.
+- *Rendering failed* (`NOTIF-002`), or the commission couldn't be read
+  (`NOTIF-003`). No email and no line.
+
+**Fix.** For the deploy-order case, apply `20261109_192`. Then set the rows
+stuck in `sending` since the deploy back to `pending`. That's a data change, so
+it's Alvin's step. Those people will get the email a second time. Otherwise
+follow the issue named.
+
+**Money impact.** None.
+
+---
+
+## `NOTIF-007` — The bell does not load or does not clear
+
+```yaml
+id: NOTIF-007
+tier: 2
+signals:
+  - source: client
+    match: "column listing_request_notifications.title does not exist"
+    where: "useNotifications (src/hooks/notifications/useNotifications.ts): the site was deployed before 20261109_192"
+  - source: client
+    match: "permission denied for table listing_request_notifications"
+    where: "useNotifications or useMarkNotificationsRead: the migration's grants are missing"
+auto_fix: none
+reason_not_automatable: "needs a migration applied or its grants restored"
+escalate_with:
+  - "the failing request and its error from the browser's network tab"
+```
+
+**Cause.** The site reads columns and grants that `20261109_192` adds. Without
+them, the bell's read fails and the bell shows no number. "Mark read" fails
+the same way, so the number never clears.
+
+**What the user sees.** A bell with no number and an empty list, or a number
+that comes back after opening.
+
+**Fix.** Apply `20261109_192`, or compare its grants and policies with the
+catalog (`information_schema.column_privileges`, `pg_policies`) and restore
+what's missing.
+
+**Money impact.** None.
+
+---
+
 ## Known gaps
 
 - **Saved English inside a translated email.** A payment name saved on a
@@ -341,5 +442,9 @@ and treat it as a defect.
 - **Anyone signed in can trigger a send run** (`POST /api/notifications/drain`).
   It only sends what the database already queued, to the recipients the
   database chose.
+- **The bell keeps the language the email was sent in.** A line is written
+  once, when the email is rendered; changing language later doesn't rewrite
+  old lines.
+- **The bell lists the latest 20** and has no page for older ones.
 - **More email volume.** A full commission now sends about fifteen emails.
   Watch the Cloudflare sending quota (`EMAIL-004`) while the domain is new.

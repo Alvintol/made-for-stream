@@ -35,6 +35,14 @@ export const getNotificationUrl = (appOrigin, row, buyerUserId) =>
         buyerUserId === row.recipient_user_id ? "buyer" : "creator",
       );
 
+// What the bell on the site shows for a row (20261109_192): the email's
+// subject, already in the reader's language, and the page its button opens.
+// Chat rows get none: the inbox has its own number for those.
+export const getBellLine = (row, subject, buyerUserId) =>
+  CONVERSATION_KINDS.has(row.kind)
+    ? {}
+    : { title: subject, link_path: getNotificationUrl("", row, buyerUserId) };
+
 const deadline = (payload, pack) =>
   payload.expires_at
     ? new Date(payload.expires_at).toLocaleDateString(pack?.locale ?? "en-US", {

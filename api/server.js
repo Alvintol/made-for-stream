@@ -22,6 +22,7 @@ import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { sendTransactionalEmail, suppressEmail } from "./email.js";
 import { getEmailLanguage } from "./emailLanguage.js";
 import {
+  getBellLine,
   getListingRequestUrl as buildListingRequestUrl,
   getNotificationNames,
   getNotificationUrl,
@@ -1334,6 +1335,8 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
 
     for (const row of rows || []) {
       let result;
+      // The bell's line, kept even when the email itself fails to send.
+      let bell = {};
 
       try {
         // A chat email about an inquiry has no commission behind it.
@@ -1403,6 +1406,8 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
           throw new Error(`NOTIF-002: no email template for kind "${row.kind}".`);
         }
 
+        bell = getBellLine(row, rendered.subject, request?.buyer_user_id ?? null);
+
         result = await sendTransactionalEmail(supabaseAdmin, {
           to: await getSupabaseUserEmail(row.recipient_user_id),
           ...rendered,
@@ -1429,6 +1434,7 @@ const drainListingRequestNotifications = async ({ limit = 25 } = {}) => {
           email_status: result.status === "sent" ? "sent" : "failed",
           email_provider_message_id: result.providerMessageId,
           email_failed_reason: result.failedReason,
+          ...bell,
         })
         .eq("id", row.id);
 
