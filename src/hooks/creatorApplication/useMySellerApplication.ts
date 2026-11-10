@@ -11,6 +11,8 @@ export type SellerApplicationStatus =
   | "needs_changes"
   | "suspended";
 
+export type TwitchStatus = "none" | "affiliate" | "partner";
+
 export type SellerApplicationRow = {
   id: string;
   profile_user_id: string;
@@ -22,6 +24,11 @@ export type SellerApplicationRow = {
   agreed_to_original_work: boolean;
   agreed_to_manual_review: boolean;
   agreed_to_age_and_capacity: boolean;
+
+  // The applicant's own numbers (20261110_193); checked by hand at review.
+  twitch_status: TwitchStatus | null;
+  twitch_follower_count: number | null;
+  youtube_subscriber_count: number | null;
 
   submitted_at: string | null;
   reviewed_at: string | null;
@@ -49,6 +56,9 @@ const fetchMySellerApplication = async (
   agreed_to_original_work,
   agreed_to_manual_review,
   agreed_to_age_and_capacity,
+  twitch_status,
+  twitch_follower_count,
+  youtube_subscriber_count,
   submitted_at,
   reviewed_at,
   reviewed_by,

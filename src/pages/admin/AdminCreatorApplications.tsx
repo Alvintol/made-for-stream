@@ -324,6 +324,13 @@ const AdminCreatorApplications = () => {
                   <div className={classes.queueItemMeta}>
                     Submitted: {application.submitted_at ?? "Not submitted"}
                   </div>
+
+                  {/* Their own numbers: check them against the linked channel. */}
+                  <div className={classes.queueItemMeta}>
+                    Twitch: {application.twitch_status ?? "not given"},{" "}
+                    {application.twitch_follower_count ?? "?"} followers · YouTube:{" "}
+                    {application.youtube_subscriber_count ?? "?"} subscribers
+                  </div>
                 </button>
               );
             })}

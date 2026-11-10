@@ -7,6 +7,7 @@ import { AdBanner, AdGutters } from '../ads/SiteAds';
 import CookieConsent from '../legal/CookieConsent';
 import PolicyAcceptanceGate from '../legal/PolicyAcceptanceGate';
 import SiteUpdatesNotice from '../app/SiteUpdatesNotice';
+import LaunchBanner from '../app/LaunchBanner';
 import GuideTour from '../guide/GuideTour';
 import GuideWelcome from '../guide/GuideWelcome';
 import LanguageSync from '../app/LanguageSync';
@@ -26,6 +27,7 @@ const Layout = () => {
     <div className={classes.shell}>
       <LanguageSync />
       <Nav />
+      <LaunchBanner />
       <main className={classes.main}>
         <PolicyAcceptanceGate>
           <PageTransition transitionKey={pathname}>

@@ -93,6 +93,8 @@ import ListingRequestCancellationProposalPanel from '../../components/listingReq
 import NoticeAndClosurePanel from '../../components/listingRequests/core/NoticeAndClosurePanel';
 import CancellationWarningPanel from '../../components/listingRequests/core/CancellationWarningPanel';
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
+import PreLaunchDealNotice from "../../components/app/PreLaunchDealNotice";
+import { usePaymentsLive } from "../../hooks/site/usePaymentsLive";
 
 const classes = {
   page: "space-y-6",
@@ -107,6 +109,7 @@ const classes = {
   btnPrimary: "btnPrimary",
   btnDanger: "btnDangerOutline",
   submitError: "notice noticeError",
+  acceptClosed: "notice noticeInfo",
   loadingText: "text-sm text-zinc-600",
   errorCard: "notice noticeError",
   field: "space-y-2 pt-1",
@@ -162,6 +165,7 @@ const getCreatorMilestoneWaitMessage = (
 
 const CreatorRequestDetails = () => {
   const t = useT();
+  const paymentsLive = usePaymentsLive();
   const language = dateLocale(useLanguage());
   const { id } = useParams<{ id: string }>();
 
@@ -653,6 +657,10 @@ const CreatorRequestDetails = () => {
                 </div>
               )}
 
+              {canAcceptListingRequest(request.status) && !paymentsLive && (
+                <p className={classes.acceptClosed}>{t("launch.acceptClosed")}</p>
+              )}
+
               <div className={classes.row}>
                 {canAcceptListingRequest(request.status) && (
                   <button
@@ -660,6 +668,7 @@ const CreatorRequestDetails = () => {
                     type="button"
                     onClick={() => void handleAcceptRequest()}
                     disabled={
+                      !paymentsLive ||
                       updateStatusMutation.isPending ||
                       (Boolean(request.buyer_consumer_rights_region) && !consumerRightsAcknowledged)
                     }
@@ -1049,7 +1058,7 @@ const CreatorRequestDetails = () => {
           stages={getRequestStages(workspaceInput, t)}
           actions={manageMenu}
           notice={
-            (request.status === "declined" ||
+            ((request.status === "declined" ||
               request.status === "archived" ||
               request.status === "cancelled") && (
               <RequestStatusNotice
@@ -1058,7 +1067,7 @@ const CreatorRequestDetails = () => {
                 archiveContext={request}
                 cancellationContext={request}
               />
-            )
+            )) || (!paymentsLive && <PreLaunchDealNotice />)
           }
         />
       }

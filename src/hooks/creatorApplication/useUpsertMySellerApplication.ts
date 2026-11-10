@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../providers/AuthProvider";
-import type { SellerApplicationStatus } from "./useMySellerApplication";
+import type { SellerApplicationStatus, TwitchStatus } from "./useMySellerApplication";
 
 type UpsertSellerApplicationInput = {
   id?: string;
@@ -11,6 +11,9 @@ type UpsertSellerApplicationInput = {
   agreed_to_original_work?: boolean;
   agreed_to_manual_review?: boolean;
   agreed_to_age_and_capacity?: boolean;
+  twitch_status?: TwitchStatus | null;
+  twitch_follower_count?: number | null;
+  youtube_subscriber_count?: number | null;
   submitted_at?: string | null;
 };
 
@@ -30,6 +33,9 @@ const upsertMySellerApplication = async (
     agreed_to_original_work: input.agreed_to_original_work ?? false,
     agreed_to_manual_review: input.agreed_to_manual_review ?? false,
     agreed_to_age_and_capacity: input.agreed_to_age_and_capacity ?? false,
+    twitch_status: input.twitch_status ?? null,
+    twitch_follower_count: input.twitch_follower_count ?? null,
+    youtube_subscriber_count: input.youtube_subscriber_count ?? null,
     submitted_at:
       input.status === "submitted"
         ? input.submitted_at ?? now

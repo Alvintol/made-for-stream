@@ -71,6 +71,8 @@ import ListingRequestCancelBeforePaymentAction from '../../components/listingReq
 import ListingRequestCancellationProposalPanel from '../../components/listingRequests/core/ListingRequestCancellationProposalPanel';
 import NoticeAndClosurePanel from '../../components/listingRequests/core/NoticeAndClosurePanel';
 import CancellationWarningPanel from '../../components/listingRequests/core/CancellationWarningPanel';
+import PreLaunchDealNotice from '../../components/app/PreLaunchDealNotice';
+import { usePaymentsLive } from '../../hooks/site/usePaymentsLive';
 
 const classes = {
   page: "space-y-6",
@@ -104,6 +106,7 @@ const BuyerRequestDetails = () => {
 
   const { id } = useParams<{ id: string }>();
   const t = useT();
+  const paymentsLive = usePaymentsLive();
   const language = dateLocale(useLanguage());
 
   const { data, isLoading, error } = useBuyerRequest(id ?? null);
@@ -761,7 +764,7 @@ const BuyerRequestDetails = () => {
           stages={getRequestStages(workspaceInput, t)}
           actions={manageMenu}
           notice={
-            (request.status === "declined" ||
+            ((request.status === "declined" ||
               request.status === "archived" ||
               request.status === "cancelled") &&
             <RequestStatusNotice
@@ -769,7 +772,7 @@ const BuyerRequestDetails = () => {
               reason={request.creator_status_reason}
               archiveContext={request}
               cancellationContext={request}
-            />
+            />) || (!paymentsLive && <PreLaunchDealNotice />)
           }
         />
       }

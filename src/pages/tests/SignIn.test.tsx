@@ -40,6 +40,8 @@ const renderSignIn = () =>
 const getPolicyCheckbox = () =>
   screen.getByRole("checkbox", { name: /I agree to the Terms of Service and the Privacy Policy/i });
 
+const getAdultCheckbox = () => screen.getByRole("checkbox", { name: /I am at least 18 years old/i });
+
 const expectedPending = [
   { policyType: "terms", policyVersion: termsVersion },
   { policyType: "privacy", policyVersion: privacyVersion },
@@ -81,6 +83,12 @@ describe("SignIn policy acceptance", () => {
     expect(getPolicyCheckbox().closest(".needsAttention")).not.toBeNull();
 
     fireEvent.click(getPolicyCheckbox());
+    fireEvent.click(twitch);
+
+    expect(mocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Please confirm you are at least 18 to continue.");
+
+    fireEvent.click(getAdultCheckbox());
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(document.querySelector(".needsAttention")).toBeNull();
@@ -113,6 +121,7 @@ describe("SignIn policy acceptance", () => {
     renderSignIn();
 
     fireEvent.click(getPolicyCheckbox());
+    fireEvent.click(getAdultCheckbox());
     fireEvent.click(screen.getByRole("button", { name: /Sign in with Google/i }));
 
     await waitFor(() => expect(mocks.signInWithOAuth).toHaveBeenCalledTimes(1));
@@ -124,6 +133,7 @@ describe("SignIn policy acceptance", () => {
     renderSignIn();
 
     fireEvent.click(getPolicyCheckbox());
+    fireEvent.click(getAdultCheckbox());
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
       target: { value: "buyer@example.com" },
     });

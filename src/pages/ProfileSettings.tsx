@@ -24,6 +24,7 @@ import CreatorPayoutSettings from "../components/settings/CreatorPayoutSettings"
 import { useT, type Translate } from "../lib/i18n/i18n";
 import { FadeIn } from "../lib/motion";
 import KeptPlaceholder from "../components/ui/KeptPlaceholder";
+import { usePaymentsLive } from "../hooks/site/usePaymentsLive";
 
 const classes = {
   page: "space-y-4",
@@ -156,6 +157,7 @@ const StepBadge = ({ step }: { step: AccountSetupStep }): ReactNode => {
 
 const ProfileSettings = () => {
   const t = useT();
+  const paymentsLive = usePaymentsLive();
   const navigate = useNavigate();
   const { search } = useLocation();
 
@@ -711,7 +713,11 @@ const ProfileSettings = () => {
             badge={<StepBadge step={stepByKey.payouts} />}
             {...sectionFlags("payouts")}
           >
-            <CreatorPayoutSettings isCreatorApproved={isCreatorApproved} />
+            {paymentsLive ? (
+              <CreatorPayoutSettings isCreatorApproved={isCreatorApproved} />
+            ) : (
+              <p className={classes.noticeInfo}>{t("launch.payoutsClosed")}</p>
+            )}
           </CollapsibleSection>
         </div>
       </div>

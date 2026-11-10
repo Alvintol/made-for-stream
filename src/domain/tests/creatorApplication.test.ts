@@ -9,6 +9,7 @@ import {
   getUrlValidationError,
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
+  meetsAudienceMinimum,
   normaliseUrlInput,
   type WorkSample,
 } from "../creatorApplication/creatorApplication";
@@ -24,6 +25,7 @@ const recent = link(REQUIRED_RECENT_UPLOAD_TITLE, "https://youtube.com/watch?v=1
 const ready = {
   profileReady: true,
   hasLinkedPlatform: true,
+  audience: { twitchStatus: "affiliate" as const, twitchFollowers: 300, youtubeSubscribers: null },
   samples: [recent, link("One"), link("Two")],
   agreementsAccepted: true,
 };
@@ -115,5 +117,27 @@ describe("submission requirements", () => {
       samples: [recent, ...Array.from({ length: 10 }, (_, index) => link(`Sample ${index}`))],
     });
     expect(getFirstApplicationBlocker(tooMany)?.blocker).toBe("Remove samples to stay within 10.");
+  });
+});
+
+describe("audience minimum", () => {
+  it("takes Twitch Affiliate or Partner with 300 followers, or 500 YouTube subscribers", () => {
+    expect(meetsAudienceMinimum({ twitchStatus: "affiliate", twitchFollowers: 300, youtubeSubscribers: null })).toBe(true);
+    expect(meetsAudienceMinimum({ twitchStatus: "partner", twitchFollowers: 5000, youtubeSubscribers: null })).toBe(true);
+    expect(meetsAudienceMinimum({ twitchStatus: null, twitchFollowers: null, youtubeSubscribers: 500 })).toBe(true);
+  });
+
+  it("refuses anything below the minimums", () => {
+    expect(meetsAudienceMinimum({ twitchStatus: "affiliate", twitchFollowers: 299, youtubeSubscribers: 499 })).toBe(false);
+    expect(meetsAudienceMinimum({ twitchStatus: "none", twitchFollowers: 10000, youtubeSubscribers: null })).toBe(false);
+    expect(meetsAudienceMinimum({ twitchStatus: null, twitchFollowers: null, youtubeSubscribers: null })).toBe(false);
+  });
+
+  it("blocks submission until it is met", () => {
+    const blocker = getFirstApplicationBlocker(
+      getCreatorApplicationRequirements({ ...ready, audience: { twitchStatus: "none", twitchFollowers: 0, youtubeSubscribers: 0 } })
+    );
+
+    expect(blocker?.key).toBe("audience");
   });
 });

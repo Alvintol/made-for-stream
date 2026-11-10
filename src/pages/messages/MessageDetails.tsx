@@ -9,6 +9,7 @@ import {
 } from "../../hooks/conversations/useConversationDetails";
 import { useT } from "../../lib/i18n/i18n";
 import { useAuth } from "../../providers/AuthProvider";
+import PreLaunchDealNotice from "../../components/app/PreLaunchDealNotice";
 const classes = {
   page: "space-y-5",
   backLink: "backLink",
@@ -87,6 +88,8 @@ const MessageDetails = () => {
             <p className={classes.sub}>
               {t("messages.people", { buyer: buyerLabel, creator: creatorLabel })}
             </p>
+
+            <PreLaunchDealNotice />
           </>
         }
       />
