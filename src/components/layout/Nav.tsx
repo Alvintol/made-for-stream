@@ -16,6 +16,7 @@ import { useCollapsed, useFitCount } from "../../hooks/useCollapsed";
 import { useT } from "../../lib/i18n/i18n";
 import type { MessageKey } from "../../lib/i18n/messages/en";
 import BrandLogo from "./BrandLogo";
+import NotificationBell from "./NotificationBell";
 import RegionPicker from "./RegionPicker";
 import ThemeToggle from "./ThemeToggle";
 
@@ -273,6 +274,8 @@ const Nav = () => {
     </NavLink>
   );
 
+  const bell = !loading && user && <NotificationBell />;
+
   const signInLink = !loading && !user && (
     <NavLink to="/signin" className={classes.signInButton}>
       {t("nav.signIn")}
@@ -329,6 +332,8 @@ const Nav = () => {
       )}
 
       {withPriority && inboxLink}
+
+      {withPriority && bell}
       
       {!loading && user && (
         <NavLink
@@ -398,6 +403,7 @@ const Nav = () => {
           <div className={classes.priority}>
             {dashboardLink}
             {inboxLink}
+            {bell}
             {signInLink}
           </div>
         ) : (

@@ -36,12 +36,13 @@ const REQUEST_QUERIES = new Set([
   "activeListingRequestForListing",
 ]);
 
-// What a commission notification makes out of date: the request pages and
-// lists, and everything about a request's agreement, payments and steps.
+// What a commission notification makes out of date: the bell, the request
+// pages and lists, and everything about a request's agreement, payments and
+// steps.
 export const refreshesOnNotification = (key: QueryKey): boolean => {
   const name = String(key[0]);
 
-  return REQUEST_QUERIES.has(name) || name.startsWith("listingRequest");
+  return name === "notifications" || REQUEST_QUERIES.has(name) || name.startsWith("listingRequest");
 };
 
 // Listens for `userId`; returns the function that stops.
