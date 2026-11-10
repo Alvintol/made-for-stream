@@ -415,8 +415,12 @@ These create paid or external resources and are **not** done by any agent.
 2. **Secret and env on Cloud Run** (`made-for-stream-api`, `us-central1`):
 
    ```bash
-   openssl rand -base64 48 | tr -d '\n' | gcloud secrets create OPS_CRON_SECRET --data-file=-
+   openssl rand -base64 48 | tr -d '\r\n' | gcloud secrets create OPS_CRON_SECRET --data-file=-
    ```
+
+   Keep the `\r`: on Windows, `openssl` ends its output with a hidden carriage
+   return. If it's left in the secret, no request can match it, and every call
+   gets a 401.
 
    ```bash
    gcloud run services update made-for-stream-api --region us-central1 --update-secrets=OPS_CRON_SECRET=OPS_CRON_SECRET:latest --update-env-vars=OPS_ALERT_EMAIL=ops@madeforstream.com

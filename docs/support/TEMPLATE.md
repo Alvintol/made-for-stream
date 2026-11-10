@@ -27,7 +27,7 @@ blocked, and is money involved.
 id: <AREA>-001
 tier: 1
 signals:
-  - source: api | db | client | stripe
+  - source: api | db | client | stripe | worker
     match: "<verbatim error string or /regex/i>"
     where: "<table, endpoint, or file that produces it>"
 auto_fix: <whitelisted_action_name>
