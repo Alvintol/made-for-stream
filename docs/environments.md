@@ -143,7 +143,10 @@ Alvin does these, in this order. Nothing here moves money.
    from `supabase/templates/` (`support/messaging/transactional-email.md`).
    Set Rate Limits to match dev.
 6. Authentication → Attack Protection: **CAPTCHA protection on**, provider
-   Turnstile, with the secret from step 2 below.
+   **Cloudflare Turnstile**, with the secret from step 2 below. The provider
+   menu starts on hCaptcha: change it, or every email sign-in fails with
+   `captcha protection: request disallowed (invalid-input-response)`, even
+   with the right secret.
 7. Realtime → Settings: match dev (public access off; the site only uses
    private channels).
 

@@ -324,15 +324,18 @@ Google and Twitch sign-in don't use it. Dev has no check: its build has no
 `VITE_TURNSTILE_SITE_KEY` and its Supabase has CAPTCHA off.
 
 **Cause.** One person: the check hasn't finished, failed in their browser, or
-an extension blocks `challenges.cloudflare.com`. Everyone: the site key on the
-prod Worker and the secret in Supabase (Authentication → Attack Protection)
-come from different Turnstile widgets, or the widget doesn't list
+an extension blocks `challenges.cloudflare.com`. Everyone: Supabase's CAPTCHA
+provider (Authentication → Attack Protection) is set to hCaptcha, its default,
+instead of Cloudflare Turnstile — every token then fails with
+`invalid-input-response`, whatever the secret (this happened at the
+2026-11-11 launch); or the site key on the prod Worker and the secret in
+Supabase come from different Turnstile widgets, or the widget doesn't list
 `madeforstream.com`. A site built with the site key while its Supabase has
 CAPTCHA off still works; the reverse (CAPTCHA on, no site key) refuses every
 email sign-in.
 
 **Fix.** One person: wait for the check, reload, or turn off the blocking
-extension; Google or Twitch also work. Everyone: compare the widget's keys with
+extension; Google or Twitch also work. Everyone: first check the provider says Cloudflare Turnstile, then compare the widget's keys with
 both settings, then rebuild the prod Worker.
 
 **Money impact.** None.
