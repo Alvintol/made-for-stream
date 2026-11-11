@@ -7,7 +7,7 @@ or replace function public.close_conversation(
   p_reason_details text default null
 ) returns public.conversations language plpgsql security definer
 set
-  search_path = public as $ $ declare current_user_id uuid;
+  search_path = public as $$ declare current_user_id uuid;
 
 conversation_row public.conversations;
 
@@ -115,7 +115,7 @@ return conversation_row;
 
 end;
 
-$ $;
+$$;
 
 grant execute on function public.close_conversation(uuid, text, text) to authenticated;
 
@@ -125,7 +125,7 @@ or replace function public.request_buyer_image_upload(
   p_request_note text default null
 ) returns public.conversations language plpgsql security definer
 set
-  search_path = public as $ $ declare current_user_id uuid;
+  search_path = public as $$ declare current_user_id uuid;
 
 conversation_row public.conversations;
 
@@ -218,14 +218,14 @@ return conversation_row;
 
 end;
 
-$ $;
+$$;
 
 grant execute on function public.request_buyer_image_upload(uuid, text) to authenticated;
 
 create
 or replace function public.approve_buyer_image_upload(p_conversation_id uuid) returns public.conversations language plpgsql security definer
 set
-  search_path = public as $ $ declare current_user_id uuid;
+  search_path = public as $$ declare current_user_id uuid;
 
 conversation_row public.conversations;
 
@@ -304,14 +304,14 @@ return conversation_row;
 
 end;
 
-$ $;
+$$;
 
 grant execute on function public.approve_buyer_image_upload(uuid) to authenticated;
 
 create
 or replace function public.revoke_buyer_image_upload(p_conversation_id uuid) returns public.conversations language plpgsql security definer
 set
-  search_path = public as $ $ declare current_user_id uuid;
+  search_path = public as $$ declare current_user_id uuid;
 
 conversation_row public.conversations;
 
@@ -390,6 +390,6 @@ return conversation_row;
 
 end;
 
-$ $;
+$$;
 
 grant execute on function public.revoke_buyer_image_upload(uuid) to authenticated;

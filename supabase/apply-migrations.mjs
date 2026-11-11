@@ -30,7 +30,7 @@ export const pendingMigrations = (files, appliedVersions) => {
   return files
     .map(parseMigrationFile)
     .filter(Boolean)
-    .sort((a, b) => a.file.localeCompare(b.file))
+    .sort((a, b) => (a.file < b.file ? -1 : 1)) // byte order, not locale: "_a_" must sort as written
     .filter((migration) => !applied.has(migration.file));
 };
 

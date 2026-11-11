@@ -2,7 +2,7 @@
 create
 or replace function public.handle_conversation_message_insert() returns trigger language plpgsql security definer
 set
-  search_path = public as $ $ declare preview text;
+  search_path = public as $$ declare preview text;
 
 begin preview := case
   when new.message_type = any (array ['attachment'::text, 'mixed'::text])
@@ -44,7 +44,7 @@ return new;
 
 end;
 
-$ $;
+$$;
 
 drop trigger if exists conversation_messages_after_insert on public.conversation_messages;
 

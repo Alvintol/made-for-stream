@@ -1,6 +1,6 @@
 -- Helper for RLS and future SQL logic
 create
-or replace function public.is_approved_seller(_user_id uuid) returns boolean language sql stable as $ $
+or replace function public.is_approved_seller(_user_id uuid) returns boolean language sql stable as $$
 select
   exists (
     select
@@ -12,4 +12,4 @@ select
       and sa.status = 'approved'
   );
 
-$ $;
+$$;
