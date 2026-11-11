@@ -10,6 +10,8 @@ surfaces:
   - src/lib/i18n/i18n.ts                         # loadLanguage, PAGE-002
   - src/domain/legal/policyVersions.ts           # versions, apart from policy text
   - vite.config.js                               # library download groups
+  - src/components/home/HeroParallax.tsx         # home hero showcase
+  - public/hero/                                 # its VTuber model, emote sheet, pixel-art GIF and video
 unmatched_tier: 2
 ---
 
@@ -35,6 +37,7 @@ to get the new release, at most once a minute so a broken page can't loop.
 | The page reloaded by itself once | Expected, just after a release |
 | The site is in English after choosing French or Spanish | [`PAGE-002`](#page-002--a-language-could-not-be-downloaded) |
 | "Loading..." for a moment on a page's first visit | Expected on a slow connection |
+| The home page's video is still, not moving | [Home hero showcase](#home-hero-showcase) |
 
 ---
 
@@ -90,6 +93,51 @@ rather than an unfinished page.
 **Fix.** Ask them to reload. If it affects everyone, treat it as `PAGE-001`.
 
 **Money impact.** None.
+
+---
+
+## Home hero showcase
+
+Not an error the code produces. Since 2026-11-10 the large-screen home hero
+shows four fixed pieces from `public/hero/`:
+- a VTuber model cutout in the middle, the main piece. It's mirrored in the
+  file itself, so it faces the headline; don't flip it with CSS, because the
+  scroll animation overwrites transforms.
+- an emote sheet on a card, upper left by her head, turned in toward the
+  model in 3D
+- a pixel-art GIF below the emote card, a little left of its centre. Like
+  the model, it's mirrored in the file itself, not with CSS.
+- a short-form video edit behind the model on the right, turned in toward it
+
+Only the emote sheet sits on a card. The model and the GIF came with transparent
+backgrounds. The emote sheet's black background was removed when it was
+added, keeping the black line art: only large black areas joined to the
+picture's edge were cleared. A replacement sheet needs the same treatment, or
+it will show as a black rectangle.
+
+All four pieces, and the arches behind the model, sit in one box the size of the
+model's picture (80% of the screen height), so they stay beside her at any
+screen size.
+
+The video is a silent 9-second loop of about 1.2 MB, played like a GIF. The
+source clip ends on about a second of black, so the last 2 seconds were cut.
+Phones and small tablets don't show the art at all (`lg` and up only).
+
+- **The video shows a still frame.** That's expected for anyone whose device
+  asks for reduced motion, and for browsers that block autoplay (some battery
+  savers do). The still is `video-edit-poster.jpg`.
+- **The headline and buttons are invisible.** Fixed 2026-11-10. The hero's
+  animations must use `opacity`, never `autoAlpha`: `autoAlpha` reads the
+  page fade-in's hidden state on load and keeps the text hidden.
+- **A piece is blank.** Its file is missing from `public/hero/` in the
+  release. Check the file is in the repo and the deploy finished. Nothing else
+  depends on these files.
+
+To swap a piece, replace the file with one of the same name, or change the
+path in `media` at the top of `HeroParallax.tsx`. Keep the video small: it
+downloads on every first visit to the home page on a large screen. FFmpeg
+settings used: `-t 9.366 -an -vf scale=480:-2,fps=30 -c:v libx264 -crf 27
+-preset slow -movflags +faststart`.
 
 ---
 

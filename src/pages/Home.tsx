@@ -90,12 +90,6 @@ const SectionHeader = ({ eyebrow, title, to, linkText }: SectionHeaderProps) => 
 // used to take the three newest listings' images, so whatever a creator
 // published last became the site's front-page art (noticed 2026-10-06).
 // Replace these with brand artwork when it exists (rebrand assets).
-const HERO_PLACEHOLDER_URLS = [
-  "https://picsum.photos/seed/emotes/960/540",
-  "https://picsum.photos/seed/overlay/960/540",
-  "https://picsum.photos/seed/pngtuber/960/540",
-];
-
 // The home page shows six at most, so nothing more is asked for.
 const LIVE_CARD_COUNT = 6;
 
@@ -285,7 +279,7 @@ const Home = () => {
 
   return (
     <div className={classes.page}>
-      <HeroParallax previewUrls={HERO_PLACEHOLDER_URLS} />
+      <HeroParallax />
       <div className={classes.afterHero}>
         <AdGutters afterHero />
         <FeaturedSection
