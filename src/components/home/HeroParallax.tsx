@@ -87,8 +87,14 @@ const classes = {
   // picture ends at the waist, so its bottom fades out. Stacked shadows: a
   // wide soft one, a tight one at the edge, and one cast back onto the video.
   // Dark mode uses black plus a faint accent rim so she still lifts off the page.
+  // The shadows sit on a wrapper, not on the image: a mask only covers its own
+  // element's box, so with both on the image every shadow was cut off in a hard
+  // rectangle at the picture's edges (most visible on phones). The wrapper
+  // shadows the already-faded picture, so the shadow fades out with her too.
+  modelShadow:
+    "absolute inset-0 [filter:drop-shadow(0_32px_44px_rgb(39_24_112/0.38))_drop-shadow(0_6px_10px_rgb(39_24_112/0.28))_drop-shadow(18px_8px_22px_rgb(39_24_112/0.22))] dark:[filter:drop-shadow(0_32px_48px_rgb(0_0_0/0.8))_drop-shadow(0_6px_12px_rgb(0_0_0/0.6))_drop-shadow(18px_8px_24px_rgb(0_0_0/0.55))_drop-shadow(0_0_26px_rgb(var(--accent)/0.3))]",
   model:
-    "absolute inset-0 h-full w-full [filter:drop-shadow(0_32px_44px_rgb(39_24_112/0.38))_drop-shadow(0_6px_10px_rgb(39_24_112/0.28))_drop-shadow(18px_8px_22px_rgb(39_24_112/0.22))] dark:[filter:drop-shadow(0_32px_48px_rgb(0_0_0/0.8))_drop-shadow(0_6px_12px_rgb(0_0_0/0.6))_drop-shadow(18px_8px_24px_rgb(0_0_0/0.55))_drop-shadow(0_0_26px_rgb(var(--accent)/0.3))] [mask-image:linear-gradient(to_bottom,black_82%,transparent)] will-change-transform",
+    "absolute inset-0 h-full w-full [mask-image:linear-gradient(to_bottom,black_82%,transparent)] will-change-transform",
   // Transparent GIF, no card; the shadow follows its outline. Below the emote
   // card and a little left of its centre, in front of the model.
   sprite:
@@ -284,7 +290,9 @@ const HeroParallax = () => {
             )}
 
             <div data-intro="model" className={classes.introLayer}>
-              <img data-hero-model src={media.model} alt="" className={classes.model} loading="eager" />
+              <div className={classes.modelShadow}>
+                <img data-hero-model src={media.model} alt="" className={classes.model} loading="eager" />
+              </div>
             </div>
 
             <div data-intro="tile" className={classes.introLayer}>
