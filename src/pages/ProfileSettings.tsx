@@ -272,8 +272,9 @@ const ProfileSettings = () => {
         hasLinkedPlatform: hasLinkedCreatorPlatform,
         applicationStatus: sellerApplication?.status ?? null,
         payoutsReady,
+        paymentsLive,
       }, t),
-    [profileReady, hasLinkedCreatorPlatform, sellerApplication?.status, payoutsReady, t]
+    [profileReady, hasLinkedCreatorPlatform, sellerApplication?.status, payoutsReady, paymentsLive, t]
   );
 
   const stepByKey = Object.fromEntries(steps.map((step) => [step.key, step])) as Record<
@@ -427,9 +428,11 @@ const ProfileSettings = () => {
       ? t("dashboard.checking")
       : t("profile.noPlatforms");
 
-  const payoutSummary = isCreatorApproved
-    ? getCreatorPaymentAccountStatusLabel(paymentAccount, t)
-    : t("profile.payoutsLocked");
+  const payoutSummary = !isCreatorApproved
+    ? t("profile.payoutsLocked")
+    : paymentsLive || payoutsReady
+      ? getCreatorPaymentAccountStatusLabel(paymentAccount, t)
+      : t("setup.payoutsClosed");
 
   return (
     <div className={classes.page}>

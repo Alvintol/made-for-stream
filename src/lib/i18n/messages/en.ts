@@ -2385,6 +2385,7 @@ export const en = {
   "setup.connect": "Connect",
   "setup.payouts": "Payouts",
   "setup.payoutsLocked": "Unlocks after creator approval",
+  "setup.payoutsClosed": "Opens when payments open",
   "setup.payoutsDone": "Stripe is ready for payouts",
   "setup.payoutsTodo": "Finish Stripe setup to get paid",
   "setup.setUpPayouts": "Set up payouts",

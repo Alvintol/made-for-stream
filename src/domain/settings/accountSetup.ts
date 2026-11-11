@@ -26,6 +26,9 @@ export type AccountSetupInput = {
     | "suspended"
     | null;
   payoutsReady: boolean;
+  // False before launch (payments_are_live, 20261110_193): there's no payout
+  // setup to finish yet, so the step waits instead of asking for attention.
+  paymentsLive?: boolean;
 };
 
 const creatorStep = (
@@ -68,6 +71,7 @@ export const getAccountSetupSteps = (
   t: Translate = english
 ): AccountSetupStep[] => {
   const isCreator = input.applicationStatus === "approved";
+  const payoutsClosed = isCreator && input.paymentsLive === false && !input.payoutsReady;
 
   return [
     {
@@ -88,11 +92,13 @@ export const getAccountSetupSteps = (
     {
       key: "payouts",
       label: t("setup.payouts"),
-      state: !isCreator ? "locked" : input.payoutsReady ? "done" : "todo",
+      state: !isCreator || payoutsClosed ? "locked" : input.payoutsReady ? "done" : "todo",
       detail: t(
         !isCreator
           ? "setup.payoutsLocked"
-          : input.payoutsReady
+          : payoutsClosed
+            ? "setup.payoutsClosed"
+            : input.payoutsReady
             ? "setup.payoutsDone"
             : "setup.payoutsTodo"
       ),
