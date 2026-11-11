@@ -235,6 +235,12 @@ shakes, gets a red ring, takes the focus and shows the sentence above.
 Ticking it clears the ring. Someone with reduced motion turned on gets the
 ring without the shake.
 
+**No age box at sign-in (since 2026-11-11).** From 2026-11-10 to 2026-11-11
+sign-in also had an "I am at least 18" box. It was removed: agreeing to the
+Terms covers their age rule (section 3, accounts are for adults), and
+creators confirm their age in its own box on the creator application, which
+the database enforces (`creators/applications.md`).
+
 **Asked again straight after signing in (2026-10-28).** The ticked box is
 recorded once the person arrives, except for a document they accepted
 before in an older version: for that one they get the "What changed in

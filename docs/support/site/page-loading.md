@@ -122,7 +122,12 @@ screen size.
 
 The video is a silent 9-second loop of about 1.2 MB, played like a GIF. The
 source clip ends on about a second of black, so the last 2 seconds were cut.
-Phones and small tablets don't show the art at all (`lg` and up only).
+Phones and tablets (below `lg`, 1024px) show a smaller group under the text:
+the model, the emote card and the pixel art, sized by the screen's width.
+They don't get the video or the arches, to keep it calm. The video isn't put
+in the page at all there, so phones never download it; which one a visitor
+gets is decided once when the page opens, so widening a window past 1024px
+only adds the video after a reload.
 
 - **The video shows a still frame.** That's expected for anyone whose device
   asks for reduced motion, and for browsers that block autoplay (some battery

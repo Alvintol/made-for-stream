@@ -144,10 +144,9 @@ const SignIn = () => {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Agreeing to the Terms covers their age rule (section 3). Creators confirm
+  // their age again, in its own box, on the creator application.
   const [agreed, setAgreed] = useState(false);
-  // Terms section 3: accounts are for adults. Asked every time, like the
-  // Terms box, because this page can't tell a new account from a returning one.
-  const [adult, setAdult] = useState(false);
   // Counts attempts to continue without the box; each one replays the shake.
   const [policyAttempts, setPolicyAttempts] = useState(0);
   const policyRef = useRef<HTMLDivElement>(null);
@@ -160,15 +159,13 @@ const SignIn = () => {
   // Every way in starts here: without the box ticked, the box shakes, turns
   // red, says why and takes the focus; nothing is sent.
   const requireAgreement = (): boolean => {
-    if (agreed && adult) return true;
+    if (agreed) return true;
 
     setPolicyAttempts((count) => count + 1);
 
     requestAnimationFrame(() => {
       policyRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-      document
-        .getElementById(agreed ? "signin-adult" : "signin-policy-acceptance")
-        ?.focus({ preventScroll: true });
+      document.getElementById("signin-policy-acceptance")?.focus({ preventScroll: true });
     });
 
     return false;
@@ -176,12 +173,7 @@ const SignIn = () => {
 
   const onAgreedChange = (checked: boolean) => {
     setAgreed(checked);
-    if (checked && adult) setPolicyAttempts(0);
-  };
-
-  const onAdultChange = (checked: boolean) => {
-    setAdult(checked);
-    if (checked && agreed) setPolicyAttempts(0);
+    if (checked) setPolicyAttempts(0);
   };
 
   // Sign-in redirects away, so the acceptance is parked and recorded by
@@ -392,19 +384,11 @@ const SignIn = () => {
             </Link>
             {t("signin.agreeAfter")}
           </PolicyAcceptanceCheckbox>
-          <PolicyAcceptanceCheckbox
-            id="signin-adult"
-            checked={adult}
-            onChange={onAdultChange}
-            disabled={busy}
-          >
-            {t("signin.adultConfirm")}
-          </PolicyAcceptanceCheckbox>
           </div>
 
           {policyAttempts > 0 && (
             <p className={classes.policyError} role="alert">
-              {t(agreed ? "signin.adultRequired" : "signin.policyRequired")}
+              {t("signin.policyRequired")}
             </p>
           )}
         </div>

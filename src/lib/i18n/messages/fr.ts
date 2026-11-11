@@ -2179,8 +2179,6 @@ export const fr: Record<MessageKey, Message> = {
   "launch.acceptClosed": "Les demandes ne peuvent pas être acceptées avant l’ouverture des paiements dans votre région. Vous pouvez quand même écrire à l’acheteur.",
   "launch.buyClosed": "L’achat ouvrira quand les paiements ouvriront dans votre région.",
   "launch.payoutsClosed": "La configuration des versements ouvrira avec les paiements dans votre région. Vous pouvez publier des annonces en attendant.",
-  "signin.adultConfirm": "J’ai au moins 18 ans.",
-  "signin.adultRequired": "Veuillez confirmer que vous avez au moins 18 ans pour continuer.",
   "apply.reqAudience": "Affilié Twitch avec {followers}+ abonnés, ou {subscribers}+ abonnés YouTube",
   "apply.reqAudienceBlock": "Il faut être Affilié ou Partenaire Twitch avec au moins {followers} abonnés, ou avoir au moins {subscribers} abonnés YouTube.",
   "apply.audienceTitle": "Votre audience",

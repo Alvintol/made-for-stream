@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { gsap, motion, prefersReducedMotion, useGSAP } from "../../lib/motion";
@@ -17,6 +17,12 @@ const media = {
   video: "/hero/video-edit.mp4",
   videoPoster: "/hero/video-edit-poster.jpg",
 } as const;
+
+// The video only goes on large screens, and isn't put in the page at all
+// elsewhere, so phones never download it. Checked once when the page opens.
+// ponytail: widening a window past it later doesn't add the video; a reload does.
+const showsVideo = () =>
+  typeof window.matchMedia === "function" && window.matchMedia("(min-width: 1024px)").matches;
 
 const classes = {
   // Full-bleed: break out of the page container; the app shell clips horizontal overflow.
@@ -37,7 +43,7 @@ const classes = {
     "absolute inset-[-20%] bg-[radial-gradient(rgb(var(--ink)/0.12)_1px,transparent_1px)] [background-size:28px_28px] [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)] will-change-transform",
   // Behind the model, centred a little right of her; the bottom fades out with her.
   // Tall enough that the outer two arches run off the top of the hero.
-  arcs: "absolute bottom-0 left-[9%] h-[140%] max-w-none text-[rgb(var(--accent)/0.18)] [mask-image:linear-gradient(to_bottom,black_70%,transparent)] will-change-transform",
+  arcs: "absolute bottom-0 left-[9%] hidden h-[140%] max-w-none lg:block text-[rgb(var(--accent)/0.18)] [mask-image:linear-gradient(to_bottom,black_70%,transparent)] will-change-transform",
 
   copy: "relative z-10 space-y-7 will-change-transform",
   tagline:
@@ -57,7 +63,9 @@ const classes = {
   // Laid out in percentages of one box, so the group keeps its shape at any width.
   // Sits on the bottom of the first screen (the -mb cancels the stage padding),
   // so the model stands on the page edge.
-  art: "relative z-0 mx-auto hidden aspect-[800/560] w-full max-w-[680px] lg:-mb-20 lg:block lg:self-end",
+  // Phones and tablets get a smaller group under the text, sized by the
+  // screen's width, without the video or the arches so it stays calm.
+  art: "relative z-0 mx-auto -mb-16 h-[min(50svh,90vw)] w-full max-w-[680px] lg:-mb-20 lg:h-auto lg:aspect-[800/560] lg:self-end",
   introLayer: "absolute inset-0",
   // Each turned piece: a spot with perspective, a static CSS turn inside it,
   // and the element GSAP moves inside that, so the two transforms never clash.
@@ -69,7 +77,7 @@ const classes = {
   emotesImage: "block h-auto w-full",
   // The model, the video, the emotes and the pixel art share one box the size
   // of the picture, so they keep their places around her at any screen size.
-  figure: "absolute bottom-0 left-1/2 aspect-[462/540] h-[80svh] -translate-x-1/2",
+  figure: "absolute bottom-0 left-1/2 aspect-[462/540] h-full -translate-x-1/2 lg:h-[80svh]",
   videoSpot: "absolute left-[74%] top-[16%] aspect-[9/14] w-[34%] [perspective:900px]",
   videoTurn: "h-full w-full [transform:rotateY(-30deg)] [transform-style:preserve-3d]",
   videoFrame:
@@ -94,6 +102,7 @@ const classes = {
 const HeroParallax = () => {
   const heroRef = useRef<HTMLElement>(null);
   const t = useT();
+  const [withVideo] = useState(showsVideo);
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
@@ -107,11 +116,6 @@ const HeroParallax = () => {
           stagger: 0.08,
         })
         .from(
-          "[data-intro='video']",
-          { opacity: 0, y: 40, scale: 0.92, duration: 1 },
-          0.05
-        )
-        .from(
           "[data-intro='model']",
           { opacity: 0, y: 60, scale: 0.94, duration: 1 },
           0.2
@@ -121,6 +125,9 @@ const HeroParallax = () => {
           { opacity: 0, y: 40, duration: 0.8, stagger: 0.12 },
           0.35
         );
+      if (withVideo) {
+        intro.from("[data-intro='video']", { opacity: 0, y: 40, scale: 0.92, duration: 1 }, 0.05);
+      }
 
       gsap.to("[data-hero-glow]", {
         x: "random(-40, 40)",
@@ -154,7 +161,7 @@ const HeroParallax = () => {
         ["[data-hero-sprite]", { y: -120, rotate: 6 }],
       ];
 
-      layers.forEach(([target, vars]) => {
+      layers.filter(([target]) => withVideo || !target.includes("video")).forEach(([target, vars]) => {
         gsap.to(target, { ...vars, ease: "none", scrollTrigger: scrub });
       });
 
@@ -253,26 +260,28 @@ const HeroParallax = () => {
               </div>
             </div>
 
-            <div data-intro="video" className={classes.introLayer}>
-              <div className={classes.videoSpot}>
-                <div className={classes.videoTurn}>
-                  <div data-hero-video className={classes.videoFrame}>
-                    <div data-hero-video-media className="h-full w-full">
-                      <video
-                        className={classes.videoMedia}
-                        src={media.video}
-                        poster={media.videoPoster}
-                        autoPlay={!prefersReducedMotion()}
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                      />
+            {withVideo && (
+              <div data-intro="video" className={classes.introLayer}>
+                <div className={classes.videoSpot}>
+                  <div className={classes.videoTurn}>
+                    <div data-hero-video className={classes.videoFrame}>
+                      <div data-hero-video-media className="h-full w-full">
+                        <video
+                          className={classes.videoMedia}
+                          src={media.video}
+                          poster={media.videoPoster}
+                          autoPlay={!prefersReducedMotion()}
+                          muted
+                          loop
+                          playsInline
+                          preload="auto"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div data-intro="model" className={classes.introLayer}>
               <img data-hero-model src={media.model} alt="" className={classes.model} loading="eager" />

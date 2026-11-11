@@ -2211,8 +2211,6 @@ export const en = {
   "launch.acceptClosed": "Requests can't be accepted until payments open in your region. You can still chat with the buyer.",
   "launch.buyClosed": "Buying opens when payments open in your region.",
   "launch.payoutsClosed": "Payout setup opens when payments open in your region. You can publish listings in the meantime.",
-  "signin.adultConfirm": "I am at least 18 years old.",
-  "signin.adultRequired": "Please confirm you are at least 18 to continue.",
   "apply.reqAudience": "Twitch Affiliate with {followers}+ followers, or {subscribers}+ YouTube subscribers",
   "apply.reqAudienceBlock": "You need Twitch Affiliate or Partner with at least {followers} followers, or at least {subscribers} YouTube subscribers.",
   "apply.audienceTitle": "Your audience",
