@@ -100,6 +100,7 @@ export const en = {
   "signin.browseCreators": "Browse creators",
   "signin.title": "Sign in",
   "signin.intro": "Use Twitch or Google, or get a sign-in link by email.",
+  "signin.introNoGoogle": "Use Twitch, or get a sign-in link by email.",
   "signin.twitch": "Sign in with Twitch",
   "signin.google": "Sign in with Google",
   "signin.orByEmail": "or by email",

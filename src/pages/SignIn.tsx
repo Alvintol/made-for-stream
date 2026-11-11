@@ -154,6 +154,9 @@ const SignIn = () => {
   // Each token works once, so the check restarts after every send.
   const siteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "").trim();
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Google sign-in shows only on a build with VITE_GOOGLE_SIGNIN=on, once its
+  // provider is set up in that Supabase project (support/auth/sign-in.md).
+  const withGoogle = String(import.meta.env.VITE_GOOGLE_SIGNIN ?? "").trim() === "on";
   const [checkRound, setCheckRound] = useState(0);
 
   // Every way in starts here: without the box ticked, the box shakes, turns
@@ -315,7 +318,7 @@ const SignIn = () => {
       <div className={classes.card}>
         <div className={classes.header}>
           <h1 className={classes.h1}>{t("signin.title")}</h1>
-          <p className={classes.p}>{t("signin.intro")}</p>
+          <p className={classes.p}>{t(withGoogle ? "signin.intro" : "signin.introNoGoogle")}</p>
         </div>
 
         <div className={classes.providerStack}>
@@ -326,12 +329,14 @@ const SignIn = () => {
             disabled={busy}
           />
 
-          <SocialButton
-            provider="google"
-            label={t("signin.google")}
-            onClick={() => void onOAuthSignIn("google")}
-            disabled={busy}
-          />
+          {withGoogle && (
+            <SocialButton
+              provider="google"
+              label={t("signin.google")}
+              onClick={() => void onOAuthSignIn("google")}
+              disabled={busy}
+            />
+          )}
         </div>
 
         <div className={classes.dividerRow}>

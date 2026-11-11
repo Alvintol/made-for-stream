@@ -92,10 +92,10 @@ describe("SignIn policy acceptance", () => {
   it("puts the agreement box after the ways to sign in", () => {
     renderSignIn();
 
-    const google = screen.getByRole("button", { name: /Sign in with Google/i });
+    const twitch = screen.getByRole("button", { name: /Sign in with Twitch/i });
     const email = screen.getByRole("button", { name: /Send sign-in link/i });
 
-    expect(google.compareDocumentPosition(getPolicyCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(twitch.compareDocumentPosition(getPolicyCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(email.compareDocumentPosition(getPolicyCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -116,10 +116,10 @@ describe("SignIn policy acceptance", () => {
     renderSignIn();
 
     fireEvent.click(getPolicyCheckbox());
-    fireEvent.click(screen.getByRole("button", { name: /Sign in with Google/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Sign in with Twitch/i }));
 
     await waitFor(() => expect(mocks.signInWithOAuth).toHaveBeenCalledTimes(1));
-    expect(mocks.signInWithOAuth.mock.calls[0][0]).toMatchObject({ provider: "google" });
+    expect(mocks.signInWithOAuth.mock.calls[0][0]).toMatchObject({ provider: "twitch" });
     expect(readPendingPolicyAcceptance()?.policies).toEqual(expectedPending);
   });
 
@@ -181,5 +181,21 @@ describe("SignIn person check (Turnstile)", () => {
 
     await waitFor(() => expect(mocks.signInWithOtp).toHaveBeenCalledTimes(1));
     expect(mocks.signInWithOtp.mock.calls[0][0].options).toMatchObject({ captchaToken: "token-1" });
+  });
+});
+
+describe("SignIn Google button", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("is hidden unless the build turns it on", () => {
+    renderSignIn();
+    expect(screen.queryByRole("button", { name: /Sign in with Google/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Use Twitch, or get a sign-in link by email.")).toBeInTheDocument();
+  });
+
+  it("shows with VITE_GOOGLE_SIGNIN=on", () => {
+    vi.stubEnv("VITE_GOOGLE_SIGNIN", "on");
+    renderSignIn();
+    expect(screen.getByRole("button", { name: /Sign in with Google/i })).toBeInTheDocument();
   });
 });

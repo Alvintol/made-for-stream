@@ -207,6 +207,12 @@ provider.
 console, Supabase auth settings, and `APP_ORIGIN`. A domain change breaks all
 three at once.
 
+**"There's no Google button" (since 2026-11-11).** Expected. Google sign-in
+was never set up, so the button shows only on a build with
+`VITE_GOOGLE_SIGNIN=on`. Turn that on only once that site's Supabase project
+has Google switched on with a working client (`environments.md`), or the
+button leads to a Google error page.
+
 **Money impact.** None directly.
 
 ---
@@ -227,8 +233,8 @@ auto_fix: none
 reason_not_automatable: "the person has to tick the box; nothing is wrong"
 ```
 
-**What it is (2026-10-26).** The sign-in card lists Twitch and Google,
-then the email link, then the agreement box ("I agree to the Terms of
+**What it is (2026-10-26).** The sign-in card lists Twitch (and Google, where
+it's switched on), then the email link, then the agreement box ("I agree to the Terms of
 Service and the Privacy Policy"). The buttons are never greyed out:
 pressing one without the box ticked sends nothing, and instead the box
 shakes, gets a red ring, takes the focus and shows the sentence above.
