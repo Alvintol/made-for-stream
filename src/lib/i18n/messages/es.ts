@@ -92,6 +92,7 @@ export const es: Record<MessageKey, Message> = {
   "signin.browseCreators": "Ver creadores",
   "signin.title": "Iniciar sesión",
   "signin.intro": "Usa Twitch o Google, o recibe un enlace para iniciar sesión por correo electrónico.",
+  "signin.introNoGoogle": "Usa Twitch, o recibe un enlace para iniciar sesión por correo electrónico.",
   "signin.twitch": "Iniciar sesión con Twitch",
   "signin.google": "Iniciar sesión con Google",
   "signin.orByEmail": "o por correo electrónico",

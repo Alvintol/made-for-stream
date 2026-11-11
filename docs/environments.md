@@ -131,10 +131,12 @@ Alvin does these, in this order. Nothing here moves money.
    None of these files are for dev: never apply `000`, `098_a`, `119_a` or
    `194` there.
 3. Authentication → Sign In / Providers: **allow new users to sign up**, email
-   on, and Google and Twitch on with the same client ID and secret as dev.
-   Add `https://caqvtbahdhcznwnbixqq.supabase.co/auth/v1/callback` to the
-   Google OAuth client's redirect URIs and to the Twitch app's OAuth redirect
-   URLs.
+   on, and Twitch on with the same client ID and secret as dev. Add
+   `https://caqvtbahdhcznwnbixqq.supabase.co/auth/v1/callback` to the Twitch
+   app's OAuth redirect URLs. Google sign-in isn't set up anywhere yet, so
+   its button is hidden (`VITE_GOOGLE_SIGNIN` unset). To add it later: make a
+   Google OAuth client with that callback, turn Google on here, then set
+   `VITE_GOOGLE_SIGNIN=on` on the Worker and rebuild.
 4. Authentication → URL Configuration: Site URL `https://madeforstream.com`,
    redirect URL `https://madeforstream.com/**`.
 5. Authentication → Emails: SMTP settings as on dev, and paste the templates
@@ -226,7 +228,7 @@ Accessor** on it. Then:
 ### 5. Check it, then make yourself admin
 
 On `madeforstream.com`: sign up by email (the check appears above the send
-button), with Google and with Twitch. Then, in prod's SQL editor, with your
+button), and with Twitch. Then, in prod's SQL editor, with your
 user id from Authentication → Users:
 
 ```sql
