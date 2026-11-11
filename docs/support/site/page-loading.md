@@ -38,6 +38,7 @@ to get the new release, at most once a minute so a broken page can't loop.
 | The site is in English after choosing French or Spanish | [`PAGE-002`](#page-002--a-language-could-not-be-downloaded) |
 | "Loading..." for a moment on a page's first visit | Expected on a slow connection |
 | The home page's video is still, not moving | [Home hero showcase](#home-hero-showcase) |
+| The page zooms in when tapping a text box on a phone | [Phones and tablets](#phones-and-tablets) |
 
 ---
 
@@ -138,6 +139,19 @@ path in `media` at the top of `HeroParallax.tsx`. Keep the video small: it
 downloads on every first visit to the home page on a large screen. FFmpeg
 settings used: `-t 9.366 -an -vf scale=480:-2,fps=30 -c:v libx264 -crf 27
 -preset slow -movflags +faststart`.
+
+---
+
+## Phones and tablets
+
+Not an error the code produces. Since 2026-11-10 every text box, drop-down
+and text area is 16px on touch screens (`pointer: coarse` in
+`src/styles/ui.css`), because phones zoom the page in on any field smaller
+than that and leave it zoomed. If the zoom comes back, a field has a rule that
+beats it, usually an inline style; it shouldn't set its own font size.
+
+Checked on 2026-11-10: no public page runs off the side of the screen at 320px
+or 375px wide. Pages behind sign-in weren't checked.
 
 ---
 
