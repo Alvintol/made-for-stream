@@ -647,6 +647,17 @@
   }
 }
 
+/* Phones and tablets zoom the page in when someone taps a text box whose
+   text is under 16px, and leave it zoomed. Unlayered, so it beats the
+   text-sm on individual fields. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* An invoice prints without the site around it. */
 @media print {
   header,
