@@ -1,0 +1,19 @@
+// Cloudflare Worker that serves the built web app (dist/) for the public site,
+// madeforstream.com. Same as wrangler.jsonc (dev), apart from the name and the
+// address. Built and deployed by Cloudflare from the `production` branch, with
+// the deploy command `npx wrangler deploy --config wrangler.prod.jsonc`, and
+// its own build variables pointing at the prod database and API.
+// The first deploy creates the madeforstream.com custom domain and its DNS
+// record. See docs/environments.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "made-for-stream",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "madeforstream.com", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

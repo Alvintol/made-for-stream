@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -142,5 +142,52 @@ describe("SignIn policy acceptance", () => {
     await waitFor(() => expect(mocks.signInWithOtp).toHaveBeenCalledTimes(1));
     expect(readPendingPolicyAcceptance()?.policies).toEqual(expectedPending);
     expect(await screen.findByText(/Link sent/i)).toBeInTheDocument();
+  });
+});
+
+describe("SignIn person check (Turnstile)", () => {
+  const fillAndSend = () => {
+    fireEvent.click(getPolicyCheckbox());
+    fireEvent.click(getAdultCheckbox());
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "buyer@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Send sign-in link/i }));
+  };
+
+  let solve: ((token: string) => void) | null = null;
+
+  beforeEach(() => {
+    mocks.signInWithOtp.mockReset().mockResolvedValue({ error: null });
+    vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "test-site-key");
+    solve = null;
+    window.turnstile = {
+      render: (_element, options) => {
+        solve = options.callback as (token: string) => void;
+        return "widget-1";
+      },
+      remove: vi.fn(),
+    };
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete window.turnstile;
+    clearPendingPolicyAcceptance();
+  });
+
+  it("sends nothing until the check passes, then sends its token", async () => {
+    renderSignIn();
+    await waitFor(() => expect(solve).not.toBeNull());
+
+    fillAndSend();
+    expect(mocks.signInWithOtp).not.toHaveBeenCalled();
+    expect(screen.getByText(/Wait a moment for the check/i)).toBeInTheDocument();
+
+    act(() => solve?.("token-1"));
+    fireEvent.click(screen.getByRole("button", { name: /Send sign-in link/i }));
+
+    await waitFor(() => expect(mocks.signInWithOtp).toHaveBeenCalledTimes(1));
+    expect(mocks.signInWithOtp.mock.calls[0][0].options).toMatchObject({ captchaToken: "token-1" });
   });
 });

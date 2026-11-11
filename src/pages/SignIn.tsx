@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import TurnstileCheck from "../components/auth/TurnstileCheck";
 import PolicyAcceptanceCheckbox from "../components/legal/PolicyAcceptanceCheckbox";
 import {
   signupPolicyTypes,
@@ -150,6 +151,11 @@ const SignIn = () => {
   // Counts attempts to continue without the box; each one replays the shake.
   const [policyAttempts, setPolicyAttempts] = useState(0);
   const policyRef = useRef<HTMLDivElement>(null);
+  // The email link needs a passed person check where one is set up (prod).
+  // Each token works once, so the check restarts after every send.
+  const siteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "").trim();
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [checkRound, setCheckRound] = useState(0);
 
   // Every way in starts here: without the box ticked, the box shakes, turns
   // red, says why and takes the focus; nothing is sent.
@@ -229,6 +235,11 @@ const SignIn = () => {
       return;
     }
 
+    if (siteKey && !captchaToken) {
+      setErr(t("signin.checkPending"));
+      return;
+    }
+
     try {
       setBusy(true);
       parkPolicyAcceptance();
@@ -237,6 +248,7 @@ const SignIn = () => {
         email: value,
         options: {
           emailRedirectTo: getRedirectTo(),
+          ...(captchaToken ? { captchaToken } : {}),
         },
       });
 
@@ -247,6 +259,10 @@ const SignIn = () => {
       setErr(getErrorMessage(error, t("signin.linkFailed")));
     } finally {
       setBusy(false);
+      if (siteKey) {
+        setCaptchaToken(null);
+        setCheckRound((round) => round + 1);
+      }
     }
   };
 
@@ -346,6 +362,8 @@ const SignIn = () => {
             placeholder={t("signin.emailPlaceholder")}
             autoComplete="email"
           />
+
+          {siteKey && <TurnstileCheck key={checkRound} siteKey={siteKey} onToken={setCaptchaToken} />}
 
           <button className={classes.btnEmail} type="submit" disabled={busy}>
             {busy ? t("signin.working") : t("signin.sendLink")}

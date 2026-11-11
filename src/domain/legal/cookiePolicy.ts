@@ -57,11 +57,12 @@ export const cookiePolicySections = [
     "title": "7. Storage Register",
     "body": [
       "This is the browser storage Made for Stream's site uses. No analytics, advertising or optional external media is in use, so Cookie settings currently has no optional category to switch on. You can remove any entry through your browser settings; removing necessary storage can sign you out or interrupt a payment.",
-      "Name: sb-itbgxxczuazwroniiyot-auth-token; Provider: Made for Stream, using Supabase; Type: Local storage on madeforstream.com; Purpose: Keeps you signed in and refreshes your session; Category: Authentication and account security; Duration: Until you sign out or clear it",
+      "Name: sb-caqvtbahdhcznwnbixqq-auth-token; Provider: Made for Stream, using Supabase; Type: Local storage on madeforstream.com; Purpose: Keeps you signed in and refreshes your session; Category: Authentication and account security; Duration: Until you sign out or clear it",
       "Name: creatorhub.pendingPolicyAcceptance; Provider: Made for Stream; Type: Local storage on madeforstream.com; Purpose: Holds the Terms and Privacy Policy versions you accepted while your account is created, so they can be recorded; Category: Authentication and account security; Duration: Removed once recorded",
       "Name: creatorhub.cookiePreferences; Provider: Made for Stream; Type: Local storage on madeforstream.com; Purpose: Remembers your Cookie settings choice and the policy version it applied to; Category: Privacy-choice storage; Duration: Up to six months",
       "Name: creatorhub-theme; Provider: Made for Stream; Type: Local storage on madeforstream.com; Purpose: Remembers a light or dark theme you chose; Category: Optional preferences, stored only when you choose a theme; Duration: Until you change or clear it",
       "Name: __stripe_mid and __stripe_sid; Provider: Stripe; Type: Cookies on madeforstream.com, set by Stripe.js; Purpose: Fraud prevention for a payment or creator onboarding you start; Category: Payment and fraud prevention; Duration: One year and 30 minutes respectively",
+      "The sign-in page loads Cloudflare Turnstile, a check that you are a person and not an automated program, before an email sign-in link is sent. It runs in a frame from challenges.cloudflare.com and does not set cookies on madeforstream.com. Cloudflare handles that check under its Privacy Policy (https://www.cloudflare.com/privacypolicy/).",
       "Stripe.js loads only on the checkout and payout-settings pages. Stripe's own pages and embedded onboarding can use further storage on Stripe's domains, governed by Stripe's Privacy Policy (https://stripe.com/privacy)."
     ]
   }

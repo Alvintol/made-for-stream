@@ -104,10 +104,7 @@ const App = () => {
             path="/terms/creator"
             element={<CreatorTerms />}
           />
-          {/*
-            Published policies. Terms and Privacy still carry a
-            [BUSINESS_NUMBER] placeholder while the registration is pending.
-          */}
+          {/* Published policies. */}
           <Route path="/policies/refunds" element={<RefundPolicy />} />
           <Route path="/policies/copyright" element={<CopyrightPolicy />} />
           <Route path="/policies/fees" element={<FeeSchedule />} />

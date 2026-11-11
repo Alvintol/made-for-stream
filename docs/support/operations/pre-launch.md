@@ -27,6 +27,12 @@ send a project agreement, buy an instant download, open a checkout or set up
 payouts. One database function, `payments_are_live()`, returns `false`. The
 database rules, the API and the site all read it, so they can't disagree.
 
+Since 2026-11-11 this is the public soft launch at `madeforstream.com`, on
+its own prod database and API, open to sign-ups (`../../environments.md`).
+Prod's API has no Stripe keys at all, so even a gap in this lock couldn't
+reach Stripe: any Stripe route answers "Stripe prod secret key is not
+configured." Dev keeps the same lock and Stripe's test mode.
+
 Every page shows a banner saying payments aren't open yet. Commission pages
 and chats show both people a notice that there's no date for their region,
 and that any deal they make anyway is only between them (Terms section 4).
@@ -136,15 +142,17 @@ All of this is Alvin's job, and it happens in this order:
 1. A lawyer has reviewed the Terms, Privacy Policy, Creator Terms, Refund
    Policy and Payment Terms. Remove the "Before launch" paragraph from Terms
    section 4 and bump `termsVersion`.
-2. A migration redefines `payments_are_live()` to return `true`. That opens
+2. Prod's API gets live Stripe keys, webhooks and the `connect-resync` job
+   ("Before payments open" in `../../environments.md`).
+3. A migration redefines `payments_are_live()` to return `true`. That opens
    accepting, agreements, checkout, instant purchases and payout setup, and
    puts back the payout-account rules for publishing and for receiving
    requests.
-3. Paid listings published before launch stay published, even if their
+4. Paid listings published before launch stay published, even if their
    creator has no payout account. Requests to them are refused
    ("This creator cannot take new paid work right now…") until the creator
    sets up payouts. Tell those creators before launch day.
-4. The site picks up the change the next time someone loads a page. No site
+5. The site picks up the change the next time someone loads a page. No site
    deploy is needed.
 
 ## Known gaps

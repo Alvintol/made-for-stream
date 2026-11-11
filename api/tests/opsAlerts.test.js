@@ -272,6 +272,16 @@ describe("renderOpsAlertDigest", () => {
       now,
     });
 
+  it("marks the dev site's digest as dev, so it isn't mistaken for prod", () => {
+    const { subject } = renderOpsAlertDigest({
+      rows: [{ alert_id: "unknown_alert", subject_id: "x", observed_at: "2026-06-20T22:59:20Z", detail: {}, isNew: true }],
+      siteUrl: "https://dev.madeforstream.com",
+      now,
+    });
+
+    expect(subject).toMatch(/^\[Made for Stream dev ops\] /);
+  });
+
   it("explains a stale request in plain language, with a readable date and an admin link", () => {
     const { subject, text, html } = render([
       {

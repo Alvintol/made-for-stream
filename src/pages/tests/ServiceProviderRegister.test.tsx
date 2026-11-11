@@ -15,7 +15,7 @@ describe("Service Provider Register page", () => {
 
     expect(screen.getByRole("heading", { name: "Service Provider Register" })).toBeInTheDocument();
     expect(screen.getByText("Supabase, Inc.")).toBeInTheDocument();
-    expect(screen.getByText("United States (Oregon)")).toBeInTheDocument();
+    expect(screen.getByText("United States (Ohio)")).toBeInTheDocument();
     expect(screen.getByText("Cloudflare, Inc.")).toBeInTheDocument();
     expect(screen.queryByText(/Review draft/)).not.toBeInTheDocument();
   });

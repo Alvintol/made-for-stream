@@ -1318,7 +1318,7 @@ deploy** (see the runbook's step 0).
       2029-09-24**: a designation lapses after three years, and the safe harbour
       with it. Any change to the agent's details needs an amendment there and a
       matching Copyright Policy version.
-- [ ] **Business number** (registration pending). Replace `[BUSINESS_NUMBER]` in
+- [x] *(Done 2026-11-11: 786404640, Terms 2026-11-11, Privacy 2026-11-11.)* **Business number**. Replace `[BUSINESS_NUMBER]` in
       `termsOfService.ts` and `privacyPolicy.ts`, bump both versions, record the
       fingerprints, and drop the allowance in `legalPublication.test.ts`.
 - [x] *(Done by the user, 2026-09-26.)* **Cloudflare Email Routing rules** for `support@`, `legal@`, `privacy@`,

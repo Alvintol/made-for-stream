@@ -30,12 +30,23 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.24.01";
+export const siteVersion = "V0.25.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.25.00",
+    date: "2026-11-11",
+    title: "Open at madeforstream.com",
+    changes: [
+      "Made for Stream is now open at madeforstream.com: you can sign up, apply to be a creator, publish listings, send requests and chat.",
+      "Signing in by email now includes a quick check that you're a person.",
+      "The Terms of Service and Privacy Policy now give our business number.",
+      "The Privacy Policy, Cookie Policy and service provider list now cover who hosts the website and runs the sign-in check.",
+    ],
+  },
   {
     version: "V0.24.01",
     date: "2026-11-10",

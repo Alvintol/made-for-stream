@@ -3,38 +3,42 @@
 // text, so keeping these here stops the full policies downloading on every visit.
 // Changing a policy's text means changing its version here.
 
-export const termsVersion = "2026-11-10";
+export const termsVersion = "2026-11-11";
 
 // What changed in this version, in plain words, for the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
 // fails if the two versions differ.
 export const termsChanges = {
-  version: "2026-11-10",
+  version: "2026-11-11",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "Before launch, no request can be accepted and nothing can be paid through Made for Stream (section 4).",
-    "Any deal a buyer and a creator make before launch is only between them, and they take on all of its risk (section 4).",
-    "We rely on what you tell us, including your age and your creator application, and can close an account if it is untrue (section 3).",
-    "If you break these Terms or give us false information, you cover the costs it causes us, as far as the law allows (section 11).",
+    "We added our business number to section 1.",
+    "Earlier change (version 2026-11-10): before launch, no request can be accepted and nothing can be paid through Made for Stream (section 4).",
+    "Earlier change (version 2026-11-10): any deal a buyer and a creator make before launch is only between them, and they take on all of its risk (section 4).",
+    "Earlier change (version 2026-11-10): we rely on what you tell us, including your age and your creator application, and can close an account if it is untrue (section 3).",
+    "Earlier change (version 2026-11-10): if you break these Terms or give us false information, you cover the costs it causes us, as far as the law allows (section 11).",
     "Earlier change (version 2026-11-03): you can now buy instant downloads, each with a personal, streaming or commercial use licence.",
     "Earlier change (version 2026-10-31): during the beta, Made for Stream is only open to people who live in Canada or the United States.",
   ],
 } as const;
 
-export const privacyVersion = "2026-11-03-3";
+export const privacyVersion = "2026-11-11";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-11-03-3",
+  version: "2026-11-11",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "When you pay a creator, they can see your country and province or state, added up with their other sales from there, to help with their taxes.",
-    "Creators never see your street address, city or postal code, and never see your region next to your name or a single order.",
-    "This only applies to payments you make after accepting this version.",
+    "Cloudflare now hosts the website (section 4).",
+    "When you sign in by email, Cloudflare checks that you are a person and not an automated program (section 4).",
+    "We added our business number to section 1.",
+    "Earlier change (version 2026-11-03-3): when you pay a creator, they can see your country and province or state, added up with their other sales from there, to help with their taxes.",
+    "Earlier change (version 2026-11-03-3): creators never see your street address, city or postal code, and never see your region next to your name or a single order.",
+    "Earlier change (version 2026-11-03-3): this only applies to payments you make after accepting that version.",
     "Earlier change (version 2026-11-03-2): when you buy an instant download, we record each time you download one of its files. The creator doesn't see this record.",
     "Earlier change (version 2026-11-03-2): if you dispute an instant download with your bank, we can give the bank that record as evidence.",
     "Earlier change (version 2026-11-02): if you are a creator and choose to show your tax number on invoices, your buyers see that number and your business or legal name.",
@@ -54,6 +58,6 @@ export const paymentTermsVersion = "2026-11-03";
 
 export const copyrightPolicyVersion = "2026-09-24";
 
-export const cookiePolicyVersion = "2026-09-24";
+export const cookiePolicyVersion = "2026-11-11";
 
 export const communityGuidelinesVersion = "2026-10-29";
