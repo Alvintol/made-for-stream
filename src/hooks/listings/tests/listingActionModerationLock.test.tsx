@@ -245,10 +245,10 @@ describe("listing action moderation lock guards", () => {
   });
 
   it("publish listing blocks when creator payment account is not ready", async () => {
-    mocks.rpc.mockResolvedValueOnce({
-      data: false,
-      error: null,
-    });
+    // Payments open (payments_are_live), then the account isn't ready.
+    mocks.rpc
+      .mockResolvedValueOnce({ data: true, error: null })
+      .mockResolvedValueOnce({ data: false, error: null });
 
     const chain = createSupabaseChain({ id: "listing-1" });
 

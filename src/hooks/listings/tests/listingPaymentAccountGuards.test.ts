@@ -31,6 +31,20 @@ const mockListing = (
   return chain;
 };
 
+// Answers each RPC by name: payments_are_live (the pre-launch switch) and
+// has_ready_creator_payment_account (Stripe readiness).
+const mockRpc = (
+  { live = true, ready = false, liveError = null }: { live?: boolean; ready?: boolean; liveError?: unknown } = {},
+) => {
+  mocks.rpc.mockImplementation((name: string) =>
+    Promise.resolve(
+      name === "payments_are_live"
+        ? { data: liveError ? null : live, error: liveError }
+        : { data: ready, error: null },
+    ),
+  );
+};
+
 describe("requireCreatorPaymentAccountReadyForPublishing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,7 +52,7 @@ describe("requireCreatorPaymentAccountReadyForPublishing", () => {
 
   it("allows a free listing without a connected account", async () => {
     mockListing({ is_free: true });
-    mocks.rpc.mockResolvedValue({ data: false, error: null });
+    mockRpc({ ready: false });
 
     await expect(
       requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
@@ -50,7 +64,7 @@ describe("requireCreatorPaymentAccountReadyForPublishing", () => {
 
   it("requires a ready account for a paid listing", async () => {
     mockListing({ is_free: false });
-    mocks.rpc.mockResolvedValue({ data: false, error: null });
+    mockRpc({ ready: false });
 
     await expect(
       requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
@@ -59,7 +73,7 @@ describe("requireCreatorPaymentAccountReadyForPublishing", () => {
 
   it("allows a paid listing when the account is ready", async () => {
     mockListing({ is_free: false });
-    mocks.rpc.mockResolvedValue({ data: true, error: null });
+    mockRpc({ ready: true });
 
     await expect(
       requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
@@ -69,7 +83,7 @@ describe("requireCreatorPaymentAccountReadyForPublishing", () => {
   it("checks readiness when the listing cannot be read", async () => {
     // Not finding the row must not be mistaken for a free listing.
     mockListing(null);
-    mocks.rpc.mockResolvedValue({ data: false, error: null });
+    mockRpc({ ready: false });
 
     await expect(
       requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
@@ -78,13 +92,37 @@ describe("requireCreatorPaymentAccountReadyForPublishing", () => {
 
   it("surfaces a listing read failure instead of skipping the check", async () => {
     mockListing(null, new Error("network"));
-    mocks.rpc.mockResolvedValue({ data: true, error: null });
+    mockRpc({ ready: true });
 
     await expect(
       requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
     ).rejects.toThrow("network");
 
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("allows a paid listing without an account while payments are locked", async () => {
+    // Soft launch: the database lets it publish, so the site must too.
+    mockListing({ is_free: false });
+    mockRpc({ live: false, ready: false });
+
+    await expect(
+      requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
+    ).resolves.toBeUndefined();
+
+    expect(mocks.rpc).not.toHaveBeenCalledWith(
+      "has_ready_creator_payment_account",
+      expect.anything(),
+    );
+  });
+
+  it("surfaces a failed payments switch read instead of guessing", async () => {
+    mockListing({ is_free: false });
+    mockRpc({ liveError: new Error("switch unreadable"), ready: true });
+
+    await expect(
+      requireCreatorPaymentAccountReadyForPublishing("user-1", "listing-1"),
+    ).rejects.toThrow("switch unreadable");
   });
 
   it("scopes the listing read to the acting creator", async () => {

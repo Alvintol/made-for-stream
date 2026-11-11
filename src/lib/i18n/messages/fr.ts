@@ -2352,6 +2352,7 @@ export const fr: Record<MessageKey, Message> = {
   "setup.connect": "Connecter",
   "setup.payouts": "Versements",
   "setup.payoutsLocked": "Débloqué après l’approbation du créateur",
+  "setup.payoutsClosed": "Ouvre à l’ouverture des paiements",
   "setup.payoutsDone": "Stripe est prêt pour les versements",
   "setup.payoutsTodo": "Terminez la configuration de Stripe pour être payé",
   "setup.setUpPayouts": "Configurer les versements",

@@ -8,6 +8,11 @@ export const CREATOR_PAYMENT_ACCOUNT_REQUIRED_MESSAGE =
 // (20260921_116_exempt_free_listings_from_payout_readiness.sql); this check only
 // exists to fail earlier with a clearer message. It reads is_free from the row
 // rather than accepting it from the caller, so it cannot be waved through.
+//
+// Before launch (payments_are_live() is false, 20261110_193) the trigger lets
+// paid listings publish without a payout account, since nothing can be paid
+// and prod has no Stripe to connect to. This asks the same switch, so the
+// requirement comes back by itself the moment payments open.
 export const requireCreatorPaymentAccountReadyForPublishing = async (
   userId: string,
   listingId: string,
@@ -24,6 +29,18 @@ export const requireCreatorPaymentAccountReadyForPublishing = async (
   }
 
   if (listing?.is_free === true) {
+    return;
+  }
+
+  const { data: paymentsLive, error: paymentsLiveError } = await supabase.rpc(
+    "payments_are_live",
+  );
+
+  if (paymentsLiveError) {
+    throw paymentsLiveError;
+  }
+
+  if (paymentsLive !== true) {
     return;
   }
 

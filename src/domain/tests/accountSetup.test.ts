@@ -85,4 +85,27 @@ describe("account setup steps", () => {
     expect(states(input({ applicationStatus: "rejected" })).creator).toBe("locked");
     expect(states(input({ applicationStatus: "suspended" })).creator).toBe("locked");
   });
+
+  it("doesn't ask approved creators for payouts while payments are locked", () => {
+    const value = input({
+      profileReady: true,
+      hasLinkedPlatform: true,
+      applicationStatus: "approved",
+      payoutsReady: false,
+      paymentsLive: false,
+    });
+    const steps = getAccountSetupSteps(value);
+
+    expect(states(value).payouts).toBe("locked");
+    expect(steps.find((step) => step.key === "payouts")?.detail).toBe("Opens when payments open");
+    expect(getNextAccountSetupStep(steps)).toBeNull();
+    expect(getAccountSetupProgress(steps)).toEqual({ done: 3, total: 3 });
+  });
+
+  it("asks approved creators for payouts once payments open", () => {
+    const value = input({ profileReady: true, hasLinkedPlatform: true, applicationStatus: "approved", paymentsLive: true });
+
+    expect(states(value).payouts).toBe("todo");
+    expect(getNextAccountSetupStep(getAccountSetupSteps(value))?.key).toBe("payouts");
+  });
 });
