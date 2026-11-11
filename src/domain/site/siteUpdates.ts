@@ -30,12 +30,22 @@ export type SiteUpdate = {
   changes: readonly string[];
 };
 
-export const siteVersion = "V0.25.00";
+export const siteVersion = "V0.26.00";
 
 // How many versions /updates lists at a time.
 export const siteUpdatesPageSize = 10;
 
 export const siteUpdates: readonly SiteUpdate[] = [
+  {
+    version: "V0.26.00",
+    date: "2026-11-11",
+    title: "Artwork on phones, simpler sign-in",
+    changes: [
+      "The home page now shows the creator artwork on phones and tablets too, under the headline.",
+      "Signing in no longer asks you to confirm your age in a separate box.",
+      "Creators still confirm they are at least 18 when they apply.",
+    ],
+  },
   {
     version: "V0.25.00",
     date: "2026-11-11",
