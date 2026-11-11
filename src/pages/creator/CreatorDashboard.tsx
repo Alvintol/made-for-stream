@@ -11,6 +11,7 @@ import {
   getCreatorPaymentAccountIsReady,
   useCreatorPaymentAccount,
 } from "../../hooks/payments/useCreatorPaymentAccount";
+import { usePaymentsLive } from "../../hooks/site/usePaymentsLive";
 import { useT } from "../../lib/i18n/i18n";
 const classes = {
   page: "space-y-4",
@@ -90,10 +91,13 @@ const CreatorDashboard = () => {
   const active = activeRequests.data?.items ?? [];
   const unreadMessages = unread.data ?? 0;
   const payoutsReady = getCreatorPaymentAccountIsReady(paymentAccount);
+  // Before launch there's nothing to set up: paid listings publish without
+  // Stripe (20261110_193), so the nudge would only send creators to a dead end.
+  const paymentsLive = usePaymentsLive();
 
   // What needs the creator, most urgent first.
   const attention: Array<{ key: string; to: string; title: string; detail: string }> = [
-    ...(!isPaymentAccountLoading && !payoutsReady
+    ...(paymentsLive && !isPaymentAccountLoading && !payoutsReady
       ? [
           {
             key: "payouts",

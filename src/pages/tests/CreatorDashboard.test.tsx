@@ -7,9 +7,14 @@ const mocks = vi.hoisted(() => ({
   counts: { newRequests: 0, inProgress: 0, completed: 0, liveListings: 0, draftListings: 0 },
   unread: 0,
   paymentAccount: { payouts_enabled: true } as { payouts_enabled: boolean } | null,
+  paymentsLive: true,
   requestedPageSize: 0,
   sales: [] as unknown[],
   salesMonths: [] as string[],
+}));
+
+vi.mock("../../hooks/site/usePaymentsLive", () => ({
+  usePaymentsLive: () => mocks.paymentsLive,
 }));
 
 vi.mock("../../hooks/creatorRequests/useMyCreatorRequests", () => ({
@@ -73,6 +78,7 @@ describe("<CreatorDashboard />", () => {
     mocks.counts = { newRequests: 0, inProgress: 0, completed: 0, liveListings: 0, draftListings: 0 };
     mocks.unread = 0;
     mocks.paymentAccount = { payouts_enabled: true };
+    mocks.paymentsLive = true;
   });
 
   it("shows the counts the database worked out, and downloads only the few commissions it lists", () => {
@@ -116,6 +122,20 @@ describe("<CreatorDashboard />", () => {
     expect(attention.getByText("Finish payout setup")).toBeInTheDocument();
     expect(attention.getByText("2 new commission requests")).toBeInTheDocument();
     expect(attention.getByText("1 unread message")).toBeInTheDocument();
+  });
+
+  it("doesn't ask for payout setup while payments are locked", () => {
+    // Soft launch: paid listings publish without Stripe, so there's nothing to finish.
+    mocks.paymentsLive = false;
+    mocks.paymentAccount = null;
+    mocks.counts = { ...mocks.counts, newRequests: 2 };
+
+    renderPage();
+
+    const attention = within(screen.getByRole("region", { name: "Needs your attention" }));
+
+    expect(attention.queryByText("Finish payout setup")).not.toBeInTheDocument();
+    expect(attention.getByText("2 new commission requests")).toBeInTheDocument();
   });
 
   it("links only to creator pages the top bar does not have", () => {
