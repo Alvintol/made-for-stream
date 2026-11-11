@@ -25,7 +25,7 @@ add
 add
   column if not exists updated_at timestamptz not null default now();
 
-do $ $ begin if not exists (
+do $$ begin if not exists (
   select
     1
   from
@@ -40,4 +40,4 @@ add
 
 end if;
 
-end $ $;
+end $$;

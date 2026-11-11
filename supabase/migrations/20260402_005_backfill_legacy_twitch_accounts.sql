@@ -1,6 +1,6 @@
 -- Move any legacy Twitch data from profiles into profile_platform_accounts
 -- Safe to keep around in repo even after old columns are gone
-do $ $ begin if exists (
+do $$ begin if exists (
   select
     1
   from
@@ -9,7 +9,7 @@ do $ $ begin if exists (
     table_schema = 'public'
     and table_name = 'profiles'
     and column_name = 'twitch_user_id'
-) then execute $ sql $
+) then execute $sql$
 insert into
   public.profile_platform_accounts (
     profile_user_id,
@@ -50,8 +50,8 @@ set
   account_created_at = excluded.account_created_at,
   connected_at = excluded.connected_at,
   metadata = excluded.metadata,
-  updated_at = now() $ sql $;
+  updated_at = now() $sql$;
 
 end if;
 
-end $ $;
+end $$;

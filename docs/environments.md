@@ -106,8 +106,30 @@ Alvin does these, in this order. Nothing here moves money.
 2. Apply every migration, from the repository root in PowerShell, as in
    [Releasing a change](#releasing-a-change) step 3. On an empty database it
    applies all of them. If one fails, nothing from that file is kept: fix the
-   file and run it again. `056` was changed on 2026-11-11 so the chain replays
-   (`20260926_140` explains why it never applied on dev).
+   file and run it again.
+
+   **Why the chain needed fixing first (2026-11-11).** Dev was partly built by
+   hand, so the files alone couldn't rebuild it. Before prod's first run:
+   - Six of the April files had their `$$` markers broken into `$ $` by a code
+     formatter, and they were repaired.
+   - `016` was emptied, since it never applied on dev.
+   - `056` gained a `drop function` (`20260926_140` explains why).
+   - Three files create what dev got by hand: `20260401_000` (ten tables that
+     predate migrations), `20260616_098_a` and `20260922_119_a`.
+   - `20261111_194` adds dev's hand-made indexes, rules and triggers, and
+     removes what dev had removed by hand.
+
+   The whole chain was then replayed on an empty local Postgres and compared
+   with dev object by object. Only these differ, on purpose:
+   - Three chat-image functions differ in spacing only.
+   - Supabase's `rls_auto_enable` dashboard setting.
+   - The profile-insert rule is limited to signed-in people.
+   - Two key checks from `032` that only repeat the primary keys.
+   - The chat typing rules from `20261106_191`, **which dev is missing**, so
+     the typing indicator doesn't work there until `191` is applied to dev.
+
+   None of these files are for dev: never apply `000`, `098_a`, `119_a` or
+   `194` there.
 3. Authentication → Sign In / Providers: **allow new users to sign up**, email
    on, and Google and Twitch on with the same client ID and secret as dev.
    Add `https://caqvtbahdhcznwnbixqq.supabase.co/auth/v1/callback` to the
