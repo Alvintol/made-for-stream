@@ -7,24 +7,20 @@ import { currentPolicyVersions } from "../legal/policyAcceptance";
 import { privacySections } from "../legal/privacyPolicy";
 import { serviceProviderRegisterSections } from "../legal/serviceProviderRegister";
 
-// Every policy is published. The one open field is the business number,
-// pending registration: it appears once in Terms section 1 and once in
-// Privacy section 1, and nowhere else.
+// Every policy is published, with no placeholder left in any of them.
 const legalDir = resolve(process.cwd(), "src/domain/legal");
 const legalFiles = readdirSync(legalDir).filter((file) => file.endsWith(".ts"));
 const readLegal = (file: string) => readFileSync(resolve(legalDir, file), "utf8");
 
 const PLACEHOLDER = /\[[A-Z_]{4,}\]/g;
-const FILES_WITH_PENDING_BUSINESS_NUMBER = ["termsOfService.ts", "privacyPolicy.ts"];
 
 describe("published legal documents", () => {
   it.each(legalFiles)("%s has no review-draft marker", (file) => {
     expect(readLegal(file)).not.toContain("REVIEW DRAFT");
   });
 
-  it.each(legalFiles)("%s has no placeholder other than the pending business number", (file) => {
-    const expected = FILES_WITH_PENDING_BUSINESS_NUMBER.includes(file) ? ["[BUSINESS_NUMBER]"] : [];
-    expect(readLegal(file).match(PLACEHOLDER) ?? []).toEqual(expected);
+  it.each(legalFiles)("%s has no placeholder", (file) => {
+    expect(readLegal(file).match(PLACEHOLDER) ?? []).toEqual([]);
   });
 
   it("cuts a non-draft version of every accepted policy", () => {

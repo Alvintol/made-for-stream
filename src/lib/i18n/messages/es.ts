@@ -83,6 +83,7 @@ export const es: Record<MessageKey, Message> = {
   "signin.oauthFailed": "No se pudo iniciar sesión con {provider}.",
   "signin.emailRequired": "Ingresa tu correo electrónico.",
   "signin.linkFailed": "No se pudo enviar el enlace para iniciar sesión.",
+  "signin.checkPending": "Espera un momento a que termine la verificación encima del botón y vuelve a enviar el enlace.",
   "signin.signOutFailed": "No se pudo cerrar la sesión.",
   "signin.signedInTitle": "Ya iniciaste sesión",
   "signin.signedInAs": "Sesión iniciada como",

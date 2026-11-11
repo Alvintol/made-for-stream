@@ -4,7 +4,7 @@ export const termsSections = [
   {
     "title": "1. Overview and operator",
     "body": [
-      "Made for Stream is an online marketplace and community for digital creator services and assets. It is operated by Made for Stream (business number [BUSINESS_NUMBER]), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. Help with accounts, listings or projects: support@madeforstream.com. Legal notices and enquiries: legal@madeforstream.com. Privacy enquiries: privacy@madeforstream.com. Reports of illegal or harmful content, and the point of contact for users and for authorities under the EU Digital Services Act and the UK Online Safety Act: safety@madeforstream.com, in English.",
+      "Made for Stream is an online marketplace and community for digital creator services and assets. It is operated by Made for Stream (business number 786404640), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. Help with accounts, listings or projects: support@madeforstream.com. Legal notices and enquiries: legal@madeforstream.com. Privacy enquiries: privacy@madeforstream.com. Reports of illegal or harmful content, and the point of contact for users and for authorities under the EU Digital Services Act and the UK Online Safety Act: safety@madeforstream.com, in English.",
       "These Terms govern accounts, creator applications, listings, messaging, project agreements, payments and related services. Before creating an account or accepting a paid agreement, you must be shown these Terms and affirmatively accept the terms applicable to that activity. If you do not agree, do not create an account or enter a transaction."
     ]
   },

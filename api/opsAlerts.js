@@ -395,7 +395,9 @@ export const renderOpsAlertDigest = ({
     (alertId) => OPS_ALERTS[alertId]?.title || alertId,
   );
 
-  const subject = `[Made for Stream ops] ${titles.length === 1 ? titles[0] : plural(rows.length, "open alert")}${
+  // Dev and prod mail the same inbox; only prod's alerts are about real people.
+  const where = new URL(siteUrl).hostname === "madeforstream.com" ? "ops" : "dev ops";
+  const subject = `[Made for Stream ${where}] ${titles.length === 1 ? titles[0] : plural(rows.length, "open alert")}${
     newCount ? ` (${newCount} new)` : ""
   }`;
 

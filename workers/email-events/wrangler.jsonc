@@ -4,6 +4,8 @@
 //   npx wrangler deploy --config workers/email-events/wrangler.jsonc
 // EMAIL_WEBHOOK_SECRET is a secret on this Worker, the same value as the
 // API's. See docs/support/messaging/transactional-email.md.
+// Dev and prod send from the same domain into this one queue, so every event
+// goes to the prod API, where the real people are. Dev records no bounces.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "made-for-stream-email-events",
@@ -11,7 +13,7 @@
   "compatibility_date": "2026-10-01",
   "workers_dev": false,
   "vars": {
-    "API_BASE": "https://made-for-stream-api-422533033771.us-central1.run.app"
+    "API_BASE": "https://made-for-stream-api-prod-422533033771.us-central1.run.app"
   },
   "queues": {
     "consumers": [

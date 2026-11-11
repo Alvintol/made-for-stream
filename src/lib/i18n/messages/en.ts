@@ -91,6 +91,7 @@ export const en = {
   "signin.oauthFailed": "Could not start {provider} sign-in.",
   "signin.emailRequired": "Please enter your email.",
   "signin.linkFailed": "Could not send sign-in link.",
+  "signin.checkPending": "Wait a moment for the check above the button to finish, then send the link again.",
   "signin.signOutFailed": "Could not sign out.",
   "signin.signedInTitle": "You’re signed in",
   "signin.signedInAs": "Signed in as",

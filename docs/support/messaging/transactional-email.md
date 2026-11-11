@@ -193,7 +193,9 @@ bounce or complaint event. Every future send checks this table first
 publishes `message.bounced` and `message.complained` events for
 `send.madeforstream.com` to the Cloudflare Queue `email-events`. The Worker
 `made-for-stream-email-events` (`workers/email-events/`) reads the queue and
-posts each event, unchanged, to the webhook with the shared secret. There,
+posts each event, unchanged, to the webhook with the shared secret. Since
+2026-11-11 that is the **prod** API's webhook only: dev and prod send from the
+same domain into the one queue, so dev records no bounces. There,
 `parseEmailEvent` (`api/email.js`) suppresses the address on a **hard** bounce
 or a complaint. A **soft** bounce (Cloudflare ran out of retries on a temporary
 failure) is ignored, because the address may still work. Cloudflare also

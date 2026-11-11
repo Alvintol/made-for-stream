@@ -4,6 +4,11 @@
 -- Reporter-visible updates set reporter_status_updated_at.
 -- Admin update history remains append-only.
 
+-- Added 2026-11-11 so the chain replays on an empty database: this version
+-- reorders the parameters and returns jsonb, which create or replace refuses
+-- over 042's. It never applied on dev for that reason (20260926_140 fixed dev).
+drop function if exists public.update_moderation_report_status(uuid, text, text, text, text);
+
 create or replace function public.update_moderation_report_status(
   p_report_id uuid,
   p_status text,

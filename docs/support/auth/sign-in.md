@@ -4,6 +4,7 @@ status: active
 surfaces:
   - src/pages/SignIn.tsx:161   # signInWithOAuth
   - src/pages/SignIn.tsx:196   # signInWithOtp (magic link)
+  - src/components/auth/TurnstileCheck.tsx   # the person check on email sign-in (prod only)
   - src/providers/               # auth provider and session handling
   - api/server.js                # requireSupabaseUserId — bearer token validation
   - src/components/legal/PolicyAcceptanceGate.tsx   # records the sign-in box, or asks again
@@ -38,6 +39,7 @@ severe here than in a password-based product.
 | "It says too many requests" | [`AUTH-006`](#auth-006--rate-limited) |
 | "The buttons don't do anything" / "A red box shakes" | [`AUTH-007`](#auth-007--terms-box-not-ticked) |
 | "I ticked the box and it asked me again" | [`AUTH-007`](#auth-007--terms-box-not-ticked) |
+| "It says wait for the check" / a "captcha" error / no check shows | [`AUTH-008`](#auth-008--person-check-didnt-pass) |
 
 ---
 
@@ -278,6 +280,48 @@ rate-limited the same way and is a faster route if available.
 
 **Escalate if it is widespread** — many accounts hitting auth rate limits at once
 can indicate enumeration rather than impatience.
+
+**Money impact.** None.
+
+---
+
+## `AUTH-008` — Person check didn't pass
+
+```yaml
+id: AUTH-008
+tier: 2
+signals:
+  - source: client
+    match: "Wait a moment for the check above the button to finish, then send the link again."
+    where: "src/pages/SignIn.tsx onSubmit (signin.checkPending): no Turnstile token yet"
+  - source: client
+    match: "/captcha/i"
+    where: "Supabase Auth refused the link (error code captcha_failed), shown under the form"
+  - source: client
+    match: "AUTH-008: the sign-in check could not load."
+    where: "src/components/auth/TurnstileCheck.tsx, browser console"
+auto_fix: none
+reason_not_automatable: "either the visitor's browser or a key mismatch, and telling them apart takes a person"
+escalate_if:
+  - "everyone on prod gets the captcha error"   # the keys don't match
+```
+
+Since 2026-11-11, email sign-in on prod (`madeforstream.com`) asks Cloudflare
+Turnstile whether the visitor is a person before Supabase sends the link.
+Google and Twitch sign-in don't use it. Dev has no check: its build has no
+`VITE_TURNSTILE_SITE_KEY` and its Supabase has CAPTCHA off.
+
+**Cause.** One person: the check hasn't finished, failed in their browser, or
+an extension blocks `challenges.cloudflare.com`. Everyone: the site key on the
+prod Worker and the secret in Supabase (Authentication → Attack Protection)
+come from different Turnstile widgets, or the widget doesn't list
+`madeforstream.com`. A site built with the site key while its Supabase has
+CAPTCHA off still works; the reverse (CAPTCHA on, no site key) refuses every
+email sign-in.
+
+**Fix.** One person: wait for the check, reload, or turn off the blocking
+extension; Google or Twitch also work. Everyone: compare the widget's keys with
+both settings, then rebuild the prod Worker.
 
 **Money impact.** None.
 

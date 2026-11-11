@@ -84,6 +84,7 @@ export const fr: Record<MessageKey, Message> = {
   "signin.oauthFailed": "Impossible de lancer la connexion avec {provider}.",
   "signin.emailRequired": "Veuillez entrer votre adresse courriel.",
   "signin.linkFailed": "Impossible d’envoyer le lien de connexion.",
+  "signin.checkPending": "Attendez un instant que la vérification au-dessus du bouton se termine, puis renvoyez le lien.",
   "signin.signOutFailed": "Impossible de vous déconnecter.",
   "signin.signedInTitle": "Connexion réussie",
   "signin.signedInAs": "Session ouverte avec",
