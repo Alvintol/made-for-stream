@@ -157,21 +157,27 @@ email sign-in on dev stops (`support/auth/sign-in.md` `AUTH-008`).
 
 ### 3. API (`made-for-stream-api-prod`)
 
-New secrets for prod, in **Git Bash** (nothing is printed). Two random ones:
+New secrets for prod, in **Git Bash** (nothing is printed). Paste with
+right-click or Shift+Insert: in Git Bash, Ctrl+V types a control character
+instead. Two random ones (a `node -e` pipe stored nothing here, so use
+`openssl`):
 
 ```bash
-node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))" | gcloud secrets create PROD_OAUTH_STATE_SECRET --data-file=-
+gcloud secrets create PROD_OAUTH_STATE_SECRET --replication-policy=automatic && printf %s "$(openssl rand -hex 32)" | gcloud secrets versions add PROD_OAUTH_STATE_SECRET --data-file=-
 ```
 
 ```bash
-node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))" | gcloud secrets create PROD_OPS_CRON_SECRET --data-file=-
+gcloud secrets create PROD_OPS_CRON_SECRET --replication-policy=automatic && printf %s "$(openssl rand -hex 32)" | gcloud secrets versions add PROD_OPS_CRON_SECRET --data-file=-
 ```
 
-And prod's service role key (Supabase → Project Settings → API keys). Paste
-it at the silent prompt:
+And prod's service role key: Supabase → Project Settings → API keys → Legacy
+API keys → service_role, copied with the copy icon. Run the command first,
+then paste the key at its silent prompt. Copying the command after the key
+replaces the key on the clipboard; that's how the command text once got
+stored as the key.
 
 ```bash
-read -rs KEY && printf %s "$KEY" | gcloud secrets create PROD_SUPABASE_SERVICE_ROLE_KEY --data-file=- ; unset KEY
+read -rsp "Paste the key, then press Enter: " KEY && printf %s "$KEY" | gcloud secrets create PROD_SUPABASE_SERVICE_ROLE_KEY --data-file=- ; unset KEY
 ```
 
 Twitch, SMTP, the support address, the company address and the email
@@ -182,14 +188,20 @@ so the commas survive:
 gcloud run deploy made-for-stream-api-prod --source api --region us-central1 --allow-unauthenticated --memory 512Mi --max-instances 10 --cpu-boost --env-vars-file api/env.prod.yaml "--set-secrets=SUPABASE_SERVICE_ROLE_KEY=PROD_SUPABASE_SERVICE_ROLE_KEY:latest,OAUTH_STATE_SECRET=PROD_OAUTH_STATE_SECRET:latest,OPS_CRON_SECRET=PROD_OPS_CRON_SECRET:latest,TWITCH_CLIENT_SECRET=TWITCH_CLIENT_SECRET:latest,EMAIL_SMTP_PASS=EMAIL_SMTP_PASS:latest,EMAIL_SUPPORT_EMAIL=EMAIL_SUPPORT_EMAIL:latest,EMAIL_COMPANY_ADDRESS=EMAIL_COMPANY_ADDRESS:latest,EMAIL_WEBHOOK_SECRET=EMAIL_WEBHOOK_SECRET:latest"
 ```
 
-If it refuses a secret, grant the service account
-(`422533033771-compute@developer.gserviceaccount.com`) **Secret Manager Secret
-Accessor** on it. Then:
+A new secret isn't readable by the API until it's shared with the API's
+service account; until then the deploy fails with "Permission denied on
+secret". Share each of the three:
+
+```bash
+gcloud secrets add-iam-policy-binding PROD_SUPABASE_SERVICE_ROLE_KEY --member="serviceAccount:422533033771-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
+```
+
+(and the same for `PROD_OAUTH_STATE_SECRET` and `PROD_OPS_CRON_SECRET`). Then:
 
 - Check `https://made-for-stream-api-prod-422533033771.us-central1.run.app/api/health`
   answers. `api/env.prod.yaml` and `workers/email-events` assume that address.
-- Set and check the [health probe](#the-apis-health-probe), with
-  `made-for-stream-api-prod` in place of the service name.
+- Set and check the [health probe](#the-apis-health-probe). Prod listens on
+  port **8080** (Cloud Run's default); dev listens on 8787.
 - Add `https://made-for-stream-api-prod-422533033771.us-central1.run.app/api/twitch/connect/callback`
   to the Twitch app's OAuth redirect URLs (for linking a Twitch account).
 - The ops alerts job, in Git Bash:
@@ -257,11 +269,20 @@ about 30 seconds after it started. The API answered only in the gaps, and on
 2026-10-05 it stopped answering at all (every route `500`). Fixed in revision
 `00017`. Playbook: `support/operations/alerting.md` `OPS-004`.
 
-**Setting it.** Run this in **Git Bash**, with the quotes, so the commas
-survive. Then run the check above; do not trust the command's own output.
+**Setting it.** Run this in **PowerShell**, with the single quotes, so the
+commas survive. Not Git Bash: it rewrites `/api/health` into a Windows path
+(`C:/Program Files/Git/api/health`, seen on prod 2026-11-11), and
+`MSYS_NO_PATHCONV=1` breaks the gcloud command itself. Then run the check
+above; do not trust the command's own output. Dev:
 
-```bash
-gcloud run services update made-for-stream-api --region us-central1 "--liveness-probe=httpGet.path=/api/health,httpGet.port=8787,periodSeconds=30,failureThreshold=3,timeoutSeconds=5"
+```powershell
+gcloud run services update made-for-stream-api --region us-central1 '--liveness-probe=httpGet.path=/api/health,httpGet.port=8787,periodSeconds=30,failureThreshold=3,timeoutSeconds=5'
+```
+
+Prod:
+
+```powershell
+gcloud run services update made-for-stream-api-prod --region us-central1 '--liveness-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=30,failureThreshold=3,timeoutSeconds=5'
 ```
 
 A probe setting is part of the service, so later `gcloud run deploy` runs keep
