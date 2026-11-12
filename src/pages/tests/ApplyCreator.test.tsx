@@ -158,6 +158,7 @@ describe("ApplyCreator", () => {
         twitch_status: "affiliate",
         twitch_follower_count: 300,
         youtube_subscriber_count: null,
+        offering_types: ["emotes"],
         created_at: "2026-04-01T00:00:00.000Z",
         updated_at: "2026-04-01T00:00:00.000Z",
       },
@@ -380,10 +381,40 @@ describe("ApplyCreator", () => {
       });
     });
     expect(upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "application-1", status: "draft", agreed_to_age_and_capacity: true })
+      expect.objectContaining({
+        id: "application-1",
+        status: "draft",
+        agreed_to_age_and_capacity: true,
+        offering_types: ["emotes"],
+      })
     );
     expect(upsert.mock.invocationCallOrder[0]).toBeLessThan(submit.mock.invocationCallOrder[0]);
     expect(await screen.findByText(/Application submitted/)).toBeInTheDocument();
+  });
+
+  it("asks what they'll offer, needs at least one, and saves every choice", async () => {
+    const upsert = vi.fn().mockResolvedValue(undefined);
+    mockUseUpsertMySellerApplication.mockReturnValue({ mutateAsync: upsert, isPending: false } as never);
+    withApplication({ sellerApplication: { offering_types: [] } });
+
+    renderPage(readySamples());
+
+    expect(screen.getByText("What will you offer?")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: /submit for review/i });
+    expect(button).toBeDisabled();
+    expect(screen.getAllByText(/Choose what you'll offer/).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "VTuber Models" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Something else" }));
+    expect(button).toBeEnabled();
+
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ offering_types: ["vtuber-models", "other"] }),
+      ),
+    );
   });
 
   it("shows a save failure instead of throwing when submitting", async () => {

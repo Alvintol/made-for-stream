@@ -1,6 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CATEGORIES } from "../catalog";
 import {
+  APPLICATION_OFFERINGS,
   REQUIRED_RECENT_UPLOAD_TITLE,
   getCreatorApplicationPhase,
   getCreatorApplicationRequirements,
@@ -10,7 +14,9 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   meetsAudienceMinimum,
+  normaliseOfferings,
   normaliseUrlInput,
+  type ApplicationOffering,
   type WorkSample,
 } from "../creatorApplication/creatorApplication";
 
@@ -139,5 +145,44 @@ describe("audience minimum", () => {
     );
 
     expect(blocker?.key).toBe("audience");
+  });
+});
+
+describe("what an applicant will offer", () => {
+  it("offers every listing category plus something else, in the database's own list", () => {
+    expect(APPLICATION_OFFERINGS).toEqual([...CATEGORIES.map((category) => category.key), "other"]);
+
+    const migration = fs.readFileSync(
+      path.resolve(__dirname, "../../../supabase/migrations/20261112_197_add_creator_application_offerings.sql"),
+      "utf8",
+    );
+    const listed = [...(migration.match(/array\[([^\]]+)\]::text\[\]/)?.[1] ?? "").matchAll(/'([^']+)'/g)].map(
+      (match) => match[1],
+    );
+
+    expect(listed).toEqual([...APPLICATION_OFFERINGS]);
+  });
+
+  it("keeps known answers in the list's order and drops the rest", () => {
+    expect(normaliseOfferings(["other", "emotes", "emotes", "nonsense", null])).toEqual(["emotes", "other"]);
+    expect(normaliseOfferings(null)).toEqual([]);
+  });
+
+  it("needs at least one offering to submit, when it's asked", () => {
+    const base = {
+      profileReady: true,
+      hasLinkedPlatform: true,
+      audience: { twitchStatus: "affiliate" as const, twitchFollowers: 300, youtubeSubscribers: null },
+      samples: [],
+      agreementsAccepted: true,
+    };
+    const offerings = (value: readonly ApplicationOffering[]) =>
+      getCreatorApplicationRequirements({ ...base, offerings: value }).find((item) => item.key === "offerings");
+
+    expect(offerings([])?.done).toBe(false);
+    expect(offerings([])?.blocker).toBe("Choose at least one thing you'll offer before you apply.");
+    expect(offerings(["games"])?.done).toBe(true);
+    // Not asked: no requirement at all.
+    expect(getCreatorApplicationRequirements(base).some((item) => item.key === "offerings")).toBe(false);
   });
 });

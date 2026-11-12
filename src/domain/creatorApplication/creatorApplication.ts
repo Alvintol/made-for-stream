@@ -1,4 +1,6 @@
 import { english, type Translate } from "../../lib/i18n/i18n";
+import type { MessageKey } from "../../lib/i18n/messages/en";
+import { CATEGORIES } from "../catalog";
 
 export type CreatorApplicationStatus =
   | "draft"
@@ -11,6 +13,22 @@ export type CreatorApplicationStatus =
 
 // What the applicant can do right now, derived from the stored status.
 export type CreatorApplicationPhase = "not_started" | "editing" | "in_review" | "approved" | "closed";
+
+// "What will you offer?" (20261112_197): every listing category, plus
+// something else. The database's check lists the same keys; a test compares.
+export const APPLICATION_OFFERINGS = [...CATEGORIES.map((category) => category.key), "other"] as const;
+
+export type ApplicationOffering = (typeof APPLICATION_OFFERINGS)[number];
+
+export const isApplicationOffering = (value: unknown): value is ApplicationOffering =>
+  (APPLICATION_OFFERINGS as readonly unknown[]).includes(value);
+
+export const applicationOfferingLabel = (offering: ApplicationOffering): MessageKey =>
+  offering === "other" ? "apply.offeringOther" : `category.${offering}`;
+
+// Saved answers in the list's order, without anything unknown or repeated.
+export const normaliseOfferings = (values: readonly unknown[] | null | undefined): ApplicationOffering[] =>
+  APPLICATION_OFFERINGS.filter((offering) => (values ?? []).includes(offering));
 
 export const MIN_WORK_SAMPLES = 3;
 export const MAX_WORK_SAMPLES = 10;
@@ -124,6 +142,7 @@ export type CreatorApplicationRequirementKey =
   | "profile"
   | "platform"
   | "audience"
+  | "offerings"
   | "recentUpload"
   | "samples"
   | "agreements";
@@ -140,6 +159,8 @@ export type CreatorApplicationReadinessInput = {
   profileReady: boolean;
   hasLinkedPlatform: boolean;
   audience: ApplicationAudience;
+  // Left out, offerings aren't asked about (older callers and tests).
+  offerings?: readonly ApplicationOffering[];
   samples: WorkSample[];
   agreementsAccepted: boolean;
 };
@@ -181,6 +202,16 @@ export const getCreatorApplicationRequirements = (
       done: meetsAudienceMinimum(input.audience),
       blocker: t("apply.reqAudienceBlock", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
     },
+    ...(input.offerings
+      ? [
+          {
+            key: "offerings" as const,
+            label: t("apply.reqOfferings"),
+            done: input.offerings.length > 0,
+            blocker: t("apply.reqOfferingsBlock"),
+          },
+        ]
+      : []),
     {
       key: "recentUpload",
       label: t("apply.reqRecent"),

@@ -23,7 +23,11 @@ import {
   isRequiredRecentUploadSample,
   isValidPublicUrl,
   meetsAudienceMinimum,
+  APPLICATION_OFFERINGS,
+  applicationOfferingLabel,
+  normaliseOfferings,
   type ApplicationAudience,
+  type ApplicationOffering,
   normaliseUrlInput,
   type CreatorApplicationRequirementKey,
 } from "../../domain/creatorApplication/creatorApplication";
@@ -83,6 +87,8 @@ const classes = {
   checks: "space-y-1",
   check: "flex items-start gap-3 rounded-xl px-2 py-2 text-sm text-zinc-700 transition hover:bg-[rgb(var(--ink)/0.03)]",
   checkbox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 accent-[rgb(var(--brand))]",
+  // Two columns of short choices on wider screens, one on phones.
+  offerings: "grid gap-x-3 gap-y-0.5 sm:grid-cols-2",
   inlineLink: "font-semibold text-[rgb(var(--accent-text))] underline underline-offset-2 hover:opacity-80",
 
   // Badges
@@ -140,6 +146,7 @@ const requirementSection: Record<CreatorApplicationRequirementKey, SectionKey> =
   profile: "basics",
   platform: "basics",
   audience: "basics",
+  offerings: "basics",
   recentUpload: "recent",
   samples: "samples",
   agreements: "agreements",
@@ -244,6 +251,20 @@ const ApplyCreator = () => {
     setAudience(savedAudience);
   }
 
+  const savedOfferings = normaliseOfferings(sellerApplication?.offering_types);
+  const savedOfferingsKey = savedOfferings.join(",");
+  const [offerings, setOfferings] = useState<ApplicationOffering[]>(savedOfferings);
+  const [offeringsFor, setOfferingsFor] = useState<string | null>(null);
+  if (savedOfferingsKey !== offeringsFor) {
+    setOfferingsFor(savedOfferingsKey);
+    setOfferings(savedOfferings);
+  }
+
+  const toggleOffering = (offering: ApplicationOffering, checked: boolean) =>
+    setOfferings((current) =>
+      normaliseOfferings(checked ? [...current, offering] : current.filter((value) => value !== offering)),
+    );
+
   // Empty or not a whole number is "not answered".
   const toCount = (value: string): number | null => {
     const count = Number.parseInt(value.replace(/[^0-9]/g, ""), 10);
@@ -274,6 +295,7 @@ const ApplyCreator = () => {
     profileReady,
     hasLinkedPlatform: hasLinkedCreatorPlatform,
     audience,
+    offerings,
     samples,
     agreementsAccepted,
   }, t);
@@ -295,8 +317,17 @@ const ApplyCreator = () => {
     .map((error) => getErrorMessage(error, t))
     .join(" ");
 
+  // A step that opened to ask for something stays open for the visit, so
+  // meeting its requirement (one ticked offering, the 300th follower typed)
+  // doesn't snap it shut mid-answer. The arrow still closes it.
+  const [openedSections, setOpenedSections] = useState<SectionKey[]>([]);
+  if (attentionSection && !openedSections.includes(attentionSection)) {
+    setOpenedSections((current) => [...current, attentionSection]);
+  }
+
   const sectionFlags = (key: SectionKey) => ({
     attention: attentionSection === key,
+    defaultOpen: openedSections.includes(key),
     focusKey: focus?.key === key ? focus.nonce : null,
   });
 
@@ -316,6 +347,7 @@ const ApplyCreator = () => {
     twitch_status: audience.twitchStatus,
     twitch_follower_count: audience.twitchFollowers,
     youtube_subscriber_count: audience.youtubeSubscribers,
+    offering_types: offerings,
   };
 
   const onStartDraft = async () => {
@@ -457,7 +489,8 @@ const ApplyCreator = () => {
     );
   }
 
-  const basicsDone = profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience);
+  const basicsDone =
+    profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience) && offerings.length > 0;
 
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
@@ -752,6 +785,23 @@ const ApplyCreator = () => {
                     }}
                   />
                 </label>
+              </div>
+            </fieldset>
+            <fieldset className={classes.addForm} disabled={!canEdit}>
+              <legend className={classes.addTitle}>{t("apply.offeringsTitle")}</legend>
+              <p className={classes.small}>{t("apply.offeringsHint")}</p>
+              <div className={classes.offerings}>
+                {APPLICATION_OFFERINGS.map((offering) => (
+                  <label key={offering} className={classes.check}>
+                    <input
+                      className={classes.checkbox}
+                      type="checkbox"
+                      checked={offerings.includes(offering)}
+                      onChange={(event) => toggleOffering(offering, event.currentTarget.checked)}
+                    />
+                    <span>{t(applicationOfferingLabel(offering))}</span>
+                  </label>
+                ))}
               </div>
             </fieldset>
             {!(profileReady && hasLinkedCreatorPlatform) && (
