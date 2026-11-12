@@ -86,14 +86,20 @@ export const getRegionOptions = (
 };
 
 // Places Made for Stream does not serve, as the database's
-// blocked_location_message() (20261031_177) says them: sanctioned countries,
-// Quebec until the site is in French, and anywhere outside Canada and the
-// United States during the beta.
+// blocked_location_message() (20261112_195) says them: sanctioned countries,
+// and anywhere outside Canada and the United States during the beta. Quebec
+// is open for free listings only until the site is in French: its address
+// can be saved, and QUEBEC_MESSAGE is what the database says when someone
+// there tries anything else.
 export const SANCTIONED_COUNTRIES = ["BY", "CU", "IR", "KP", "RU", "SY"] as const;
 
 export const SANCTIONED_COUNTRY_MESSAGE = english("account.sanctioned");
 
 export const QUEBEC_MESSAGE = english("account.quebec");
+
+// Quebec until the site is in French (20261112_195, is_free_only_location()).
+export const isFreeOnlyLocation = (countryCode: string | null | undefined, region: string | null | undefined) =>
+  (countryCode ?? "").trim().toUpperCase() === "CA" && (region ?? "").trim().toUpperCase() === "QC";
 
 export const BETA_COUNTRY_MESSAGE = english("account.betaCountries");
 const yearsAgo = (years: number, today: Date): string => {
@@ -140,8 +146,6 @@ export const validateAccountDetails = (
 
   if ((SANCTIONED_COUNTRIES as readonly string[]).includes(trimmed.country_code.toUpperCase())) {
     errors.country_code = t("account.sanctioned");
-  } else if (trimmed.country_code === "CA" && trimmed.region.toUpperCase() === "QC") {
-    errors.region = t("account.quebec");
   } else if (trimmed.country_code && !isOpenCountry(trimmed.country_code)) {
     errors.country_code = t("account.betaCountries");
   }

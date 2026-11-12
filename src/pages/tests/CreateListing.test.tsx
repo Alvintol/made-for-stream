@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
   publish: vi.fn(),
   upload: vi.fn(),
+  accountDetails: { country_code: "CA", region: "AB" } as { country_code: string; region: string } | null,
+}));
+
+vi.mock("../../hooks/settings/useAccountDetails", () => ({
+  useAccountDetails: () => ({ data: mocks.accountDetails }),
 }));
 
 vi.mock("../../hooks/profile/useMyProfile", () => ({
@@ -97,6 +102,7 @@ const getButtons = (name: string) => screen.getAllByRole("button", { name });
 describe("<CreateListing /> publish flow", () => {
   beforeEach(() => {
     mocks.insert.mockReset();
+    mocks.accountDetails = { country_code: "CA", region: "AB" };
     mocks.publish.mockReset().mockResolvedValue("listing-9");
     mocks.upload.mockReset().mockResolvedValue(
       "https://project.supabase.co/storage/v1/object/public/listing-previews/creator-1/a.webp",
@@ -113,6 +119,28 @@ describe("<CreateListing /> publish flow", () => {
     getButtons("Publish now").forEach((button) => expect(button).toBeDisabled());
     getButtons("Save as draft").forEach((button) => expect(button).toBeEnabled());
     expect(screen.getByText(/items left before this can be published/i)).toBeInTheDocument();
+  });
+
+  it("tells a Quebec creator only free listings are open, and saves nothing paid", async () => {
+    mocks.accountDetails = { country_code: "CA", region: "QC" };
+    renderPage();
+
+    const notice = /From Quebec, you can only post free listings for now/;
+    expect(screen.getByText(notice)).toBeInTheDocument();
+
+    fillDraftFields();
+    fireEvent.click(getButtons("Save as draft")[0]);
+
+    // The notice, plus the save error where the form shows it (top and by the buttons).
+    expect(await screen.findAllByText(notice)).toHaveLength(3);
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+  });
+
+  it("doesn't mention Quebec to anyone else", () => {
+    renderPage();
+
+    expect(screen.queryByText(/From Quebec/)).not.toBeInTheDocument();
   });
 
   it("saves a draft and goes straight to the listing's page", async () => {
