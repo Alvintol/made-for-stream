@@ -30,6 +30,21 @@ looks the same to the creator: nothing is happening.
 Nothing here is auto-fixable. Approval is a human judgement and stays one — the
 agent is explicitly forbidden from writing `seller_applications`.
 
+## What a creator offers (2026-11-12, `20261112_197`)
+
+The application asks "What will you offer?": one checkbox per listing
+category, and "Something else" with a required description (up to 80
+characters). At least one is needed to submit; the database refuses a
+submission without one ("Choose at least one thing you'll offer before you
+apply."). The answers are kept on the profile (`profiles.offering_types`,
+`profiles.offering_other`), not the application, so creators change them in
+Settings → What you offer, and they show as tags on the public profile.
+
+Approved creators who had none when this shipped are sent to Settings from
+every page except sign-in, the policies and Personal details, with a banner
+saying why, until they save at least one (`ProfileSetupRedirect`). That is
+expected, not a fault. Admin's review cards show the answers as tags.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |

@@ -20,6 +20,13 @@ import {
   type AccountSetupStepKey,
 } from "../domain/settings/accountSetup";
 import CollapsibleSection from "../components/ui/CollapsibleSection";
+import OfferingsField from "../components/creator/OfferingsField";
+import { useSaveMyOfferings } from "../hooks/profile/useSaveMyOfferings";
+import {
+  getOfferingsError,
+  normaliseOfferings,
+  type ApplicationOffering,
+} from "../domain/creatorApplication/creatorApplication";
 import CreatorPayoutSettings from "../components/settings/CreatorPayoutSettings";
 import { useT, type Translate } from "../lib/i18n/i18n";
 import { FadeIn } from "../lib/motion";
@@ -34,6 +41,7 @@ const classes = {
   sections: "card min-w-0 divide-y divide-[var(--hairline)] overflow-hidden hover:shadow-[var(--shadow-md)]",
 
   noticeInfo: "notice noticeInfo",
+  noticeWarn: "notice noticeWarning",
   noticeOk: "notice noticeSuccess",
   noticeErr: "notice noticeError",
 
@@ -51,6 +59,7 @@ const classes = {
   input: "formControl",
   textarea: "formControl min-h-[96px]",
   fieldHelp: "text-xs text-zinc-500",
+  fieldError: "formError",
   footer: "flex flex-wrap items-center justify-end gap-2",
   saved: "mr-auto text-xs font-medium text-emerald-700",
 
@@ -295,6 +304,40 @@ const ProfileSettings = () => {
     focusKey: focus?.key === key ? focus.nonce : null,
   });
 
+  // What they offer (20261112_197): shown to creators and applicants, kept
+  // on the profile, and shown as tags on the public profile. Approved
+  // creators without any are sent here (ProfileSetupRedirect) until they save.
+  const showsOfferings = isCreatorApproved || Boolean(sellerApplication);
+  const savedOfferingsList = normaliseOfferings(profile?.offering_types);
+  const needsOfferings = isCreatorApproved && Boolean(profile) && savedOfferingsList.length === 0;
+  const savedOfferingsKey = `${savedOfferingsList.join(",")}|${profile?.offering_other ?? ""}`;
+  const [offerings, setOfferings] = useState<ApplicationOffering[]>(savedOfferingsList);
+  const [offeringOther, setOfferingOther] = useState(profile?.offering_other ?? "");
+  const [offeringsFor, setOfferingsFor] = useState<string | null>(null);
+  const [offeringsTried, setOfferingsTried] = useState(false);
+  const [offeringsSavedAt, setOfferingsSavedAt] = useState<number | null>(null);
+  if (savedOfferingsKey !== offeringsFor) {
+    setOfferingsFor(savedOfferingsKey);
+    setOfferings(savedOfferingsList);
+    setOfferingOther(profile?.offering_other ?? "");
+  }
+  const offeringsError = getOfferingsError(offerings, offeringOther, t);
+  const saveOfferings = useSaveMyOfferings();
+
+  const onSaveOfferings = async () => {
+    setOfferingsTried(true);
+    setOfferingsSavedAt(null);
+    if (offeringsError) return;
+
+    try {
+      await saveOfferings.mutateAsync({ offerings, other: offeringOther });
+      setOfferingsTried(false);
+      setOfferingsSavedAt(Date.now());
+    } catch (saveError) {
+      setErrMsg(getErrorMessage(saveError, t));
+    }
+  };
+
   const onSave = async () => {
     if (!user?.id) return;
 
@@ -436,6 +479,11 @@ const ProfileSettings = () => {
 
   return (
     <div className={classes.page}>
+      {needsOfferings && (
+        <div className={classes.noticeWarn} role="status">
+          <strong>{t("profile.offeringsRequiredTitle")}</strong> {t("profile.offeringsRequired")}
+        </div>
+      )}
       {infoMsg && <FadeIn className={classes.noticeInfo}>{infoMsg}</FadeIn>}
       {okMsg && <FadeIn className={classes.noticeOk}>{okMsg}</FadeIn>}
       {(errMsg || loadError) && (
@@ -708,6 +756,48 @@ const ProfileSettings = () => {
               <span className={classes.pill}>{t("profile.pillNoInstant")}</span>
             </div>
           </CollapsibleSection>
+
+          {showsOfferings && (
+            <CollapsibleSection
+              id="settings-offerings"
+              title={t("profile.offeringsTitle")}
+              summary={
+                savedOfferingsList.length
+                  ? t("profile.offeringsSummary", { count: savedOfferingsList.length })
+                  : t("profile.offeringsSummaryNone")
+              }
+              attention={needsOfferings}
+              defaultOpen={needsOfferings}
+            >
+              <p className={classes.fieldHelp}>{t("profile.offeringsHint")}</p>
+              <OfferingsField
+                id="settings-offerings-field"
+                offerings={offerings}
+                other={offeringOther}
+                onChange={(next) => {
+                  setOfferings(next.offerings);
+                  setOfferingOther(next.other);
+                  setOfferingsSavedAt(null);
+                }}
+                otherError={offeringsTried && offerings.includes("other") ? offeringsError : null}
+                disabled={saveOfferings.isPending}
+              />
+              {offeringsTried && offeringsError && !offerings.includes("other") && (
+                <p className={classes.fieldError} role="alert">{offeringsError}</p>
+              )}
+              <div className={classes.footer}>
+                {offeringsSavedAt && <span className={classes.saved}>{t("profile.offeringsSaved")}</span>}
+                <button
+                  className={classes.btnPrimary}
+                  type="button"
+                  onClick={() => void onSaveOfferings()}
+                  disabled={saveOfferings.isPending}
+                >
+                  {t("profile.offeringsSave")}
+                </button>
+              </div>
+            </CollapsibleSection>
+          )}
 
           <CollapsibleSection
             id="settings-payouts"

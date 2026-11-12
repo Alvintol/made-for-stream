@@ -23,8 +23,7 @@ import {
   isRequiredRecentUploadSample,
   isValidPublicUrl,
   meetsAudienceMinimum,
-  APPLICATION_OFFERINGS,
-  applicationOfferingLabel,
+  getOfferingsError,
   normaliseOfferings,
   type ApplicationAudience,
   type ApplicationOffering,
@@ -32,6 +31,9 @@ import {
   type CreatorApplicationRequirementKey,
 } from "../../domain/creatorApplication/creatorApplication";
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
+import OfferingsField from "../../components/creator/OfferingsField";
+import { useSaveMyOfferings } from "../../hooks/profile/useSaveMyOfferings";
+import { useMyProfile } from "../../hooks/profile/useMyProfile";
 import StatusHeader, { type StatusHeaderStage } from "../../components/ui/StatusHeader";
 import { useT, type Translate } from "../../lib/i18n/i18n";
 import { FadeIn } from "../../lib/motion";
@@ -87,8 +89,6 @@ const classes = {
   checks: "space-y-1",
   check: "flex items-start gap-3 rounded-xl px-2 py-2 text-sm text-zinc-700 transition hover:bg-[rgb(var(--ink)/0.03)]",
   checkbox: "mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 accent-[rgb(var(--brand))]",
-  // Two columns of short choices on wider screens, one on phones.
-  offerings: "grid gap-x-3 gap-y-0.5 sm:grid-cols-2",
   inlineLink: "font-semibold text-[rgb(var(--accent-text))] underline underline-offset-2 hover:opacity-80",
 
   // Badges
@@ -197,6 +197,8 @@ const ApplyCreator = () => {
   } = useSellerAccess();
 
   const upsertApplication = useUpsertMySellerApplication();
+  const saveOfferings = useSaveMyOfferings();
+  const { data: myProfile } = useMyProfile();
   const { data: queueState, isLoading: isQueueLoading, error: queueError } =
     useCreatorApplicationQueueState();
 
@@ -251,19 +253,20 @@ const ApplyCreator = () => {
     setAudience(savedAudience);
   }
 
-  const savedOfferings = normaliseOfferings(sellerApplication?.offering_types);
-  const savedOfferingsKey = savedOfferings.join(",");
+  // What they'll offer is kept on the profile (20261112_197), so Settings
+  // edits the same answers; it's saved with the application on submit.
+  const savedOfferings = normaliseOfferings(myProfile?.offering_types);
+  const savedOther = myProfile?.offering_other ?? "";
+  const savedOfferingsKey = `${savedOfferings.join(",")}|${savedOther}`;
   const [offerings, setOfferings] = useState<ApplicationOffering[]>(savedOfferings);
+  const [offeringOther, setOfferingOther] = useState(savedOther);
   const [offeringsFor, setOfferingsFor] = useState<string | null>(null);
   if (savedOfferingsKey !== offeringsFor) {
     setOfferingsFor(savedOfferingsKey);
     setOfferings(savedOfferings);
+    setOfferingOther(savedOther);
   }
-
-  const toggleOffering = (offering: ApplicationOffering, checked: boolean) =>
-    setOfferings((current) =>
-      normaliseOfferings(checked ? [...current, offering] : current.filter((value) => value !== offering)),
-    );
+  const offeringsError = getOfferingsError(offerings, offeringOther, t);
 
   // Empty or not a whole number is "not answered".
   const toCount = (value: string): number | null => {
@@ -296,6 +299,7 @@ const ApplyCreator = () => {
     hasLinkedPlatform: hasLinkedCreatorPlatform,
     audience,
     offerings,
+    offeringOther,
     samples,
     agreementsAccepted,
   }, t);
@@ -347,7 +351,6 @@ const ApplyCreator = () => {
     twitch_status: audience.twitchStatus,
     twitch_follower_count: audience.twitchFollowers,
     youtube_subscriber_count: audience.youtubeSubscribers,
-    offering_types: offerings,
   };
 
   const onStartDraft = async () => {
@@ -455,7 +458,9 @@ const ApplyCreator = () => {
     }
 
     try {
-      // Agreements are stored with the application, so save them before submitting.
+      // What they'll offer is on the profile, and the agreements are on the
+      // application: both are saved before submitting, which checks them.
+      await saveOfferings.mutateAsync({ offerings, other: offeringOther });
       await upsertApplication.mutateAsync({
         id: applicationId,
         status: sellerApplication?.status === "needs_changes" ? "needs_changes" : "draft",
@@ -490,7 +495,7 @@ const ApplyCreator = () => {
   }
 
   const basicsDone =
-    profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience) && offerings.length > 0;
+    profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience) && offeringsError === null;
 
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
@@ -790,19 +795,16 @@ const ApplyCreator = () => {
             <fieldset className={classes.addForm} disabled={!canEdit}>
               <legend className={classes.addTitle}>{t("apply.offeringsTitle")}</legend>
               <p className={classes.small}>{t("apply.offeringsHint")}</p>
-              <div className={classes.offerings}>
-                {APPLICATION_OFFERINGS.map((offering) => (
-                  <label key={offering} className={classes.check}>
-                    <input
-                      className={classes.checkbox}
-                      type="checkbox"
-                      checked={offerings.includes(offering)}
-                      onChange={(event) => toggleOffering(offering, event.currentTarget.checked)}
-                    />
-                    <span>{t(applicationOfferingLabel(offering))}</span>
-                  </label>
-                ))}
-              </div>
+              <OfferingsField
+                id="apply-offerings"
+                offerings={offerings}
+                other={offeringOther}
+                onChange={(next) => {
+                  setOfferings(next.offerings);
+                  setOfferingOther(next.other);
+                }}
+                disabled={!canEdit}
+              />
             </fieldset>
             {!(profileReady && hasLinkedCreatorPlatform) && (
               <Link className={classes.btnOutline} to="/settings/profile">

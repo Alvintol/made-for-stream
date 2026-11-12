@@ -30,6 +30,29 @@ export const applicationOfferingLabel = (offering: ApplicationOffering): Message
 export const normaliseOfferings = (values: readonly unknown[] | null | undefined): ApplicationOffering[] =>
   APPLICATION_OFFERINGS.filter((offering) => (values ?? []).includes(offering));
 
+// "Something else" needs a short description (profiles_offering_other_check).
+export const OFFERING_OTHER_MAX_LENGTH = 80;
+
+// Why these answers can't be saved or submitted yet, or null when they can.
+export const getOfferingsError = (
+  offerings: readonly ApplicationOffering[],
+  other: string,
+  t: Translate = english,
+): string | null => {
+  if (offerings.length === 0) return t("apply.reqOfferingsBlock");
+  if (offerings.includes("other") && !other.trim()) return t("apply.offeringOtherRequired");
+  if (other.trim().length > OFFERING_OTHER_MAX_LENGTH) {
+    return t("apply.offeringOtherTooLong", { max: OFFERING_OTHER_MAX_LENGTH });
+  }
+  return null;
+};
+
+// What to save: the description only goes with "Something else".
+export const toOfferingsPatch = (offerings: readonly ApplicationOffering[], other: string) => ({
+  offering_types: [...offerings],
+  offering_other: offerings.includes("other") ? other.trim() : null,
+});
+
 export const MIN_WORK_SAMPLES = 3;
 export const MAX_WORK_SAMPLES = 10;
 export const MAX_VIDEO_SAMPLES = 1;
@@ -161,6 +184,7 @@ export type CreatorApplicationReadinessInput = {
   audience: ApplicationAudience;
   // Left out, offerings aren't asked about (older callers and tests).
   offerings?: readonly ApplicationOffering[];
+  offeringOther?: string;
   samples: WorkSample[];
   agreementsAccepted: boolean;
 };
@@ -207,8 +231,8 @@ export const getCreatorApplicationRequirements = (
           {
             key: "offerings" as const,
             label: t("apply.reqOfferings"),
-            done: input.offerings.length > 0,
-            blocker: t("apply.reqOfferingsBlock"),
+            done: getOfferingsError(input.offerings, input.offeringOther ?? "", t) === null,
+            blocker: getOfferingsError(input.offerings, input.offeringOther ?? "", t) ?? t("apply.reqOfferingsBlock"),
           },
         ]
       : []),

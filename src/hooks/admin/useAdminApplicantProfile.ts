@@ -6,6 +6,8 @@ export type AdminApplicantProfileRow = {
   handle: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  offering_types: string[] | null;
+  offering_other: string | null;
 };
 
 const fetchAdminApplicantProfile = async (
@@ -17,7 +19,9 @@ const fetchAdminApplicantProfile = async (
       user_id,
       handle,
       display_name,
-      avatar_url
+      avatar_url,
+      offering_types,
+      offering_other
     `)
     .eq("user_id", userId)
     .maybeSingle();

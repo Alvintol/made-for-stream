@@ -14,7 +14,6 @@ type UpsertSellerApplicationInput = {
   twitch_status?: TwitchStatus | null;
   twitch_follower_count?: number | null;
   youtube_subscriber_count?: number | null;
-  offering_types?: string[];
   submitted_at?: string | null;
 };
 
@@ -37,7 +36,6 @@ const upsertMySellerApplication = async (
     twitch_status: input.twitch_status ?? null,
     twitch_follower_count: input.twitch_follower_count ?? null,
     youtube_subscriber_count: input.youtube_subscriber_count ?? null,
-    offering_types: input.offering_types ?? [],
     submitted_at:
       input.status === "submitted"
         ? input.submitted_at ?? now

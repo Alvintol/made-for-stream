@@ -17,6 +17,11 @@ export type ProfileRow = {
   banner_url: string | null;
   website_url: string | null;
 
+  // What they offer (20261112_197): APPLICATION_OFFERINGS keys, and the
+  // description that goes with "other".
+  offering_types: string[];
+  offering_other: string | null;
+
   // country_code, timezone and auth_provider_last_used are stored but not
   // readable through the API (migration 189), so they are not here.
 
@@ -47,6 +52,8 @@ const fetchMyProfile = async (userId: string): Promise<ProfileRow | null> => {
       avatar_url,
       banner_url,
       website_url,
+      offering_types,
+      offering_other,
       profile_visibility,
       messaging_enabled,
       profile_setup_seen,

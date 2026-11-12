@@ -14,8 +14,10 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   meetsAudienceMinimum,
+  getOfferingsError,
   normaliseOfferings,
   normaliseUrlInput,
+  toOfferingsPatch,
   type ApplicationOffering,
   type WorkSample,
 } from "../creatorApplication/creatorApplication";
@@ -184,5 +186,23 @@ describe("what an applicant will offer", () => {
     expect(offerings(["games"])?.done).toBe(true);
     // Not asked: no requirement at all.
     expect(getCreatorApplicationRequirements(base).some((item) => item.key === "offerings")).toBe(false);
+  });
+});
+
+describe("saving what someone offers", () => {
+  it("needs at least one, and a description of 80 characters or fewer for something else", () => {
+    expect(getOfferingsError([], "")).toBe("Choose at least one thing you'll offer before you apply.");
+    expect(getOfferingsError(["other"], "  ")).toBe("Tell us what else you'll offer.");
+    expect(getOfferingsError(["other"], "x".repeat(81))).toBe("Keep it to 80 characters.");
+    expect(getOfferingsError(["other"], "Logo design")).toBeNull();
+    expect(getOfferingsError(["emotes"], "")).toBeNull();
+  });
+
+  it("only keeps the description with something else, trimmed", () => {
+    expect(toOfferingsPatch(["emotes", "other"], "  Logo design ")).toEqual({
+      offering_types: ["emotes", "other"],
+      offering_other: "Logo design",
+    });
+    expect(toOfferingsPatch(["emotes"], "left over")).toEqual({ offering_types: ["emotes"], offering_other: null });
   });
 });

@@ -8,6 +8,9 @@ export type PublicCreatorProfile = {
   display_name: string | null;
   bio: string | null;
   avatar_url: string | null;
+  // What they offer (20261112_197), shown as tags.
+  offering_types: string[] | null;
+  offering_other: string | null;
 };
 
 export type PublicCreatorListing = {
@@ -44,7 +47,7 @@ const fetchPublicCreatorProfile = async (
 ): Promise<PublicCreatorProfilePayload> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("user_id, handle, display_name, bio, avatar_url")
+    .select("user_id, handle, display_name, bio, avatar_url, offering_types, offering_other")
     .eq("handle", handle)
     .maybeSingle();
 

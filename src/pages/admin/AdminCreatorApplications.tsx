@@ -4,11 +4,7 @@ import {
   useAdminSellerApplications,
   type AdminSellerApplicationRow,
 } from "../../hooks/admin/useAdminSellerApplications";
-import {
-  applicationOfferingLabel,
-  normaliseOfferings,
-} from "../../domain/creatorApplication/creatorApplication";
-import { useT } from "../../lib/i18n/i18n";
+import OfferingTags from "../../components/creator/OfferingTags";
 import {
   useAdminSellerApplicationSamples,
   type SellerApplicationSampleRow,
@@ -108,27 +104,6 @@ const formatDay = (value: string): string => {
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-};
-
-// What the applicant said they'll offer (20261112_197). Applications sent
-// before the question existed have none.
-const OfferingTags = ({ offerings, showEmpty = false }: { offerings: string[] | null; showEmpty?: boolean }) => {
-  const t = useT();
-  const chosen = normaliseOfferings(offerings);
-
-  if (chosen.length === 0) {
-    return showEmpty ? <p className={classes.queueItemMeta}>Offerings: not asked (applied before the question)</p> : null;
-  }
-
-  return (
-    <div className={classes.queueItemTags} aria-label="Plans to offer">
-      {chosen.map((offering) => (
-        <span key={offering} className={classes.queueItemTag}>
-          {t(applicationOfferingLabel(offering))}
-        </span>
-      ))}
-    </div>
-  );
 };
 
 const getStatusLabel = (application: SellerApplicationRow | null): string =>
@@ -386,7 +361,13 @@ const AdminCreatorApplications = () => {
                     {application.youtube_subscriber_count ?? "?"} subscribers
                   </div>
 
-                  <OfferingTags offerings={application.offering_types} />
+                  <OfferingTags
+                    offerings={application.applicant?.offering_types}
+                    other={application.applicant?.offering_other}
+                    label="Plans to offer"
+                    className={classes.queueItemTags}
+                    tagClassName={classes.queueItemTag}
+                  />
                 </button>
               );
             })}
@@ -428,7 +409,17 @@ const AdminCreatorApplications = () => {
 
                 <div>
                   <div className={classes.label}>Plans to offer</div>
-                  <OfferingTags offerings={selectedApplication.offering_types} showEmpty />
+                  {applicantProfile?.offering_types?.length ? (
+                    <OfferingTags
+                      offerings={applicantProfile.offering_types}
+                      other={applicantProfile.offering_other}
+                      label="Plans to offer"
+                      className={classes.queueItemTags}
+                      tagClassName={classes.queueItemTag}
+                    />
+                  ) : (
+                    <p className={classes.queueItemMeta}>Not chosen yet</p>
+                  )}
                 </div>
 
                 {applicantPlatformAccounts.length > 0 && (

@@ -30,9 +30,6 @@ export type SellerApplicationRow = {
   twitch_follower_count: number | null;
   youtube_subscriber_count: number | null;
 
-  // What they plan to offer (20261112_197): APPLICATION_OFFERINGS keys.
-  offering_types: string[] | null;
-
   submitted_at: string | null;
   reviewed_at: string | null;
   reviewed_by: string | null;
@@ -62,7 +59,6 @@ const fetchMySellerApplication = async (
   twitch_status,
   twitch_follower_count,
   youtube_subscriber_count,
-  offering_types,
   submitted_at,
   reviewed_at,
   reviewed_by,

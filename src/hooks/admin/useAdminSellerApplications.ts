@@ -14,7 +14,12 @@ const defaultStatuses: SellerApplicationStatus[] = [
 
 // The applicant's public name and handle, for the queue card.
 export type AdminSellerApplicationRow = SellerApplicationRow & {
-  applicant: { handle: string | null; display_name: string | null } | null;
+  applicant: {
+    handle: string | null;
+    display_name: string | null;
+    offering_types: string[];
+    offering_other: string | null;
+  } | null;
 };
 
 const fetchAdminSellerApplications = async (
@@ -29,7 +34,6 @@ const fetchAdminSellerApplications = async (
       twitch_status,
       twitch_follower_count,
       youtube_subscriber_count,
-      offering_types,
       submitted_at,
       reviewed_at,
       reviewer_notes,
@@ -48,15 +52,32 @@ const fetchAdminSellerApplications = async (
 
   // One read for every applicant's name, not one per card.
   const { data: profiles, error: profilesError } = userIds.length
-    ? await supabase.from("profiles").select("user_id, handle, display_name").in("user_id", userIds)
+    ? await supabase
+        .from("profiles")
+        .select("user_id, handle, display_name, offering_types, offering_other")
+        .in("user_id", userIds)
     : { data: [], error: null };
 
   if (profilesError) throw profilesError;
 
   const byUser = new Map(
-    ((profiles ?? []) as Array<{ user_id: string; handle: string | null; display_name: string | null }>).map(
-      (profile) => [profile.user_id, { handle: profile.handle, display_name: profile.display_name }],
-    ),
+    (
+      (profiles ?? []) as Array<{
+        user_id: string;
+        handle: string | null;
+        display_name: string | null;
+        offering_types: string[] | null;
+        offering_other: string | null;
+      }>
+    ).map((profile) => [
+      profile.user_id,
+      {
+        handle: profile.handle,
+        display_name: profile.display_name,
+        offering_types: profile.offering_types ?? [],
+        offering_other: profile.offering_other,
+      },
+    ]),
   );
 
   return rows.map((row) => ({ ...row, applicant: byUser.get(row.profile_user_id) ?? null }));

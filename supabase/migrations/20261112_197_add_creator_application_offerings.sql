@@ -1,29 +1,49 @@
--- What a creator applicant plans to offer (decided 2026-11-12).
+-- What a creator offers (decided 2026-11-12).
 --
--- The application asks "What will you offer?" with one checkbox per listing
--- category (src/domain/catalog.ts) and "Something else". At least one is
--- needed to submit, so reviewers see each applicant's intentions. Applications
--- submitted before this keep an empty list; nothing is backfilled.
+-- Asked as "What will you offer?" on the creator application, and kept up to
+-- date in Settings: one checkbox per listing category (src/domain/catalog.ts)
+-- and "Something else", which needs a short description. Stored on the
+-- profile, not the application, because an application locks once it is
+-- submitted and the answers show on the public profile as tags.
 --
--- The site must not save this column before it exists: apply this migration
--- before releasing the website that asks the question.
+-- At least one is needed to submit an application. Approved creators without
+-- any are sent to Settings by the site until they choose
+-- (src/components/auth/ProfileSetupRedirect.tsx). Nothing is backfilled.
+--
+-- Apply this before releasing the website that reads these columns.
 
-alter table public.seller_applications
-  add column if not exists offering_types text[] not null default '{}';
+alter table public.profiles
+  add column if not exists offering_types text[] not null default '{}',
+  add column if not exists offering_other text;
 
 -- Only known answers. Mirrors APPLICATION_OFFERINGS in
 -- src/domain/creatorApplication/creatorApplication.ts; a test compares them.
-alter table public.seller_applications
-  drop constraint if exists seller_applications_offering_types_check;
-alter table public.seller_applications
-  add constraint seller_applications_offering_types_check
+alter table public.profiles
+  drop constraint if exists profiles_offering_types_check;
+alter table public.profiles
+  add constraint profiles_offering_types_check
   check (offering_types <@ array[
     'emotes', 'overlays', 'panels', 'screens', 'alerts', 'badges',
     'pngtuber-models', 'vtuber-models', 'vtuber-rigging',
     'video-editing', 'audio-tech-help', 'games', 'other'
   ]::text[]);
 
--- Submitting: the checks from 20261110_193, plus at least one offering.
+-- "Something else" needs its description, and only it has one.
+alter table public.profiles
+  drop constraint if exists profiles_offering_other_check;
+alter table public.profiles
+  add constraint profiles_offering_other_check
+  check (
+    ('other' = any(offering_types))
+      = (offering_other is not null and char_length(btrim(offering_other)) > 0)
+    and char_length(coalesce(offering_other, '')) <= 80
+  );
+
+-- Profiles are readable column by column (20261105_189); these are public.
+grant select (offering_types, offering_other) on public.profiles to anon, authenticated;
+
+-- Submitting: the checks from 20261110_193, plus at least one offering on
+-- the applicant's profile.
 create or replace function public.check_seller_application_submission()
 returns trigger
 language plpgsql
@@ -48,7 +68,11 @@ begin
       using errcode = 'P0001';
   end if;
 
-  if coalesce(cardinality(new.offering_types), 0) = 0 then
+  if not exists (
+    select 1 from public.profiles
+    where profiles.user_id = new.profile_user_id
+      and cardinality(profiles.offering_types) > 0
+  ) then
     raise exception 'Choose at least one thing you''ll offer before you apply.'
       using errcode = 'P0001';
   end if;
