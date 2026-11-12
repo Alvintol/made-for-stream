@@ -2512,6 +2512,7 @@ export const es: Record<MessageKey, Message> = {
   "account.sanctioned":
     "Made for Stream no se puede usar desde Bielorrusia, Cuba, Irán, Corea del Norte, Rusia ni Siria, debido a las sanciones que se aplican a Made for Stream y a su proveedor de pagos.",
   "account.quebec": "En Quebec, Made for Stream por ahora solo ofrece anuncios gratuitos. Los encargos y los pagos abrirán allí cuando el sitio esté en francés.",
+  "account.quebecNotice": "La versión en francés de Made for Stream todavía está en revisión y aún no se ha publicado. Hasta entonces, desde Quebec puedes publicar anuncios gratuitos, pero no ofrecer anuncios de pago, enviar ni aceptar encargos, ni pagar.",
   "account.betaCountries": "Durante la beta, Made for Stream solo está disponible en Canadá y Estados Unidos.",
   "payout.signIn": "Debes iniciar sesión para empezar la configuración de Stripe.",
   "payout.acceptFirst": "Acepta los Términos para creadores y los acuerdos de Stripe para empezar la configuración de Stripe.",

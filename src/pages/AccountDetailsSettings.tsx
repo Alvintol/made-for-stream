@@ -6,6 +6,7 @@ import {
   MASKED_VALUE,
   MINIMUM_AGE,
   getRegionOptions,
+  isFreeOnlyLocation,
   toAccountDetailsForm,
   validateAccountDetails,
   type AccountDetails,
@@ -461,6 +462,9 @@ const AccountDetailsSettings = () => {
                 label={t(regionOptions ? "account.provinceState" : "account.stateRegion")}
                 optional={!regionOptions}
                 error={errors.region}
+                // Quebec is open for free listings only until the French
+                // version is out (20261112_195), and is told so before saving.
+                hint={isFreeOnlyLocation(form.country_code, form.region) ? t("account.quebecNotice") : undefined}
               >
                 {(props) =>
                   regionOptions ? (

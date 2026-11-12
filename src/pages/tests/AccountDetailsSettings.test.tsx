@@ -126,6 +126,28 @@ describe("<AccountDetailsSettings />", () => {
     expect(mocks.saveMarketing).toHaveBeenCalledWith(true);
   });
 
+  it("saves a Quebec address, with a note that the French version is still pending", async () => {
+    renderPage();
+
+    fill(/^Legal first name/, "Ada");
+    fill(/^Legal last name/, "Buyer");
+    fill(/^Date of birth/, "1990-01-01");
+    fill(/^Country/, "CA");
+    fill(/^Street address/, "1 Main St");
+    fill(/^City or town/, "Montréal");
+    expect(screen.queryByText(/French version of Made for Stream is still being reviewed/)).not.toBeInTheDocument();
+    fill(/^Province or state/, "QC");
+    fill(/^Postal or ZIP code/, "H2X 1Y4");
+
+    expect(screen.getByText(/French version of Made for Stream is still being reviewed/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ country_code: "CA", region: "QC" })),
+    );
+  });
+
   it("makes a new account choose a public display name before anything is saved", async () => {
     mocks.nameChosen = false;
 
