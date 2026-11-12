@@ -65,6 +65,22 @@ describe("guide steps", () => {
     expect(stateOf("creators", "payouts", facts({ payoutsReady: true }))).toBe("done");
   });
 
+  it("only explains payouts while payments are locked, and asks for them once open", () => {
+    const payouts = guideSteps.creators.find((entry) => entry.key === "payouts");
+    const locked = facts({ isCreator: true, paymentsLive: false });
+    const open = facts({ isCreator: true, paymentsLive: true });
+
+    expect(stateOf("creators", "payouts", locked)).toBe("read");
+    expect(payouts?.body?.(locked)).toBe("bodyClosed");
+    expect(hasMessage("guide.creators.payouts.bodyClosed")).toBe(true);
+    expect(guideProgressCount("creators", locked).total).toBe(guideProgressCount("creators", open).total - 1);
+
+    expect(stateOf("creators", "payouts", open)).toBe("todo");
+    expect(payouts?.body?.(open)).toBe("body");
+    // A ready account still shows as done, whatever the switch says.
+    expect(stateOf("creators", "payouts", facts({ payoutsReady: true, paymentsLive: false }))).toBe("done");
+  });
+
   it("shows an application under review as waiting, and an approved one as done", () => {
     expect(stateOf("creators", "apply", facts({ applicationStatus: "draft" }))).toBe("todo");
     expect(stateOf("creators", "apply", facts({ applicationStatus: "under_review" }))).toBe("waiting");
