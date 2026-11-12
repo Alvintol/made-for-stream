@@ -4,7 +4,7 @@ export const privacySections = [
   {
     "title": "1. Who is responsible",
     "body": [
-      "Made for Stream is operated by Made for Stream (business number 786404640), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. The individual responsible for privacy enquiries can be reached at privacy@madeforstream.com. This policy explains personal information handled through accounts, creator applications, listings, messaging, projects, payments and support.",
+      "Made for Stream is operated by Made for Stream (business number 786404640), P.O. Box 34086, Calgary RPO Westbrook, Alberta, Canada T3C 3W2. Our Privacy Officer is the person in charge of protecting personal information at Made for Stream, and can be reached at privacy@madeforstream.com. This policy explains personal information handled through accounts, creator applications, listings, messaging, projects, payments and support.",
       "It does not replace the privacy notices of services you choose to use, such as Stripe or a sign-in provider. We identify relevant sharing below. Where privacy law imposes additional mandatory requirements, those requirements apply."
     ]
   },
