@@ -7,6 +7,7 @@ import {
   REQUIRED_RECENT_UPLOAD_TITLE,
 } from "../../domain/creatorApplication/creatorApplication";
 import { supabase } from "../../lib/supabaseClient";
+import { alertAdminOfApplication } from "./alertAdminOfApplication";
 
 export type SellerApplicationSampleType = "link" | "image" | "video";
 
@@ -182,7 +183,10 @@ export const useSubmitSellerApplication = (userId: string | null) => {
 
   return useMutation({
     mutationFn: submitApplication,
-    onSuccess: async () => {
+    onSuccess: async (_data, input) => {
+      // Not awaited: the email never holds up or undoes the submission.
+      void alertAdminOfApplication(input.applicationId);
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["mySellerApplication", userId] }),
         queryClient.invalidateQueries({ queryKey: ["creatorApplicationQueueState"] }),

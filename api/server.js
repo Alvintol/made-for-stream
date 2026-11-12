@@ -20,6 +20,7 @@ import {
 } from "./supportedCurrencies.js";
 import { computeCumulativeRefund } from "./refundArithmetic.js";
 import { parseEmailEvent, sendTransactionalEmail, suppressEmail } from "./email.js";
+import { alertNewCreatorApplications } from "./creatorApplicationAlerts.js";
 import { getEmailLanguage } from "./emailLanguage.js";
 import {
   getBellLine,
@@ -185,6 +186,19 @@ const OPS_CRON_SECRET = process.env.OPS_CRON_SECRET || "";
 // The email provider's bounce webhook sends this the same way (EMAIL-006).
 const EMAIL_WEBHOOK_SECRET = process.env.EMAIL_WEBHOOK_SECRET || "";
 const OPS_ALERT_EMAIL = process.env.OPS_ALERT_EMAIL || "ops@madeforstream.com";
+// New creator applications are emailed here, straight away (APP-007).
+const CREATOR_APPLICATION_ALERT_EMAIL = process.env.CREATOR_APPLICATION_ALERT_EMAIL || OPS_ALERT_EMAIL;
+const EMAIL_SITE_URL = process.env.EMAIL_SITE_URL || "https://madeforstream.com";
+
+const sendNewCreatorApplicationAlerts = (applicationId = null, limit = 10) =>
+  alertNewCreatorApplications({
+    supabaseAdmin,
+    sendEmail: (message) => sendTransactionalEmail(supabaseAdmin, message),
+    to: CREATOR_APPLICATION_ALERT_EMAIL,
+    siteUrl: EMAIL_SITE_URL,
+    applicationId,
+    limit,
+  });
 const OPS_RESYNC_BATCH_SIZE = Math.min(
   Math.max(Number(process.env.OPS_RESYNC_BATCH_SIZE) || 100, 1),
   500,
@@ -3944,6 +3958,54 @@ app.post("/api/creator-applications/:applicationId/send-decision-email", async (
   }
 });
 
+// The applicant's site calls this right after submit_seller_application(),
+// so the team hears about the application at once (APP-007). Only the
+// applicant can ask, only for their own submitted application, and it is
+// emailed once per submission whatever is asked; the hourly ops run sends
+// any this missed.
+app.post("/api/creator-applications/:applicationId/alert-admin", async (req, res) => {
+  let userId;
+
+  try {
+    userId = await requireSupabaseUserId(req);
+  } catch {
+    return res.status(401).json({ error: "Sign in to continue." });
+  }
+
+  const applicationId = String(req.params.applicationId || "").trim();
+
+  if (!/^[0-9a-f-]{36}$/i.test(applicationId)) {
+    return res.status(400).json({ error: "applicationId is required." });
+  }
+
+  try {
+    if (!supabaseAdmin) {
+      throw new Error("Supabase admin not configured");
+    }
+
+    const { data: application, error } = await supabaseAdmin
+      .from("seller_applications")
+      .select("id, profile_user_id")
+      .eq("id", applicationId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!application || application.profile_user_id !== userId) {
+      return res.status(404).json({ error: "Application not found." });
+    }
+
+    const outcome = await sendNewCreatorApplicationAlerts(applicationId);
+
+    return res.json(outcome);
+  } catch (err) {
+    console.error(`APP-007: new-application email for ${applicationId} failed: ${String(err?.message || err)}`);
+    return res.status(500).json({ error: "The team couldn't be notified right now; it will be retried." });
+  }
+});
+
 // Sprint 6 (launch-scope.md section 7.1): "Suppression-list handling, so a
 // hard bounce does not silently restart a notice clock that nobody
 // received." Cloudflare Email Service publishes bounce and complaint events
@@ -4561,6 +4623,18 @@ app.post("/api/internal/ops/alerts/run", async (req, res) => {
     });
 
     const notifications = await drainListingRequestNotifications({ limit: 100 });
+
+    // New creator applications whose email the site's call missed (APP-007).
+    // Its failures are logged and never stop the ops alerts below.
+    try {
+      const applicationAlerts = await sendNewCreatorApplicationAlerts(null, 25);
+
+      if (applicationAlerts.failed > 0) {
+        console.error(`APP-007: ${applicationAlerts.failed} new-application email(s) failed; retried next hour.`);
+      }
+    } catch (err) {
+      console.error(`APP-007: new-application emails could not be checked: ${String(err?.message || err)}`);
+    }
 
     const { data: rows, error: alertsError } =
       await supabaseAdmin.rpc("list_ops_alerts");
