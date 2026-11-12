@@ -25,19 +25,20 @@ export const termsChanges = {
   ],
 } as const;
 
-export const privacyVersion = "2026-11-11";
+export const privacyVersion = "2026-11-12";
 
 // What changed in this version, in plain words. Shown on the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time privacyVersion changes: a
 // test fails if the two versions differ.
 export const privacyChanges = {
-  version: "2026-11-11",
+  version: "2026-11-12",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "Cloudflare now hosts the website (section 4).",
-    "When you sign in by email, Cloudflare checks that you are a person and not an automated program (section 4).",
-    "We added our business number to section 1.",
+    "We named our Privacy Officer as the person in charge of protecting personal information (section 1).",
+    "Earlier change (version 2026-11-11): Cloudflare now hosts the website (section 4).",
+    "Earlier change (version 2026-11-11): when you sign in by email, Cloudflare checks that you are a person and not an automated program (section 4).",
+    "Earlier change (version 2026-11-11): we added our business number to section 1.",
     "Earlier change (version 2026-11-03-3): when you pay a creator, they can see your country and province or state, added up with their other sales from there, to help with their taxes.",
     "Earlier change (version 2026-11-03-3): creators never see your street address, city or postal code, and never see your region next to your name or a single order.",
     "Earlier change (version 2026-11-03-3): this only applies to payments you make after accepting that version.",
@@ -60,6 +61,6 @@ export const paymentTermsVersion = "2026-11-03";
 
 export const copyrightPolicyVersion = "2026-09-24";
 
-export const cookiePolicyVersion = "2026-11-11";
+export const cookiePolicyVersion = "2026-11-12";
 
 export const communityGuidelinesVersion = "2026-10-29";
