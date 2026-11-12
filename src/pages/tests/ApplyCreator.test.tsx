@@ -37,6 +37,20 @@ vi.mock("../../hooks/creatorApplication/useCreatorApplicationQueueState", () => 
   useCreatorApplicationQueueState: vi.fn(),
 }));
 
+// What they'll offer lives on the profile (20261112_197).
+const offeringMocks = vi.hoisted(() => ({
+  profile: { offering_types: ["emotes"] as string[], offering_other: null as string | null },
+  save: vi.fn(),
+}));
+
+vi.mock("../../hooks/profile/useMyProfile", () => ({
+  useMyProfile: () => ({ data: offeringMocks.profile }),
+}));
+
+vi.mock("../../hooks/profile/useSaveMyOfferings", () => ({
+  useSaveMyOfferings: () => ({ mutateAsync: offeringMocks.save, isPending: false }),
+}));
+
 type SellerApplicationSampleRow = {
   id: string;
   application_id: string;
@@ -125,6 +139,8 @@ const renderPage = (samples: SellerApplicationSampleRow[]) => {
 
 describe("ApplyCreator", () => {
   beforeEach(() => {
+    offeringMocks.profile = { offering_types: ["emotes"], offering_other: null };
+    offeringMocks.save.mockReset().mockResolvedValue(undefined);
     vi.clearAllMocks();
 
     mockUseAuth.mockReturnValue({
@@ -382,8 +398,45 @@ describe("ApplyCreator", () => {
     expect(upsert).toHaveBeenCalledWith(
       expect.objectContaining({ id: "application-1", status: "draft", agreed_to_age_and_capacity: true })
     );
+    expect(offeringMocks.save).toHaveBeenCalledWith({ offerings: ["emotes"], other: "" });
     expect(upsert.mock.invocationCallOrder[0]).toBeLessThan(submit.mock.invocationCallOrder[0]);
     expect(await screen.findByText(/Application submitted/)).toBeInTheDocument();
+  });
+
+  it("asks what they'll offer, needs at least one and a description for something else, and saves them", async () => {
+    offeringMocks.profile = { offering_types: [], offering_other: null };
+    mockUseUpsertMySellerApplication.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    } as never);
+
+    renderPage(readySamples());
+
+    expect(screen.getByText("What will you offer?")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: /submit for review/i });
+    expect(button).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "VTuber Models" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Something else" }));
+    // Something else needs its description first.
+    expect(button).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("What else will you offer?"), { target: { value: "Logo design" } });
+    expect(button).toBeEnabled();
+
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(offeringMocks.save).toHaveBeenCalledWith({ offerings: ["vtuber-models", "other"], other: "Logo design" }),
+    );
+  });
+
+  it("doesn't ask for follower or subscriber numbers, and says the team checks the channel", () => {
+    renderPage(readySamples());
+
+    expect(screen.queryByLabelText(/followers/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/subscribers/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/we check your linked channel ourselves/)).toBeInTheDocument();
   });
 
   it("shows a save failure instead of throwing when submitting", async () => {

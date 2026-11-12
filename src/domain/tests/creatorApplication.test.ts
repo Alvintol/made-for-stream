@@ -1,6 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CATEGORIES } from "../catalog";
 import {
+  APPLICATION_OFFERINGS,
   REQUIRED_RECENT_UPLOAD_TITLE,
   getCreatorApplicationPhase,
   getCreatorApplicationRequirements,
@@ -10,7 +14,11 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   meetsAudienceMinimum,
+  getOfferingsError,
+  normaliseOfferings,
   normaliseUrlInput,
+  toOfferingsPatch,
+  type ApplicationOffering,
   type WorkSample,
 } from "../creatorApplication/creatorApplication";
 
@@ -139,5 +147,62 @@ describe("audience minimum", () => {
     );
 
     expect(blocker?.key).toBe("audience");
+  });
+});
+
+describe("what an applicant will offer", () => {
+  it("offers every listing category plus something else, in the database's own list", () => {
+    expect(APPLICATION_OFFERINGS).toEqual([...CATEGORIES.map((category) => category.key), "other"]);
+
+    const migration = fs.readFileSync(
+      path.resolve(__dirname, "../../../supabase/migrations/20261112_197_add_creator_application_offerings.sql"),
+      "utf8",
+    );
+    const listed = [...(migration.match(/array\[([^\]]+)\]::text\[\]/)?.[1] ?? "").matchAll(/'([^']+)'/g)].map(
+      (match) => match[1],
+    );
+
+    expect(listed).toEqual([...APPLICATION_OFFERINGS]);
+  });
+
+  it("keeps known answers in the list's order and drops the rest", () => {
+    expect(normaliseOfferings(["other", "emotes", "emotes", "nonsense", null])).toEqual(["emotes", "other"]);
+    expect(normaliseOfferings(null)).toEqual([]);
+  });
+
+  it("needs at least one offering to submit, when it's asked", () => {
+    const base = {
+      profileReady: true,
+      hasLinkedPlatform: true,
+      audience: { twitchStatus: "affiliate" as const, twitchFollowers: 300, youtubeSubscribers: null },
+      samples: [],
+      agreementsAccepted: true,
+    };
+    const offerings = (value: readonly ApplicationOffering[]) =>
+      getCreatorApplicationRequirements({ ...base, offerings: value }).find((item) => item.key === "offerings");
+
+    expect(offerings([])?.done).toBe(false);
+    expect(offerings([])?.blocker).toBe("Choose at least one thing you'll offer before you apply.");
+    expect(offerings(["games"])?.done).toBe(true);
+    // Not asked: no requirement at all.
+    expect(getCreatorApplicationRequirements(base).some((item) => item.key === "offerings")).toBe(false);
+  });
+});
+
+describe("saving what someone offers", () => {
+  it("needs at least one, and a description of 80 characters or fewer for something else", () => {
+    expect(getOfferingsError([], "")).toBe("Choose at least one thing you'll offer before you apply.");
+    expect(getOfferingsError(["other"], "  ")).toBe("Tell us what else you'll offer.");
+    expect(getOfferingsError(["other"], "x".repeat(81))).toBe("Keep it to 80 characters.");
+    expect(getOfferingsError(["other"], "Logo design")).toBeNull();
+    expect(getOfferingsError(["emotes"], "")).toBeNull();
+  });
+
+  it("only keeps the description with something else, trimmed", () => {
+    expect(toOfferingsPatch(["emotes", "other"], "  Logo design ")).toEqual({
+      offering_types: ["emotes", "other"],
+      offering_other: "Logo design",
+    });
+    expect(toOfferingsPatch(["emotes"], "left over")).toEqual({ offering_types: ["emotes"], offering_other: null });
   });
 });

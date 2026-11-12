@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
-import { useAdminSellerApplications } from "../../hooks/admin/useAdminSellerApplications";
+import {
+  useAdminSellerApplications,
+  type AdminSellerApplicationRow,
+} from "../../hooks/admin/useAdminSellerApplications";
+import OfferingTags from "../../components/creator/OfferingTags";
 import {
   useAdminSellerApplicationSamples,
   type SellerApplicationSampleRow,
@@ -33,7 +37,14 @@ const classes = {
   queueItemActive:
     "rounded-2xl border border-[rgb(var(--brand))] bg-white p-4 text-left ring-2 ring-[rgba(244,92,44,0.16)]",
   queueItemTitle: "text-sm font-extrabold text-zinc-900",
+  queueItemHandle: "text-xs font-semibold text-zinc-500",
+  queueItemHead: "flex items-start justify-between gap-2",
   queueItemMeta: "mt-1 text-xs text-zinc-500",
+  queueItemTags: "mt-2 flex flex-wrap gap-1",
+  queueItemTag:
+    "rounded-full bg-[rgb(var(--ink)/0.06)] px-2 py-0.5 text-[11px] font-medium text-zinc-600",
+  queueItemStatus: "chip shrink-0 text-[11px]",
+  smallPrint: "mt-2 text-xs text-zinc-400",
 
   section: "space-y-4",
   row: "mt-5 flex flex-wrap items-center gap-3",
@@ -80,6 +91,20 @@ const getErrorMessage = (error: unknown): string =>
   error && typeof error === "object" && "message" in error
     ? String((error as { message: unknown }).message)
     : "Something went wrong.";
+
+// The card leads with who applied, not their account id.
+const applicantName = (application: AdminSellerApplicationRow): string =>
+  application.applicant?.display_name?.trim() ||
+  (application.applicant?.handle ? `@${application.applicant.handle}` : "Unnamed applicant");
+
+// "Nov 12, 2026", in the reviewer's own time zone.
+const formatDay = (value: string): string => {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+};
 
 const getStatusLabel = (application: SellerApplicationRow | null): string =>
   !application
@@ -313,24 +338,30 @@ const AdminCreatorApplications = () => {
                   type="button"
                   onClick={() => setSelectedApplicationId(application.id)}
                 >
-                  <div className={classes.queueItemTitle}>
-                    {application.profile_user_id}
+                  <div className={classes.queueItemHead}>
+                    <div className="min-w-0">
+                      <div className={classes.queueItemTitle}>{applicantName(application)}</div>
+                      {application.applicant?.handle && (
+                        <div className={classes.queueItemHandle}>@{application.applicant.handle}</div>
+                      )}
+                    </div>
+                    <span className={classes.queueItemStatus}>{getStatusLabel(application)}</span>
                   </div>
 
                   <div className={classes.queueItemMeta}>
-                    Status: {getStatusLabel(application)}
+                    {application.submitted_at
+                      ? `Submitted ${formatDay(application.submitted_at)}`
+                      : "Not submitted yet"}
                   </div>
 
-                  <div className={classes.queueItemMeta}>
-                    Submitted: {application.submitted_at ?? "Not submitted"}
-                  </div>
 
-                  {/* Their own numbers: check them against the linked channel. */}
-                  <div className={classes.queueItemMeta}>
-                    Twitch: {application.twitch_status ?? "not given"},{" "}
-                    {application.twitch_follower_count ?? "?"} followers · YouTube:{" "}
-                    {application.youtube_subscriber_count ?? "?"} subscribers
-                  </div>
+                  <OfferingTags
+                    offerings={application.applicant?.offering_types}
+                    other={application.applicant?.offering_other}
+                    label="Plans to offer"
+                    className={classes.queueItemTags}
+                    tagClassName={classes.queueItemTag}
+                  />
                 </button>
               );
             })}
@@ -350,7 +381,9 @@ const AdminCreatorApplications = () => {
             ) : (
               <>
                 <p className={classes.help}>
-                  Review the samples and decide whether this account should receive
+                  Review the samples, open their linked channel to check the audience
+                  minimum (Twitch Affiliate or Partner with 300+ followers, or 500+
+                  YouTube subscribers), then decide whether this account should receive
                   creator access.
                 </p>
 
@@ -370,20 +403,45 @@ const AdminCreatorApplications = () => {
                   )}
                 </div>
 
-                <div className={classes.help}>
-                  Applicant ID: {selectedApplication.profile_user_id}
+                <div>
+                  <div className={classes.label}>Plans to offer</div>
+                  {applicantProfile?.offering_types?.length ? (
+                    <OfferingTags
+                      offerings={applicantProfile.offering_types}
+                      other={applicantProfile.offering_other}
+                      label="Plans to offer"
+                      className={classes.queueItemTags}
+                      tagClassName={classes.queueItemTag}
+                    />
+                  ) : (
+                    <p className={classes.queueItemMeta}>Not chosen yet</p>
+                  )}
                 </div>
 
                 {applicantPlatformAccounts.length > 0 && (
                   <div className={classes.statusPills}>
-                    {applicantPlatformAccounts.map((platformAccount) => (
-                      <span key={platformAccount.id} className={classes.pill}>
-                        {platformAccount.platform}
-                        {platformAccount.platform_login
-                          ? ` · @${platformAccount.platform_login}`
-                          : ""}
-                      </span>
-                    ))}
+                    {/* Open the channel to check the audience minimum by hand. */}
+                    {applicantPlatformAccounts.map((platformAccount) => {
+                      const label = `${platformAccount.platform}${
+                        platformAccount.platform_login ? ` · @${platformAccount.platform_login}` : ""
+                      }`;
+
+                      return platformAccount.profile_url ? (
+                        <a
+                          key={platformAccount.id}
+                          className={classes.pill}
+                          href={platformAccount.profile_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {label} ↗
+                        </a>
+                      ) : (
+                        <span key={platformAccount.id} className={classes.pill}>
+                          {label}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -433,6 +491,8 @@ const AdminCreatorApplications = () => {
                     Suspend
                   </button>
                 </div>
+
+                <p className={classes.smallPrint}>Account ID: {selectedApplication.profile_user_id}</p>
               </>
             )}
           </div>

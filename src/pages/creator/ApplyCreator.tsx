@@ -22,12 +22,16 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   isValidPublicUrl,
-  meetsAudienceMinimum,
-  type ApplicationAudience,
+  getOfferingsError,
+  normaliseOfferings,
+  type ApplicationOffering,
   normaliseUrlInput,
   type CreatorApplicationRequirementKey,
 } from "../../domain/creatorApplication/creatorApplication";
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
+import OfferingsField from "../../components/creator/OfferingsField";
+import { useSaveMyOfferings } from "../../hooks/profile/useSaveMyOfferings";
+import { useMyProfile } from "../../hooks/profile/useMyProfile";
 import StatusHeader, { type StatusHeaderStage } from "../../components/ui/StatusHeader";
 import { useT, type Translate } from "../../lib/i18n/i18n";
 import { FadeIn } from "../../lib/motion";
@@ -140,6 +144,7 @@ const requirementSection: Record<CreatorApplicationRequirementKey, SectionKey> =
   profile: "basics",
   platform: "basics",
   audience: "basics",
+  offerings: "basics",
   recentUpload: "recent",
   samples: "samples",
   agreements: "agreements",
@@ -190,6 +195,8 @@ const ApplyCreator = () => {
   } = useSellerAccess();
 
   const upsertApplication = useUpsertMySellerApplication();
+  const saveOfferings = useSaveMyOfferings();
+  const { data: myProfile } = useMyProfile();
   const { data: queueState, isLoading: isQueueLoading, error: queueError } =
     useCreatorApplicationQueueState();
 
@@ -231,24 +238,21 @@ const ApplyCreator = () => {
     setAgreements(savedAgreements);
   }
 
-  const savedAudience: ApplicationAudience = {
-    twitchStatus: sellerApplication?.twitch_status ?? null,
-    twitchFollowers: sellerApplication?.twitch_follower_count ?? null,
-    youtubeSubscribers: sellerApplication?.youtube_subscriber_count ?? null,
-  };
-  const savedAudienceKey = JSON.stringify(savedAudience);
-  const [audience, setAudience] = useState<ApplicationAudience>(savedAudience);
-  const [audienceFor, setAudienceFor] = useState<string | null>(null);
-  if (savedAudienceKey !== audienceFor) {
-    setAudienceFor(savedAudienceKey);
-    setAudience(savedAudience);
-  }
 
-  // Empty or not a whole number is "not answered".
-  const toCount = (value: string): number | null => {
-    const count = Number.parseInt(value.replace(/[^0-9]/g, ""), 10);
-    return Number.isFinite(count) ? count : null;
-  };
+  // What they'll offer is kept on the profile (20261112_197), so Settings
+  // edits the same answers; it's saved with the application on submit.
+  const savedOfferings = normaliseOfferings(myProfile?.offering_types);
+  const savedOther = myProfile?.offering_other ?? "";
+  const savedOfferingsKey = `${savedOfferings.join(",")}|${savedOther}`;
+  const [offerings, setOfferings] = useState<ApplicationOffering[]>(savedOfferings);
+  const [offeringOther, setOfferingOther] = useState(savedOther);
+  const [offeringsFor, setOfferingsFor] = useState<string | null>(null);
+  if (savedOfferingsKey !== offeringsFor) {
+    setOfferingsFor(savedOfferingsKey);
+    setOfferings(savedOfferings);
+    setOfferingOther(savedOther);
+  }
+  const offeringsError = getOfferingsError(offerings, offeringOther, t);
 
   const recentUploadSample = useMemo(
     () => samples.find(isRequiredRecentUploadSample) ?? null,
@@ -273,7 +277,8 @@ const ApplyCreator = () => {
   const requirements = getCreatorApplicationRequirements({
     profileReady,
     hasLinkedPlatform: hasLinkedCreatorPlatform,
-    audience,
+    offerings,
+    offeringOther,
     samples,
     agreementsAccepted,
   }, t);
@@ -295,8 +300,17 @@ const ApplyCreator = () => {
     .map((error) => getErrorMessage(error, t))
     .join(" ");
 
+  // A step that opened to ask for something stays open for the visit, so
+  // meeting its requirement (one ticked offering, the 300th follower typed)
+  // doesn't snap it shut mid-answer. The arrow still closes it.
+  const [openedSections, setOpenedSections] = useState<SectionKey[]>([]);
+  if (attentionSection && !openedSections.includes(attentionSection)) {
+    setOpenedSections((current) => [...current, attentionSection]);
+  }
+
   const sectionFlags = (key: SectionKey) => ({
     attention: attentionSection === key,
+    defaultOpen: openedSections.includes(key),
     focusKey: focus?.key === key ? focus.nonce : null,
   });
 
@@ -313,9 +327,6 @@ const ApplyCreator = () => {
     agreed_to_original_work: agreements.originalWork,
     agreed_to_manual_review: agreements.manualReview,
     agreed_to_age_and_capacity: agreements.ageAndCapacity,
-    twitch_status: audience.twitchStatus,
-    twitch_follower_count: audience.twitchFollowers,
-    youtube_subscriber_count: audience.youtubeSubscribers,
   };
 
   const onStartDraft = async () => {
@@ -423,7 +434,9 @@ const ApplyCreator = () => {
     }
 
     try {
-      // Agreements are stored with the application, so save them before submitting.
+      // What they'll offer is on the profile, and the agreements are on the
+      // application: both are saved before submitting, which checks them.
+      await saveOfferings.mutateAsync({ offerings, other: offeringOther });
       await upsertApplication.mutateAsync({
         id: applicationId,
         status: sellerApplication?.status === "needs_changes" ? "needs_changes" : "draft",
@@ -457,7 +470,8 @@ const ApplyCreator = () => {
     );
   }
 
-  const basicsDone = profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience);
+  const basicsDone =
+    profileReady && hasLinkedCreatorPlatform && offeringsError === null;
 
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
@@ -703,56 +717,24 @@ const ApplyCreator = () => {
                 </div>
               </li>
             </ul>
+            {/* The minimum is checked by hand on the linked channel at review,
+                not typed in (decided 2026-11-12). */}
+            <p className={classes.small}>
+              {t("apply.audienceCheckedByUs", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS })}
+            </p>
             <fieldset className={classes.addForm} disabled={!canEdit}>
-              <legend className={classes.addTitle}>{t("apply.audienceTitle")}</legend>
-              <p className={classes.small}>
-                {t("apply.audienceHint", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS })}
-              </p>
-              <div className={classes.grid}>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.twitchStatus")}</span>
-                  <select
-                    className={classes.input}
-                    value={audience.twitchStatus ?? ""}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value;
-                      setAudience((current) => ({
-                        ...current,
-                        twitchStatus: value === "affiliate" || value === "partner" || value === "none" ? value : null,
-                      }));
-                    }}
-                  >
-                    <option value="">{t("apply.twitchStatusPick")}</option>
-                    <option value="none">{t("apply.twitchStatusNone")}</option>
-                    <option value="affiliate">{t("apply.twitchStatusAffiliate")}</option>
-                    <option value="partner">{t("apply.twitchStatusPartner")}</option>
-                  </select>
-                </label>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.twitchFollowers")}</span>
-                  <input
-                    className={classes.input}
-                    inputMode="numeric"
-                    value={audience.twitchFollowers ?? ""}
-                    onChange={(event) => {
-                      const value = toCount(event.currentTarget.value);
-                      setAudience((current) => ({ ...current, twitchFollowers: value }));
-                    }}
-                  />
-                </label>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.youtubeSubscribers")}</span>
-                  <input
-                    className={classes.input}
-                    inputMode="numeric"
-                    value={audience.youtubeSubscribers ?? ""}
-                    onChange={(event) => {
-                      const value = toCount(event.currentTarget.value);
-                      setAudience((current) => ({ ...current, youtubeSubscribers: value }));
-                    }}
-                  />
-                </label>
-              </div>
+              <legend className={classes.addTitle}>{t("apply.offeringsTitle")}</legend>
+              <p className={classes.small}>{t("apply.offeringsHint")}</p>
+              <OfferingsField
+                id="apply-offerings"
+                offerings={offerings}
+                other={offeringOther}
+                onChange={(next) => {
+                  setOfferings(next.offerings);
+                  setOfferingOther(next.other);
+                }}
+                disabled={!canEdit}
+              />
             </fieldset>
             {!(profileReady && hasLinkedCreatorPlatform) && (
               <Link className={classes.btnOutline} to="/settings/profile">

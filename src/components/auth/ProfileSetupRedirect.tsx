@@ -4,6 +4,8 @@ import { useMyProfile } from '../../hooks/profile/useMyProfile';
 import { useAccountDetails } from '../../hooks/settings/useAccountDetails';
 import { hasChosenDisplayName } from '../../domain/settings/displayName';
 import { useAuth } from '../../providers/AuthProvider';
+import { useMySellerApplication } from '../../hooks/creatorApplication/useMySellerApplication';
+import { normaliseOfferings } from '../../domain/creatorApplication/creatorApplication';
 
 
 // Paths that should never redirect into themselves
@@ -13,6 +15,7 @@ const shouldSkipRedirect = (pathname: string): boolean =>
   pathname.startsWith("/auth");
 
 const ACCOUNT_DETAILS_PATH = "/settings/personal";
+const PROFILE_SETTINGS_PATH = "/settings/profile";
 
 // Pages someone can still read before adding their account details: the
 // form itself, sign-in (to sign out), and the documents that explain why
@@ -45,6 +48,13 @@ const ProfileSetupRedirect = () => {
     (accountDetails.isSuccess && !accountDetails.data) ||
     (Boolean(profile) && !hasChosenDisplayName(profile));
   const accountDetailsPending = accountDetails.isLoading || isLoading;
+  // An approved creator who hasn't said what they offer (20261112_197) is
+  // sent to Settings, which explains why, until they save at least one.
+  const { data: application } = useMySellerApplication();
+  const needsOfferings =
+    application?.status === "approved" &&
+    Boolean(profile) &&
+    normaliseOfferings(profile?.offering_types).length === 0;
 
   useEffect(() => {
     if (loading || !user || accountDetailsPending) return;
@@ -57,6 +67,14 @@ const ProfileSetupRedirect = () => {
     }
 
     if (isLoading || !profile) return;
+
+    if (needsOfferings) {
+      if (location.pathname !== PROFILE_SETTINGS_PATH && !isOpenWithoutAccountDetails(location.pathname)) {
+        navigate(PROFILE_SETTINGS_PATH, { replace: true });
+      }
+      return;
+    }
+
     if (profile.profile_setup_seen) return;
     if (shouldSkipRedirect(location.pathname)) return;
 
@@ -67,6 +85,7 @@ const ProfileSetupRedirect = () => {
     user,
     profile,
     needsAccountDetails,
+    needsOfferings,
     accountDetailsPending,
     location.pathname,
     navigate,

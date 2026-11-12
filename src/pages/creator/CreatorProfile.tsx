@@ -18,6 +18,7 @@ import {
   moderationReportReasonOptions,
 } from '../../domain/moderation/moderationReports';
 import KeptPlaceholder from "../../components/ui/KeptPlaceholder";
+import OfferingTags from "../../components/creator/OfferingTags";
 
 const classes = {
   container: "space-y-8",
@@ -32,6 +33,7 @@ const classes = {
 
   titleRow: "flex flex-wrap items-center gap-2",
   bio: "mt-2 text-zinc-600",
+  offerings: "mt-3 flex flex-wrap gap-1.5",
 
   badgeLive: "badge badgeLive",
 
@@ -328,6 +330,13 @@ const CreatorProfile = () => {
         </div>
 
         {profile.bio && <p className={classes.bio}>{profile.bio}</p>}
+
+        <OfferingTags
+          offerings={profile.offering_types}
+          other={profile.offering_other}
+          label={t("creatorProfile.offers")}
+          className={classes.offerings}
+        />
 
         <div className={classes.linksRow}>
           {watchUrl && (

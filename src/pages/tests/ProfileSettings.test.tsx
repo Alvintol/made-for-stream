@@ -14,6 +14,11 @@ const mocks = vi.hoisted(() => ({
   accountDetails: { country_code: "CA" } as Record<string, unknown> | null,
   update: vi.fn(),
   refetch: vi.fn(),
+  saveOfferings: vi.fn(),
+}));
+
+vi.mock("../../hooks/profile/useSaveMyOfferings", () => ({
+  useSaveMyOfferings: () => ({ mutateAsync: mocks.saveOfferings, isPending: false }),
 }));
 
 // Prices are shown in the creator's own currency in these tests; the
@@ -130,7 +135,10 @@ describe("<ProfileSettings /> in the settings layout", () => {
       profile_setup_seen: true,
       profile_setup_completed_at: "2026-05-01T00:00:00.000Z",
       display_name_auto: false,
+      offering_types: ["emotes"],
+      offering_other: null,
     };
+    mocks.saveOfferings.mockResolvedValue(undefined);
     mocks.platforms = [
       { platform: "twitch", platform_user_id: "1", platform_login: "pastelfox", metadata: {} },
     ];
@@ -211,6 +219,63 @@ describe("<ProfileSettings /> in the settings layout", () => {
     expect(sectionToggle(/Payouts/)).toHaveTextContent("Needs attention");
     expect(screen.getByText("Mock payout settings: approved")).toBeInTheDocument();
     expect(within(screen.getByRole("banner")).getByText("Creator")).toBeInTheDocument();
+  });
+
+  describe("what you offer", () => {
+    const approved = () => {
+      mocks.sellerAccess = {
+        ...member,
+        isCreatorApproved: true,
+        sellerApplication: { status: "approved", reviewer_notes: null },
+        creatorStatusLabel: "Approved creator",
+      };
+    };
+
+    it("isn't shown to someone who hasn't applied", () => {
+      renderSettings();
+
+      expect(document.getElementById("settings-offerings")).toBeNull();
+    });
+
+    it("asks an approved creator with none to choose, with a banner saying why", () => {
+      approved();
+      mocks.profile = { ...mocks.profile, offering_types: [], offering_other: null };
+
+      renderSettings();
+
+      expect(screen.getByText("One more step: choose what you offer.")).toBeInTheDocument();
+      const section = document.getElementById("settings-offerings") as HTMLElement;
+      expect(within(section).getAllByRole("button")[0]).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("needs a description for something else, then saves", async () => {
+      approved();
+      mocks.profile = { ...mocks.profile, offering_types: [], offering_other: null };
+
+      renderSettings();
+
+      fireEvent.click(screen.getByRole("checkbox", { name: "Something else" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save what I offer" }));
+
+      expect(await screen.findByText("Tell us what else you'll offer.")).toBeInTheDocument();
+      expect(mocks.saveOfferings).not.toHaveBeenCalled();
+
+      fireEvent.change(screen.getByLabelText("What else will you offer?"), { target: { value: "Logo design" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save what I offer" }));
+
+      await waitFor(() =>
+        expect(mocks.saveOfferings).toHaveBeenCalledWith({ offerings: ["other"], other: "Logo design" }),
+      );
+      expect(await screen.findByText("Saved")).toBeInTheDocument();
+    });
+
+    it("shows no banner once they've chosen", () => {
+      approved();
+      renderSettings();
+
+      expect(screen.queryByText("One more step: choose what you offer.")).not.toBeInTheDocument();
+      expect(screen.getByText("1 chosen")).toBeInTheDocument();
+    });
   });
 
   it("jumps to a section from the checklist", () => {
