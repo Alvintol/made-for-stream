@@ -6,6 +6,7 @@ import {
   BETA_COUNTRY_MESSAGE,
   emptyAccountDetailsForm,
   getRegionOptions,
+  getFreeOnlyReason,
   isFreeOnlyLocation,
   QUEBEC_MESSAGE,
   SANCTIONED_COUNTRIES,
@@ -47,32 +48,39 @@ describe("places Made for Stream does not serve", () => {
     expect(isFreeOnlyLocation(null, null)).toBe(false);
   });
 
-  it("is open in Canada and the United States only during the beta", () => {
+  it("saves an address anywhere outside the sanctions, with only free listings open outside Canada and the US", () => {
     const abroad = { ...valid, region: "", postal_code: "" };
 
-    expect(validateAccountDetails({ ...abroad, country_code: "IE" }, today).errors).toEqual({
-      country_code: BETA_COUNTRY_MESSAGE,
-    });
-    expect(validateAccountDetails({ ...abroad, country_code: "MX" }, today).errors).toEqual({
-      country_code: BETA_COUNTRY_MESSAGE,
-    });
+    // 20261112_196: the rest of the world is open for free listings during the beta.
+    expect(validateAccountDetails({ ...abroad, country_code: "IE" }, today).errors).toEqual({});
+    expect(validateAccountDetails({ ...abroad, country_code: "MX" }, today).errors).toEqual({});
     expect(
       validateAccountDetails({ ...valid, country_code: "US", region: "WA", postal_code: "98101" }, today).errors,
     ).toEqual({});
+
+    expect(getFreeOnlyReason("IE", "")).toBe("beta");
+    expect(getFreeOnlyReason("jp", null)).toBe("beta");
+    expect(getFreeOnlyReason("CA", "QC")).toBe("quebec");
+    expect(getFreeOnlyReason("CA", "AB")).toBeNull();
+    expect(getFreeOnlyReason("US", "WA")).toBeNull();
+    // Sanctioned countries aren't free-only: they're refused outright.
+    expect(getFreeOnlyReason("RU", "")).toBeNull();
+    expect(getFreeOnlyReason("", "")).toBeNull();
   });
   it("matches the database's list and wording exactly", () => {
     const readMigration = (file: string) =>
       fs.readFileSync(path.resolve(__dirname, `../../../supabase/migrations/${file}`), "utf8").replace(/''/g, "'");
     // sanctioned_country_message() is defined here and hasn't changed since.
     const sanctions = readMigration("20261031_177_limit_beta_to_canada_and_us.sql");
-    // blocked_location_message() as it stands, with Quebec's free-listings sentence.
-    const locations = readMigration("20261112_195_allow_free_listings_from_quebec.sql");
+    // blocked_location_message() and free_only_listing_message() as they stand.
+    const locations = readMigration("20261112_196_open_free_listings_worldwide.sql");
 
     expect(sanctions).toContain(`in (${SANCTIONED_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
     expect(sanctions).toContain(SANCTIONED_COUNTRY_MESSAGE);
     expect(locations).toContain(QUEBEC_MESSAGE);
     expect(locations).toContain(BETA_COUNTRY_MESSAGE);
     expect(locations).toContain(english("listingForm.quebecFreeOnly"));
+    expect(locations).toContain(english("listingForm.betaFreeOnly"));
     // Doubled quotes were undone above, so the empty string reads as one quote.
     expect(locations).toContain(`not in (', ${OPEN_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
   });

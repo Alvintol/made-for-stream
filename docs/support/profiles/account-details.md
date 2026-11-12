@@ -304,7 +304,13 @@ signals:
     where: "the same places"
   - source: db
     match: "During the beta, Made for Stream is only open in Canada and the United States."
-    where: "the same places"
+    where: "the same places, before 2026-11-12"
+  - source: db
+    match: "Outside Canada and the United States, Made for Stream only offers free listings during the beta. Commissions and payments aren't open there yet."
+    where: "commission requests, agreements and checkout from outside Canada and the US (20261112_196)"
+  - source: db
+    match: "/you can only post free listings (for now|during the beta)/"
+    where: "creating a paid listing, or switching one to paid, from Quebec or outside Canada and the US"
   - source: api
     match: "Your location could not be checked. Please try again."
     where: "POST /api/stripe/checkout/session (assertCheckoutLocationAllowed)"
@@ -313,6 +319,20 @@ reason_not_automatable: "the refusal is the law (sanctions) or a decision (Quebe
 escalate_if:
   - "someone outside these places is refused"        # a wrong address, or a wrong internet-address country
 ```
+
+**Free listings everywhere (2026-11-12, `20261112_195`, `20261112_196`).**
+Quebec, and every country outside Canada and the United States apart from the
+sanctioned ones, can now save an address, apply to be a creator and post free
+listings. They can't post a paid listing (or switch one to paid), send or
+receive commission requests, send agreements or pay: the database refuses
+each with the sentence below, and the address and listing forms say so before
+saving. An account can't move its address there while it has published paid
+listings ("Where you live, you can only offer free listings for now…"); it
+unpublishes them first. Payout accounts still open only in Canada and the US.
+Sanctioned countries are refused as before. Terms section 3, version
+2026-11-12-2.
+
+The beta paragraph below describes the rule before that date.
 
 **The beta (2026-10-31, `20261031_177`).** Only addresses in Canada and the
 United States are accepted, outside Quebec. The form offers only those two

@@ -1945,6 +1945,7 @@ export const en = {
   "listingForm.draftOnly": "Only draft listings can be edited right now.",
   "listingForm.createTitle": "Create listing",
   "listingForm.quebecFreeOnly": "From Quebec, you can only post free listings for now. Paid listings, commissions and payments open there once the site is in French.",
+  "listingForm.betaFreeOnly": "Outside Canada and the United States, you can only post free listings during the beta. Paid listings, commissions and payments aren't open there yet.",
   "listingForm.createText":
     "Fill this in, then publish it straight away or save it as a private draft to finish later. Buyers only see a listing once it is published.",
   "listingForm.checklist": "Publish checklist",
@@ -2585,7 +2586,8 @@ export const en = {
     "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider.",
   "account.quebec": "In Quebec, Made for Stream only offers free listings for now. Commissions and payments open there once the site is in French.",
   "account.quebecNotice": "The French version of Made for Stream is still being reviewed and hasn’t been released yet. Until it is, from Quebec you can post free listings, but not offer paid listings, send or take commission requests, or pay.",
-  "account.betaCountries": "During the beta, Made for Stream is only open in Canada and the United States.",
+  "account.betaNotice": "During the beta, Made for Stream is fully open only in Canada and the United States. From where you live you can make your profile, apply to be a creator and post free listings, but not offer paid listings, send or take commission requests, or pay.",
+  "account.betaCountries": "Outside Canada and the United States, Made for Stream only offers free listings during the beta. Commissions and payments aren't open there yet.",
   // Payouts (components/settings/CreatorPayoutSettings.tsx and
   // CreatorRecoveryBalanceSection.tsx)
   "payout.signIn": "You must be signed in to start Stripe setup.",

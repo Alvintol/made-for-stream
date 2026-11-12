@@ -3,17 +3,18 @@
 // text, so keeping these here stops the full policies downloading on every visit.
 // Changing a policy's text means changing its version here.
 
-export const termsVersion = "2026-11-12";
+export const termsVersion = "2026-11-12-2";
 
 // What changed in this version, in plain words, for the card that asks
 // someone who accepted an earlier version to accept this one
 // (PolicyAcceptanceGate). Rewrite it every time termsVersion changes: a test
 // fails if the two versions differ.
 export const termsChanges = {
-  version: "2026-11-12",
+  version: "2026-11-12-2",
   // One change per line: never join separate changes into one sentence.
   items: [
-    "People who live in Quebec can now post free listings, until the site is offered in French. Paid listings, commissions and payments stay closed there (section 3).",
+    "People who live outside Canada and the United States can now make an account, apply to be a creator and post free listings during the beta. Paid listings, commissions and payments stay closed there (section 3).",
+    "Earlier change (version 2026-11-12): people who live in Quebec can post free listings until the site is offered in French. Paid listings, commissions and payments stay closed there (section 3).",
     "Earlier change (version 2026-11-11): we added our business number to section 1.",
     "Earlier change (version 2026-11-10): before launch, no request can be accepted and nothing can be paid through Made for Stream (section 4).",
     "Earlier change (version 2026-11-10): any deal a buyer and a creator make before launch is only between them, and they take on all of its risk (section 4).",

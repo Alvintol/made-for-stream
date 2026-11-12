@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -146,6 +146,27 @@ describe("<AccountDetailsSettings />", () => {
     await waitFor(() =>
       expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ country_code: "CA", region: "QC" })),
     );
+  });
+
+  it("saves an address outside Canada and the US, saying only free listings are open there, but never a sanctioned one", async () => {
+    renderPage();
+
+    const country = screen.getByLabelText(/^Country/);
+    expect(within(country).queryByRole("option", { name: "Russia" })).not.toBeInTheDocument();
+    expect(within(country).getByRole("option", { name: "United Kingdom" })).toBeInTheDocument();
+
+    fill(/^Legal first name/, "Ada");
+    fill(/^Legal last name/, "Buyer");
+    fill(/^Date of birth/, "1990-01-01");
+    fill(/^Country/, "GB");
+    fill(/^Street address/, "1 High St");
+    fill(/^City or town/, "London");
+
+    expect(screen.getByText(/fully open only in Canada and the United States/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ country_code: "GB" })));
   });
 
   it("makes a new account choose a public display name before anything is saved", async () => {

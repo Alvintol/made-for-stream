@@ -1882,6 +1882,7 @@ export const es: Record<MessageKey, Message> = {
   "listingForm.draftOnly": "Por ahora solo se pueden editar los borradores de anuncios.",
   "listingForm.createTitle": "Crear un anuncio",
   "listingForm.quebecFreeOnly": "Desde Quebec, por ahora solo puedes publicar anuncios gratuitos. Los anuncios de pago, los encargos y los pagos abrirán allí cuando el sitio esté en francés.",
+  "listingForm.betaFreeOnly": "Fuera de Canadá y Estados Unidos, solo puedes publicar anuncios gratuitos durante la beta. Los anuncios de pago, los encargos y los pagos aún no están abiertos allí.",
   "listingForm.createText":
     "Completa esto y publícalo de inmediato, o guárdalo como borrador privado para terminarlo más tarde. Los compradores solo ven un anuncio cuando está publicado.",
   "listingForm.checklist": "Lista para publicar",
@@ -2513,7 +2514,8 @@ export const es: Record<MessageKey, Message> = {
     "Made for Stream no se puede usar desde Bielorrusia, Cuba, Irán, Corea del Norte, Rusia ni Siria, debido a las sanciones que se aplican a Made for Stream y a su proveedor de pagos.",
   "account.quebec": "En Quebec, Made for Stream por ahora solo ofrece anuncios gratuitos. Los encargos y los pagos abrirán allí cuando el sitio esté en francés.",
   "account.quebecNotice": "La versión en francés de Made for Stream todavía está en revisión y aún no se ha publicado. Hasta entonces, desde Quebec puedes publicar anuncios gratuitos, pero no ofrecer anuncios de pago, enviar ni aceptar encargos, ni pagar.",
-  "account.betaCountries": "Durante la beta, Made for Stream solo está disponible en Canadá y Estados Unidos.",
+  "account.betaNotice": "Durante la beta, Made for Stream solo está abierto por completo en Canadá y Estados Unidos. Desde donde vives puedes crear tu perfil, solicitar ser creador y publicar anuncios gratuitos, pero no ofrecer anuncios de pago, enviar ni aceptar encargos, ni pagar.",
+  "account.betaCountries": "Fuera de Canadá y Estados Unidos, Made for Stream solo ofrece anuncios gratuitos durante la beta. Los encargos y los pagos aún no están abiertos allí.",
   "payout.signIn": "Debes iniciar sesión para empezar la configuración de Stripe.",
   "payout.acceptFirst": "Acepta los Términos para creadores y los acuerdos de Stripe para empezar la configuración de Stripe.",
   "payout.chooseCountryFirst": "Elige y confirma tu país antes de empezar la configuración de Stripe.",
