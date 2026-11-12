@@ -1,12 +1,12 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getBillingCountryOptions } from "../domain/payments/billingCountries";
-import { isOpenCountry } from "../domain/payments/supportedCountries";
 import {
   MASKED_VALUE,
   MINIMUM_AGE,
+  SANCTIONED_COUNTRIES,
+  getFreeOnlyReason,
   getRegionOptions,
-  isFreeOnlyLocation,
   toAccountDetailsForm,
   validateAccountDetails,
   type AccountDetails,
@@ -150,10 +150,16 @@ const AccountDetailsSettings = () => {
   const showForm = editing || !details || needsDisplayName;
 
   const countryOptions = useMemo(
-    () => getBillingCountryOptions(language).filter((option) => isOpenCountry(option.code)),
+    // Every country but the sanctioned ones: outside Canada and the US only
+    // free listings are open during the beta (20261112_196), and the form says so.
+    () =>
+      getBillingCountryOptions(language).filter(
+        (option) => !(SANCTIONED_COUNTRIES as readonly string[]).includes(option.code),
+      ),
     [language],
   );
   const regionOptions = getRegionOptions(form.country_code);
+  const freeOnlyReason = getFreeOnlyReason(form.country_code, form.region);
   const countryName = (code: string) =>
     countryOptions.find((option) => option.code === code)?.name ?? code;
 
@@ -425,7 +431,7 @@ const AccountDetailsSettings = () => {
                 name="country_code"
                 label={t("account.country")}
                 wide
-                hint={t("account.countryHint")}
+                hint={t(freeOnlyReason === "beta" ? "account.betaNotice" : "account.countryHint")}
                 error={errors.country_code}
               >
                 {(props) => (
@@ -464,7 +470,7 @@ const AccountDetailsSettings = () => {
                 error={errors.region}
                 // Quebec is open for free listings only until the French
                 // version is out (20261112_195), and is told so before saving.
-                hint={isFreeOnlyLocation(form.country_code, form.region) ? t("account.quebecNotice") : undefined}
+                hint={freeOnlyReason === "quebec" ? t("account.quebecNotice") : undefined}
               >
                 {(props) =>
                   regionOptions ? (

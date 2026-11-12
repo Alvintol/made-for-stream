@@ -1917,6 +1917,7 @@ export const fr: Record<MessageKey, Message> = {
   "listingForm.draftOnly": "Seuls les brouillons d’annonces peuvent être modifiés pour le moment.",
   "listingForm.createTitle": "Créer une annonce",
   "listingForm.quebecFreeOnly": "Depuis le Québec, vous ne pouvez publier que des annonces gratuites pour l’instant. Les annonces payantes, les commandes et les paiements y ouvriront quand le site sera en français.",
+  "listingForm.betaFreeOnly": "Hors du Canada et des États-Unis, vous ne pouvez publier que des annonces gratuites pendant la bêta. Les annonces payantes, les commandes et les paiements n’y sont pas encore ouverts.",
   "listingForm.createText":
     "Remplissez ce formulaire, puis publiez tout de suite ou enregistrez un brouillon privé pour terminer plus tard. Les acheteurs ne voient une annonce qu’une fois publiée.",
   "listingForm.checklist": "Liste de publication",
@@ -2547,7 +2548,8 @@ export const fr: Record<MessageKey, Message> = {
     "Made for Stream ne peut pas être utilisé depuis la Biélorussie, Cuba, l’Iran, la Corée du Nord, la Russie ou la Syrie, en raison des sanctions qui s’appliquent à lui et à son fournisseur de paiement.",
   "account.quebec": "Au Québec, Made for Stream n’offre pour l’instant que des annonces gratuites. Les commandes et les paiements y ouvriront quand le site sera en français.",
   "account.quebecNotice": "La version française de Made for Stream est encore en révision et n’est pas encore publiée. D’ici là, depuis le Québec, vous pouvez publier des annonces gratuites, mais pas proposer d’annonces payantes, envoyer ou accepter des commandes, ni payer.",
-  "account.betaCountries": "Pendant la version bêta, Made for Stream est offert seulement au Canada et aux États-Unis.",
+  "account.betaNotice": "Pendant la bêta, Made for Stream n’est entièrement ouvert qu’au Canada et aux États-Unis. Depuis chez vous, vous pouvez créer votre profil, demander à devenir créateur et publier des annonces gratuites, mais pas proposer d’annonces payantes, envoyer ou accepter des commandes, ni payer.",
+  "account.betaCountries": "Hors du Canada et des États-Unis, Made for Stream n’offre que des annonces gratuites pendant la bêta. Les commandes et les paiements n’y sont pas encore ouverts.",
   "payout.signIn": "Vous devez être connecté pour commencer la configuration de Stripe.",
   "payout.acceptFirst": "Acceptez les Conditions du créateur et les ententes de Stripe pour commencer la configuration de Stripe.",
   "payout.chooseCountryFirst": "Choisissez et confirmez votre pays avant de commencer la configuration de Stripe.",

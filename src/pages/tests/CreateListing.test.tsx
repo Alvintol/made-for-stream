@@ -137,6 +137,20 @@ describe("<CreateListing /> publish flow", () => {
     expect(mocks.upload).not.toHaveBeenCalled();
   });
 
+  it("tells a creator outside Canada and the US only free listings are open during the beta", async () => {
+    mocks.accountDetails = { country_code: "GB", region: "" };
+    renderPage();
+
+    const notice = /Outside Canada and the United States, you can only post free listings during the beta/;
+    expect(screen.getByText(notice)).toBeInTheDocument();
+
+    fillDraftFields();
+    fireEvent.click(getButtons("Save as draft")[0]);
+
+    expect(await screen.findAllByText(notice)).toHaveLength(3);
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
   it("doesn't mention Quebec to anyone else", () => {
     renderPage();
 
