@@ -6,6 +6,11 @@
 -- profile, not the application, because an application locks once it is
 -- submitted and the answers show on the public profile as tags.
 --
+-- The application no longer asks for follower or subscriber numbers: the
+-- team checks the minimum on the linked channel at review, so the
+-- self-reported check from 20261110_193 is removed below. The old numbers
+-- stay in seller_applications for applications that gave them.
+--
 -- At least one is needed to submit an application. Approved creators without
 -- any are sent to Settings by the site until they choose
 -- (src/components/auth/ProfileSetupRedirect.tsx). Nothing is backfilled.
@@ -42,8 +47,8 @@ alter table public.profiles
 -- Profiles are readable column by column (20261105_189); these are public.
 grant select (offering_types, offering_other) on public.profiles to anon, authenticated;
 
--- Submitting: the checks from 20261110_193, plus at least one offering on
--- the applicant's profile.
+-- Submitting: the age confirmation from 20261110_193, and at least one
+-- offering on the applicant's profile. No audience numbers.
 create or replace function public.check_seller_application_submission()
 returns trigger
 language plpgsql
@@ -57,14 +62,6 @@ begin
 
   if not new.agreed_to_age_and_capacity then
     raise exception 'You must confirm you are at least 18 to apply.'
-      using errcode = 'P0001';
-  end if;
-
-  if not (
-    (new.twitch_status in ('affiliate', 'partner') and coalesce(new.twitch_follower_count, 0) >= 300)
-    or coalesce(new.youtube_subscriber_count, 0) >= 500
-  ) then
-    raise exception 'To apply you need Twitch Affiliate or Partner with at least 300 followers, or at least 500 YouTube subscribers.'
       using errcode = 'P0001';
   end if;
 

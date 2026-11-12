@@ -431,6 +431,14 @@ describe("ApplyCreator", () => {
     );
   });
 
+  it("doesn't ask for follower or subscriber numbers, and says the team checks the channel", () => {
+    renderPage(readySamples());
+
+    expect(screen.queryByLabelText(/followers/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/subscribers/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/we check your linked channel ourselves/)).toBeInTheDocument();
+  });
+
   it("shows a save failure instead of throwing when submitting", async () => {
     mockUseUpsertMySellerApplication.mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue(new Error("Could not save agreements")),

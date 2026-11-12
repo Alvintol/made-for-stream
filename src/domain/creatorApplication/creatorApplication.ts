@@ -181,7 +181,9 @@ export type CreatorApplicationRequirement = {
 export type CreatorApplicationReadinessInput = {
   profileReady: boolean;
   hasLinkedPlatform: boolean;
-  audience: ApplicationAudience;
+  // Left out, the audience minimum is checked by hand at review instead
+  // (the application doesn't ask for numbers since 2026-11-12).
+  audience?: ApplicationAudience;
   // Left out, offerings aren't asked about (older callers and tests).
   offerings?: readonly ApplicationOffering[];
   offeringOther?: string;
@@ -220,12 +222,16 @@ export const getCreatorApplicationRequirements = (
       done: input.hasLinkedPlatform,
       blocker: t("apply.reqPlatformBlock"),
     },
-    {
-      key: "audience",
-      label: t("apply.reqAudience", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
-      done: meetsAudienceMinimum(input.audience),
-      blocker: t("apply.reqAudienceBlock", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
-    },
+    ...(input.audience
+      ? [
+          {
+            key: "audience" as const,
+            label: t("apply.reqAudience", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
+            done: meetsAudienceMinimum(input.audience),
+            blocker: t("apply.reqAudienceBlock", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS }),
+          },
+        ]
+      : []),
     ...(input.offerings
       ? [
           {

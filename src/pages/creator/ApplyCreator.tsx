@@ -22,10 +22,8 @@ import {
   getWorkSampleCounts,
   isRequiredRecentUploadSample,
   isValidPublicUrl,
-  meetsAudienceMinimum,
   getOfferingsError,
   normaliseOfferings,
-  type ApplicationAudience,
   type ApplicationOffering,
   normaliseUrlInput,
   type CreatorApplicationRequirementKey,
@@ -240,18 +238,6 @@ const ApplyCreator = () => {
     setAgreements(savedAgreements);
   }
 
-  const savedAudience: ApplicationAudience = {
-    twitchStatus: sellerApplication?.twitch_status ?? null,
-    twitchFollowers: sellerApplication?.twitch_follower_count ?? null,
-    youtubeSubscribers: sellerApplication?.youtube_subscriber_count ?? null,
-  };
-  const savedAudienceKey = JSON.stringify(savedAudience);
-  const [audience, setAudience] = useState<ApplicationAudience>(savedAudience);
-  const [audienceFor, setAudienceFor] = useState<string | null>(null);
-  if (savedAudienceKey !== audienceFor) {
-    setAudienceFor(savedAudienceKey);
-    setAudience(savedAudience);
-  }
 
   // What they'll offer is kept on the profile (20261112_197), so Settings
   // edits the same answers; it's saved with the application on submit.
@@ -267,12 +253,6 @@ const ApplyCreator = () => {
     setOfferingOther(savedOther);
   }
   const offeringsError = getOfferingsError(offerings, offeringOther, t);
-
-  // Empty or not a whole number is "not answered".
-  const toCount = (value: string): number | null => {
-    const count = Number.parseInt(value.replace(/[^0-9]/g, ""), 10);
-    return Number.isFinite(count) ? count : null;
-  };
 
   const recentUploadSample = useMemo(
     () => samples.find(isRequiredRecentUploadSample) ?? null,
@@ -297,7 +277,6 @@ const ApplyCreator = () => {
   const requirements = getCreatorApplicationRequirements({
     profileReady,
     hasLinkedPlatform: hasLinkedCreatorPlatform,
-    audience,
     offerings,
     offeringOther,
     samples,
@@ -348,9 +327,6 @@ const ApplyCreator = () => {
     agreed_to_original_work: agreements.originalWork,
     agreed_to_manual_review: agreements.manualReview,
     agreed_to_age_and_capacity: agreements.ageAndCapacity,
-    twitch_status: audience.twitchStatus,
-    twitch_follower_count: audience.twitchFollowers,
-    youtube_subscriber_count: audience.youtubeSubscribers,
   };
 
   const onStartDraft = async () => {
@@ -495,7 +471,7 @@ const ApplyCreator = () => {
   }
 
   const basicsDone =
-    profileReady && hasLinkedCreatorPlatform && meetsAudienceMinimum(audience) && offeringsError === null;
+    profileReady && hasLinkedCreatorPlatform && offeringsError === null;
 
   const stages: StatusHeaderStage[] = (() => {
     const inReviewOrLater = phase === "in_review" || phase === "approved";
@@ -741,57 +717,11 @@ const ApplyCreator = () => {
                 </div>
               </li>
             </ul>
-            <fieldset className={classes.addForm} disabled={!canEdit}>
-              <legend className={classes.addTitle}>{t("apply.audienceTitle")}</legend>
-              <p className={classes.small}>
-                {t("apply.audienceHint", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS })}
-              </p>
-              <div className={classes.grid}>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.twitchStatus")}</span>
-                  <select
-                    className={classes.input}
-                    value={audience.twitchStatus ?? ""}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value;
-                      setAudience((current) => ({
-                        ...current,
-                        twitchStatus: value === "affiliate" || value === "partner" || value === "none" ? value : null,
-                      }));
-                    }}
-                  >
-                    <option value="">{t("apply.twitchStatusPick")}</option>
-                    <option value="none">{t("apply.twitchStatusNone")}</option>
-                    <option value="affiliate">{t("apply.twitchStatusAffiliate")}</option>
-                    <option value="partner">{t("apply.twitchStatusPartner")}</option>
-                  </select>
-                </label>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.twitchFollowers")}</span>
-                  <input
-                    className={classes.input}
-                    inputMode="numeric"
-                    value={audience.twitchFollowers ?? ""}
-                    onChange={(event) => {
-                      const value = toCount(event.currentTarget.value);
-                      setAudience((current) => ({ ...current, twitchFollowers: value }));
-                    }}
-                  />
-                </label>
-                <label className={classes.field}>
-                  <span className={classes.label}>{t("apply.youtubeSubscribers")}</span>
-                  <input
-                    className={classes.input}
-                    inputMode="numeric"
-                    value={audience.youtubeSubscribers ?? ""}
-                    onChange={(event) => {
-                      const value = toCount(event.currentTarget.value);
-                      setAudience((current) => ({ ...current, youtubeSubscribers: value }));
-                    }}
-                  />
-                </label>
-              </div>
-            </fieldset>
+            {/* The minimum is checked by hand on the linked channel at review,
+                not typed in (decided 2026-11-12). */}
+            <p className={classes.small}>
+              {t("apply.audienceCheckedByUs", { followers: MIN_TWITCH_FOLLOWERS, subscribers: MIN_YOUTUBE_SUBSCRIBERS })}
+            </p>
             <fieldset className={classes.addForm} disabled={!canEdit}>
               <legend className={classes.addTitle}>{t("apply.offeringsTitle")}</legend>
               <p className={classes.small}>{t("apply.offeringsHint")}</p>

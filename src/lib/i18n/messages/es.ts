@@ -2151,6 +2151,7 @@ export const es: Record<MessageKey, Message> = {
   "apply.reqAudience": "Afiliado de Twitch con {followers}+ seguidores, o {subscribers}+ suscriptores de YouTube",
   "apply.reqAudienceBlock": "Necesitas ser Afiliado o Partner de Twitch con al menos {followers} seguidores, o tener al menos {subscribers} suscriptores de YouTube.",
   "apply.audienceTitle": "Tu audiencia",
+  "apply.audienceCheckedByUs": "Para que te aprueben necesitas ser Afiliado o Partner de Twitch con al menos {followers} seguidores, o tener al menos {subscribers} suscriptores de YouTube. No hace falta que escribas tus cifras: revisamos tu canal vinculado nosotros mismos.",
   "apply.offeringsTitle": "¿Qué vas a ofrecer?",
   "apply.offeringsHint": "Elige todo lo que piensas crear u ofrecer. Nos ayuda a revisar tu solicitud, y puedes cambiarlo hasta que la envíes.",
   "apply.offeringOther": "Otra cosa",

@@ -45,6 +45,14 @@ every page except sign-in, the policies and Personal details, with a banner
 saying why, until they save at least one (`ProfileSetupRedirect`). That is
 expected, not a fault. Admin's review cards show the answers as tags.
 
+**No audience numbers (2026-11-12, `20261112_197`).** The application no
+longer asks for Twitch status, followers or YouTube subscribers: those were
+typed in by the applicant and never verified. The minimum (Twitch Affiliate or
+Partner with 300+ followers, or 500+ YouTube subscribers) is shown as a note,
+and the reviewer checks it on the linked channel, which opens from the
+selected application in Admin. The database no longer refuses a submission on
+those numbers; numbers given before stay on the application.
+
 ## Quick triage
 
 | Symptom the user reports | Likely issue |

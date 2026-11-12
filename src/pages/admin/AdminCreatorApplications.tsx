@@ -354,12 +354,6 @@ const AdminCreatorApplications = () => {
                       : "Not submitted yet"}
                   </div>
 
-                  {/* Their own numbers: check them against the linked channel. */}
-                  <div className={classes.queueItemMeta}>
-                    Twitch: {application.twitch_status ?? "not given"},{" "}
-                    {application.twitch_follower_count ?? "?"} followers · YouTube:{" "}
-                    {application.youtube_subscriber_count ?? "?"} subscribers
-                  </div>
 
                   <OfferingTags
                     offerings={application.applicant?.offering_types}
@@ -387,7 +381,9 @@ const AdminCreatorApplications = () => {
             ) : (
               <>
                 <p className={classes.help}>
-                  Review the samples and decide whether this account should receive
+                  Review the samples, open their linked channel to check the audience
+                  minimum (Twitch Affiliate or Partner with 300+ followers, or 500+
+                  YouTube subscribers), then decide whether this account should receive
                   creator access.
                 </p>
 
@@ -424,14 +420,28 @@ const AdminCreatorApplications = () => {
 
                 {applicantPlatformAccounts.length > 0 && (
                   <div className={classes.statusPills}>
-                    {applicantPlatformAccounts.map((platformAccount) => (
-                      <span key={platformAccount.id} className={classes.pill}>
-                        {platformAccount.platform}
-                        {platformAccount.platform_login
-                          ? ` · @${platformAccount.platform_login}`
-                          : ""}
-                      </span>
-                    ))}
+                    {/* Open the channel to check the audience minimum by hand. */}
+                    {applicantPlatformAccounts.map((platformAccount) => {
+                      const label = `${platformAccount.platform}${
+                        platformAccount.platform_login ? ` · @${platformAccount.platform_login}` : ""
+                      }`;
+
+                      return platformAccount.profile_url ? (
+                        <a
+                          key={platformAccount.id}
+                          className={classes.pill}
+                          href={platformAccount.profile_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {label} ↗
+                        </a>
+                      ) : (
+                        <span key={platformAccount.id} className={classes.pill}>
+                          {label}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
 

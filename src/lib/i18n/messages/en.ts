@@ -2217,6 +2217,7 @@ export const en = {
   "apply.reqAudience": "Twitch Affiliate with {followers}+ followers, or {subscribers}+ YouTube subscribers",
   "apply.reqAudienceBlock": "You need Twitch Affiliate or Partner with at least {followers} followers, or at least {subscribers} YouTube subscribers.",
   "apply.audienceTitle": "Your audience",
+  "apply.audienceCheckedByUs": "To be approved you'll need Twitch Affiliate or Partner with at least {followers} followers, or at least {subscribers} YouTube subscribers. You don't need to enter your numbers: we check your linked channel ourselves when we review.",
   "apply.offeringsTitle": "What will you offer?",
   "apply.offeringsHint": "Choose everything you plan to make or offer. It helps us review your application, and you can change it until you submit.",
   "apply.offeringOther": "Something else",
