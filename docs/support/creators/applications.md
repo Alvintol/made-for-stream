@@ -358,3 +358,41 @@ section 3.
   through to Tier 2 unmatched.
 - **No rejection-reason playbook.** What applicants are told when declined, and
   whether they may reapply, is not defined anywhere.
+
+---
+
+## `APP-007` — New-application email to the team
+
+```yaml
+id: APP-007
+tier: 2
+signals:
+  - source: api
+    match: "APP-007:"
+    where: "api/creatorApplicationAlerts.js and POST /api/creator-applications/:id/alert-admin"
+auto_fix: "the hourly ops run (POST /api/internal/ops/alerts/run) retries any that failed"
+reason_not_automatable: "a lasting failure is the email setup itself (EMAIL-*), which needs a person"
+```
+
+**What it is (2026-11-12, `20261112_198`).** Each submitted creator application
+is emailed to `CREATOR_APPLICATION_ALERT_EMAIL` on the API (default
+`OPS_ALERT_EMAIL`, `ops@madeforstream.com`) so it can be reviewed at once. The
+subject starts `[Made for Stream ops]` on prod and `[Made for Stream dev ops]`
+on dev. It names the applicant, what they plan to offer, their linked
+channels and sample count, and links to the application in Admin
+(`/admin/creator-applications?application=<id>`).
+
+The applicant's site asks for it right after submitting; the hourly ops run
+sends any that call missed (a closed tab, a network blip, a failed send).
+`seller_applications.admin_alerted_at` records the submission last alerted:
+each submission is emailed once, and a resubmission after "needs changes" is
+emailed again ("Creator application resubmitted"). Applications already in the
+queue when this shipped were marked as alerted, so they get no email.
+
+**No email for an application.** Check its `admin_alerted_at`: set and later
+than `submitted_at` means it was sent; look in spam and at the address. Unset
+means it is waiting for the next hourly run; an `APP-007` log line says why
+the last try failed, usually the email setup (`EMAIL-*` in
+`messaging/transactional-email.md`).
+
+**Money impact.** None.

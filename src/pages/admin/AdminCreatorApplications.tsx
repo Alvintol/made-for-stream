@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import {
   useAdminSellerApplications,
@@ -193,8 +193,10 @@ const AdminCreatorApplications = () => {
     error: applicationsError,
   } = useAdminSellerApplications();
 
+  // The new-application email links here with ?application=<id> (APP-007).
+  const [searchParams] = useSearchParams();
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
-    null
+    () => searchParams.get("application")
   );
 
   const selectedApplication = useMemo(
