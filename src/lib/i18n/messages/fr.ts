@@ -1916,6 +1916,7 @@ export const fr: Record<MessageKey, Message> = {
   "listingForm.updateFailed": "Le brouillon de l’annonce n’a pas pu être mis à jour.",
   "listingForm.draftOnly": "Seuls les brouillons d’annonces peuvent être modifiés pour le moment.",
   "listingForm.createTitle": "Créer une annonce",
+  "listingForm.quebecFreeOnly": "Depuis le Québec, vous ne pouvez publier que des annonces gratuites pour l’instant. Les annonces payantes, les commandes et les paiements y ouvriront quand le site sera en français.",
   "listingForm.createText":
     "Remplissez ce formulaire, puis publiez tout de suite ou enregistrez un brouillon privé pour terminer plus tard. Les acheteurs ne voient une annonce qu’une fois publiée.",
   "listingForm.checklist": "Liste de publication",
@@ -2544,7 +2545,7 @@ export const fr: Record<MessageKey, Message> = {
   "account.errorBusiness": "Entrez le nom légal de l’entreprise.",
   "account.sanctioned":
     "Made for Stream ne peut pas être utilisé depuis la Biélorussie, Cuba, l’Iran, la Corée du Nord, la Russie ou la Syrie, en raison des sanctions qui s’appliquent à lui et à son fournisseur de paiement.",
-  "account.quebec": "Made for Stream n’est pas encore offert au Québec. Le site doit d’abord être en français, et cela s’en vient.",
+  "account.quebec": "Au Québec, Made for Stream n’offre pour l’instant que des annonces gratuites. Les commandes et les paiements y ouvriront quand le site sera en français.",
   "account.betaCountries": "Pendant la version bêta, Made for Stream est offert seulement au Canada et aux États-Unis.",
   "payout.signIn": "Vous devez être connecté pour commencer la configuration de Stripe.",
   "payout.acceptFirst": "Acceptez les Conditions du créateur et les ententes de Stripe pour commencer la configuration de Stripe.",

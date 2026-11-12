@@ -23,6 +23,8 @@ import ListingPreviewImageField, {
 } from "../../components/listings/ListingPreviewImageField";
 import { uploadListingPreviewImage } from "../../lib/listings/listingPreviewImage";
 import { useMyProfile } from "../../hooks/profile/useMyProfile";
+import { useAccountDetails } from "../../hooks/settings/useAccountDetails";
+import { isFreeOnlyLocation } from "../../domain/settings/accountDetails";
 import ListingAnimatedPreviewField, {
   type ListingAnimationChoice,
 } from "../../components/listings/ListingAnimatedPreviewField";
@@ -65,6 +67,7 @@ const classes = {
   header: "space-y-1",
   h1: "pageTitle",
   sub: "pageSub",
+  freeOnlyNotice: "notice noticeInfo",
 
   layout: "grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start",
   // Clears the sticky site header, like the other side panels.
@@ -189,6 +192,10 @@ const CreateListing = () => {
     action: "keep",
   });
   const { data: profile } = useMyProfile();
+  // Quebec, until the site is in French: free listings only (20261112_195).
+  // The database refuses a paid one too; this says so before anything uploads.
+  const { data: accountDetails } = useAccountDetails();
+  const freeOnly = isFreeOnlyLocation(accountDetails?.country_code, accountDetails?.region);
 
   // Which button submitted the form: save a draft, or save and publish.
   const publishAfterSaveRef = useRef(false);
@@ -373,6 +380,10 @@ const CreateListing = () => {
 
     const { isValid, priceMin, rawPriceMax } = validate();
     if (!isValid || !user?.id) return;
+    if (freeOnly && !isFreeListing) {
+      setErrors((current) => ({ ...current, submit: t("listingForm.quebecFreeOnly") }));
+      return;
+    }
     if (!isFreeListing && priceMin === null) return;
     if (publishAfterSave && !publishReadiness.isReady) return;
 
@@ -524,6 +535,8 @@ const CreateListing = () => {
         <p className={classes.sub}>{t("listingForm.createText")}</p>
         <GuideHelpLink track="creators" step="listing" tour="newListing" />
       </div>
+
+      {freeOnly && <p className={classes.freeOnlyNotice}>{t("listingForm.quebecFreeOnly")}</p>}
 
       <div className={classes.layout}>
       <aside className={classes.aside} aria-label={t("listingForm.checklist")} data-tour="listing-checklist">

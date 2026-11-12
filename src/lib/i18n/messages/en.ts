@@ -1944,6 +1944,7 @@ export const en = {
   "listingForm.updateFailed": "The listing draft could not be updated.",
   "listingForm.draftOnly": "Only draft listings can be edited right now.",
   "listingForm.createTitle": "Create listing",
+  "listingForm.quebecFreeOnly": "From Quebec, you can only post free listings for now. Paid listings, commissions and payments open there once the site is in French.",
   "listingForm.createText":
     "Fill this in, then publish it straight away or save it as a private draft to finish later. Buyers only see a listing once it is published.",
   "listingForm.checklist": "Publish checklist",
@@ -2582,7 +2583,7 @@ export const en = {
   // (a test reads the migration).
   "account.sanctioned":
     "Made for Stream can't be used from Belarus, Cuba, Iran, North Korea, Russia or Syria, because of the sanctions that apply to it and its payment provider.",
-  "account.quebec": "Made for Stream isn't available in Quebec yet. The site has to be in French first, and that's on the way.",
+  "account.quebec": "In Quebec, Made for Stream only offers free listings for now. Commissions and payments open there once the site is in French.",
   "account.betaCountries": "During the beta, Made for Stream is only open in Canada and the United States.",
   // Payouts (components/settings/CreatorPayoutSettings.tsx and
   // CreatorRecoveryBalanceSection.tsx)

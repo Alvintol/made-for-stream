@@ -6,6 +6,7 @@ import {
   BETA_COUNTRY_MESSAGE,
   emptyAccountDetailsForm,
   getRegionOptions,
+  isFreeOnlyLocation,
   QUEBEC_MESSAGE,
   SANCTIONED_COUNTRIES,
   SANCTIONED_COUNTRY_MESSAGE,
@@ -15,6 +16,7 @@ import {
 } from "../settings/accountDetails";
 
 import { OPEN_COUNTRIES } from "../payments/supportedCountries";
+import { english } from "../../lib/i18n/i18n";
 
 const today = new Date(2026, 9, 8);
 
@@ -31,12 +33,18 @@ const valid: AccountDetailsForm = {
 };
 
 describe("places Made for Stream does not serve", () => {
-  it("refuses a sanctioned country, and Quebec, with the database's own sentences", () => {
+  it("refuses a sanctioned country with the database's own sentence, and lets Quebec in for free listings", () => {
     expect(validateAccountDetails({ ...valid, country_code: "RU", region: "", postal_code: "" }, today).errors).toEqual({
       country_code: SANCTIONED_COUNTRY_MESSAGE,
     });
-    expect(validateAccountDetails({ ...valid, region: "QC" }, today).errors).toEqual({ region: QUEBEC_MESSAGE });
+    // Quebec can be saved (20261112_195); only free listings are open there.
+    expect(validateAccountDetails({ ...valid, region: "QC" }, today).errors).toEqual({});
     expect(validateAccountDetails({ ...valid, region: "ON" }, today).errors).toEqual({});
+    expect(isFreeOnlyLocation("CA", "QC")).toBe(true);
+    expect(isFreeOnlyLocation("ca", " qc ")).toBe(true);
+    expect(isFreeOnlyLocation("CA", "ON")).toBe(false);
+    expect(isFreeOnlyLocation("US", "QC")).toBe(false);
+    expect(isFreeOnlyLocation(null, null)).toBe(false);
   });
 
   it("is open in Canada and the United States only during the beta", () => {
@@ -53,19 +61,20 @@ describe("places Made for Stream does not serve", () => {
     ).toEqual({});
   });
   it("matches the database's list and wording exactly", () => {
-    const migration = fs
-      .readFileSync(
-        path.resolve(__dirname, "../../../supabase/migrations/20261031_177_limit_beta_to_canada_and_us.sql"),
-        "utf8",
-      )
-      .replace(/''/g, "'");
+    const readMigration = (file: string) =>
+      fs.readFileSync(path.resolve(__dirname, `../../../supabase/migrations/${file}`), "utf8").replace(/''/g, "'");
+    // sanctioned_country_message() is defined here and hasn't changed since.
+    const sanctions = readMigration("20261031_177_limit_beta_to_canada_and_us.sql");
+    // blocked_location_message() as it stands, with Quebec's free-listings sentence.
+    const locations = readMigration("20261112_195_allow_free_listings_from_quebec.sql");
 
-    expect(migration).toContain(`in (${SANCTIONED_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
-    expect(migration).toContain(SANCTIONED_COUNTRY_MESSAGE);
-    expect(migration).toContain(QUEBEC_MESSAGE);
-    expect(migration).toContain(BETA_COUNTRY_MESSAGE);
+    expect(sanctions).toContain(`in (${SANCTIONED_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
+    expect(sanctions).toContain(SANCTIONED_COUNTRY_MESSAGE);
+    expect(locations).toContain(QUEBEC_MESSAGE);
+    expect(locations).toContain(BETA_COUNTRY_MESSAGE);
+    expect(locations).toContain(english("listingForm.quebecFreeOnly"));
     // Doubled quotes were undone above, so the empty string reads as one quote.
-    expect(migration).toContain(`not in (', ${OPEN_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
+    expect(locations).toContain(`not in (', ${OPEN_COUNTRIES.map((code) => `'${code}'`).join(", ")})`);
   });
 });
 
