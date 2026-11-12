@@ -8,6 +8,7 @@ import {
   getCreatorPaymentAccountIsReady,
   useCreatorPaymentAccount,
 } from "../payments/useCreatorPaymentAccount";
+import { usePaymentsLive } from "../site/usePaymentsLive";
 
 // What the guide ticks off: setup facts the site already reads, plus
 // my_guide_progress() for what the account has done (migration 188).
@@ -16,6 +17,7 @@ export const useGuideFacts = (): { facts: GuideFacts; isLoading: boolean } => {
   const userId = user?.id ?? null;
   const access = useSellerAccess();
   const paymentAccount = useCreatorPaymentAccount();
+  const paymentsLive = usePaymentsLive();
 
   const progress = useQuery({
     queryKey: ["guideProgress", userId],
@@ -36,6 +38,7 @@ export const useGuideFacts = (): { facts: GuideFacts; isLoading: boolean } => {
       profileReady: access.profileReady,
       applicationStatus: access.sellerApplication?.status ?? null,
       payoutsReady: getCreatorPaymentAccountIsReady(paymentAccount.data ?? null),
+      paymentsLive,
       progress: progress.data ?? null,
     },
   };

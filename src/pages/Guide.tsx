@@ -144,7 +144,7 @@ const Guide = () => {
               </div>
 
               <div className={classes.body}>
-                {t(`${base}.body` as MessageKey)
+                {t(`${base}.${entry.body?.(facts) ?? "body"}` as MessageKey)
                   .split("\n\n")
                   .map((paragraph) => (
                     <p key={paragraph}>{paragraph}</p>

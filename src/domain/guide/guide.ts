@@ -33,6 +33,9 @@ export type GuideFacts = {
   profileReady: boolean;
   applicationStatus: string | null;
   payoutsReady: boolean;
+  // False before launch (payments_are_live, 20261110_193): there's no payout
+  // setup to do yet. Left out, payments count as open.
+  paymentsLive?: boolean;
   progress: GuideProgress | null;
 };
 
@@ -47,7 +50,14 @@ export type GuideStep = {
   // A setting changed right in the step (Guide.tsx draws it).
   control?: "theme";
   state: (facts: GuideFacts) => GuideStepState;
+  // Which body text to show, when it depends on the account: the suffix after
+  // guide.<track>.<step>. Left out, it's "body".
+  body?: (facts: GuideFacts) => "body" | "bodyClosed";
 };
+
+// Payouts can't be set up before launch, so the step is only worth knowing
+// then, and says paid listings go live without it in the meantime.
+const payoutsClosed = (facts: GuideFacts) => facts.paymentsLive === false && !facts.payoutsReady;
 
 const read = () => "read" as const;
 const when = (done: boolean): GuideStepState => (done ? "done" : "todo");
@@ -82,7 +92,8 @@ export const guideSteps: Record<GuideTrack, readonly GuideStep[]> = {
       key: "payouts",
       tour: "profile",
       link: { to: "/settings/profile", label: "guide.goPayouts" },
-      state: (facts) => when(facts.payoutsReady),
+      state: (facts) => (payoutsClosed(facts) ? "read" : when(facts.payoutsReady)),
+      body: (facts) => (payoutsClosed(facts) ? "bodyClosed" : "body"),
     },
     {
       key: "listing",
